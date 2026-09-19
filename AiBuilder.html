@@ -1,0 +1,3094 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>AI Builder — Build Your Own AI</title>
+<style>
+/* ============================================================
+   THEME
+   ============================================================ */
+:root{
+  --bg:#f4f5fb;
+  --bg-soft:#eceef8;
+  --card:#ffffff;
+  --text:#191c26;
+  --muted:#6b7280;
+  --border:#e3e6f0;
+  --accent:#6c5ce7;
+  --accent-2:#8f7dff;
+  --accent-soft:#eeebff;
+  --good:#16a34a;
+  --warn:#d97706;
+  --bad:#dc2626;
+  --shadow:0 1px 2px rgba(20,24,40,.05), 0 10px 30px rgba(20,24,40,.07);
+  --shadow-sm:0 1px 2px rgba(20,24,40,.06);
+  --radius:18px;
+  --radius-sm:12px;
+}
+html[data-theme="dark"]{
+  --bg:#0e1015;
+  --bg-soft:#141721;
+  --card:#171a23;
+  --text:#e9ebf2;
+  --muted:#98a0b3;
+  --border:#262a36;
+  --accent:#8b7dff;
+  --accent-2:#a99cff;
+  --accent-soft:#221e3d;
+  --shadow:0 1px 2px rgba(0,0,0,.35), 0 12px 34px rgba(0,0,0,.4);
+  --shadow-sm:0 1px 2px rgba(0,0,0,.4);
+}
+*{box-sizing:border-box;}
+html,body{margin:0;padding:0;height:100%;}
+body{
+  font-family:ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
+  background:var(--bg);
+  color:var(--text);
+  line-height:1.55;
+  -webkit-font-smoothing:antialiased;
+  font-size:15px;
+}
+h1,h2,h3,h4{line-height:1.25;margin:0 0 .5em;}
+h1{font-size:clamp(2rem,5vw,3.2rem);letter-spacing:-.03em;}
+h2{font-size:1.4rem;letter-spacing:-.02em;}
+h3{font-size:1rem;letter-spacing:-.01em;margin-top:1.4em;}
+p{margin:0 0 .8em;}
+code{background:var(--accent-soft);color:var(--accent);padding:.1em .4em;border-radius:6px;font-size:.85em;}
+.hidden{display:none !important;}
+.muted{color:var(--muted);}
+.small{font-size:.85em;}
+.full{width:100%;}
+
+/* ============================================================
+   BUTTONS / INPUTS
+   ============================================================ */
+.btn{
+  font:inherit;font-weight:600;cursor:pointer;border:1px solid transparent;
+  border-radius:12px;padding:.6em 1.1em;transition:.15s ease;background:var(--bg-soft);color:var(--text);
+  display:inline-flex;align-items:center;gap:.45em;justify-content:center;
+}
+.btn:hover{transform:translateY(-1px);}
+.btn:active{transform:translateY(0);}
+.btn.primary{background:var(--accent);color:#fff;box-shadow:0 6px 18px rgba(108,92,231,.28);}
+.btn.primary:hover{background:var(--accent-2);}
+.btn.ghost{background:transparent;border-color:var(--border);}
+.btn.ghost:hover{background:var(--bg-soft);}
+.btn.danger{color:var(--bad);}
+.btn.danger.ghost{border-color:var(--border);}
+.btn.danger.ghost:hover{background:rgba(220,38,38,.08);}
+.btn.big{font-size:1.1rem;padding:.85em 2.2em;border-radius:16px;}
+.btn.small{font-size:.85rem;padding:.45em .85em;}
+.btn.tiny{font-size:.75rem;padding:.3em .6em;border-radius:9px;}
+.btn:disabled{opacity:.5;cursor:not-allowed;transform:none;}
+.icon-btn{
+  background:transparent;border:1px solid var(--border);color:var(--text);
+  width:38px;height:38px;border-radius:11px;cursor:pointer;font-size:1rem;
+  display:inline-flex;align-items:center;justify-content:center;transition:.15s;
+}
+.icon-btn:hover{background:var(--bg-soft);}
+.icon-btn.tiny{width:26px;height:26px;font-size:.7rem;border-radius:8px;border-color:transparent;color:var(--muted);}
+.icon-btn.tiny:hover{color:var(--bad);background:var(--bg-soft);}
+input,textarea,select{
+  font:inherit;color:var(--text);background:var(--card);
+  border:1px solid var(--border);border-radius:12px;padding:.65em .85em;width:100%;
+  transition:.15s;outline:none;
+}
+input:focus,textarea:focus,select:focus{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-soft);}
+textarea{resize:vertical;min-height:70px;font-family:inherit;}
+label{display:block;font-weight:600;font-size:.85rem;margin:1em 0 .35em;color:var(--muted);}
+
+/* ============================================================
+   LAYOUT
+   ============================================================ */
+.view{min-height:100vh;display:flex;flex-direction:column;}
+.topnav{
+  display:flex;align-items:center;gap:14px;padding:14px 22px;
+  border-bottom:1px solid var(--border);background:var(--card);position:sticky;top:0;z-index:40;
+  flex-wrap:wrap;
+}
+.brand{font-weight:800;font-size:1.05rem;letter-spacing:-.02em;display:flex;align-items:center;gap:.5em;}
+.brand .logo{color:var(--accent);font-size:1.2em;}
+.brand-accent{color:var(--accent);}
+.topnav-actions{margin-left:auto;display:flex;gap:8px;align-items:center;}
+.card{
+  background:var(--card);border:1px solid var(--border);border-radius:var(--radius);
+  padding:22px;box-shadow:var(--shadow-sm);
+}
+.panel.narrow{max-width:520px;margin:40px auto;width:calc(100% - 40px);}
+.hint{font-size:.82rem;color:var(--muted);margin:.4em 0 .8em;}
+.empty{color:var(--muted);font-size:.88rem;font-style:italic;padding:.4em 0;}
+.row{display:flex;gap:8px;align-items:center;flex-wrap:wrap;}
+.row > .input{flex:1;min-width:140px;}
+.small-input{flex:0 0 auto;width:auto;min-width:110px;}
+
+/* ============================================================
+   HOME
+   ============================================================ */
+.hero{text-align:center;padding:60px 22px 30px;max-width:820px;margin:0 auto;}
+.hero h1{margin-bottom:.2em;}
+.hero-sub{font-size:1.15rem;color:var(--muted);margin-bottom:1.6em;}
+.hero-note{max-width:560px;margin:1.8em auto 0;color:var(--muted);font-size:.95rem;}
+.feature-grid{
+  display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));
+  gap:16px;max-width:1000px;margin:34px auto;padding:0 22px;width:100%;
+}
+.feature-grid .card h3{margin-top:0;color:var(--accent);}
+.feature-grid .card p{font-size:.9rem;color:var(--muted);margin:0;}
+.honest{
+  max-width:760px;margin:10px auto 60px;padding:16px 20px;border-radius:var(--radius);
+  background:var(--bg-soft);color:var(--muted);font-size:.86rem;border:1px solid var(--border);
+}
+
+/* ============================================================
+   TABS
+   ============================================================ */
+.tabs{display:flex;gap:4px;flex-wrap:wrap;}
+.tab{
+  font:inherit;font-weight:600;cursor:pointer;border:none;background:transparent;color:var(--muted);
+  padding:.5em .95em;border-radius:11px;transition:.15s;
+}
+.tab:hover{background:var(--bg-soft);color:var(--text);}
+.tab.active{background:var(--accent-soft);color:var(--accent);}
+.studio-main{flex:1;padding:22px;max-width:1180px;width:100%;margin:0 auto;}
+
+/* ============================================================
+   CHAT
+   ============================================================ */
+.chat-card{
+  background:var(--card);border:1px solid var(--border);border-radius:var(--radius);
+  box-shadow:var(--shadow);display:flex;flex-direction:column;height:calc(100vh - 190px);min-height:420px;
+  overflow:hidden;
+}
+.chat-head{
+  display:flex;align-items:center;gap:12px;padding:14px 20px;border-bottom:1px solid var(--border);
+  flex-wrap:wrap;
+}
+.chat-title{font-weight:700;}
+.chat-sub{font-size:.8rem;color:var(--muted);}
+.chat-head .switch{margin-left:auto;}
+.switch{display:flex;align-items:center;gap:.5em;font-size:.82rem;color:var(--muted);cursor:pointer;font-weight:600;}
+.switch input{width:auto;accent-color:var(--accent);}
+.chat-log{flex:1;overflow-y:auto;padding:20px;display:flex;flex-direction:column;gap:14px;}
+.msg{max-width:78%;display:flex;flex-direction:column;gap:6px;}
+.msg.user{align-self:flex-end;align-items:flex-end;}
+.msg.ai{align-self:flex-start;}
+.bubble{
+  padding:.7em 1em;border-radius:16px;white-space:pre-wrap;word-wrap:break-word;
+}
+.msg.user .bubble{background:var(--accent);color:#fff;border-bottom-right-radius:5px;}
+.msg.ai .bubble{background:var(--bg-soft);border-bottom-left-radius:5px;}
+.msg-tools{display:flex;gap:6px;}
+.msg-tools button{
+  font:inherit;font-size:.72rem;font-weight:600;cursor:pointer;color:var(--muted);
+  background:transparent;border:1px solid var(--border);border-radius:9px;padding:.25em .6em;
+}
+.msg-tools button:hover{color:var(--accent);border-color:var(--accent);}
+.trace{
+  background:var(--bg-soft);border:1px solid var(--border);border-radius:13px;
+  padding:12px 14px;font-size:.82rem;color:var(--muted);max-width:100%;
+}
+.trace-title{color:var(--text);font-weight:600;margin-bottom:.3em;}
+.trace-conf{color:var(--accent);font-weight:700;margin-bottom:.5em;}
+.trace-row{margin:.25em 0;}
+.trace-bars{margin-top:.6em;display:flex;flex-direction:column;gap:4px;}
+.bar-row{display:grid;grid-template-columns:1fr 90px 38px;gap:8px;align-items:center;font-size:.76rem;}
+.bar{background:var(--border);height:7px;border-radius:5px;overflow:hidden;display:block;}
+.bar i{display:block;height:100%;background:var(--accent);border-radius:5px;}
+.bar-val{text-align:right;font-variant-numeric:tabular-nums;}
+.chat-input{display:flex;gap:9px;padding:14px 18px;border-top:1px solid var(--border);}
+.teach-panel{
+  background:var(--bg-soft);border:1px solid var(--border);border-radius:14px;padding:12px 14px;
+  display:flex;flex-direction:column;gap:8px;font-size:.85rem;max-width:340px;
+}
+.teach-panel .row{gap:6px;}
+
+/* ============================================================
+   TEACH
+   ============================================================ */
+.teach-layout{display:grid;grid-template-columns:250px 1fr;gap:18px;align-items:start;}
+.concept-side{position:sticky;top:90px;}
+.chips{display:flex;flex-wrap:wrap;gap:7px;margin-bottom:14px;}
+.chip{
+  font:inherit;font-size:.85rem;font-weight:600;cursor:pointer;border:1px solid var(--border);
+  background:var(--card);color:var(--text);border-radius:999px;padding:.35em .8em;
+  display:inline-flex;align-items:center;gap:.45em;transition:.15s;
+}
+.chip:hover{border-color:var(--accent);}
+.chip.active{background:var(--accent);color:#fff;border-color:var(--accent);}
+.chip-count{font-size:.72rem;opacity:.65;}
+.editor-head{display:flex;gap:10px;align-items:center;}
+.concept-name-input{font-size:1.25rem;font-weight:700;border:none;background:transparent;padding:.2em 0;}
+.concept-name-input:focus{box-shadow:none;border-bottom:2px solid var(--accent);border-radius:0;}
+.list{display:flex;flex-direction:column;gap:6px;margin-bottom:10px;}
+.list-item{
+  display:flex;align-items:center;gap:10px;justify-content:space-between;
+  background:var(--bg-soft);border-radius:11px;padding:.5em .8em;font-size:.9rem;
+}
+.list-item .val{color:var(--accent);font-weight:600;}
+.empty-state{text-align:center;padding:40px 20px;color:var(--muted);}
+
+/* ============================================================
+   BRAIN / GRAPH
+   ============================================================ */
+.graph-wrap{
+  overflow:auto;background:var(--bg-soft);border-radius:var(--radius-sm);
+  border:1px solid var(--border);padding:10px;max-height:520px;
+}
+svg .node rect{fill:var(--card);stroke:var(--border);stroke-width:1.5;transition:.15s;}
+svg .node{cursor:pointer;}
+svg .node:hover rect{stroke:var(--accent);}
+svg .node.sel rect{fill:var(--accent);stroke:var(--accent);}
+svg .node.sel text{fill:#fff;}
+svg .node text{fill:var(--text);font-size:13px;font-weight:600;font-family:inherit;pointer-events:none;}
+svg .link{stroke:var(--border);stroke-width:1.6;fill:none;}
+svg .link.cross{stroke-dasharray:4 4;opacity:.6;}
+
+/* ============================================================
+   MISC
+   ============================================================ */
+.stat-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:12px;margin:16px 0;}
+.stat{background:var(--bg-soft);border-radius:14px;padding:14px;text-align:center;}
+.stat b{display:block;font-size:1.7rem;color:var(--accent);line-height:1.1;}
+.stat span{font-size:.78rem;color:var(--muted);}
+.toast{
+  position:fixed;left:50%;bottom:26px;transform:translate(-50%,90px);
+  background:var(--text);color:var(--bg);padding:.7em 1.2em;border-radius:12px;
+  font-size:.88rem;font-weight:600;opacity:0;transition:.25s;z-index:200;pointer-events:none;
+  box-shadow:var(--shadow);
+}
+.toast.show{opacity:1;transform:translate(-50%,0);}
+.toast.error{background:var(--bad);color:#fff;}
+.group-card{border:1px solid var(--border);border-radius:14px;padding:12px;margin-bottom:10px;background:var(--bg-soft);}
+.progress-note{font-size:.85rem;color:var(--muted);margin-top:.5em;}
+
+/* ============================================================
+   RESPONSIVE
+   ============================================================ */
+@media (max-width:820px){
+  .teach-layout{grid-template-columns:1fr;}
+  .concept-side{position:static;}
+  .msg{max-width:90%;}
+  .chat-card{height:calc(100vh - 230px);}
+  .studio-main{padding:14px;}
+  .topnav{padding:12px 14px;}
+}
+</style>
+</head>
+<body>
+
+<div id="toast" class="toast"></div>
+
+<!-- ============================================================
+     HOME
+     ============================================================ -->
+<section id="view-home" class="view">
+  <div class="topnav">
+    <div class="brand"><span class="logo">◈</span> AI<span class="brand-accent">Builder</span></div>
+    <div class="topnav-actions">
+      <button class="btn ghost small" id="homeImportBtn">Import AI</button>
+      <button class="icon-btn" id="homeThemeBtn" title="Toggle dark mode">🌙</button>
+    </div>
+  </div>
+
+  <div class="hero">
+    <h1>Build Your Own AI</h1>
+    <p class="hero-sub">Teach it what you want it to know. No coding or giant datasets required.</p>
+    <button class="btn primary big" id="btnCreate">Create an AI</button>
+    <p class="hero-note">
+      You teach your AI <strong>concepts</strong>, <strong>facts</strong>, and <strong>behaviors</strong>.
+      It learns patterns from your examples and uses them to respond to new messages.
+    </p>
+  </div>
+
+  <div class="feature-grid">
+    <div class="card">
+      <h3>1 · Teach concepts</h3>
+      <p>Give your AI a topic and a few example sentences. It works out the important words on its own — you never write a keyword list.</p>
+    </div>
+    <div class="card">
+      <h3>2 · Add facts &amp; rules</h3>
+      <p>Tell it your name, your favorite color, or how it should greet people. It remembers and reuses them.</p>
+    </div>
+    <div class="card">
+      <h3>3 · Chat &amp; correct</h3>
+      <p>Talk to it. When it gets something wrong, click “Teach this” and it learns immediately.</p>
+    </div>
+    <div class="card">
+      <h3>4 · See its brain</h3>
+      <p>A simple map of what it knows, plus an explanation of exactly why it gave each answer.</p>
+    </div>
+  </div>
+
+  <p class="honest">
+    <strong>An honest note:</strong> your AI is not a giant language model and does not understand language like a
+    person. It is a small pattern-matching system that runs entirely in your browser. It recognises patterns in
+    the examples you teach it, remembers facts you give it, and follows the rules you set. That is the whole trick —
+    and it is genuinely yours.
+  </p>
+</section>
+
+<!-- ============================================================
+     CREATE AI
+     ============================================================ -->
+<section id="view-create" class="view hidden">
+  <div class="topnav">
+    <div class="brand"><span class="logo">◈</span> AI<span class="brand-accent">Builder</span></div>
+    <div class="topnav-actions">
+      <button class="icon-btn" id="createThemeBtn" title="Toggle dark mode">🌙</button>
+    </div>
+  </div>
+  <div class="panel narrow card">
+    <h2>Create your AI</h2>
+    <p class="muted small">Three quick things. You can change all of them later.</p>
+
+    <label for="aiName">AI Name</label>
+    <input id="aiName" placeholder="Lumo" maxlength="40" />
+
+    <label for="aiPersonality">Personality</label>
+    <input id="aiPersonality" placeholder="Friendly, curious, and helpful" maxlength="80" />
+
+    <label for="aiDescription">What is it for? <span class="muted">(optional)</span></label>
+    <input id="aiDescription" placeholder="A little assistant that helps me with programming." maxlength="140" />
+
+    <div class="row" style="margin-top:22px;">
+      <button class="btn primary" id="btnStartTeaching">Start Teaching</button>
+      <button class="btn ghost" id="btnBackHome">Back</button>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================
+     STUDIO
+     ============================================================ -->
+<section id="view-studio" class="view hidden">
+  <div class="topnav">
+    <div class="brand"><span class="logo">◈</span> <span id="studioName">Lumo</span></div>
+    <div class="tabs" id="tabBar">
+      <button class="tab active" data-tab="chat">Chat</button>
+      <button class="tab" data-tab="teach">Teach</button>
+      <button class="tab" data-tab="memory">Memory</button>
+      <button class="tab" data-tab="rules">Rules</button>
+      <button class="tab" data-tab="brain">Brain</button>
+      <button class="tab" data-tab="profile">Profile</button>
+    </div>
+    <div class="topnav-actions">
+      <button class="icon-btn" id="studioThemeBtn" title="Toggle dark mode">🌙</button>
+    </div>
+  </div>
+
+  <main class="studio-main">
+
+    <!-- CHAT -->
+    <div id="tab-chat" class="tabpanel">
+      <div class="chat-card">
+        <div class="chat-head">
+          <div>
+            <div class="chat-title" id="chatTitle">Lumo</div>
+            <div class="chat-sub" id="chatSub">Your AI</div>
+          </div>
+          <label class="switch">
+            <input type="checkbox" id="showWhyToggle" />
+            Show how the AI decided
+          </label>
+        </div>
+        <div class="chat-log" id="chatLog"></div>
+        <div class="chat-input">
+          <input id="chatInput" placeholder="Type a message..." autocomplete="off" />
+          <button class="btn primary" id="chatSend">Send</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- TEACH -->
+    <div id="tab-teach" class="tabpanel hidden">
+      <div class="teach-layout">
+        <aside class="card concept-side">
+          <h3 style="margin-top:0;">Your AI knows about</h3>
+          <div id="conceptChips" class="chips"></div>
+          <button class="btn ghost full" id="btnAddConcept">+ Add Concept</button>
+          <p class="hint" style="margin-top:14px;">
+            Concepts are things your AI can recognise. Give each one a few example sentences and it will
+            look for similar messages later.
+          </p>
+        </aside>
+        <section class="card concept-main" id="conceptEditor"></section>
+      </div>
+    </div>
+
+    <!-- MEMORY -->
+    <div id="tab-memory" class="tabpanel hidden">
+      <div class="card">
+        <h2 style="margin-top:0;">What your AI remembers</h2>
+        <p class="hint">
+          Facts are simple <code>key = value</code> pairs. Your AI also picks these up automatically when you say
+          things like “My name is George” or “My favorite color is blue”.
+        </p>
+        <div id="memoryList" class="list"></div>
+        <div class="row" style="margin-top:12px;">
+          <input id="memKey" class="input" placeholder="favorite_game" />
+          <input id="memValue" class="input" placeholder="Minecraft" />
+          <button class="btn primary small" id="btnAddMemory">Add Fact</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- RULES -->
+    <div id="tab-rules" class="tabpanel hidden">
+      <div class="card">
+        <h2 style="margin-top:0;">Rules</h2>
+        <p class="hint">
+          Rules tell your AI how to behave. Build them with the dropdowns — there is no code to write.
+        </p>
+        <div id="ruleList" class="list"></div>
+
+        <h3>Add a rule</h3>
+        <div class="row" style="margin-bottom:8px;">
+          <span class="muted small" style="width:52px;">When</span>
+          <select id="ruleTrigger" class="input small-input">
+            <option value="concept">someone talks about</option>
+            <option value="greeting">someone greets me</option>
+            <option value="phrase">someone says</option>
+            <option value="question">someone asks about my memory</option>
+            <option value="any">anything is said</option>
+          </select>
+          <select id="ruleConcept" class="input small-input"></select>
+          <input id="rulePhrase" class="input hidden" placeholder="e.g. goodbye" />
+        </div>
+        <div class="row" style="margin-bottom:8px;">
+          <span class="muted small" style="width:52px;">Then</span>
+          <select id="ruleAction" class="input small-input">
+            <option value="respond">respond with</option>
+            <option value="conceptResponses">use the concept's responses</option>
+            <option value="remember">remember it as</option>
+            <option value="unknown">say I don't know</option>
+          </select>
+          <input id="ruleText" class="input" placeholder="I love talking about programming!" />
+          <input id="ruleKey" class="input small-input hidden" placeholder="fact_key" />
+        </div>
+        <button class="btn primary small" id="btnAddRule">Add Rule</button>
+      </div>
+    </div>
+
+    <!-- BRAIN -->
+    <div id="tab-brain" class="tabpanel hidden">
+      <div class="card" style="margin-bottom:18px;">
+        <h2 style="margin-top:0;">Your AI's brain</h2>
+        <p class="hint">
+          Boxes are concepts. Lines are relationships you created. Click a concept to see what it has learned.
+        </p>
+        <div class="graph-wrap" id="graphWrap"></div>
+        <div id="graphDetail" style="margin-top:14px;"></div>
+      </div>
+
+      <div class="card">
+        <h2 style="margin-top:0;">Find Concepts</h2>
+        <p class="hint">
+          Paste a list of words or sentences. Your AI will try to group them into concepts.
+          Grouping uses shared words, similar spelling, and a small built-in list of common topics.
+          Nothing is added until you say so.
+        </p>
+        <textarea id="discoverInput" rows="6" placeholder="pizza&#10;pepperoni&#10;cheese&#10;burger&#10;pasta&#10;javascript&#10;python&#10;coding&#10;minecraft&#10;chess"></textarea>
+        <div class="row" style="margin-top:10px;">
+          <button class="btn primary small" id="btnDiscover">Analyse</button>
+          <span class="muted small">You can rename, edit or delete any group before adding it.</span>
+        </div>
+        <div id="discoverResults" style="margin-top:16px;"></div>
+      </div>
+    </div>
+
+    <!-- PROFILE -->
+    <div id="tab-profile" class="tabpanel hidden">
+      <div class="card" style="margin-bottom:18px;">
+        <h2 style="margin-top:0;" id="profileName">Lumo</h2>
+        <p class="muted" id="profilePersonality">Friendly and curious</p>
+        <div class="stat-grid" id="profileStats"></div>
+        <p class="progress-note" id="profileNote"></p>
+      </div>
+
+      <div class="card" style="margin-bottom:18px;">
+        <h3 style="margin-top:0;">Your AI's identity</h3>
+        <label>AI Name</label>
+        <input id="profName" maxlength="40" />
+        <label>Personality</label>
+        <input id="profPersonality" maxlength="80" />
+        <label>Description</label>
+        <input id="profDescription" maxlength="140" />
+        <button class="btn primary small" id="btnSaveProfile" style="margin-top:14px;">Save</button>
+      </div>
+
+      <div class="card" style="margin-bottom:18px;">
+        <h3 style="margin-top:0;">How confident should your AI be before choosing a concept?</h3>
+        <p class="hint">
+          Higher means it says “I don't know” more often. Lower means it guesses more. A good starting point is 35%.
+        </p>
+        <div class="row">
+          <input type="range" id="thresholdRange" min="5" max="90" step="1" style="flex:1;" />
+          <strong id="thresholdValue" style="min-width:52px;text-align:right;">35%</strong>
+        </div>
+      </div>
+
+      <div class="card" style="margin-bottom:18px;">
+        <h3 style="margin-top:0;">When your AI doesn't understand</h3>
+        <p class="hint">These are the fallback replies it chooses between. One per line.</p>
+        <textarea id="fallbackInput" rows="4"></textarea>
+        <button class="btn primary small" id="btnSaveFallbacks" style="margin-top:10px;">Save</button>
+      </div>
+
+      <div class="card">
+        <h3 style="margin-top:0;">Your AI's files</h3>
+        <p class="hint">Everything is stored in this browser. No account, no server.</p>
+        <div class="row">
+          <button class="btn ghost small" id="btnExport">Export AI</button>
+          <button class="btn ghost small" id="btnImport">Import AI</button>
+          <button class="btn primary small" id="btnExportChatbot">Export Chatbot</button>
+          <button class="btn danger ghost small" id="btnReset">Start Over</button>
+        </div>
+        <p class="hint" style="margin-top:12px;">
+          <strong>Export Chatbot</strong> creates a single HTML file with your AI inside it. Anyone can open it
+          and chat with your AI — offline, no server, no API.
+        </p>
+      </div>
+    </div>
+
+  </main>
+</section>
+
+<input type="file" id="importFile" accept="application/json,.json" class="hidden" />
+
+<!-- ============================================================
+     STANDALONE RUNTIME (used when exporting a chatbot)
+     ============================================================ -->
+<script type="text/plain" id="standaloneRuntime">
+(function(){
+  'use strict';
+
+  var D = window.AI_DATA || {};
+  var AI = D.ai || { name: 'AI', personality: '' };
+  var SHOW_WHY = !!D.showWhy;
+
+  /* ---------- text processing ---------- */
+  var STOP = new Set(("a about above after again against all am an and any are as at be because been before being below " +
+    "between both but by can cannot could did do does doing down during each few for from further had has have having " +
+    "he her here hers herself him himself his how i if in into is it its itself just me more most my myself no nor not " +
+    "now of off on once only or other our ours ourselves out over own same she should so some such than that the their " +
+    "theirs them themselves then there these they this those through to too under until up very was we were what when " +
+    "where which while who whom why will with would you your yours yourself yourselves im ive id ill youre youve youll " +
+    "dont doesnt didnt cant wont thats whats lets gonna wanna").split(/\s+/));
+
+  function norm(t){
+    return String(t == null ? '' : t).toLowerCase()
+      .replace(/[\u2018\u2019\u02bc]/g, "'")
+      .replace(/[^a-z0-9'\s]/g, ' ')
+      .replace(/'/g, '')
+      .replace(/\s+/g, ' ')
+      .trim();
+  }
+  function stem(w){
+    if (w.length <= 3) return w;
+    if (w.endsWith('ies') && w.length > 4) return w.slice(0,-3) + 'y';
+    if (/(?:ses|xes|zes|ches|shes)$/.test(w)) return w.slice(0,-2);
+    if (w.endsWith('ss')) return w;
+    if (w.endsWith('s') && !w.endsWith('us') && w.length > 3) return w.slice(0,-1);
+    if (w.endsWith('ing') && w.length > 5){
+      var b1 = w.slice(0,-3);
+      if (b1.length > 2 && b1[b1.length-1] === b1[b1.length-2]) b1 = b1.slice(0,-1);
+      return b1;
+    }
+    if (w.endsWith('ed') && w.length > 4){
+      var b2 = w.slice(0,-2);
+      if (b2.length > 2 && b2[b2.length-1] === b2[b2.length-2]) b2 = b2.slice(0,-1);
+      return b2;
+    }
+    return w;
+  }
+  function isContent(w){ return w.length >= 2 && !STOP.has(w); }
+
+  function analyze(text){
+    var n = norm(text);
+    var raw = n ? n.split(' ') : [];
+    var tokens = raw.map(function(w){ return { raw:w, stem:stem(w), content:isContent(w) }; });
+    var content = tokens.filter(function(t){ return t.content; });
+    var bigrams = [];
+    for (var i = 0; i < tokens.length - 1; i++){
+      if (tokens[i].content && tokens[i+1].content) bigrams.push(tokens[i].stem + ' ' + tokens[i+1].stem);
+    }
+    return { text:text, norm:n, tokens:tokens, content:content, bigrams:bigrams };
+  }
+  function tmatch(a,b){
+    if (!a || !b) return 0;
+    if (a === b) return 1;
+    if (a + 'e' === b || b + 'e' === a) return 0.9;
+    if (a.length >= 4 && b.length >= 4 && (a.indexOf(b) === 0 || b.indexOf(a) === 0)) return 0.75;
+    return 0;
+  }
+
+  /* ---------- build concept models ---------- */
+  var concepts = (D.concepts || []).map(function(c){
+    var words = new Map(), bigrams = new Map(), exs = [];
+    (c.examples || []).forEach(function(t){
+      var a = analyze(t);
+      exs.push(a);
+      a.content.forEach(function(tk){ words.set(tk.stem, (words.get(tk.stem) || 0) + 1); });
+      a.bigrams.forEach(function(b){ bigrams.set(b, (bigrams.get(b) || 0) + 1); });
+    });
+    var mx = 1;
+    words.forEach(function(v){ if (v > mx) mx = v; });
+    var w = new Map();
+    words.forEach(function(v,k){ w.set(k, 0.25 + 0.75 * (v / mx)); });
+    return {
+      name: c.name,
+      responses: c.responses || [],
+      examples: exs,
+      exampleTexts: c.examples || [],
+      words: w,
+      bigrams: bigrams,
+      nameStems: analyze(c.name).content.map(function(t){ return t.stem; })
+    };
+  });
+
+  /* ---------- global word rarity ---------- */
+  var df = new Map();
+  var N = Math.max(1, concepts.length);
+  concepts.forEach(function(c){
+    var seen = new Set();
+    c.examples.forEach(function(a){ a.content.forEach(function(t){ seen.add(t.stem); }); });
+    seen.forEach(function(s){ df.set(s, (df.get(s) || 0) + 1); });
+  });
+  function qWeight(st){
+    var d = df.get(st);
+    if (d === undefined) return 0.35;
+    return Math.max(0.5, Math.min(1, 1 - 0.5 * (d - 1) / N));
+  }
+
+  /* ---------- similarity ---------- */
+  function overlap(qa, target){
+    var q = qa.content;
+    if (!q.length || !target.length) return 0;
+    var qw = q.map(function(t){ return qWeight(t.stem); });
+    var qTotal = qw.reduce(function(a,b){ return a+b; }, 0) || 1;
+    var used = {}, m = 0;
+    for (var i = 0; i < q.length; i++){
+      for (var j = 0; j < target.length; j++){
+        if (used[j]) continue;
+        var s = tmatch(q[i].stem, target[j].stem);
+        if (s > 0){
+          used[j] = 1;
+          m += qw[i] * s * (target[j].weight || 1);
+          break;
+        }
+      }
+    }
+    var tTotal = target.reduce(function(a,x){ return a + (x.weight || 1); }, 0);
+    if (qTotal + tTotal === 0) return 0;
+    return Math.max(0, Math.min(1, 2 * m / (qTotal + tTotal)));
+  }
+
+  function scoreConcept(qa, c){
+    if (!c.words.size || !qa.content.length) return null;
+
+    var q = qa.content;
+    var qw = q.map(function(t){ return qWeight(t.stem); });
+    var qTotal = qw.reduce(function(a,b){ return a+b; }, 0) || 1;
+
+    /* word overlap */
+    var matchedWords = [], matchedWeight = 0;
+    q.forEach(function(t, i){
+      var best = 0, bestStem = null;
+      c.words.forEach(function(w, st){
+        var mm = tmatch(t.stem, st);
+        if (mm > 0){
+          var s = mm * w;
+          if (s > best){ best = s; bestStem = st; }
+        }
+      });
+      if (best > 0){ matchedWeight += qw[i] * best; matchedWords.push(t.raw); }
+    });
+    var wordScore = Math.min(1, matchedWeight / qTotal);
+
+    /* phrase overlap */
+    var phraseScore = 0, phraseUsed = false;
+    if (qa.bigrams.length){
+      phraseUsed = true;
+      var hits = 0;
+      qa.bigrams.forEach(function(bg){
+        if (c.bigrams.has(bg)) hits += 1;
+        else {
+          var parts = bg.split(' ');
+          var hasA = false, hasB = false;
+          c.words.forEach(function(w, st){
+            if (tmatch(parts[0], st) > 0) hasA = true;
+            if (tmatch(parts[1], st) > 0) hasB = true;
+          });
+          if (hasA && hasB) hits += 0.35;
+        }
+      });
+      phraseScore = Math.min(1, hits / qa.bigrams.length);
+    }
+
+    /* example similarity */
+    var bestEx = null, bestExSim = 0;
+    c.examples.forEach(function(a, idx){
+      var sim = overlap(qa, a.content.map(function(t){ return { stem:t.stem, weight:1 }; }));
+      if (sim > bestExSim){ bestExSim = sim; bestEx = c.exampleTexts[idx]; }
+    });
+
+    /* overall concept similarity */
+    var conceptTarget = [];
+    c.words.forEach(function(w, st){ conceptTarget.push({ stem:st, weight:w }); });
+    var conceptScore = overlap(qa, conceptTarget);
+
+    /* weighted combination */
+    var sum = 0, wsum = 0;
+    sum += wordScore * 0.28;    wsum += 0.28;
+    if (phraseUsed){ sum += phraseScore * 0.22; wsum += 0.22; }
+    sum += bestExSim * 0.30;    wsum += 0.30;
+    sum += conceptScore * 0.20; wsum += 0.20;
+    var score = wsum ? sum / wsum : 0;
+
+    /* concept name mentioned */
+    var nameHit = c.nameStems.length > 0 && c.nameStems.every(function(ns){
+      return qa.content.some(function(t){ return tmatch(t.stem, ns) > 0; });
+    });
+    if (nameHit) score = Math.min(1, score + 0.08);
+
+    return {
+      concept: c, score: score, matchedWords: matchedWords,
+      closestExample: bestEx,
+      components: [
+        { label:'Shared important words', value: wordScore },
+        { label:'Matching phrases', value: phraseUsed ? phraseScore : 0 },
+        { label:'Similar to a taught example', value: bestExSim },
+        { label:'Similar to the concept overall', value: conceptScore }
+      ]
+    };
+  }
+
+  function rank(qa){
+    var out = [];
+    concepts.forEach(function(c){
+      var r = scoreConcept(qa, c);
+      if (r) out.push(r);
+    });
+    out.sort(function(a,b){ return b.score - a.score; });
+    return out;
+  }
+
+  /* ---------- memory ---------- */
+  var memories = (D.memories || []).slice();
+  function memGet(key){
+    key = String(key).toLowerCase();
+    for (var i = 0; i < memories.length; i++){
+      if (String(memories[i].key).toLowerCase() === key) return memories[i].value;
+    }
+    return null;
+  }
+  function memSet(key, value){
+    key = String(key).toLowerCase();
+    for (var i = 0; i < memories.length; i++){
+      if (String(memories[i].key).toLowerCase() === key){ memories[i].value = value; return; }
+    }
+    memories.push({ key:key, value:value });
+  }
+
+  var Q_PATTERNS = [
+    { re:/\b(whats my name|what is my name|who am i|do you know my name)\b/, key:function(){ return 'name'; }, phrase:function(){ return 'name'; } },
+    { re:/\b(whats my favou?rite ([a-z ]{1,20})|what is my favou?rite ([a-z ]{1,20}))\b/, key:function(m){ return 'favorite_' + (m[2] || m[3]).trim().replace(/\s+/g,'_'); }, phrase:function(m){ return 'favorite ' + (m[2] || m[3]).trim(); } },
+    { re:/\b(where do i live|whats my location|what is my location|whats my city)\b/, key:function(){ return 'location'; }, phrase:function(){ return 'location'; } },
+    { re:/\b(whats my ([a-z ]{1,20})|what is my ([a-z ]{1,20}))\b/, key:function(m){ return (m[2] || m[3]).trim().replace(/\s+/g,'_'); }, phrase:function(m){ return (m[2] || m[3]).trim(); } }
+  ];
+
+  function memoryAnswer(n){
+    for (var i = 0; i < Q_PATTERNS.length; i++){
+      var p = Q_PATTERNS[i];
+      var m = n.match(p.re);
+      if (!m) continue;
+      var key = p.key(m);
+      var phrase = p.phrase(m);
+      var val = memGet(key);
+      if (val === null){
+        return "I don't know your " + phrase + " yet. You can tell me by saying \u201cMy " + phrase + " is \u2026\u201d.";
+      }
+      var short = key.replace(/^favorite_/, '');
+      if (key === 'name') return 'Your name is ' + val + '.';
+      if (key === 'location') return 'You live in ' + val + '.';
+      if (key === 'likes') return 'You like ' + val + '.';
+      if (key.indexOf('favorite_') === 0) return 'Your favorite ' + short.replace(/_/g,' ') + ' is ' + val + '.';
+      return 'Your ' + key.replace(/_/g,' ') + ' is ' + val + '.';
+    }
+    return null;
+  }
+
+  /* ---------- rules ---------- */
+  var rules = D.rules || [];
+  function isGreeting(n){
+    return /^(hi|hello|hey|yo|hiya|howdy|greetings|sup|good morning|good afternoon|good evening)\b/.test(n);
+  }
+  function ruleMatches(rule, ctx){
+    var t = rule.trigger || {};
+    if (t.type === 'greeting') return isGreeting(ctx.n);
+    if (t.type === 'phrase') return t.value && ctx.n.indexOf(norm(t.value)) !== -1;
+    if (t.type === 'any') return true;
+    if (t.type === 'concept') return ctx.top && ctx.top.concept.name === t.value && ctx.above;
+    if (t.type === 'question') return !!memoryAnswer(ctx.n);
+    return false;
+  }
+
+  /* ---------- response templates ---------- */
+  function pick(a){ return a[Math.floor(Math.random() * a.length)]; }
+  function renderTemplate(text, ctx){
+    if (!text) return '';
+    var out = String(text);
+    out = out.replace(/\{choose:([^}]*)\}/gi, function(m, body){
+      var opts = body.split('|').map(function(s){ return s.trim(); }).filter(Boolean);
+      return opts.length ? pick(opts) : '';
+    });
+    out = out.replace(/\{input\}/gi, ctx.input || '');
+    out = out.replace(/\{concept\}/gi, ctx.concept || 'that');
+    out = out.replace(/\{name\}/gi, ctx.name || 'friend');
+    out = out.replace(/\{memory:([a-z0-9_ ]+)\}/gi, function(m, k){
+      var v = memGet(k.trim());
+      return v === null ? "I don't know that yet" : v;
+    });
+    return out.trim();
+  }
+
+  var fallbacks = (D.fallbacks && D.fallbacks.length) ? D.fallbacks : [
+    "I'm not sure what you mean yet.",
+    "I don't know much about that yet.",
+    "You might have to teach me about that."
+  ];
+  var DEFAULT_RESPONSES = [
+    'That sounds like it is about {concept}.',
+    'I recognise this is about {concept}. Tell me more!',
+    '{choose:I know about {concept}.|This seems related to {concept}.}'
+  ];
+
+  /* ---------- the chat brain ---------- */
+  function respond(input){
+    var qa = analyze(input);
+    var n = qa.norm;
+    var ctxBase = { input: input, name: memGet('name') };
+    var ranked = rank(qa);
+    var top = ranked.length ? ranked[0] : null;
+    var above = !!(top && top.score >= (D.threshold || 0.35));
+    var ctx = { n: n, top: top, above: above };
+
+    /* rules first — but memory questions are handled by rules only if the user made one */
+    var activeTop = above ? top : null;
+    for (var i = 0; i < rules.length; i++){
+      var r = rules[i];
+      if (!ruleMatches(r, { n:n, top:activeTop, above:above })) continue;
+      var a = r.action || {};
+      if (a.type === 'respond'){
+        return { text: renderTemplate(a.text, Object.assign({}, ctxBase, { concept: top ? top.concept.name : '' })), kind:'rule' };
+      }
+      if (a.type === 'unknown'){
+        return { text: renderTemplate(pick(fallbacks), ctxBase), kind:'rule' };
+      }
+      if (a.type === 'remember'){
+        var val = input.replace(/^[\s\S]{0,40}?\b(is|are|am)\b/i, '').trim() || input;
+        memSet(a.key || 'note', val);
+        return { text: 'Okay, I will remember that.', kind:'rule' };
+      }
+      if (a.type === 'conceptResponses' && activeTop){
+        var list = activeTop.concept.responses.length ? activeTop.concept.responses : DEFAULT_RESPONSES;
+        return { text: renderTemplate(pick(list), Object.assign({}, ctxBase, { concept: activeTop.concept.name })), kind:'concept', top:activeTop };
+      }
+    }
+
+    /* automatic memory questions */
+    var mem = memoryAnswer(n);
+    if (mem) return { text: mem, kind:'memory', top: top };
+
+    /* concept match */
+    if (above){
+      var c = top.concept;
+      var list2 = c.responses.length ? c.responses : DEFAULT_RESPONSES;
+      return {
+        text: renderTemplate(pick(list2), Object.assign({}, ctxBase, { concept: c.name })),
+        kind:'concept', top: top, others: ranked.slice(1,4)
+      };
+    }
+
+    return { text: renderTemplate(pick(fallbacks), ctxBase), kind:'fallback', top: top, others: ranked.slice(0,3) };
+  }
+
+  /* ---------- UI ---------- */
+  function esc(s){
+    return String(s == null ? '' : s).replace(/[&<>"']/g, function(c){
+      return ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'})[c];
+    });
+  }
+
+  var css = ''
+    + ':root{--bg:#f4f5fb;--card:#fff;--text:#191c26;--muted:#6b7280;--border:#e3e6f0;--accent:#6c5ce7;--soft:#eceef8;--shadow:0 1px 2px rgba(20,24,40,.05),0 10px 30px rgba(20,24,40,.07);}'
+    + 'html[data-theme="dark"]{--bg:#0e1015;--card:#171a23;--text:#e9ebf2;--muted:#98a0b3;--border:#262a36;--accent:#8b7dff;--soft:#1c1f2b;}'
+    + '*{box-sizing:border-box}body{margin:0;font-family:ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif;background:var(--bg);color:var(--text);height:100vh;display:flex;justify-content:center;padding:18px;font-size:15px;line-height:1.55}'
+    + '.wrap{width:100%;max-width:760px;background:var(--card);border:1px solid var(--border);border-radius:20px;box-shadow:var(--shadow);display:flex;flex-direction:column;overflow:hidden}'
+    + '.head{display:flex;align-items:center;gap:12px;padding:14px 20px;border-bottom:1px solid var(--border)}'
+    + '.avatar{width:40px;height:40px;border-radius:12px;background:var(--accent);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:1.1rem}'
+    + '.name{font-weight:700}.sub{font-size:.8rem;color:var(--muted)}'
+    + '.spacer{flex:1}'
+    + '.icon{background:transparent;border:1px solid var(--border);color:var(--text);width:36px;height:36px;border-radius:11px;cursor:pointer;font-size:1rem}'
+    + '.log{flex:1;overflow-y:auto;padding:20px;display:flex;flex-direction:column;gap:12px}'
+    + '.msg{max-width:80%}.msg.user{align-self:flex-end}.msg.ai{align-self:flex-start}'
+    + '.bubble{padding:.7em 1em;border-radius:16px;white-space:pre-wrap;word-wrap:break-word}'
+    + '.msg.user .bubble{background:var(--accent);color:#fff;border-bottom-right-radius:5px}'
+    + '.msg.ai .bubble{background:var(--soft);border-bottom-left-radius:5px}'
+    + '.trace{margin-top:8px;font-size:.78rem;color:var(--muted);background:var(--soft);border:1px solid var(--border);border-radius:12px;padding:10px 12px}'
+    + '.trace b{color:var(--accent)}'
+    + '.composer{display:flex;gap:9px;padding:14px 18px;border-top:1px solid var(--border)}'
+    + '.composer input{flex:1;font:inherit;padding:.65em .9em;border-radius:12px;border:1px solid var(--border);background:var(--card);color:var(--text);outline:none}'
+    + '.composer input:focus{border-color:var(--accent)}'
+    + '.composer button{font:inherit;font-weight:600;background:var(--accent);color:#fff;border:none;border-radius:12px;padding:.65em 1.3em;cursor:pointer}'
+    + '.foot{padding:10px 18px 16px;font-size:.75rem;color:var(--muted);text-align:center}'
+    + '.know{padding:0 18px 12px}'
+    + '.know summary{cursor:pointer;font-size:.82rem;color:var(--muted)}'
+    + '.knowlist{font-size:.82rem;color:var(--muted);margin-top:8px;display:flex;flex-wrap:wrap;gap:6px}'
+    + '.knowlist span{background:var(--soft);border-radius:999px;padding:.2em .7em}';
+
+  function boot(){
+    var style = document.createElement('style');
+    style.textContent = css;
+    document.head.appendChild(style);
+
+    var root = document.getElementById('root');
+    var initial = (AI.name || 'A').trim().charAt(0).toUpperCase();
+
+    root.innerHTML =
+      '<div class="wrap">' +
+        '<div class="head">' +
+          '<div class="avatar">' + esc(initial) + '</div>' +
+          '<div><div class="name">' + esc(AI.name || 'AI') + '</div>' +
+          '<div class="sub">' + esc(AI.personality || 'A small AI you can talk to') + '</div></div>' +
+          '<div class="spacer"></div>' +
+          '<button class="icon" id="themeBtn" title="Dark mode">🌙</button>' +
+        '</div>' +
+        '<div class="log" id="log"></div>' +
+        '<div class="know"><details><summary>What I know</summary><div class="knowlist" id="knowlist"></div></details></div>' +
+        '<div class="composer">' +
+          '<input id="input" placeholder="Type a message..." autocomplete="off" />' +
+          '<button id="send">Send</button>' +
+        '</div>' +
+        '<div class="foot">Built with AI Builder · runs offline · no server, no API</div>' +
+      '</div>';
+
+    var log = document.getElementById('log');
+    var input = document.getElementById('input');
+    var sendBtn = document.getElementById('send');
+    var knowlist = document.getElementById('knowlist');
+
+    knowlist.innerHTML = concepts.length
+      ? concepts.map(function(c){ return '<span>' + esc(c.name) + ' · ' + c.exampleTexts.length + '</span>'; }).join('')
+      : '<span>Nothing yet</span>';
+
+    function addMessage(role, text, trace){
+      var wrap = document.createElement('div');
+      wrap.className = 'msg ' + role;
+      var html = '<div class="bubble">' + esc(text) + '</div>';
+      if (trace && SHOW_WHY) html += trace;
+      wrap.innerHTML = html;
+      log.appendChild(wrap);
+      log.scrollTop = log.scrollHeight;
+    }
+
+    function traceHTML(res){
+      if (!res.top) return '<div class="trace">Nothing matched well enough, so I used a fallback.</div>';
+      var t = res.top;
+      var h = '<div class="trace">I matched this to <b>' + esc(t.concept.name) + '</b> — confidence ' +
+              Math.round(t.score * 100) + '%.';
+      if (t.closestExample) h += '<br>Closest example: \u201c' + esc(t.closestExample) + '\u201d';
+      if (t.matchedWords && t.matchedWords.length) h += '<br>Matching words: ' + t.matchedWords.map(esc).join(', ');
+      if (res.others && res.others.length){
+        h += '<br>Other possible matches: ' + res.others.map(function(o){
+          return esc(o.concept.name) + ' ' + Math.round(o.score * 100) + '%';
+        }).join(' · ');
+      }
+      return h + '</div>';
+    }
+
+    function say(text){
+      var res = respond(text);
+      addMessage('ai', res.text, traceHTML(res));
+    }
+
+    function submit(){
+      var v = input.value.trim();
+      if (!v) return;
+      addMessage('user', v);
+      input.value = '';
+      setTimeout(function(){ say(v); }, 120);
+    }
+
+    sendBtn.addEventListener('click', submit);
+    input.addEventListener('keydown', function(e){ if (e.key === 'Enter') submit(); });
+
+    var themeBtn = document.getElementById('themeBtn');
+    themeBtn.addEventListener('click', function(){
+      var dark = document.documentElement.getAttribute('data-theme') === 'dark';
+      document.documentElement.setAttribute('data-theme', dark ? 'light' : 'dark');
+      themeBtn.textContent = dark ? '🌙' : '☀️';
+    });
+
+    addMessage('ai', 'Hi! I\u2019m ' + (AI.name || 'your AI') + '. ' +
+      (concepts.length ? 'I already know a few things — try talking to me.' : 'I don\u2019t know much yet, but you can talk to me.'));
+  }
+
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot);
+  else boot();
+})();
+</script>
+
+<!-- ============================================================
+     MAIN APPLICATION
+     ============================================================ -->
+<script>
+(function(){
+'use strict';
+
+/* ============================================================
+   SECTION 1 — TINY HELPERS
+   ============================================================ */
+const $  = (sel, root = document) => root.querySelector(sel);
+const $$ = (sel, root = document) => Array.from(root.querySelectorAll(sel));
+const uid = (p = 'id') => p + '_' + Math.random().toString(36).slice(2, 9) + Date.now().toString(36).slice(-3);
+const esc = (s) => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const clamp = (n, a, b) => Math.max(a, Math.min(b, n));
+const pick = (arr) => arr[Math.floor(Math.random() * arr.length)];
+const byId = (arr, id) => arr.find(x => x.id === id);
+const truncate = (s, n) => (s.length > n ? s.slice(0, n - 1) + '…' : s);
+const slug = (s) => String(s || 'ai').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') || 'ai';
+
+function toast(msg, kind){
+  const el = $('#toast');
+  el.textContent = msg;
+  el.className = 'toast show' + (kind ? ' ' + kind : '');
+  clearTimeout(el._t);
+  el._t = setTimeout(() => { el.className = 'toast'; }, 2600);
+}
+
+function download(filename, text, mime){
+  const blob = new Blob([text], { type: mime || 'text/plain' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  setTimeout(() => URL.revokeObjectURL(url), 1500);
+}
+
+/* ============================================================
+   SECTION 2 — TEXT PROCESSING
+   Lowercase → strip punctuation → tokenise → drop stop words →
+   stem → build words + phrases. No neural network anywhere.
+   ============================================================ */
+
+const STOP_WORDS = new Set((
+  'a about above after again against all am an and any are as at be because been before being below ' +
+  'between both but by can cannot could did do does doing down during each few for from further had has ' +
+  'have having he her here hers herself him himself his how i if in into is it its itself just me more ' +
+  'most my myself no nor not now of off on once only or other our ours ourselves out over own same she ' +
+  'should so some such than that the their theirs them themselves then there these they this those ' +
+  'through to too under until up very was we were what when where which while who whom why will with ' +
+  'would you your yours yourself yourselves im ive id ill youre youve youll dont doesnt didnt cant wont ' +
+  'thats whats lets gonna wanna'
+).split(/\s+/));
+
+/** Lowercase, remove punctuation (apostrophes are dropped: "what's" → "whats"). */
+function normalizeText(text){
+  return String(text == null ? '' : text)
+    .toLowerCase()
+    .replace(/[\u2018\u2019\u02bc]/g, "'")
+    .replace(/[^a-z0-9'\s]/g, ' ')
+    .replace(/'/g, '')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+/** Very light stemmer: plurals, -ing, -ed. Deliberately simple and predictable. */
+function stem(word){
+  const w = word;
+  if (w.length <= 3) return w;
+  if (w.endsWith('ies') && w.length > 4) return w.slice(0, -3) + 'y';
+  if (/(?:ses|xes|zes|ches|shes)$/.test(w)) return w.slice(0, -2);
+  if (w.endsWith('ss')) return w;
+  if (w.endsWith('s') && !w.endsWith('us') && w.length > 3) return w.slice(0, -1);
+  if (w.endsWith('ing') && w.length > 5){
+    let b = w.slice(0, -3);
+    if (b.length > 2 && b[b.length - 1] === b[b.length - 2]) b = b.slice(0, -1);
+    return b;
+  }
+  if (w.endsWith('ed') && w.length > 4){
+    let b = w.slice(0, -2);
+    if (b.length > 2 && b[b.length - 1] === b[b.length - 2]) b = b.slice(0, -1);
+    return b;
+  }
+  return w;
+}
+
+function isContentWord(w){ return w.length >= 2 && !STOP_WORDS.has(w); }
+
+/** Split text into tokens, content words and content bigrams. */
+function analyze(text){
+  const norm = normalizeText(text);
+  const rawTokens = norm ? norm.split(' ') : [];
+  const tokens = rawTokens.map(w => ({ raw: w, stem: stem(w), content: isContentWord(w) }));
+  const content = tokens.filter(t => t.content);
+  const bigrams = [];
+  for (let i = 0; i < tokens.length - 1; i++){
+    if (tokens[i].content && tokens[i + 1].content){
+      bigrams.push(tokens[i].stem + ' ' + tokens[i + 1].stem);
+    }
+  }
+  return { text: String(text == null ? '' : text), norm, tokens, content, bigrams };
+}
+
+/** Two stems match if equal, off by a trailing "e", or one is a prefix of the other. */
+function tokenMatch(a, b){
+  if (!a || !b) return 0;
+  if (a === b) return 1;
+  if (a + 'e' === b || b + 'e' === a) return 0.9;
+  if (a.length >= 4 && b.length >= 4 && (a.startsWith(b) || b.startsWith(a))) return 0.75;
+  return 0;
+}
+
+/* ============================================================
+   SECTION 3 — STATE + STORAGE
+   ============================================================ */
+
+const STORAGE_KEY = 'ai-builder-state-v1';
+let state = null;
+
+function defaultState(){
+  return {
+    version: 1,
+    created: false,
+    ai: { name: 'Lumo', personality: 'Friendly, curious, and helpful', description: '' },
+    concepts: [],
+    memories: [],
+    rules: [],
+    relationships: [],
+    fallbacks: [
+      "I'm not sure what you mean yet.",
+      "I don't know much about that yet.",
+      "You might have to teach me about that."
+    ],
+    threshold: 0.35,
+    ui: { dark: false, showWhy: false, tab: 'chat' },
+    chat: []
+  };
+}
+
+/** Make sure anything loaded from localStorage/JSON is safe to use. */
+function validateState(raw){
+  const base = defaultState();
+  if (!raw || typeof raw !== 'object') return base;
+
+  const s = base;
+  if (raw.ai && typeof raw.ai === 'object'){
+    s.ai.name = typeof raw.ai.name === 'string' ? raw.ai.name.slice(0, 60) : base.ai.name;
+    s.ai.personality = typeof raw.ai.personality === 'string' ? raw.ai.personality.slice(0, 120) : '';
+    s.ai.description = typeof raw.ai.description === 'string' ? raw.ai.description.slice(0, 200) : '';
+  }
+  s.created = !!raw.created;
+
+  if (Array.isArray(raw.concepts)){
+    s.concepts = raw.concepts.filter(c => c && typeof c === 'object').map(c => ({
+      id: typeof c.id === 'string' ? c.id : uid('c'),
+      name: String(c.name || 'Untitled').slice(0, 60),
+      examples: Array.isArray(c.examples)
+        ? c.examples.filter(e => e && typeof e.text === 'string' && e.text.trim())
+            .map(e => ({ id: typeof e.id === 'string' ? e.id : uid('e'), text: e.text.slice(0, 400) }))
+        : [],
+      responses: Array.isArray(c.responses)
+        ? c.responses.filter(r => r && typeof r.text === 'string' && r.text.trim())
+            .map(r => ({ id: typeof r.id === 'string' ? r.id : uid('r'), text: r.text.slice(0, 400) }))
+        : []
+    }));
+  }
+
+  if (Array.isArray(raw.memories)){
+    s.memories = raw.memories.filter(m => m && typeof m === 'object' && m.key != null)
+      .map(m => ({ id: typeof m.id === 'string' ? m.id : uid('m'), key: String(m.key).slice(0, 60), value: String(m.value == null ? '' : m.value).slice(0, 200) }));
+  }
+
+  if (Array.isArray(raw.rules)){
+    s.rules = raw.rules.filter(r => r && typeof r === 'object' && r.trigger && r.action)
+      .map(r => ({
+        id: typeof r.id === 'string' ? r.id : uid('rule'),
+        trigger: { type: String(r.trigger.type || 'any'), value: String(r.trigger.value || '').slice(0, 120) },
+        action: { type: String(r.action.type || 'respond'), text: String(r.action.text || '').slice(0, 300), key: String(r.action.key || '').slice(0, 60) }
+      }));
+  }
+
+  if (Array.isArray(raw.relationships)){
+    s.relationships = raw.relationships.filter(r => r && r.from && r.to)
+      .map(r => ({ id: typeof r.id === 'string' ? r.id : uid('rel'), from: String(r.from), to: String(r.to), type: String(r.type || 'related to') }));
+  }
+
+  if (Array.isArray(raw.fallbacks) && raw.fallbacks.length){
+    s.fallbacks = raw.fallbacks.filter(x => typeof x === 'string' && x.trim()).slice(0, 20);
+    if (!s.fallbacks.length) s.fallbacks = base.fallbacks;
+  }
+
+  if (typeof raw.threshold === 'number' && raw.threshold > 0 && raw.threshold < 1) s.threshold = raw.threshold;
+
+  if (raw.ui && typeof raw.ui === 'object'){
+    s.ui.dark = !!raw.ui.dark;
+    s.ui.showWhy = !!raw.ui.showWhy;
+    s.ui.tab = typeof raw.ui.tab === 'string' ? raw.ui.tab : 'chat';
+  }
+
+  if (Array.isArray(raw.chat)){
+    s.chat = raw.chat.filter(m => m && typeof m.text === 'string')
+      .slice(-200)
+      .map(m => ({ id: typeof m.id === 'string' ? m.id : uid('msg'), role: m.role === 'user' ? 'user' : 'ai', text: m.text.slice(0, 2000), trace: m.trace || null, ts: m.ts || Date.now() }));
+  }
+
+  return s;
+}
+
+const Store = {
+  save(){
+    try { localStorage.setItem(STORAGE_KEY, JSON.stringify(cleanState(state))); }
+    catch (e) { console.warn('Could not save', e); }
+  },
+  load(){
+    try {
+      const raw = localStorage.getItem(STORAGE_KEY);
+      if (!raw) return null;
+      return validateState(JSON.parse(raw));
+    } catch (e) {
+      console.warn('Could not load', e);
+      return null;
+    }
+  }
+};
+
+/** Strip cached (underscore-prefixed) fields before saving/exporting. */
+function cleanState(s){
+  return JSON.parse(JSON.stringify(s, (k, v) => (k.startsWith('_') ? undefined : v)));
+}
+
+/* ============================================================
+   SECTION 4 — INDEX (word rarity + concept feature cache)
+   ============================================================ */
+
+const Index = {
+  df: new Map(),
+  N: 1,
+
+  rebuild(){
+    const concepts = state.concepts;
+    this.N = Math.max(1, concepts.length);
+    this.df = new Map();
+
+    concepts.forEach(c => {
+      const seen = new Set();
+      c.examples.forEach(ex => {
+        const a = exampleAnalysis(ex);
+        a.content.forEach(t => seen.add(t.stem));
+      });
+      analyze(c.name).content.forEach(t => seen.add(t.stem));
+      seen.forEach(s => this.df.set(s, (this.df.get(s) || 0) + 1));
+    });
+
+    concepts.forEach(c => computeConceptFeatures(c));
+  },
+
+  /** How much should a query word count? Rare words count more; unseen words count little. */
+  queryWeight(stemKey){
+    const df = this.df.get(stemKey);
+    if (df === undefined) return 0.35;
+    return clamp(1 - 0.5 * (df - 1) / this.N, 0.5, 1);
+  }
+};
+
+function exampleAnalysis(ex){
+  if (!ex._a) ex._a = analyze(ex.text);
+  return ex._a;
+}
+
+function computeConceptFeatures(c){
+  const words = new Map();
+  const bigrams = new Map();
+
+  c.examples.forEach(ex => {
+    const a = exampleAnalysis(ex);
+    a.content.forEach(t => words.set(t.stem, (words.get(t.stem) || 0) + 1));
+    a.bigrams.forEach(b => bigrams.set(b, (bigrams.get(b) || 0) + 1));
+  });
+
+  let maxCount = 1;
+  words.forEach(v => { if (v > maxCount) maxCount = v; });
+
+  const weights = new Map();
+  words.forEach((count, key) => weights.set(key, 0.25 + 0.75 * (count / maxCount)));
+
+  c._f = {
+    words: weights,
+    bigrams,
+    nameStems: analyze(c.name).content.map(t => t.stem)
+  };
+}
+
+/* ============================================================
+   SECTION 5 — SIMILARITY ENGINE
+   Five signals, combined into one confidence score.
+   ============================================================ */
+
+/**
+ * F1-style overlap between the query and a weighted target token list.
+ * Uses fuzzy token matching so "pizzas" ≈ "pizza" and "coding" ≈ "code".
+ */
+function overlapScore(qa, targetList){
+  const q = qa.content;
+  if (!q.length || !targetList.length) return 0;
+
+  const qWeights = q.map(t => Index.queryWeight(t.stem));
+  const qTotal = qWeights.reduce((a, b) => a + b, 0) || 1;
+
+  const used = new Set();
+  let matched = 0;
+
+  q.forEach((t, i) => {
+    for (let j = 0; j < targetList.length; j++){
+      if (used.has(j)) continue;
+      const s = tokenMatch(t.stem, targetList[j].stem);
+      if (s > 0){
+        used.add(j);
+        matched += qWeights[i] * s * (targetList[j].weight || 1);
+        break;
+      }
+    }
+  });
+
+  const tTotal = targetList.reduce((a, x) => a + (x.weight || 1), 0);
+  if (qTotal + tTotal === 0) return 0;
+  return clamp((2 * matched) / (qTotal + tTotal), 0, 1);
+}
+
+function scoreConcept(qa, c){
+  const f = c._f;
+  if (!f || !f.words.size || !qa.content.length) return null;
+
+  const q = qa.content;
+  const qWeights = q.map(t => Index.queryWeight(t.stem));
+  const qTotal = qWeights.reduce((a, b) => a + b, 0) || 1;
+
+  /* --- 1. word overlap + keyword strength --- */
+  const matchedWords = [];
+  let matchedWeight = 0;
+  q.forEach((t, i) => {
+    let best = 0;
+    f.words.forEach((w, key) => {
+      const m = tokenMatch(t.stem, key);
+      if (m > 0){
+        const s = m * w;
+        if (s > best) best = s;
+      }
+    });
+    if (best > 0){
+      matchedWeight += qWeights[i] * best;
+      matchedWords.push(t.raw);
+    }
+  });
+  const wordScore = clamp(matchedWeight / qTotal, 0, 1);
+
+  /* --- 2. phrase overlap --- */
+  let phraseScore = 0;
+  let phraseUsed = false;
+  if (qa.bigrams.length){
+    phraseUsed = true;
+    let hits = 0;
+    qa.bigrams.forEach(bg => {
+      if (f.bigrams.has(bg)){ hits += 1; return; }
+      const parts = bg.split(' ');
+      let hasA = false, hasB = false;
+      f.words.forEach((w, key) => {
+        if (tokenMatch(parts[0], key) > 0) hasA = true;
+        if (tokenMatch(parts[1], key) > 0) hasB = true;
+      });
+      if (hasA && hasB) hits += 0.35;
+    });
+    phraseScore = clamp(hits / qa.bigrams.length, 0, 1);
+  }
+
+  /* --- 3. best example similarity --- */
+  let bestExample = null;
+  let bestExSim = 0;
+  c.examples.forEach(ex => {
+    const a = exampleAnalysis(ex);
+    const target = a.content.map(t => ({ stem: t.stem, weight: 1 }));
+    const sim = overlapScore(qa, target);
+    if (sim > bestExSim){ bestExSim = sim; bestExample = ex.text; }
+  });
+
+  /* --- 4. overall concept similarity --- */
+  const conceptTarget = [];
+  f.words.forEach((w, key) => conceptTarget.push({ stem: key, weight: w }));
+  const conceptScore = overlapScore(qa, conceptTarget);
+
+  /* --- combine --- */
+  let sum = 0, wsum = 0;
+  sum += wordScore * 0.28;  wsum += 0.28;
+  if (phraseUsed){ sum += phraseScore * 0.22; wsum += 0.22; }
+  sum += bestExSim * 0.30;  wsum += 0.30;
+  sum += conceptScore * 0.20; wsum += 0.20;
+  let score = wsum ? sum / wsum : 0;
+
+  /* --- small bonus when the concept's own name appears --- */
+  const nameHit = f.nameStems.length > 0 && f.nameStems.every(ns =>
+    qa.content.some(t => tokenMatch(t.stem, ns) > 0)
+  );
+  if (nameHit) score = clamp(score + 0.08, 0, 1);
+
+  return {
+    concept: c,
+    score,
+    matchedWords,
+    closestExample: bestExample,
+    components: [
+      { label: 'Shared important words', value: wordScore },
+      { label: 'Matching phrases', value: phraseUsed ? phraseScore : 0 },
+      { label: 'Similar to a taught example', value: bestExSim },
+      { label: 'Similar to the concept overall', value: conceptScore },
+      { label: 'Concept name mentioned', value: nameHit ? 1 : 0 }
+    ]
+  };
+}
+
+function rankConcepts(qa){
+  const results = [];
+  state.concepts.forEach(c => {
+    const r = scoreConcept(qa, c);
+    if (r) results.push(r);
+  });
+  results.sort((a, b) => b.score - a.score);
+  return results;
+}
+
+/* ============================================================
+   SECTION 6 — MEMORY SYSTEM
+   ============================================================ */
+
+const Memory = {
+  get(key){
+    const k = String(key).toLowerCase();
+    const m = state.memories.find(x => x.key.toLowerCase() === k);
+    return m ? m.value : null;
+  },
+  set(key, value){
+    const k = String(key).toLowerCase().replace(/\s+/g, '_').slice(0, 60);
+    const existing = state.memories.find(x => x.key.toLowerCase() === k);
+    if (existing) existing.value = value;
+    else state.memories.push({ id: uid('m'), key: k, value });
+    return k;
+  },
+  remove(id){
+    state.memories = state.memories.filter(m => m.id !== id);
+  },
+  /** Display key: favorite_color → "favorite color" */
+  pretty(key){ return String(key).replace(/_/g, ' '); }
+};
+
+/* --- patterns that let the AI learn facts from normal sentences --- */
+const FACT_PATTERNS = [
+  { re: /^my name(?: is|s)? ([a-z][a-z\-']{1,30})$/i,           key: () => 'name' },
+  { re: /\b(?:i am|im|i'm) called ([a-z][a-z\-']{1,30})/i,      key: () => 'name' },
+  { re: /\bmy favou?rite ([a-z ]{1,20}?) is ([^.,!?]{1,60})/i,  key: m => 'favorite_' + m[1].trim().replace(/\s+/g, '_') },
+  { re: /\bi live in ([a-z ,'\-]{2,50})/i,                      key: () => 'location' },
+  { re: /\bi (?:really )?like ([^.,!?]{1,50})/i,                key: () => 'likes', append: true },
+  { re: /\bmy ([a-z ]{1,20}?) is ([^.,!?]{1,60})/i,             key: m => m[1].trim().replace(/\s+/g, '_') }
+];
+
+function cleanValue(v){
+  return String(v).trim().replace(/[.!?,;]+$/, '').trim().slice(0, 80);
+}
+
+/**
+ * Look for simple factual statements and remember them.
+ * Returns a list of {key, value} that were learned.
+ */
+function detectFacts(text){
+  const learned = [];
+  const raw = String(text).trim();
+  if (!raw || raw.length > 160) return learned;
+
+  for (const p of FACT_PATTERNS){
+    const m = raw.match(p.re);
+    if (!m) continue;
+
+    const key = p.key(m);
+    let value;
+    if (p.append){
+      value = cleanValue(m[1]);
+      if (!value || value.split(/\s+/).length > 5) break;
+      if (/^(to|that|it|them|him|her|this|the)\b/i.test(value)) break;
+      const existing = Memory.get('likes');
+      if (existing && existing.toLowerCase().includes(value.toLowerCase())) break;
+      Memory.set('likes', existing ? existing + ', ' + value : value);
+      learned.push({ key: 'likes', value });
+      break;
+    }
+
+    value = cleanValue(m[m.length - 1]);
+    if (!value || value.split(/\s+/).length > 8) break;
+    if (value.toLowerCase() === 'not sure' || value.toLowerCase() === 'fine') break;
+
+    Memory.set(key, value);
+    learned.push({ key, value });
+    break;
+  }
+  return learned;
+}
+
+/* --- patterns that let the AI answer questions about stored facts --- */
+const QUESTION_PATTERNS = [
+  { re: /\b(whats my name|what is my name|who am i|do you know my name|do you remember my name)\b/,
+    key: () => 'name', phrase: () => 'name' },
+  { re: /\b(?:whats|what is) my favou?rite ([a-z ]{1,20})\b/,
+    key: m => 'favorite_' + m[1].trim().replace(/\s+/g, '_'), phrase: m => 'favorite ' + m[1].trim() },
+  { re: /\b(where do i live|whats my location|what is my location|whats my city|what is my city)\b/,
+    key: () => 'location', phrase: () => 'location' },
+  { re: /\b(?:whats|what is) my ([a-z ]{1,20})\b/,
+    key: m => m[1].trim().replace(/\s+/g, '_'), phrase: m => m[1].trim() },
+  { re: /\b(what do i like|what do i enjoy)\b/,
+    key: () => 'likes', phrase: () => 'likes' }
+];
+
+function isMemoryQuestion(norm){
+  return QUESTION_PATTERNS.some(p => p.re.test(norm));
+}
+
+function answerMemoryQuestion(norm){
+  for (const p of QUESTION_PATTERNS){
+    const m = norm.match(p.re);
+    if (!m) continue;
+
+    const key = p.key(m);
+    const phrase = p.phrase(m);
+    const value = Memory.get(key);
+
+    if (value === null){
+      return "I don't know your " + phrase + " yet. You can tell me by saying \u201cMy " + phrase + " is \u2026\u201d.";
+    }
+    if (key === 'name') return 'Your name is ' + value + '.';
+    if (key === 'location') return 'You live in ' + value + '.';
+    if (key === 'likes') return 'You like ' + value + '.';
+    if (key.startsWith('favorite_')) return 'Your favorite ' + key.slice(9).replace(/_/g, ' ') + ' is ' + value + '.';
+    return 'Your ' + Memory.pretty(key) + ' is ' + value + '.';
+  }
+  return null;
+}
+
+/* ============================================================
+   SECTION 7 — RULE SYSTEM
+   ============================================================ */
+
+function isGreeting(norm){
+  return /^(hi|hello|hey|yo|hiya|howdy|greetings|sup|good morning|good afternoon|good evening)\b/.test(norm);
+}
+
+function ruleMatches(rule, ctx){
+  const t = rule.trigger || {};
+  switch (t.type){
+    case 'greeting':  return isGreeting(ctx.norm);
+    case 'phrase':    return !!t.value && ctx.norm.includes(normalizeText(t.value));
+    case 'any':       return true;
+    case 'question':  return isMemoryQuestion(ctx.norm);
+    case 'concept':   return !!(ctx.top && ctx.top.concept.id === t.value && ctx.above);
+    default:          return false;
+  }
+}
+
+function describeRule(rule){
+  const trig = rule.trigger || {};
+  const act = rule.action || {};
+  let when;
+  switch (trig.type){
+    case 'greeting': when = 'someone greets me'; break;
+    case 'phrase':   when = 'someone says \u201c' + esc(trig.value) + '\u201d'; break;
+    case 'question': when = 'someone asks about my memory'; break;
+    case 'any':      when = 'anything is said'; break;
+    case 'concept': {
+      const c = byId(state.concepts, trig.value);
+      when = 'someone talks about ' + esc(c ? c.name : '(deleted concept)');
+      break;
+    }
+    default: when = 'unknown';
+  }
+  let then;
+  switch (act.type){
+    case 'respond':          then = 'reply \u201c' + esc(act.text) + '\u201d'; break;
+    case 'conceptResponses': then = "use the concept's own responses"; break;
+    case 'remember':         then = 'remember it as \u201c' + esc(act.key) + '\u201d'; break;
+    case 'unknown':          then = "say I don't know"; break;
+    default: then = 'do nothing';
+  }
+  return 'When ' + when + ' → ' + then;
+}
+
+/* ============================================================
+   SECTION 8 — RESPONSE SYSTEM (templates)
+   ============================================================ */
+
+function renderTemplate(text, ctx){
+  if (!text) return '';
+  let out = String(text);
+
+  /* {choose:A|B|C} */
+  out = out.replace(/\{choose:([^}]*)\}/gi, (m, body) => {
+    const opts = body.split('|').map(s => s.trim()).filter(Boolean);
+    return opts.length ? pick(opts) : '';
+  });
+
+  out = out.replace(/\{input\}/gi, ctx.input || '');
+  out = out.replace(/\{concept\}/gi, ctx.concept || 'that');
+  out = out.replace(/\{name\}/gi, ctx.name || 'friend');
+  out = out.replace(/\{memory:([a-z0-9_ ]+)\}/gi, (m, k) => {
+    const v = Memory.get(k.trim());
+    return v === null ? "I don't know that yet" : v;
+  });
+
+  return out.trim();
+}
+
+const DEFAULT_CONCEPT_RESPONSES = [
+  'That sounds like it is about {concept}.',
+  'I recognise this is about {concept}. Tell me more!',
+  '{choose:I know about {concept}.|This seems related to {concept}.}'
+];
+
+/* ============================================================
+   SECTION 9 — THE CHAT ENGINE
+   ============================================================ */
+
+function respond(userText){
+  const input = String(userText).trim();
+  const qa = analyze(input);
+  const norm = qa.norm;
+
+  const trace = {
+    input,
+    learned: [],
+    top: null,
+    others: [],
+    components: [],
+    closestExample: null,
+    matchedWords: []
+  };
+
+  /* 1 — learn facts from the message (quietly) */
+  trace.learned = detectFacts(input);
+  if (trace.learned.length) Store.save();
+
+  /* 2 — rank concepts */
+  const ranked = rankConcepts(qa);
+  const top = ranked.length ? ranked[0] : null;
+  const above = !!(top && top.score >= state.threshold);
+
+  const baseCtx = { input, name: Memory.get('name') };
+
+  /* 3 — rules that answer memory questions take priority */
+  for (const rule of state.rules){
+    if (rule.trigger.type !== 'question') continue;
+    if (!ruleMatches(rule, { norm, top, above })) continue;
+    return finish(applyRule(rule, baseCtx, top), 'rule', trace, null);
+  }
+
+  /* 4 — automatic memory questions */
+  const memAnswer = answerMemoryQuestion(norm);
+  if (memAnswer){
+    return finish(memAnswer, 'memory', trace, top);
+  }
+
+  /* 5 — the remaining rules */
+  for (const rule of state.rules){
+    if (rule.trigger.type === 'question') continue;
+    if (!ruleMatches(rule, { norm, top: above ? top : null, above })) continue;
+    const result = applyRule(rule, baseCtx, above ? top : null);
+    if (result === null) continue; /* rule had nothing to say, keep going */
+    return finish(result, 'rule', trace, above ? top : null);
+  }
+
+  /* 6 — concept match */
+  if (above){
+    const c = top.concept;
+    const list = c.responses.length ? c.responses.map(r => r.text) : DEFAULT_CONCEPT_RESPONSES;
+    const text = renderTemplate(pick(list), Object.assign({}, baseCtx, { concept: c.name }));
+    return finish(text, 'concept', trace, top);
+  }
+
+  /* 7 — fallback */
+  const fb = state.fallbacks.length ? pick(state.fallbacks) : "I don't know much about that yet.";
+  return finish(renderTemplate(fb, baseCtx), 'fallback', trace, top);
+}
+
+function applyRule(rule, baseCtx, top){
+  const a = rule.action || {};
+  switch (a.type){
+    case 'respond':
+      return renderTemplate(a.text, Object.assign({}, baseCtx, { concept: top ? top.concept.name : '' }));
+    case 'unknown':
+      return renderTemplate(state.fallbacks.length ? pick(state.fallbacks) : "I don't know.", baseCtx);
+    case 'conceptResponses': {
+      if (!top) return null;
+      const list = top.concept.responses.length ? top.concept.responses.map(r => r.text) : DEFAULT_CONCEPT_RESPONSES;
+      return renderTemplate(pick(list), Object.assign({}, baseCtx, { concept: top.concept.name }));
+    }
+    case 'remember': {
+      const value = String(baseCtx.input).replace(/^[^:]{0,40}?[:]\s*/, '').trim() || baseCtx.input;
+      const key = a.key || 'note';
+      Memory.set(key, value.slice(0, 80));
+      Store.save();
+      return 'Okay, I will remember that.';
+    }
+    default:
+      return null;
+  }
+}
+
+/** Attach the trace info and return the final response object. */
+function finish(text, kind, trace, top){
+  if (top){
+    trace.top = { name: top.concept.name, score: top.score };
+    trace.components = top.components;
+    trace.closestExample = top.closestExample;
+    trace.matchedWords = top.matchedWords;
+    trace.others = rankConcepts(analyze(trace.input)).slice(1, 4)
+      .map(r => ({ name: r.concept.name, score: r.score }));
+  } else {
+    trace.others = rankConcepts(analyze(trace.input)).slice(0, 3)
+      .map(r => ({ name: r.concept.name, score: r.score }));
+  }
+  return { text, kind, trace };
+}
+
+/* ============================================================
+   SECTION 10 — VIEWS / NAVIGATION
+   ============================================================ */
+
+let selectedConceptId = null;
+let teachTargetMsgId = null;
+
+function showView(name){
+  ['home', 'create', 'studio'].forEach(v => {
+    $('#view-' + v).classList.toggle('hidden', v !== name);
+  });
+  window.scrollTo(0, 0);
+}
+
+function applyTheme(){
+  document.documentElement.setAttribute('data-theme', state.ui.dark ? 'dark' : 'light');
+  $$('.icon-btn').forEach(b => {
+    if (b.id && b.id.toLowerCase().includes('theme')) b.textContent = state.ui.dark ? '☀️' : '🌙';
+  });
+}
+
+function toggleTheme(){
+  state.ui.dark = !state.ui.dark;
+  applyTheme();
+  Store.save();
+}
+
+/* ============================================================
+   SECTION 11 — CHAT UI
+   ============================================================ */
+
+function renderChatHeader(){
+  const totalExamples = state.concepts.reduce((n, c) => n + c.examples.length, 0);
+  $('#chatTitle').textContent = state.ai.name || 'Your AI';
+  $('#chatSub').textContent = 'Your AI · ' + state.concepts.length + ' concept' + (state.concepts.length === 1 ? '' : 's') +
+    ' · ' + totalExamples + ' example' + (totalExamples === 1 ? '' : 's');
+  $('#studioName').textContent = state.ai.name || 'Your AI';
+}
+
+function traceHTML(trace){
+  if (!trace) return '';
+  let h = '<div class="trace">';
+
+  if (trace.top){
+    h += '<div class="trace-title">I matched this to <strong>' + esc(trace.top.name) + '</strong>.</div>';
+    h += '<div class="trace-conf">Confidence: ' + Math.round(trace.top.score * 100) + '%</div>';
+    if (trace.closestExample){
+      h += '<div class="trace-row"><span class="muted">Closest example:</span> \u201c' + esc(trace.closestExample) + '\u201d</div>';
+    }
+    if (trace.matchedWords && trace.matchedWords.length){
+      h += '<div class="trace-row"><span class="muted">Matching words:</span> ' +
+           trace.matchedWords.map(w => '<code>' + esc(w) + '</code>').join(' ') + '</div>';
+    }
+    if (trace.components && trace.components.length){
+      h += '<div class="trace-bars">' + trace.components.map(c =>
+        '<div class="bar-row"><span>' + esc(c.label) + '</span>' +
+        '<span class="bar"><i style="width:' + Math.round(c.value * 100) + '%"></i></span>' +
+        '<span class="bar-val">' + Math.round(c.value * 100) + '%</span></div>'
+      ).join('') + '</div>';
+    }
+  } else {
+    h += '<div class="trace-title">Nothing matched well enough, so I used a fallback response.</div>';
+  }
+
+  if (trace.others && trace.others.length){
+    h += '<div class="trace-row"><span class="muted">Other possible matches:</span> ' +
+         trace.others.map(o => esc(o.name) + ': ' + Math.round(o.score * 100) + '%').join(' · ') + '</div>';
+  }
+
+  if (trace.learned && trace.learned.length){
+    h += '<div class="trace-row"><span class="muted">I remembered:</span> ' +
+         trace.learned.map(l => esc(l.key) + ' = ' + esc(l.value)).join(', ') + '</div>';
+  }
+
+  h += '</div>';
+  return h;
+}
+
+function renderChatLog(){
+  const log = $('#chatLog');
+  const showWhy = state.ui.showWhy;
+
+  if (!state.chat.length){
+    log.innerHTML =
+      '<div class="msg ai"><div class="bubble">' +
+      esc('Hi! I\u2019m ' + (state.ai.name || 'your AI') + '. ' +
+        (state.concepts.length
+          ? 'I already know a few things — try talking to me.'
+          : 'I don\u2019t know much yet. Go to the Teach tab and give me a concept to learn.')) +
+      '</div></div>';
+    return;
+  }
+
+  log.innerHTML = state.chat.map(msg => {
+    if (msg.role === 'user'){
+      let tools = '<div class="msg-tools"><button data-teach="' + msg.id + '">Teach this</button></div>';
+      let panel = '';
+      if (teachTargetMsgId === msg.id){
+        panel = teachPanelHTML(msg);
+      }
+      return '<div class="msg user"><div class="bubble">' + esc(msg.text) + '</div>' + tools + panel + '</div>';
+    }
+    return '<div class="msg ai"><div class="bubble">' + esc(msg.text) + '</div>' +
+      (showWhy ? traceHTML(msg.trace) : '') + '</div>';
+  }).join('');
+
+  /* wire up "Teach this" */
+  $$('[data-teach]', log).forEach(btn => {
+    btn.onclick = () => {
+      teachTargetMsgId = teachTargetMsgId === btn.dataset.teach ? null : btn.dataset.teach;
+      renderChatLog();
+    };
+  });
+
+  wireTeachPanel(log);
+
+  log.scrollTop = log.scrollHeight;
+}
+
+function teachPanelHTML(msg){
+  const options = state.concepts.map(c =>
+    '<option value="' + c.id + '">' + esc(c.name) + '</option>'
+  ).join('');
+  return '<div class="teach-panel">' +
+    '<strong>What was this about?</strong>' +
+    '<select data-teach-select>' +
+      '<option value="">— pick a concept —</option>' +
+      options +
+      '<option value="__new">+ Create a new concept</option>' +
+    '</select>' +
+    '<input data-teach-name class="hidden" placeholder="New concept name" />' +
+    '<div class="row">' +
+      '<button class="btn primary small" data-teach-go>Teach AI</button>' +
+      '<button class="btn ghost small" data-teach-cancel>Cancel</button>' +
+    '</div>' +
+  '</div>';
+}
+
+function wireTeachPanel(root){
+  const sel = $('[data-teach-select]', root);
+  if (!sel) return;
+
+  const nameInput = $('[data-teach-name]', root);
+  sel.onchange = () => {
+    nameInput.classList.toggle('hidden', sel.value !== '__new');
+    if (sel.value === '__new') nameInput.focus();
+  };
+
+  $('[data-teach-cancel]', root).onclick = () => {
+    teachTargetMsgId = null;
+    renderChatLog();
+  };
+
+  $('[data-teach-go]', root).onclick = () => {
+    const msg = byId(state.chat, teachTargetMsgId);
+    if (!msg) return;
+
+    let conceptId = sel.value;
+    if (conceptId === '__new'){
+      const name = nameInput.value.trim();
+      if (!name){ toast('Give the new concept a name first', 'error'); return; }
+      const c = { id: uid('c'), name: name.slice(0, 60), examples: [], responses: [] };
+      state.concepts.push(c);
+      conceptId = c.id;
+    }
+    if (!conceptId){ toast('Pick a concept first', 'error'); return; }
+
+    const concept = byId(state.concepts, conceptId);
+    if (!concept) return;
+
+    const already = concept.examples.some(e => e.text.toLowerCase() === msg.text.toLowerCase());
+    if (!already){
+      concept.examples.push({ id: uid('e'), text: msg.text });
+    }
+
+    Index.rebuild();
+    Store.save();
+    selectedConceptId = concept.id;
+
+    teachTargetMsgId = null;
+    renderChatLog();
+    renderConceptChips();
+    if (state.ui.tab === 'teach') renderConceptEditor();
+    updateProfile();
+
+    toast('Learned! \u201c' + truncate(msg.text, 30) + '\u201d was added to ' + concept.name);
+  };
+}
+
+function sendChat(){
+  const input = $('#chatInput');
+  const text = input.value.trim();
+  if (!text) return;
+
+  state.chat.push({ id: uid('msg'), role: 'user', text, ts: Date.now() });
+  input.value = '';
+
+  const res = respond(text);
+  state.chat.push({ id: uid('msg'), role: 'ai', text: res.text, trace: res.trace, ts: Date.now() });
+
+  if (state.chat.length > 200) state.chat = state.chat.slice(-200);
+  Store.save();
+
+  renderChatLog();
+  renderChatHeader();
+  updateProfile();
+}
+
+/* ============================================================
+   SECTION 12 — TEACH UI
+   ============================================================ */
+
+function renderConceptChips(){
+  const wrap = $('#conceptChips');
+  if (!state.concepts.length){
+    wrap.innerHTML = '<p class="empty">No concepts yet.</p>';
+    return;
+  }
+  wrap.innerHTML = state.concepts.map(c =>
+    '<button class="chip ' + (c.id === selectedConceptId ? 'active' : '') + '" data-id="' + c.id + '">' +
+      esc(c.name) + ' <span class="chip-count">' + c.examples.length + '</span>' +
+    '</button>'
+  ).join('');
+
+  $$('.chip', wrap).forEach(el => {
+    el.onclick = () => {
+      selectedConceptId = el.dataset.id;
+      teachTargetMsgId = null;
+      renderConceptChips();
+      renderConceptEditor();
+    };
+  });
+}
+
+function renderConceptEditor(){
+  const host = $('#conceptEditor');
+  const c = byId(state.concepts, selectedConceptId);
+
+  if (!c){
+    host.innerHTML =
+      '<div class="empty-state">' +
+        '<h2>Pick a concept</h2>' +
+        '<p class="muted">Select a concept on the left, or create a new one to start teaching.</p>' +
+        '<button class="btn primary" id="btnAddConcept2">+ Add Concept</button>' +
+      '</div>';
+    $('#btnAddConcept2').onclick = addConceptPrompt;
+    return;
+  }
+
+  const relatedOptions = state.concepts
+    .filter(x => x.id !== c.id)
+    .map(x => '<option value="' + x.id + '">' + esc(x.name) + '</option>').join('');
+
+  host.innerHTML =
+    '<div class="editor-head">' +
+      '<input class="concept-name-input" id="conceptName" value="' + esc(c.name) + '" maxlength="60" />' +
+      '<button class="btn danger ghost small" id="btnDeleteConcept" style="margin-left:auto;">Delete</button>' +
+    '</div>' +
+    '<p class="hint">Teach your AI what people might say about this. It works out the important words by itself — ' +
+    'you never need to list keywords.</p>' +
+
+    '<h3>Examples <span class="muted small">· ' + c.examples.length + '</span></h3>' +
+    '<div id="exampleList" class="list"></div>' +
+    '<textarea id="exampleInput" rows="3" placeholder="Type one example per line, e.g.&#10;I want pizza&#10;Can we order some pizza?"></textarea>' +
+    '<div class="row" style="margin-top:8px;">' +
+      '<button class="btn primary small" id="btnAddExamples">Add Example</button>' +
+      '<span class="muted small">You can paste several lines at once.</span>' +
+    '</div>' +
+
+    '<h3>Responses <span class="muted small">· ' + c.responses.length + '</span></h3>' +
+    '<div id="responseList" class="list"></div>' +
+    '<div class="row">' +
+      '<input id="responseInput" class="input" placeholder="e.g. Pizza sounds good!" maxlength="200" />' +
+      '<button class="btn primary small" id="btnAddResponse">Add Response</button>' +
+    '</div>' +
+    '<p class="hint">You can use <code>{input}</code>, <code>{concept}</code>, <code>{name}</code> and ' +
+    '<code>{choose:A|B|C}</code> inside a response.</p>' +
+
+    '<h3>Related to</h3>' +
+    '<div id="relList" class="list"></div>' +
+    '<div class="row">' +
+      '<select id="relType" class="input small-input">' +
+        '<option value="is a">is a</option>' +
+        '<option value="part of">part of</option>' +
+        '<option value="related to">related to</option>' +
+      '</select>' +
+      '<select id="relTarget" class="input small-input">' +
+        '<option value="">— pick a concept —</option>' + relatedOptions +
+      '</select>' +
+      '<button class="btn ghost small" id="btnAddRel">Connect</button>' +
+    '</div>' +
+    '<p class="hint">Relationships are just for organising what your AI knows. They show up in the Brain view.</p>';
+
+  /* --- wiring --- */
+  const nameInput = $('#conceptName');
+  nameInput.onchange = () => {
+    const v = nameInput.value.trim() || 'Untitled';
+    c.name = v.slice(0, 60);
+    nameInput.value = c.name;
+    Index.rebuild();
+    Store.save();
+    renderConceptChips();
+    renderChatHeader();
+    renderRuleConceptOptions();
+    updateProfile();
+  };
+
+  $('#btnDeleteConcept').onclick = () => {
+    if (!confirm('Delete the concept \u201c' + c.name + '\u201d? Its examples and responses will be lost.')) return;
+    state.concepts = state.concepts.filter(x => x.id !== c.id);
+    state.relationships = state.relationships.filter(r => r.from !== c.id && r.to !== c.id);
+    selectedConceptId = state.concepts.length ? state.concepts[0].id : null;
+    Index.rebuild();
+    Store.save();
+    renderTeach();
+    renderChatHeader();
+    renderRuleConceptOptions();
+    updateProfile();
+    toast('Concept deleted');
+  };
+
+  $('#btnAddExamples').onclick = () => {
+    const area = $('#exampleInput');
+    const lines = area.value.split('\n').map(l => l.trim()).filter(Boolean);
+    if (!lines.length){ toast('Type an example first', 'error'); return; }
+
+    let added = 0;
+    lines.forEach(line => {
+      const t = line.slice(0, 400);
+      if (c.examples.some(e => e.text.toLowerCase() === t.toLowerCase())) return;
+      c.examples.push({ id: uid('e'), text: t });
+      added++;
+    });
+
+    area.value = '';
+    Index.rebuild();
+    Store.save();
+    renderExampleList(c);
+    renderConceptChips();
+    renderChatHeader();
+    updateProfile();
+    toast(added ? 'Added ' + added + ' example' + (added === 1 ? '' : 's') : 'Those examples were already there');
+  };
+
+  $('#btnAddResponse').onclick = () => {
+    const input = $('#responseInput');
+    const t = input.value.trim();
+    if (!t){ toast('Type a response first', 'error'); return; }
+    c.responses.push({ id: uid('r'), text: t.slice(0, 400) });
+    input.value = '';
+    Store.save();
+    renderResponseList(c);
+    toast('Response added');
+  };
+
+  $('#btnAddRel').onclick = () => {
+    const target = $('#relTarget').value;
+    const type = $('#relType').value;
+    if (!target){ toast('Pick a concept to connect to', 'error'); return; }
+    const exists = state.relationships.some(r => r.from === c.id && r.to === target && r.type === type);
+    if (exists){ toast('That connection already exists'); return; }
+    state.relationships.push({ id: uid('rel'), from: c.id, to: target, type });
+    Store.save();
+    renderRelList(c);
+    renderGraph();
+    toast('Connected');
+  };
+
+  renderExampleList(c);
+  renderResponseList(c);
+  renderRelList(c);
+}
+
+function renderExampleList(c){
+  const host = $('#exampleList');
+  if (!c.examples.length){
+    host.innerHTML = '<p class="empty">No examples yet. Add a few sentences someone might say about this.</p>';
+    return;
+  }
+  host.innerHTML = c.examples.map(ex =>
+    '<div class="list-item"><span>' + esc(ex.text) + '</span>' +
+    '<button class="icon-btn tiny" data-del="' + ex.id + '" title="Remove">✕</button></div>'
+  ).join('');
+
+  $$('[data-del]', host).forEach(btn => {
+    btn.onclick = () => {
+      c.examples = c.examples.filter(e => e.id !== btn.dataset.del);
+      Index.rebuild();
+      Store.save();
+      renderExampleList(c);
+      renderConceptChips();
+      renderChatHeader();
+      updateProfile();
+    };
+  });
+}
+
+function renderResponseList(c){
+  const host = $('#responseList');
+  if (!c.responses.length){
+    host.innerHTML = '<p class="empty">No responses yet. Your AI will use a generic reply for this concept.</p>';
+    return;
+  }
+  host.innerHTML = c.responses.map(r =>
+    '<div class="list-item"><span>' + esc(r.text) + '</span>' +
+    '<button class="icon-btn tiny" data-del="' + r.id + '" title="Remove">✕</button></div>'
+  ).join('');
+
+  $$('[data-del]', host).forEach(btn => {
+    btn.onclick = () => {
+      c.responses = c.responses.filter(r => r.id !== btn.dataset.del);
+      Store.save();
+      renderResponseList(c);
+    };
+  });
+}
+
+function renderRelList(c){
+  const host = $('#relList');
+  const rels = state.relationships.filter(r => r.from === c.id || r.to === c.id);
+  if (!rels.length){
+    host.innerHTML = '<p class="empty">No connections yet.</p>';
+    return;
+  }
+  host.innerHTML = rels.map(r => {
+    const outgoing = r.from === c.id;
+    const other = byId(state.concepts, outgoing ? r.to : r.from);
+    const label = outgoing
+      ? esc(c.name) + ' → ' + esc(r.type) + ' → ' + esc(other ? other.name : '(deleted)')
+      : esc(other ? other.name : '(deleted)') + ' → ' + esc(r.type) + ' → ' + esc(c.name);
+    return '<div class="list-item"><span>' + label + '</span>' +
+      '<button class="icon-btn tiny" data-del="' + r.id + '" title="Remove">✕</button></div>';
+  }).join('');
+
+  $$('[data-del]', host).forEach(btn => {
+    btn.onclick = () => {
+      state.relationships = state.relationships.filter(r => r.id !== btn.dataset.del);
+      Store.save();
+      renderRelList(c);
+      renderGraph();
+    };
+  });
+}
+
+function addConceptPrompt(){
+  const name = prompt('What should the new concept be called?', '');
+  if (name === null) return;
+  const clean = name.trim();
+  if (!clean){ toast('A concept needs a name', 'error'); return; }
+
+  const c = { id: uid('c'), name: clean.slice(0, 60), examples: [], responses: [] };
+  state.concepts.push(c);
+  selectedConceptId = c.id;
+  Index.rebuild();
+  Store.save();
+  renderTeach();
+  renderChatHeader();
+  renderRuleConceptOptions();
+  updateProfile();
+  toast('Concept created — now teach it some examples');
+}
+
+function renderTeach(){
+  renderConceptChips();
+  renderConceptEditor();
+}
+
+/* ============================================================
+   SECTION 13 — MEMORY UI
+   ============================================================ */
+
+function renderMemory(){
+  const host = $('#memoryList');
+  if (!state.memories.length){
+    host.innerHTML = '<p class="empty">Nothing remembered yet.</p>';
+    return;
+  }
+  host.innerHTML = state.memories.map(m =>
+    '<div class="list-item">' +
+      '<span>' + esc(Memory.pretty(m.key)) + '</span>' +
+      '<span class="val">' + esc(m.value) + '</span>' +
+      '<span style="margin-left:auto;display:flex;gap:4px;">' +
+        '<button class="icon-btn tiny" data-edit="' + m.id + '" title="Edit">✎</button>' +
+        '<button class="icon-btn tiny" data-del="' + m.id + '" title="Delete">✕</button>' +
+      '</span>' +
+    '</div>'
+  ).join('');
+
+  $$('[data-del]', host).forEach(btn => {
+    btn.onclick = () => {
+      Memory.remove(btn.dataset.del);
+      Store.save();
+      renderMemory();
+      updateProfile();
+    };
+  });
+
+  $$('[data-edit]', host).forEach(btn => {
+    btn.onclick = () => {
+      const m = byId(state.memories, btn.dataset.edit);
+      if (!m) return;
+      const v = prompt('Value for \u201c' + Memory.pretty(m.key) + '\u201d:', m.value);
+      if (v === null) return;
+      m.value = v.trim().slice(0, 200);
+      Store.save();
+      renderMemory();
+    };
+  });
+}
+
+/* ============================================================
+   SECTION 14 — RULES UI
+   ============================================================ */
+
+function renderRuleConceptOptions(){
+  const sel = $('#ruleConcept');
+  const current = sel.value;
+  sel.innerHTML = state.concepts.map(c =>
+    '<option value="' + c.id + '">' + esc(c.name) + '</option>'
+  ).join('') || '<option value="">(no concepts yet)</option>';
+  if (current && byId(state.concepts, current)) sel.value = current;
+}
+
+function renderRules(){
+  const host = $('#ruleList');
+  if (!state.rules.length){
+    host.innerHTML = '<p class="empty">No rules yet. Your AI will just match concepts.</p>';
+  } else {
+    host.innerHTML = state.rules.map(r =>
+      '<div class="list-item"><span>' + describeRule(r) + '</span>' +
+      '<button class="icon-btn tiny" data-del="' + r.id + '" title="Remove">✕</button></div>'
+    ).join('');
+
+    $$('[data-del]', host).forEach(btn => {
+      btn.onclick = () => {
+        state.rules = state.rules.filter(r => r.id !== btn.dataset.del);
+        Store.save();
+        renderRules();
+        updateProfile();
+      };
+    });
+  }
+  renderRuleConceptOptions();
+}
+
+function wireRuleForm(){
+  const trigger = $('#ruleTrigger');
+  const conceptSel = $('#ruleConcept');
+  const phraseInput = $('#rulePhrase');
+  const action = $('#ruleAction');
+  const textInput = $('#ruleText');
+  const keyInput = $('#ruleKey');
+
+  function sync(){
+    conceptSel.classList.toggle('hidden', trigger.value !== 'concept');
+    phraseInput.classList.toggle('hidden', trigger.value !== 'phrase');
+
+    const a = action.value;
+    textInput.classList.toggle('hidden', a === 'conceptResponses' || a === 'remember' || a === 'unknown');
+    keyInput.classList.toggle('hidden', a !== 'remember');
+    if (a === 'respond') textInput.placeholder = 'I love talking about programming!';
+  }
+
+  trigger.onchange = sync;
+  action.onchange = sync;
+  sync();
+
+  $('#btnAddRule').onclick = () => {
+    const t = { type: trigger.value, value: '' };
+    if (t.type === 'concept'){
+      if (!conceptSel.value){ toast('Create a concept first', 'error'); return; }
+      t.value = conceptSel.value;
+    } else if (t.type === 'phrase'){
+      if (!phraseInput.value.trim()){ toast('Type the phrase to listen for', 'error'); return; }
+      t.value = phraseInput.value.trim().slice(0, 120);
+    }
+
+    const a = { type: action.value, text: '', key: '' };
+    if (a.type === 'respond'){
+      if (!textInput.value.trim()){ toast('Type the response', 'error'); return; }
+      a.text = textInput.value.trim().slice(0, 300);
+    } else if (a.type === 'remember'){
+      a.key = (keyInput.value.trim() || 'note').slice(0, 60);
+    }
+
+    state.rules.push({ id: uid('rule'), trigger: t, action: a });
+    Store.save();
+    renderRules();
+    updateProfile();
+    textInput.value = '';
+    keyInput.value = '';
+    toast('Rule added');
+  };
+}
+
+/* ============================================================
+   SECTION 15 — BRAIN (knowledge graph)
+   ============================================================ */
+
+function nodeWidth(c){
+  return Math.max(96, Math.min(230, c.name.length * 8.5 + 34));
+}
+
+function renderGraph(){
+  const wrap = $('#graphWrap');
+  const concepts = state.concepts;
+
+  if (!concepts.length){
+    wrap.innerHTML = '<p class="empty" style="padding:20px;">Your AI has not learned any concepts yet.</p>';
+    return;
+  }
+
+  /* --- build hierarchy from "is a" / "part of" relationships --- */
+  const parents = new Map();
+  const links = [];
+
+  state.relationships.forEach(r => {
+    const from = byId(concepts, r.from);
+    const to = byId(concepts, r.to);
+    if (!from || !to) return;
+    links.push({ from, to, type: r.type, hierarchical: (r.type === 'is a' || r.type === 'part of') });
+    if (r.type === 'is a' || r.type === 'part of'){
+      parents.set(to.id, (parents.get(to.id) || []).concat([from.id]));
+    }
+  });
+
+  /* --- depth (cycle-safe) --- */
+  const depth = new Map();
+  function computeDepth(id, seen){
+    if (depth.has(id)) return depth.get(id);
+    if (seen.has(id)) return 0;
+    seen.add(id);
+    let d = 0;
+    (parents.get(id) || []).forEach(p => { d = Math.max(d, computeDepth(p, seen) + 1); });
+    depth.set(id, d);
+    return d;
+  }
+  concepts.forEach(c => computeDepth(c.id, new Set()));
+
+  /* --- group by depth --- */
+  const levels = [];
+  concepts.forEach(c => {
+    const d = depth.get(c.id) || 0;
+    if (!levels[d]) levels[d] = [];
+    levels[d].push(c);
+  });
+  for (let i = 0; i < levels.length; i++) if (!levels[i]) levels[i] = [];
+
+  const gapX = 26, gapY = 96, padY = 28, padX = 24;
+  const levelWidths = levels.map(level =>
+    level.reduce((w, c) => w + nodeWidth(c) + gapX, 0)
+  );
+  const maxWidth = Math.max(560, ...levelWidths) + padX * 2;
+  const height = padY * 2 + levels.length * gapY;
+
+  const pos = new Map();
+  levels.forEach((level, d) => {
+    let x = (maxWidth - levelWidths[d]) / 2 + padX;
+    level.forEach(c => {
+      const w = nodeWidth(c);
+      pos.set(c.id, { x, y: padY + d * gapY, w, h: 46 });
+      x += w + gapX;
+    });
+  });
+
+  /* --- draw --- */
+  let svg = '<svg width="' + maxWidth + '" height="' + height + '" viewBox="0 0 ' + maxWidth + ' ' + height + '">';
+
+  links.forEach(l => {
+    const a = pos.get(l.from.id);
+    const b = pos.get(l.to.id);
+    if (!a || !b) return;
+
+    if (l.hierarchical){
+      const x1 = a.x + a.w / 2, y1 = a.y + a.h;
+      const x2 = b.x + b.w / 2, y2 = b.y;
+      const mid = (y1 + y2) / 2;
+      svg += '<path class="link" d="M' + x1 + ' ' + y1 + ' C' + x1 + ' ' + mid + ', ' + x2 + ' ' + mid + ', ' + x2 + ' ' + y2 + '" />';
+    } else {
+      const x1 = a.x + a.w / 2, y1 = a.y + a.h / 2;
+      const x2 = b.x + b.w / 2, y2 = b.y + b.h / 2;
+      svg += '<line class="link cross" x1="' + x1 + '" y1="' + y1 + '" x2="' + x2 + '" y2="' + y2 + '" />';
+    }
+  });
+
+  concepts.forEach(c => {
+    const p = pos.get(c.id);
+    const sel = c.id === selectedConceptId;
+    svg += '<g class="node ' + (sel ? 'sel' : '') + '" data-id="' + c.id + '" transform="translate(' + p.x + ',' + p.y + ')">' +
+      '<rect width="' + p.w + '" height="' + p.h + '" rx="13"></rect>' +
+      '<text x="' + (p.w / 2) + '" y="' + (p.h / 2 + 5) + '" text-anchor="middle">' + esc(truncate(c.name, 22)) + '</text>' +
+    '</g>';
+  });
+
+  svg += '</svg>';
+  wrap.innerHTML = svg;
+
+  $$('.node', wrap).forEach(g => {
+    g.onclick = () => {
+      selectedConceptId = g.dataset.id;
+      renderGraph();
+      renderGraphDetail();
+    };
+  });
+
+  renderGraphDetail();
+}
+
+function renderGraphDetail(){
+  const host = $('#graphDetail');
+  const c = byId(state.concepts, selectedConceptId);
+  if (!c){
+    host.innerHTML = '<p class="empty">Click a concept to see what it has learned.</p>';
+    return;
+  }
+
+  const rels = state.relationships.filter(r => r.from === c.id || r.to === c.id);
+  const relHTML = rels.length
+    ? rels.map(r => {
+        const other = byId(state.concepts, r.from === c.id ? r.to : r.from);
+        if (!other) return '';
+        return r.from === c.id
+          ? esc(c.name) + ' → ' + esc(r.type) + ' → ' + esc(other.name)
+          : esc(other.name) + ' → ' + esc(r.type) + ' → ' + esc(c.name);
+      }).filter(Boolean).join('<br>')
+    : '<span class="muted">No connections yet.</span>';
+
+  host.innerHTML =
+    '<div class="card">' +
+      '<h3 style="margin-top:0;">' + esc(c.name) + '</h3>' +
+      '<p class="muted small">' + c.examples.length + ' example' + (c.examples.length === 1 ? '' : 's') +
+      ' · ' + c.responses.length + ' response' + (c.responses.length === 1 ? '' : 's') + '</p>' +
+      '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:18px;">' +
+        '<div><strong class="small">Examples</strong><div class="list" style="margin-top:8px;">' +
+          (c.examples.length
+            ? c.examples.map(e => '<div class="list-item"><span>' + esc(e.text) + '</span></div>').join('')
+            : '<p class="empty">None yet.</p>') +
+        '</div></div>' +
+        '<div><strong class="small">Responses</strong><div class="list" style="margin-top:8px;">' +
+          (c.responses.length
+            ? c.responses.map(r => '<div class="list-item"><span>' + esc(r.text) + '</span></div>').join('')
+            : '<p class="empty">None yet.</p>') +
+        '</div></div>' +
+      '</div>' +
+      '<div style="margin-top:14px;"><strong class="small">Relationships</strong><p class="muted small" style="margin-top:6px;">' + relHTML + '</p></div>' +
+    '</div>';
+}
+
+/* ============================================================
+   SECTION 16 — AUTOMATIC CONCEPT DISCOVERY
+   ============================================================ */
+
+/* A small built-in hint list of common everyday topics. */
+const SEED_TOPICS = {
+  'Food': ['pizza','pepperoni','cheese','burger','pasta','food','eat','eating','sushi','taco','sandwich','noodle','rice','bread','cake','chocolate','apple','banana','cook','cooking','restaurant','menu','hungry','snack','coffee','tea','drink','breakfast','dinner','lunch','soup','salad'],
+  'Programming': ['javascript','python','coding','code','programming','program','developer','software','html','css','java','rust','function','variable','debug','compiler','algorithm','git','api','computer','database','server','web','website','app','bug','script'],
+  'Games': ['minecraft','chess','game','games','gaming','roblox','fortnite','play','playing','player','level','score','steam','console','xbox','playstation','nintendo','puzzle','board'],
+  'Animals': ['cat','dog','animal','animals','bird','fish','horse','pet','lion','tiger','elephant','rabbit','mouse','whale','snake'],
+  'School': ['school','homework','teacher','class','student','exam','test','study','studying','math','history','science','book','lesson','grade','university','college'],
+  'Sports': ['soccer','football','basketball','tennis','sport','sports','run','running','swim','swimming','gym','team','match','goal','training'],
+  'Music': ['music','song','songs','guitar','piano','band','sing','singing','album','concert','drums','melody','listen'],
+  'Weather': ['weather','rain','raining','sun','sunny','snow','cloud','cloudy','storm','wind','windy','hot','cold','temperature'],
+  'Travel': ['travel','trip','city','country','airport','flight','hotel','vacation','beach','mountain','map','journey'],
+  'Movies': ['movie','movies','film','cinema','actor','series','show','netflix','episode','character','watch']
+};
+
+const SEED_LOOKUP = (() => {
+  const map = new Map();
+  Object.keys(SEED_TOPICS).forEach(topic => {
+    SEED_TOPICS[topic].forEach(word => {
+      map.set(stem(word), topic);
+    });
+  });
+  return map;
+})();
+
+function seedTopicOf(item){
+  const votes = new Map();
+  item.a.content.forEach(t => {
+    const topic = SEED_LOOKUP.get(t.stem);
+    if (topic) votes.set(topic, (votes.get(topic) || 0) + 1);
+  });
+  let best = null, bestCount = 0;
+  votes.forEach((count, topic) => { if (count > bestCount){ best = topic; bestCount = count; } });
+  return best;
+}
+
+function jaccard(a, b){
+  const A = new Set(a), B = new Set(b);
+  if (!A.size || !B.size) return 0;
+  let inter = 0;
+  A.forEach(x => { if (B.has(x)) inter++; });
+  return inter / (A.size + B.size - inter);
+}
+
+function itemsSimilar(a, b){
+  const sa = a.a.content.map(t => t.stem);
+  const sb = b.a.content.map(t => t.stem);
+  if (jaccard(sa, sb) >= 0.34) return true;
+
+  const ta = seedTopicOf(a), tb = seedTopicOf(b);
+  if (ta && tb && ta === tb) return true;
+
+  /* single-word spelling similarity */
+  if (sa.length === 1 && sb.length === 1){
+    const x = sa[0], y = sb[0];
+    if (x.length >= 4 && y.length >= 4 && (x.startsWith(y) || y.startsWith(x))) return true;
+  }
+  return false;
+}
+
+let discoveryGroups = [];
+
+function runDiscovery(){
+  const raw = $('#discoverInput').value;
+  const lines = raw.split('\n').map(l => l.trim()).filter(Boolean);
+  if (lines.length < 2){ toast('Paste at least two lines', 'error'); return; }
+
+  const items = lines.slice(0, 300).map(line => ({ text: line, a: analyze(line) }));
+
+  /* union-find clustering */
+  const parent = items.map((_, i) => i);
+  const find = i => (parent[i] === i ? i : (parent[i] = find(parent[i])));
+  const union = (a, b) => { a = find(a); b = find(b); if (a !== b) parent[b] = a; };
+
+  for (let i = 0; i < items.length; i++){
+    for (let j = i + 1; j < items.length; j++){
+      if (itemsSimilar(items[i], items[j])) union(i, j);
+    }
+  }
+
+  const groups = new Map();
+  items.forEach((item, i) => {
+    const root = find(i);
+    if (!groups.has(root)) groups.set(root, []);
+    groups.get(root).push(item);
+  });
+
+  discoveryGroups = Array.from(groups.values()).map(members => {
+    /* name: most common seed topic, else most common content word */
+    const topicVotes = new Map();
+    members.forEach(m => {
+      const t = seedTopicOf(m);
+      if (t) topicVotes.set(t, (topicVotes.get(t) || 0) + 1);
+    });
+    let name = null, best = 0;
+    topicVotes.forEach((count, topic) => { if (count > best){ name = topic; best = count; } });
+
+    if (!name){
+      const wordVotes = new Map();
+      members.forEach(m => m.a.content.forEach(t => wordVotes.set(t.raw, (wordVotes.get(t.raw) || 0) + 1)));
+      let bestWord = members[0].text, bestCount = 0;
+      wordVotes.forEach((count, word) => { if (count > bestCount){ bestWord = word; bestCount = count; } });
+      name = bestWord.charAt(0).toUpperCase() + bestWord.slice(1);
+    }
+
+    return {
+      id: uid('g'),
+      name,
+      items: members.map(m => m.text)
+    };
+  }).sort((a, b) => b.items.length - a.items.length);
+
+  renderDiscovery();
+  toast('Found ' + discoveryGroups.length + ' group' + (discoveryGroups.length === 1 ? '' : 's'));
+}
+
+function renderDiscovery(){
+  const host = $('#discoverResults');
+  if (!discoveryGroups.length){
+    host.innerHTML = '';
+    return;
+  }
+
+  host.innerHTML =
+    '<p class="muted small">These are suggestions. Rename, remove items, or delete whole groups before adding.</p>' +
+    discoveryGroups.map(g =>
+      '<div class="group-card" data-g="' + g.id + '">' +
+        '<div class="row" style="margin-bottom:8px;">' +
+          '<input class="input" data-name="' + g.id + '" value="' + esc(g.name) + '" style="max-width:240px;" />' +
+          '<span class="muted small">' + g.items.length + ' item' + (g.items.length === 1 ? '' : 's') + '</span>' +
+          '<button class="btn danger ghost small" data-delgroup="' + g.id + '" style="margin-left:auto;">Delete group</button>' +
+        '</div>' +
+        '<div class="chips">' +
+          g.items.map((it, i) =>
+            '<span class="chip" style="cursor:default;">' + esc(truncate(it, 40)) +
+            ' <button class="icon-btn tiny" data-delitem="' + g.id + '|' + i + '" style="width:18px;height:18px;font-size:.6rem;">✕</button></span>'
+          ).join('') +
+        '</div>' +
+      '</div>'
+    ).join('') +
+    '<button class="btn primary" id="btnAddGroups" style="margin-top:8px;">Add these concepts</button>';
+
+  $$('[data-name]', host).forEach(inp => {
+    inp.onchange = () => {
+      const g = discoveryGroups.find(x => x.id === inp.dataset.name);
+      if (g) g.name = inp.value.trim().slice(0, 60) || 'Untitled';
+    };
+  });
+
+  $$('[data-delgroup]', host).forEach(btn => {
+    btn.onclick = () => {
+      discoveryGroups = discoveryGroups.filter(g => g.id !== btn.dataset.delgroup);
+      renderDiscovery();
+    };
+  });
+
+  $$('[data-delitem]', host).forEach(btn => {
+    btn.onclick = () => {
+      const [gid, idx] = btn.dataset.delitem.split('|');
+      const g = discoveryGroups.find(x => x.id === gid);
+      if (!g) return;
+      g.items.splice(Number(idx), 1);
+      if (!g.items.length) discoveryGroups = discoveryGroups.filter(x => x.id !== gid);
+      renderDiscovery();
+    };
+  });
+
+  $('#btnAddGroups').onclick = () => {
+    let added = 0;
+    discoveryGroups.forEach(g => {
+      if (!g.items.length) return;
+      let concept = state.concepts.find(c => c.name.toLowerCase() === g.name.toLowerCase());
+      if (!concept){
+        concept = { id: uid('c'), name: g.name, examples: [], responses: [] };
+        state.concepts.push(concept);
+        added++;
+      }
+      g.items.forEach(it => {
+        if (!concept.examples.some(e => e.text.toLowerCase() === it.toLowerCase())){
+          concept.examples.push({ id: uid('e'), text: it.slice(0, 400) });
+        }
+      });
+    });
+
+    Index.rebuild();
+    Store.save();
+    discoveryGroups = [];
+    renderDiscovery();
+    renderTeach();
+    renderChatHeader();
+    renderRuleConceptOptions();
+    updateProfile();
+    toast('Added ' + added + ' new concept' + (added === 1 ? '' : 's'));
+  };
+}
+
+/* ============================================================
+   SECTION 17 — PROFILE / SETTINGS
+   ============================================================ */
+
+function updateProfile(){
+  const totalExamples = state.concepts.reduce((n, c) => n + c.examples.length, 0);
+
+  $('#profileName').textContent = state.ai.name || 'Your AI';
+  $('#profilePersonality').textContent = state.ai.personality || 'No personality set';
+  $('#studioName').textContent = state.ai.name || 'Your AI';
+
+  $('#profileStats').innerHTML =
+    '<div class="stat"><b>' + state.concepts.length + '</b><span>concepts</span></div>' +
+    '<div class="stat"><b>' + totalExamples + '</b><span>examples</span></div>' +
+    '<div class="stat"><b>' + state.memories.length + '</b><span>memories</span></div>' +
+    '<div class="stat"><b>' + state.rules.length + '</b><span>rules</span></div>';
+
+  const note = $('#profileNote');
+  if (state.concepts.length === 0){
+    note.textContent = (state.ai.name || 'Your AI') + ' doesn\u2019t know much yet. Go to the Teach tab and give it a concept.';
+  } else {
+    note.textContent = (state.ai.name || 'Your AI') + ' has learned ' + state.concepts.length +
+      ' concept' + (state.concepts.length === 1 ? '' : 's') + ' from ' + totalExamples +
+      ' example' + (totalExamples === 1 ? '' : 's') + '.';
+  }
+}
+
+/* ============================================================
+   SECTION 18 — IMPORT / EXPORT
+   ============================================================ */
+
+function buildExportData(){
+  return {
+    app: 'AI Builder',
+    version: 1,
+    exported: new Date().toISOString(),
+    ai: { name: state.ai.name, personality: state.ai.personality, description: state.ai.description },
+    concepts: state.concepts.map(c => ({
+      name: c.name,
+      examples: c.examples.map(e => e.text),
+      responses: c.responses.map(r => r.text)
+    })),
+    memories: state.memories.map(m => ({ key: m.key, value: m.value })),
+    rules: state.rules.map(r => ({ trigger: r.trigger, action: r.action })),
+    relationships: state.relationships.map(r => ({
+      from: (byId(state.concepts, r.from) || {}).name || '',
+      to: (byId(state.concepts, r.to) || {}).name || '',
+      type: r.type
+    })),
+    fallbacks: state.fallbacks,
+    threshold: state.threshold,
+    showWhy: state.ui.showWhy,
+    chat: state.chat.map(m => ({ role: m.role, text: m.text }))
+  };
+}
+
+function exportJSON(){
+  download(slug(state.ai.name) + '-ai.json', JSON.stringify(buildExportData(), null, 2), 'application/json');
+  toast('Exported');
+}
+
+function importJSON(text){
+  let data;
+  try {
+    data = JSON.parse(text);
+  } catch (e) {
+    toast('That file is not valid JSON', 'error');
+    return;
+  }
+  if (!data || typeof data !== 'object' || !Array.isArray(data.concepts)){
+    toast('That does not look like an AI Builder file', 'error');
+    return;
+  }
+
+  const rebuilt = defaultState();
+  rebuilt.created = true;
+  rebuilt.ai = {
+    name: (data.ai && data.ai.name) ? String(data.ai.name).slice(0, 60) : 'Lumo',
+    personality: (data.ai && data.ai.personality) ? String(data.ai.personality).slice(0, 120) : '',
+    description: (data.ai && data.ai.description) ? String(data.ai.description).slice(0, 200) : ''
+  };
+
+  const nameToId = new Map();
+
+  (data.concepts || []).forEach(c => {
+    if (!c || typeof c !== 'object') return;
+    const name = String(c.name || 'Untitled').slice(0, 60);
+    const concept = {
+      id: uid('c'),
+      name,
+      examples: (Array.isArray(c.examples) ? c.examples : [])
+        .filter(t => typeof t === 'string' && t.trim())
+        .map(t => ({ id: uid('e'), text: t.slice(0, 400) })),
+      responses: (Array.isArray(c.responses) ? c.responses : [])
+        .filter(t => typeof t === 'string' && t.trim())
+        .map(t => ({ id: uid('r'), text: t.slice(0, 400) }))
+    };
+    nameToId.set(name.toLowerCase(), concept.id);
+    rebuilt.concepts.push(concept);
+  });
+
+  (data.memories || []).forEach(m => {
+    if (!m || m.key == null) return;
+    rebuilt.memories.push({ id: uid('m'), key: String(m.key).slice(0, 60), value: String(m.value == null ? '' : m.value).slice(0, 200) });
+  });
+
+  (data.rules || []).forEach(r => {
+    if (!r || !r.trigger || !r.action) return;
+    let value = String(r.trigger.value || '');
+    if (r.trigger.type === 'concept'){
+      const id = nameToId.get(value.toLowerCase());
+      value = id || '';
+      if (!value) return;
+    }
+    rebuilt.rules.push({
+      id: uid('rule'),
+      trigger: { type: String(r.trigger.type || 'any'), value: value.slice(0, 120) },
+      action: { type: String(r.action.type || 'respond'), text: String(r.action.text || '').slice(0, 300), key: String(r.action.key || '').slice(0, 60) }
+    });
+  });
+
+  (data.relationships || []).forEach(r => {
+    if (!r || !r.from || !r.to) return;
+    const from = nameToId.get(String(r.from).toLowerCase());
+    const to = nameToId.get(String(r.to).toLowerCase());
+    if (!from || !to) return;
+    rebuilt.relationships.push({ id: uid('rel'), from, to, type: String(r.type || 'related to') });
+  });
+
+  if (Array.isArray(data.fallbacks) && data.fallbacks.length){
+    rebuilt.fallbacks = data.fallbacks.filter(x => typeof x === 'string' && x.trim()).slice(0, 20);
+  }
+  if (typeof data.threshold === 'number' && data.threshold > 0 && data.threshold < 1){
+    rebuilt.threshold = data.threshold;
+  }
+  rebuilt.ui.showWhy = !!data.showWhy;
+
+  if (Array.isArray(data.chat)){
+    rebuilt.chat = data.chat.filter(m => m && typeof m.text === 'string').slice(-200)
+      .map(m => ({ id: uid('msg'), role: m.role === 'user' ? 'user' : 'ai', text: String(m.text).slice(0, 2000), ts: Date.now() }));
+  }
+
+  state = validateState(rebuilt);
+  selectedConceptId = state.concepts.length ? state.concepts[0].id : null;
+  Index.rebuild();
+  Store.save();
+  bootStudio();
+  toast('AI imported');
+}
+
+/* --- standalone chatbot export --- */
+
+const STANDALONE_CSS = ''; /* the runtime injects its own styles */
+
+function exportStandalone(){
+  const runtime = document.getElementById('standaloneRuntime').textContent;
+  const data = JSON.stringify(buildExportData()).replace(/</g, '\\u003c');
+
+  const html = [
+    '<!DOCTYPE html>',
+    '<html lang="en"><head><meta charset="utf-8">',
+    '<meta name="viewport" content="width=device-width, initial-scale=1">',
+    '<title>' + esc(state.ai.name || 'AI') + ' \u2014 a small AI</title>',
+    '</head><body>',
+    '<div id="root"></div>',
+    '<script>window.AI_DATA = ' + data + ';<\/script>',
+    '<script>' + runtime + '<\/script>',
+    '</body></html>'
+  ].join('\n');
+
+  download(slug(state.ai.name) + '-chatbot.html', html, 'text/html');
+  toast('Standalone chatbot exported');
+}
+
+/* ============================================================
+   SECTION 19 — BOOT
+   ============================================================ */
+
+function openStudio(){
+  state.created = true;
+  showView('studio');
+  selectedConceptId = state.concepts.length ? state.concepts[0].id : null;
+  Index.rebuild();
+  Store.save();
+  bootStudio();
+}
+
+function bootStudio(){
+  applyTheme();
+
+  /* tabs */
+  setTab(state.ui.tab || 'chat');
+
+  /* chat */
+  $('#showWhyToggle').checked = state.ui.showWhy;
+  renderChatLog();
+  renderChatHeader();
+
+  /* teach */
+  renderTeach();
+
+  /* memory */
+  renderMemory();
+
+  /* rules */
+  renderRules();
+
+  /* brain */
+  renderGraph();
+
+  /* profile */
+  $('#profName').value = state.ai.name || '';
+  $('#profPersonality').value = state.ai.personality || '';
+  $('#profDescription').value = state.ai.description || '';
+  $('#thresholdRange').value = Math.round(state.threshold * 100);
+  $('#thresholdValue').textContent = Math.round(state.threshold * 100) + '%';
+  $('#fallbackInput').value = state.fallbacks.join('\n');
+  updateProfile();
+}
+
+function setTab(name){
+  state.ui.tab = name;
+  ['chat', 'teach', 'memory', 'rules', 'brain', 'profile'].forEach(t => {
+    const panel = document.getElementById('tab-' + t);
+    if (panel) panel.classList.toggle('hidden', t !== name);
+  });
+  $$('#tabBar .tab').forEach(b => b.classList.toggle('active', b.dataset.tab === name));
+
+  if (name === 'brain') renderGraph();
+  if (name === 'teach') renderTeach();
+  if (name === 'rules') renderRules();
+  if (name === 'memory') renderMemory();
+  if (name === 'profile') updateProfile();
+}
+
+function wireGlobalUI(){
+  /* theme buttons */
+  ['homeThemeBtn', 'createThemeBtn', 'studioThemeBtn'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.onclick = toggleTheme;
+  });
+
+  /* home */
+  $('#btnCreate').onclick = () => {
+    $('#aiName').value = state.ai.name || 'Lumo';
+    $('#aiPersonality').value = state.ai.personality || 'Friendly, curious, and helpful';
+    $('#aiDescription').value = state.ai.description || '';
+    showView('create');
+  };
+
+  $('#btnBackHome').onclick = () => showView('home');
+
+  $('#btnStartTeaching').onclick = () => {
+    const name = $('#aiName').value.trim() || 'Lumo';
+    state.ai.name = name.slice(0, 60);
+    state.ai.personality = $('#aiPersonality').value.trim().slice(0, 120);
+    state.ai.description = $('#aiDescription').value.trim().slice(0, 200);
+    openStudio();
+    setTab('teach');
+    toast('Now teach ' + state.ai.name + ' something');
+  };
+
+  /* import buttons */
+  const fileInput = $('#importFile');
+  fileInput.onchange = () => {
+    const file = fileInput.files && fileInput.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = () => importJSON(String(reader.result));
+    reader.readAsText(file);
+    fileInput.value = '';
+  };
+
+  $('#homeImportBtn').onclick = () => fileInput.click();
+
+  /* tabs */
+  $$('#tabBar .tab').forEach(btn => {
+    btn.onclick = () => setTab(btn.dataset.tab);
+  });
+
+  /* chat */
+  $('#chatSend').onclick = sendChat;
+  $('#chatInput').addEventListener('keydown', e => { if (e.key === 'Enter') sendChat(); });
+  $('#showWhyToggle').onchange = e => {
+    state.ui.showWhy = e.target.checked;
+    Store.save();
+    renderChatLog();
+  };
+
+  /* teach */
+  $('#btnAddConcept').onclick = addConceptPrompt;
+
+  /* memory */
+  $('#btnAddMemory').onclick = () => {
+    const key = $('#memKey').value.trim();
+    const value = $('#memValue').value.trim();
+    if (!key || !value){ toast('Fill in both fields', 'error'); return; }
+    Memory.set(key, value);
+    Store.save();
+    $('#memKey').value = '';
+    $('#memValue').value = '';
+    renderMemory();
+    updateProfile();
+    toast('Remembered');
+  };
+
+  /* rules */
+  wireRuleForm();
+
+  /* discovery */
+  $('#btnDiscover').onclick = runDiscovery;
+
+  /* profile */
+  $('#btnSaveProfile').onclick = () => {
+    state.ai.name = $('#profName').value.trim().slice(0, 60) || 'Lumo';
+    state.ai.personality = $('#profPersonality').value.trim().slice(0, 120);
+    state.ai.description = $('#profDescription').value.trim().slice(0, 200);
+    Store.save();
+    renderChatHeader();
+    updateProfile();
+    toast('Saved');
+  };
+
+  $('#thresholdRange').oninput = e => {
+    const v = Number(e.target.value);
+    $('#thresholdValue').textContent = v + '%';
+    state.threshold = v / 100;
+  };
+  $('#thresholdRange').onchange = () => Store.save();
+
+  $('#btnSaveFallbacks').onclick = () => {
+    const lines = $('#fallbackInput').value.split('\n').map(l => l.trim()).filter(Boolean);
+    if (!lines.length){ toast('Keep at least one fallback', 'error'); return; }
+    state.fallbacks = lines.slice(0, 20);
+    Store.save();
+    toast('Fallbacks saved');
+  };
+
+  $('#btnExport').onclick = exportJSON;
+  $('#btnImport').onclick = () => fileInput.click();
+  $('#btnExportChatbot').onclick = exportStandalone;
+
+  $('#btnReset').onclick = () => {
+    if (!confirm('This deletes your AI and everything it has learned from this browser. Continue?')) return;
+    localStorage.removeItem(STORAGE_KEY);
+    state = defaultState();
+    applyTheme();
+    showView('home');
+    toast('Starting over');
+  };
+}
+
+/* ---------- start ---------- */
+function init(){
+  const loaded = Store.load();
+  state = loaded || defaultState();
+
+  wireGlobalUI();
+  applyTheme();
+
+  if (state.created && state.ai.name){
+    selectedConceptId = state.concepts.length ? state.concepts[0].id : null;
+    Index.rebuild();
+    showView('studio');
+    bootStudio();
+  } else {
+    showView('home');
+  }
+}
+
+init();
+
+})();
+</script>
+
+</body>
+</html>
