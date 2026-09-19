@@ -1,0 +1,544 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Georgemango's Arcade</title>
+    <link href="/style.css" rel="stylesheet" type="text/css" media="all">
+    <link rel="icon" type="image/png" sizes="512x512" href="/face.png">
+
+    <style>
+      :root {
+        --bg-color: #f4f6f9;
+        --card-bg: #ffffff;
+        --text-main: #333333;
+        --border-color: #b0bec5;
+        --thick-border: #37474f;
+        --primary: #3f51b5;
+        --primary-hover: #303f9f;
+      }
+
+      /* ==========================================
+         GLOBAL ARCADE STYLES
+         ========================================== */
+      body {
+        margin: 0;
+        padding: 0;
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+        background-color: #1a1a1a;
+        color: #ffffff;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        min-height: 100vh;
+        box-sizing: border-box;
+      }
+
+      header {
+        margin-bottom: 20px;
+        text-align: center;
+        width: 100%;
+        padding: 20px;
+        box-sizing: border-box;
+      }
+
+      header h1 {
+        font-size: 1.8rem;
+        margin: 0;
+        font-weight: 500;
+      }
+
+      /* ==========================================
+         APP GRID
+         ========================================== */
+      .app-grid {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 20px;
+        max-width: 500px;
+        width: 100%;
+        padding: 10px;
+      }
+
+      @media (max-width: 480px) {
+        .app-grid {
+          grid-template-columns: repeat(3, 1fr);
+        }
+      }
+
+      .app-icon {
+        background: none;
+        border: none;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        cursor: pointer;
+        padding: 0;
+        color: white;
+        font-family: inherit;
+        -webkit-tap-highlight-color: transparent;
+        position: relative;
+      }
+
+      .icon-graphic {
+        width: 64px;
+        height: 64px;
+        background-color: #333;
+        border-radius: 14px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 28px;
+        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+        transition: transform 0.1s ease;
+      }
+
+      .app-icon:active .icon-graphic {
+        transform: scale(0.92);
+      }
+
+      .app-name {
+        font-size: 0.75rem;
+        margin-top: 6px;
+        text-shadow: 0 1px 2px rgba(0, 0, 0, 0.8);
+        text-align: center;
+      }
+
+      /* ==========================================
+         GAME MODAL STYLES
+         ========================================== */
+      .game-modal {
+        display: none;
+        position: fixed;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(0, 0, 0, 0.85);
+        z-index: 1000;
+        justify-content: center;
+        align-items: center;
+        padding: 10px;
+        box-sizing: border-box;
+        overflow-y: auto;
+        -webkit-overflow-scrolling: touch;
+      }
+
+      .game-modal-content {
+        background-color: #f0f2f5;
+        color: #333;
+        width: min(100%, 760px);
+        max-height: min(90vh, 860px);
+        overflow-y: auto;
+        border-radius: 12px;
+        padding: 18px;
+        position: relative;
+        box-shadow: 0 8px 30px rgba(0,0,0,0.5);
+        box-sizing: border-box;
+      }
+
+      .close-modal-btn {
+        position: fixed;
+        top: 15px;
+        right: 15px;
+        z-index: 1100;
+        width: 36px;
+        height: 36px;
+        border-radius: 50%;
+        background: #e74c3c;
+        color: white;
+        border: 2px solid white;
+        font-size: 18px;
+        font-weight: bold;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.5);
+        transition: background 0.2s;
+        padding: 0;
+        line-height: 1;
+      }
+
+      .close-modal-btn:hover {
+        background: #c0392b;
+      }
+
+      /* ==========================================
+         GAME 1: COLOR CONTEXTO
+         ========================================== */
+      #game1-container h2 {
+        text-align: center;
+        color: #2c3e50;
+        margin-top: 0;
+      }
+      #game1-container .game-controls {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+        margin-bottom: 20px;
+        justify-content: center;
+        align-items: center;
+      }
+      #game1-container input[type="color"] {
+        border: none;
+        width: 50px;
+        height: 40px;
+        cursor: pointer;
+        border-radius: 4px;
+      }
+      #game1-container input[type="text"] {
+        padding: 10px;
+        font-size: 16px;
+        border: 1px solid #ccc;
+        border-radius: 4px;
+        width: 150px;
+        text-align: center;
+      }
+      #game1-container button.action-btn {
+        padding: 10px 20px;
+        font-size: 16px;
+        background-color: #3498db;
+        color: white;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+      }
+      #game1-container button.action-btn:hover {
+        background-color: #2980b9;
+      }
+      #game1-container button.give-up {
+        background-color: #e74c3c;
+      }
+      #game1-container button.give-up:hover {
+        background-color: #c0392b;
+      }
+      #game1-container button.new-game {
+        background-color: #2ecc71;
+        display: none;
+      }
+      #game1-container button.new-game:hover {
+        background-color: #27ae60;
+      }
+      #game1-container button:disabled {
+        background-color: #bdc3c7;
+        cursor: not-allowed;
+      }
+      #game1-container .message {
+        text-align: center;
+        font-weight: bold;
+        margin-bottom: 20px;
+        min-height: 24px;
+      }
+      #game1-container .guesses-container {
+        margin-top: 20px;
+      }
+      #game1-container .guess-row {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        background: white;
+        padding: 10px 15px;
+        margin-bottom: 8px;
+        border-radius: 6px;
+        box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+      }
+      #game1-container .swatch {
+        width: 30px;
+        height: 30px;
+        border-radius: 4px;
+        border: 1px solid #ddd;
+      }
+
+      /* ==========================================
+         MOBILE
+         ========================================== */
+      @media (max-width: 520px) {
+        body {
+          padding: 0;
+        }
+        .app-grid {
+          gap: 14px;
+        }
+        .game-modal {
+          align-items: flex-start;
+          justify-content: flex-start;
+          padding: 8px;
+        }
+        .game-modal-content {
+          padding: 12px;
+          max-width: 100%;
+          width: 100%;
+          margin-top: 16px;
+          border-radius: 14px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+
+    <header>
+      <h1>Georgemango's Arcade</h1>
+    </header>
+
+    <main class="app-grid">
+      <button class="app-icon" onclick="openGameModal('game1-modal')">
+        <div class="icon-graphic" style="background: linear-gradient(135deg, #ff7675, #74b9ff);">🎨</div>
+        <span class="app-name">Color Contexto</span>
+      </button>
+
+      <button class="app-icon" onclick="openGameModal('game2-modal')">
+        <div class="icon-graphic" style="background: linear-gradient(135deg, #10b981, #047857);">⚛</div>
+        <span class="app-name">Atom Forge</span>
+      </button>
+
+      <button class="app-icon" onclick="openGameModal('game3-modal')">
+        <div class="icon-graphic" style="background: linear-gradient(135deg, #ec4899, #7c3aed);">💬</div>
+        <span class="app-name">SparkTalk</span>
+      </button>
+
+      <button class="app-icon" onclick="openGameModal('game4-modal')">
+        <div class="icon-graphic" style="background: linear-gradient(135deg, #0ea5e9, #6366f1);">◆</div>
+        <span class="app-name">WebCraft</span>
+      </button>
+
+      <button class="app-icon" onclick="openGameModal('game5-modal')">
+        <div class="icon-graphic" style="background: linear-gradient(135deg, #f59e0b, #dc2626);">🧠</div>
+        <span class="app-name">Neural Net</span>
+      </button>
+    </main>
+
+    <!-- GAME 1 MODAL: COLOR CONTEXTO -->
+    <div id="game1-modal" class="game-modal">
+      <div class="game-modal-content">
+        <button class="close-modal-btn" onclick="closeGameModal('game1-modal')">&times;</button>
+        <div id="game1-container">
+          <h2>🎨 Color Contexto</h2>
+          <p style="text-align: center; color: #666;">Guess the hidden hex color! Lower distance means closer (0 is an exact match).</p>
+          <div class="game-controls">
+            <input type="color" id="game1-colorPicker" value="#000000">
+            <input type="text" id="game1-colorInput" placeholder="#RRGGBB">
+            <button id="game1-guessBtn" class="action-btn">Guess</button>
+            <button id="game1-giveUpBtn" class="action-btn give-up">Give Up</button>
+            <button id="game1-newGameBtn" class="action-btn new-game">New Game</button>
+          </div>
+          <div class="message" id="game1-message"></div>
+          <div class="guesses-container">
+            <h3>Closest Guesses:</h3>
+            <div id="game1-guessesContainer"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- GAME 2 MODAL: ATOM FORGE -->
+    <div id="game2-modal" class="game-modal">
+      <div class="game-modal-content"
+           style="max-width: 98vw; width: 98vw; height: 94vh; padding: 0;
+                  background: #070911; overflow: hidden; border-radius: 12px;">
+        <button class="close-modal-btn" onclick="closeGameModal('game2-modal')">&times;</button>
+        <iframe id="game2-iframe" data-src="AtomForge.html"
+                style="width: 100%; height: 100%; border: 0; display: block;"
+                allow="clipboard-write"></iframe>
+      </div>
+    </div>
+
+    <!-- GAME 3 MODAL: SPARKTALK -->
+    <div id="game3-modal" class="game-modal">
+      <div class="game-modal-content"
+           style="max-width: 98vw; width: 98vw; height: 94vh; padding: 0;
+                  background: #0f172a; overflow: hidden; border-radius: 12px;">
+        <button class="close-modal-btn" onclick="closeGameModal('game3-modal')">&times;</button>
+        <iframe id="game3-iframe" data-src="IceBreakers.html"
+                style="width: 100%; height: 100%; border: 0; display: block;"></iframe>
+      </div>
+    </div>
+
+    <!-- GAME 4 MODAL: WEBCRAFT -->
+    <div id="game4-modal" class="game-modal">
+      <div class="game-modal-content"
+           style="max-width: 98vw; width: 98vw; height: 94vh; padding: 0;
+                  background: #0f1115; overflow: hidden; border-radius: 12px;">
+        <button class="close-modal-btn" onclick="closeGameModal('game4-modal')">&times;</button>
+        <iframe id="game4-iframe" data-src="Lumo.html"
+                style="width: 100%; height: 100%; border: 0; display: block;"
+                allow="clipboard-write"></iframe>
+      </div>
+    </div>
+
+    <!-- GAME 5 MODAL: NEURAL NETWORK GRID STUDIO -->
+    <div id="game5-modal" class="game-modal">
+      <div class="game-modal-content"
+           style="max-width: 98vw; width: 98vw; height: 94vh; padding: 0;
+                  background: #0b0f19; overflow: hidden; border-radius: 12px;">
+        <button class="close-modal-btn" onclick="closeGameModal('game5-modal')">&times;</button>
+        <iframe id="game5-iframe" data-src="neural.html"
+                style="width: 100%; height: 100%; border: 0; display: block;"></iframe>
+      </div>
+    </div>
+
+    <script>
+      /* ==========================================
+         MODAL CONTROLLER
+         ========================================== */
+      function openGameModal(modalId) {
+        document.getElementById(modalId).style.display = 'flex';
+
+        // Lazy-load any iframe that hasn't been loaded yet
+        const iframe = document.getElementById(modalId.replace('-modal', '-iframe'));
+        if (iframe && !iframe.src && iframe.dataset.src) {
+          iframe.src = iframe.dataset.src;
+        }
+      }
+
+      function closeGameModal(modalId) {
+        document.getElementById(modalId).style.display = 'none';
+      }
+
+      window.onclick = function(event) {
+        if (event.target.classList.contains('game-modal')) {
+          event.target.style.display = 'none';
+        }
+      };
+
+      /* --- GAME 1: COLOR CONTEXTO LOGIC --- */
+      let game1_secretColor, game1_guesses, game1_gameOver;
+
+      const game1_colorPicker = document.getElementById('game1-colorPicker');
+      const game1_colorInput = document.getElementById('game1-colorInput');
+      const game1_guessBtn = document.getElementById('game1-guessBtn');
+      const game1_giveUpBtn = document.getElementById('game1-giveUpBtn');
+      const game1_newGameBtn = document.getElementById('game1-newGameBtn');
+      const game1_messageDiv = document.getElementById('game1-message');
+      const game1_guessesContainer = document.getElementById('game1-guessesContainer');
+
+      function game1_initGame() {
+        game1_secretColor = game1_generateRandomColor();
+        game1_guesses = [];
+        game1_gameOver = false;
+        game1_colorPicker.disabled = false;
+        game1_colorPicker.value = '#000000';
+        game1_colorInput.disabled = false;
+        game1_colorInput.value = '';
+        game1_guessBtn.disabled = false;
+        game1_giveUpBtn.disabled = false;
+        game1_newGameBtn.style.display = 'none';
+        game1_messageDiv.textContent = '';
+        game1_renderGuesses();
+      }
+
+      game1_colorPicker.addEventListener('input', (e) => {
+        if (game1_gameOver) return;
+        game1_colorInput.value = e.target.value.toUpperCase();
+      });
+
+      game1_colorInput.addEventListener('input', (e) => {
+        if (game1_gameOver) return;
+        let val = e.target.value;
+        if (val.startsWith('#') && (val.length === 4 || val.length === 7)) {
+          game1_colorPicker.value = val;
+        }
+      });
+
+      game1_guessBtn.addEventListener('click', game1_makeGuess);
+      game1_giveUpBtn.addEventListener('click', game1_giveUp);
+      game1_newGameBtn.addEventListener('click', game1_initGame);
+      game1_colorInput.addEventListener('keypress', (e) => {
+        if (e.key === 'Enter' && !game1_gameOver) game1_makeGuess();
+      });
+
+      function game1_generateRandomColor() {
+        const letters = '0123456789ABCDEF';
+        let color = '#';
+        for (let i = 0; i < 6; i++) {
+          color += letters[Math.floor(Math.random() * 16)];
+        }
+        return color;
+      }
+
+      function game1_hexToRgb(hex) {
+        let c = hex.replace('#', '');
+        if (c.length === 3) c = c.split('').map(char => char + char).join('');
+        let num = parseInt(c, 16);
+        return { r: (num >> 16) & 255, g: (num >> 8) & 255, b: num & 255 };
+      }
+
+      function game1_calculateDistance(hex1, hex2) {
+        let rgb1 = game1_hexToRgb(hex1);
+        let rgb2 = game1_hexToRgb(hex2);
+        let rDiff = rgb1.r - rgb2.r;
+        let gDiff = rgb1.g - rgb2.g;
+        let bDiff = rgb1.b - rgb2.b;
+        return Math.round(Math.sqrt(rDiff * rDiff + gDiff * gDiff + bDiff * bDiff) * 100) / 100;
+      }
+
+      function game1_makeGuess() {
+        if (game1_gameOver) return;
+        let guess = game1_colorInput.value.trim().toUpperCase();
+        if (!guess.startsWith('#')) guess = '#' + guess;
+        if (!/^#[0-9A-F]{6}$/i.test(guess)) {
+          game1_messageDiv.style.color = 'red';
+          game1_messageDiv.textContent = 'Please enter a valid 6-digit hex code (e.g., #FF5733).';
+          return;
+        }
+        if (game1_guesses.some(g => g.color === guess)) {
+          game1_messageDiv.style.color = 'orange';
+          game1_messageDiv.textContent = 'You already guessed that color!';
+          return;
+        }
+        let distance = game1_calculateDistance(guess, game1_secretColor);
+        game1_guesses.push({ color: guess, distance: distance });
+        game1_guesses.sort((a, b) => a.distance - b.distance);
+        game1_renderGuesses();
+        if (distance === 0) {
+          game1_endGame(true);
+        } else {
+          game1_messageDiv.style.color = '#333';
+          game1_messageDiv.textContent = `Distance: ${distance}`;
+        }
+      }
+
+      function game1_giveUp() {
+        if (game1_gameOver) return;
+        game1_endGame(false);
+      }
+
+      function game1_endGame(won) {
+        game1_gameOver = true;
+        game1_guessBtn.disabled = true;
+        game1_giveUpBtn.disabled = true;
+        game1_colorInput.disabled = true;
+        game1_colorPicker.disabled = true;
+        game1_newGameBtn.style.display = 'inline-block';
+        if (won) {
+          game1_messageDiv.style.color = 'green';
+          game1_messageDiv.textContent = `🎉 Correct! You found the secret color ${game1_secretColor}!`;
+        } else {
+          game1_messageDiv.style.color = '#e74c3c';
+          game1_messageDiv.innerHTML = `Game Over! The secret color was <span style="background:${game1_secretColor}; padding: 2px 8px; border-radius:4px; color:white; border:1px solid #333;">${game1_secretColor}</span>`;
+        }
+      }
+
+      function game1_renderGuesses() {
+        game1_guessesContainer.innerHTML = '';
+        game1_guesses.forEach((g, index) => {
+          let row = document.createElement('div');
+          row.className = 'guess-row';
+          let swatch = document.createElement('div');
+          swatch.className = 'swatch';
+          swatch.style.backgroundColor = g.color;
+          let text = document.createElement('span');
+          text.textContent = `#${index + 1}: ${g.color}`;
+          let dist = document.createElement('span');
+          dist.textContent = `Distance: ${g.distance}`;
+          dist.style.fontWeight = 'bold';
+          row.appendChild(swatch);
+          row.appendChild(text);
+          row.appendChild(dist);
+          game1_guessesContainer.appendChild(row);
+        });
+      }
+
+      game1_initGame();
+    </script>
+  </body>
+</html>
