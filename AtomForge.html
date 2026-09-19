@@ -1,0 +1,2381 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#070911">
+<title>Atom Forge — Custom Matter Sandbox</title>
+<link rel="icon" type="image/png" sizes="512x512" href="/face.png">
+<style>
+  *{box-sizing:border-box}
+  html{height:100%}
+  body{margin:0;font-family:'Inter',system-ui,-apple-system,'Segoe UI',sans-serif;
+    background:#070911;color:#dbe4f7;overflow:hidden;
+    display:flex;flex-direction:column;height:100vh;height:100dvh;
+    padding-bottom:env(safe-area-inset-bottom)}
+  button,.chip,.pitem,.tab{-webkit-tap-highlight-color:transparent}
+  #tabs{flex:0 0 auto;display:flex;gap:8px;padding:8px 14px;background:#0d1019;
+    border-bottom:1px solid #1b2236;align-items:center}
+  .tab{background:#141a2b;border:1px solid #253052;color:#8496c0;padding:8px 20px;
+    border-radius:9px;cursor:pointer;font-size:13.5px;letter-spacing:.4px;font-weight:600;
+    transition:.18s;font-family:inherit}
+  .tab:hover{background:#1a2338;color:#b6c6ea}
+  .tab.active{background:linear-gradient(180deg,#2f4a94,#1c2a55);color:#dbe8ff;
+    border-color:#4d70db;box-shadow:0 0 16px #2c47a066}
+  #brand{margin-left:auto;font-size:12px;color:#4c5a7d;letter-spacing:2px;font-weight:700}
+  .screen-host{flex:1 1 auto;min-height:0;position:relative;overflow:hidden}
+  .screen{position:absolute;inset:0;display:none;overflow:hidden}
+  .screen.active{display:flex}
+  .atom-left{flex:1;display:flex;flex-direction:column;align-items:center;
+    position:relative;padding:6px 10px 4px;min-width:0;min-height:0;overflow:hidden}
+  .canvas-wrap{flex:1 1 auto;min-height:0;min-width:0;width:100%;
+    display:flex;align-items:center;justify-content:center;overflow:hidden}
+  #atomCanvas{display:block;border-radius:16px;background:#080a12;box-shadow:0 0 30px #0009}
+  .hint-wrap{height:30px;display:flex;align-items:center;justify-content:center;flex:0 0 auto}
+  .hint{font-size:12.5px;padding:6px 18px;border-radius:20px;background:#111a30;
+    border:1px solid #24325a;color:#8fa6d8;opacity:0;transition:opacity .25s;
+    white-space:nowrap;pointer-events:none;font-weight:600;letter-spacing:.3px}
+  .hint.show{opacity:1}
+  .hint.err{border-color:#7a2b3a;color:#ff9aa8;background:#2a0f16}
+  .hint.ok{border-color:#2b6b4a;color:#8bffc0;background:#0c2118}
+  .qty-row{display:flex;align-items:center;gap:7px;justify-content:center;
+    padding:1px 0 6px;flex:0 0 auto;flex-wrap:wrap}
+  .qty-label{font-size:10.5px;font-weight:800;text-transform:uppercase;
+    letter-spacing:1.6px;color:#5d6c92;padding-right:2px}
+  .qbtn{width:28px;height:28px;border-radius:8px;background:#141a2b;border:1px solid #243052;
+    color:#9fb0d6;font-size:15px;font-weight:800;cursor:pointer;font-family:inherit;
+    display:flex;align-items:center;justify-content:center;transition:.13s;line-height:1;padding:0}
+  .qbtn:hover{background:#212b4b;color:#cfdcff}
+  .qbtn:active{transform:scale(.93)}
+  #qtyInput{width:74px;height:28px;text-align:center;background:#0f1524;
+    border:1px solid #202b46;color:#e2ecff;border-radius:8px;font-size:14px;font-weight:800;
+    font-family:inherit;outline:none;font-variant-numeric:tabular-nums;-moz-appearance:textfield}
+  #qtyInput::-webkit-outer-spin-button,#qtyInput::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}
+  #qtyInput:focus{border-color:#3a56a0;box-shadow:0 0 0 2px #1e3a7a55}
+  .qpresets{display:flex;gap:5px;margin-left:4px}
+  .qpreset{padding:5px 10px;border-radius:7px;background:#111726;border:1px solid #1e2840;
+    color:#7d8fb8;font-size:11.5px;font-weight:700;cursor:pointer;font-family:inherit;transition:.13s}
+  .qpreset:hover{background:#1a2338;color:#b6c6ea}
+  .qpreset.sel{background:#233059;border-color:#3f5cb0;color:#dbe8ff}
+  .chips{display:flex;gap:9px;align-items:center;flex-wrap:wrap;
+    justify-content:center;padding:0 10px 2px;flex:0 0 auto}
+  .chip{padding:8px 12px 8px 16px;border-radius:24px;cursor:pointer;user-select:none;
+    font-weight:700;font-size:13px;border:1px solid rgba(255,255,255,.16);
+    transition:.12s;letter-spacing:.3px;font-family:inherit;
+    display:flex;align-items:center;gap:9px}
+  .chip:hover{transform:translateY(-1px)}
+  .chip:active{transform:scale(.95)}
+  .chip.p{background:linear-gradient(180deg,#ff7070,#c33535);color:#fff;box-shadow:0 4px 16px #ff3b3b44}
+  .chip.n{background:linear-gradient(180deg,#9fa9c0,#5a6478);color:#fff;box-shadow:0 4px 16px #8b96ad33}
+  .chip.e{background:linear-gradient(180deg,#6ce2ff,#1d9ccd);color:#02222e;box-shadow:0 4px 16px #35c8ff44}
+  .chip-count{min-width:26px;height:21px;padding:0 7px;border-radius:11px;
+    background:rgba(0,0,0,.32);display:flex;align-items:center;justify-content:center;
+    font-size:12.5px;font-weight:800;font-variant-numeric:tabular-nums}
+  .chip.e .chip-count{background:rgba(255,255,255,.55);color:#02222e}
+  .chip.flash{animation:pop .22s ease}
+  @keyframes pop{0%{transform:scale(1)}45%{transform:scale(1.13)}100%{transform:scale(1)}}
+  .btn{background:#18203a;border:1px solid #2a3659;color:#9fb0d6;padding:9px 15px;
+    border-radius:9px;cursor:pointer;font-size:13px;font-weight:600;font-family:inherit;transition:.15s}
+  .btn:hover{background:#212b4b;color:#cfdcff}
+  .btn.primary{background:linear-gradient(180deg,#3b6be0,#2547a8);border-color:#5b86f5;
+    color:#fff;box-shadow:0 0 18px #2f52c055}
+  .btn.primary:hover{background:linear-gradient(180deg,#4a7bf0,#2d54c0)}
+  #chipModeBtn.on-remove{background:linear-gradient(180deg,#7a2b3a,#4a1622);
+    border-color:#a03a4e;color:#ffd0d8}
+  .clicknote{font-size:11px;color:#4e5d80;letter-spacing:.3px;padding:4px 0 2px;
+    text-align:center;line-height:1.6;flex:0 0 auto}
+  .clicknote b{color:#8ea3d0}
+  .props{width:390px;min-width:390px;background:#0b0e18;border-left:1px solid #1a2136;
+    display:flex;flex-direction:column;min-height:0}
+  .props-head{padding:12px 14px 8px;border-bottom:1px solid #161d30;flex:0 0 auto}
+  .atom-title{font-size:22px;font-weight:800;letter-spacing:.5px;color:#eaf1ff}
+  .atom-sub{font-size:11.5px;color:#5d6c92;margin-top:3px;letter-spacing:.4px}
+  .swatchbig{width:100%;height:6px;border-radius:3px;margin-top:9px}
+  #propSearch,#cmSearch{width:100%;margin-top:9px;background:#0f1524;border:1px solid #202b46;
+    color:#c6d3ee;padding:8px 12px;border-radius:8px;font-size:12.5px;outline:none;font-family:inherit}
+  #propSearch:focus,#cmSearch:focus{border-color:#3a56a0}
+  #propList,#cmPropList{flex:1 1 auto;overflow-y:auto;padding:6px 10px 24px;min-height:0}
+  #propList::-webkit-scrollbar,#cmPropList::-webkit-scrollbar{width:9px}
+  #propList::-webkit-scrollbar-thumb,#cmPropList::-webkit-scrollbar-thumb{background:#1d2740;border-radius:6px}
+  .cat{font-size:10.5px;letter-spacing:2px;text-transform:uppercase;color:#48598a;
+    margin:14px 0 6px 4px;font-weight:800}
+  .prow{display:flex;justify-content:space-between;gap:10px;padding:4.5px 8px;border-radius:6px;font-size:12.5px}
+  .prow:nth-child(even){background:#0d1220}
+  .pk{color:#8b9cc4;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .pv{color:#e2ecff;font-variant-numeric:tabular-nums;font-weight:600;text-align:right;white-space:nowrap}
+  .pv em{color:#5a6b95;font-style:normal;font-size:10.5px;font-weight:500}
+  .empty{color:#4b5878;font-size:13px;padding:40px 20px;text-align:center;line-height:1.7}
+  .cm-left{flex:1;display:flex;flex-direction:column;padding:14px 18px 12px;min-width:0;min-height:0;overflow:hidden}
+  .cm-header{flex:0 0 auto;margin-bottom:10px}
+  .cm-title{font-size:20px;font-weight:800;color:#eaf1ff;letter-spacing:.5px;margin:0}
+  .cm-sub{font-size:11.5px;color:#5d6c92;margin-top:3px}
+  .recipe-bar{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px;flex:0 0 auto}
+  .recipe{padding:7px 12px;border-radius:8px;background:#131a2e;border:1px solid #253052;
+    color:#a9b8dc;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;transition:.13s}
+  .recipe:hover{background:#1b2544;color:#dae4ff;border-color:#3f5cb0}
+  .recipe:disabled{opacity:.32;cursor:not-allowed}
+  .recipe:disabled:hover{background:#131a2e;color:#a9b8dc;border-color:#253052}
+  .formula-box{flex:0 0 auto;background:linear-gradient(180deg,#0f1729,#0a0f1e);
+    border:1px solid #1c2844;border-radius:12px;padding:14px 20px;text-align:center;
+    margin-bottom:12px;min-height:76px;display:flex;flex-direction:column;align-items:center;justify-content:center}
+  .formula-label{font-size:10px;letter-spacing:2.5px;text-transform:uppercase;
+    color:#4d5c80;font-weight:800;margin-bottom:5px}
+  .formula-value{font-size:32px;font-weight:800;color:#eaf1ff;letter-spacing:1px;
+    font-variant-numeric:tabular-nums;line-height:1.1;text-shadow:0 0 20px rgba(120,160,255,.28)}
+  .formula-empty{font-size:14px;color:#4b5878;font-style:italic;font-weight:600}
+  .cm-elements{flex:1 1 auto;min-height:0;overflow-y:auto;
+    display:flex;flex-direction:column;gap:5px;margin-bottom:10px;padding-right:4px}
+  .cm-elements::-webkit-scrollbar{width:8px}
+  .cm-elements::-webkit-scrollbar-thumb{background:#1d2740;border-radius:6px}
+  .cm-el{display:flex;align-items:center;gap:10px;padding:7px 10px;border-radius:9px;
+    background:#0e1524;border:1px solid #1a2338;transition:.13s}
+  .cm-el.active{border-color:#3f5cb0;background:#141c34}
+  .cm-el-swatch{width:26px;height:26px;border-radius:6px;flex:none;
+    box-shadow:0 0 10px #000a,inset 0 0 0 1px rgba(255,255,255,.1)}
+  .cm-el-info{flex:1;min-width:0}
+  .cm-el-name{font-size:13px;font-weight:700;color:#dbe4f7;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .cm-el-sub{font-size:10.5px;color:#5d6c92;margin-top:1px}
+  .cm-el-count{display:flex;align-items:center;gap:4px;background:#0a0f1c;
+    border-radius:8px;padding:2px;border:1px solid #1c2844}
+  .cm-el-count button{width:24px;height:24px;border-radius:6px;background:#141a2b;
+    border:1px solid #243052;color:#9fb0d6;font-size:14px;font-weight:800;
+    cursor:pointer;font-family:inherit;transition:.13s;
+    display:flex;align-items:center;justify-content:center;line-height:1;padding:0}
+  .cm-el-count button:hover{background:#212b4b;color:#cfdcff}
+  .cm-el-count button:active{transform:scale(.92)}
+  .cm-el-count button:disabled{opacity:.3;cursor:not-allowed}
+  .cm-el-count-num{min-width:26px;text-align:center;font-size:14px;font-weight:800;
+    color:#e2ecff;font-variant-numeric:tabular-nums;padding:0 4px}
+  .cm-el-count-num.zero{color:#3d4a68}
+  .cm-empty{color:#4b5878;font-size:12.5px;padding:30px 20px;text-align:center;
+    line-height:1.7;background:#0a0f1c;border-radius:10px;border:1px dashed #1c2844}
+  .cm-actions{display:flex;gap:8px;flex:0 0 auto;padding-top:10px;border-top:1px solid #141a2b}
+  .cm-actions .btn{flex:1}
+  #sandbox{flex-direction:row}
+  .sb-side{width:280px;min-width:280px;background:#0b0e18;border-right:1px solid #1a2136;
+    display:flex;flex-direction:column;min-height:0;overflow-y:auto;overflow-x:hidden}
+  .sb-side::-webkit-scrollbar{width:8px}
+  .sb-side::-webkit-scrollbar-thumb{background:#1d2740;border-radius:6px}
+  .sb-side h3{font-size:10.5px;letter-spacing:2px;text-transform:uppercase;color:#48598a;
+    margin:12px 14px 6px;font-weight:800;flex:0 0 auto}
+  #palette{flex:1 1 auto;overflow-y:auto;padding:0 10px 8px;min-height:70px}
+  #palette::-webkit-scrollbar{width:9px}
+  #palette::-webkit-scrollbar-thumb{background:#1d2740;border-radius:6px}
+  .pitem{display:flex;align-items:center;gap:8px;padding:6px 6px 6px 10px;border-radius:8px;
+    cursor:pointer;font-size:12.5px;color:#a9b8dc;border:1px solid transparent;
+    margin-bottom:3px;transition:.12s}
+  .pitem:hover{background:#141b2e;color:#dae4ff}
+  .pitem.sel{background:#1b2749;border-color:#3f5cb0;color:#e7efff}
+  .swatch{width:15px;height:15px;border-radius:4px;flex:none;box-shadow:0 0 8px #0008}
+  .pname{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .phase-badge{font-size:9.5px;font-weight:800;letter-spacing:.6px;padding:2px 7px;
+    border-radius:5px;text-transform:uppercase;flex:none}
+  .phase-solid{background:#22304f;color:#8fa8dd}
+  .phase-liquid{background:#123a48;color:#6fd0e8}
+  .phase-gas{background:#342a4a;color:#c79aec}
+  .pdel{width:20px;height:20px;border-radius:5px;background:#22141a;border:1px solid #3d2029;
+    color:#a06570;font-size:11px;font-weight:800;cursor:pointer;
+    display:flex;align-items:center;justify-content:center;padding:0;flex:none;
+    transition:.13s;font-family:inherit;line-height:1}
+  .pdel:hover{background:#4a1c26;border-color:#7a2b3a;color:#ff9aa8}
+  .pdel:active{transform:scale(.9)}
+  .sb-controls{flex:0 0 auto;border-top:1px solid #141a2b;padding-top:2px}
+  .time-row{display:flex;gap:8px;padding:0 12px 6px;align-items:center}
+  .playbtn{width:40px;height:40px;border-radius:10px;flex:none;
+    background:linear-gradient(180deg,#2b5bd6,#1e3f9e);border:1px solid #4d74d6;
+    color:#fff;cursor:pointer;font-size:15px;font-weight:800;
+    display:flex;align-items:center;justify-content:center;font-family:inherit;
+    transition:.13s;line-height:1;padding:0;box-shadow:0 0 12px #2c47a044}
+  .playbtn:hover{background:linear-gradient(180deg,#3a6ce8,#2649b0)}
+  .playbtn:active{transform:scale(.94)}
+  .playbtn.paused{background:linear-gradient(180deg,#8a5a20,#5e3c12);border-color:#b07a2c;
+    box-shadow:0 0 12px #7a4a1055}
+  .time-meta{flex:1;display:flex;flex-direction:column;gap:1px;min-width:0}
+  .time-lbl{font-size:10px;color:#5d6c92;letter-spacing:1.5px;text-transform:uppercase;font-weight:800}
+  .time-val{font-size:15px;font-weight:800;color:#e2ecff;font-variant-numeric:tabular-nums;letter-spacing:.4px}
+  .slider{margin:0 14px 7px;font-size:11px;color:#63739b;letter-spacing:.3px}
+  .slider input{width:100%;accent-color:#4a6bd6;margin-top:3px}
+  .tools{display:flex;gap:6px;padding:0 12px 8px;flex-wrap:wrap}
+  .tool{flex:1 1 46%;background:#141a2b;border:1px solid #243052;color:#8fa0c8;
+    padding:8px 6px;border-radius:8px;cursor:pointer;font-size:11.5px;font-weight:600;
+    font-family:inherit;transition:.13s}
+  .tool:hover{background:#2a1a22;color:#ff9fa8;border-color:#6a2a3a}
+  .tool.warn:hover{background:#3a1c14;color:#ffc08a;border-color:#7a4020}
+  .tool.active{background:#1d2b4d;border-color:#3f5cb0;color:#dbe8ff}
+  .tool.active:hover{background:#24345c;color:#eaf1ff;border-color:#4d70db}
+  .sb-hint{padding:6px 14px 12px;font-size:11px;color:#4d5c80;line-height:1.8;letter-spacing:.2px}
+  .sb-hint b{color:#7d8fb8;font-weight:700}
+  .sb-main{flex:1;display:flex;align-items:center;justify-content:center;
+    padding:12px;min-width:0;min-height:0;background:#05070d}
+  .sim-wrap{width:100%;height:100%;min-width:0;min-height:0;
+    display:flex;align-items:center;justify-content:center;overflow:hidden}
+  #simCanvas{display:block;image-rendering:pixelated;border-radius:12px;cursor:crosshair;
+    box-shadow:0 0 0 1px #1c2540,0 0 50px #000c;touch-action:none}
+  .toast{position:fixed;bottom:26px;left:50%;transform:translateX(-50%) translateY(20px);
+    background:#12203a;border:1px solid #2f57a8;color:#cfe1ff;padding:11px 24px;
+    border-radius:12px;font-size:13px;font-weight:600;opacity:0;transition:.3s;
+    pointer-events:none;z-index:9998;box-shadow:0 8px 30px #000a;max-width:92vw;text-align:center}
+  .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+  .toast.warn{border-color:#7a4020;color:#ffd0a8;background:#2a1a0a}
+  .toast.good{border-color:#2b6b4a;color:#8bffc0;background:#0c2118}
+  .toast.rx{border-color:#7a4a10;color:#ffdc9a;background:#2a1c08}
+
+  /* ================= RESPONSIVE / MOBILE ================= */
+  .mobile-only{display:none !important}
+
+  @media (max-width:900px){
+    #tabs{padding:6px 8px;gap:6px;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none}
+    #tabs::-webkit-scrollbar{display:none}
+    .tab{padding:8px 12px;font-size:12px;white-space:nowrap;flex:0 0 auto}
+    #brand{display:none}
+
+    .screen.active{flex-direction:column}
+
+    /* Atom lab */
+    .atom-left{padding:2px 6px 4px}
+    .props{
+      width:100%;min-width:0;flex:0 0 auto;
+      max-height:38vh;
+      border-left:none;border-top:1px solid #1a2136;
+    }
+    .props-head{padding:10px 12px 8px}
+    .atom-title{font-size:17px}
+    .atom-sub{font-size:10.5px}
+    .swatchbig{margin-top:7px}
+    #propSearch,#cmSearch{padding:9px 12px;font-size:13px}
+
+    .hint-wrap{height:26px}
+    .hint{font-size:11px;padding:5px 12px}
+    .qty-row{gap:6px;padding-bottom:6px}
+    .qbtn{width:34px;height:34px;font-size:17px}
+    #qtyInput{width:64px;height:34px;font-size:15px}
+    .qpresets{margin-left:0;gap:4px}
+    .qpreset{padding:6px 9px;font-size:11.5px}
+    .chips{gap:6px;padding:0 6px 4px}
+    .chip{padding:8px 11px 8px 13px;font-size:12.5px;gap:7px}
+    .btn{padding:9px 12px;font-size:12.5px}
+    .clicknote{font-size:10.5px;padding:3px 6px 4px}
+
+    /* Compound lab */
+    .cm-left{padding:10px 12px 8px;overflow-y:auto}
+    .cm-title{font-size:18px}
+    .formula-box{padding:10px 14px;min-height:62px;margin-bottom:9px}
+    .formula-value{font-size:24px}
+    .cm-elements{flex:0 0 auto;max-height:34vh}
+    .cm-el{padding:8px 10px}
+    .cm-el-count button{width:30px;height:30px;font-size:16px}
+
+    /* Sandbox */
+    #sandbox{flex-direction:column}
+    .sb-main{order:1;flex:1 1 auto;min-height:32vh;padding:6px}
+    .sb-side{
+      order:2;width:100%;min-width:0;max-height:48vh;
+      border-right:none;border-top:1px solid #1a2136;
+    }
+    #palette{flex:0 1 auto;min-height:72px;max-height:24vh}
+    .sb-hint{font-size:10.5px;padding:6px 12px 10px}
+    .tool{padding:10px 6px;font-size:12px}
+    .playbtn{width:46px;height:46px;font-size:17px}
+    .pdel{width:26px;height:26px;font-size:13px}
+
+    .mobile-only{display:block !important}
+  }
+
+  @media (max-width:420px){
+    .tab{padding:7px 9px;font-size:11px}
+    .chip{font-size:11.5px;padding:7px 9px 7px 11px;gap:6px}
+    .chip-count{min-width:22px;height:19px;font-size:11.5px}
+    .qty-label{font-size:9.5px;letter-spacing:1px}
+    .formula-value{font-size:20px}
+    .props{max-height:42vh}
+  }
+</style>
+</head>
+<body>
+
+<div id="tabs">
+  <button class="tab active" data-tab="atom">⚛ Atom Lab</button>
+  <button class="tab" data-tab="compound">🧬 Compound Lab</button>
+  <button class="tab" data-tab="sandbox">🧪 Powder Sandbox</button>
+  <div id="brand">ATOM FORGE</div>
+</div>
+
+<div class="screen-host">
+
+<section id="atom" class="screen active">
+  <div class="atom-left">
+    <div class="canvas-wrap"><canvas id="atomCanvas" width="900" height="900"></canvas></div>
+    <div class="hint-wrap"><div class="hint" id="atomHint"></div></div>
+    <div class="qty-row">
+      <span class="qty-label">Amount</span>
+      <button class="qbtn" id="qtyMinus" title="Decrease">−</button>
+      <input id="qtyInput" type="number" min="1" max="999" value="1">
+      <button class="qbtn" id="qtyPlus" title="Increase">+</button>
+      <div class="qpresets">
+        <button class="qpreset sel" data-q="1">1</button>
+        <button class="qpreset" data-q="5">5</button>
+        <button class="qpreset" data-q="10">10</button>
+        <button class="qpreset" data-q="50">50</button>
+        <button class="qpreset" data-q="100">100</button>
+      </div>
+    </div>
+    <div class="chips">
+      <button class="chip p" data-type="p">Proton <span class="chip-count" id="countP">0</span></button>
+      <button class="chip n" data-type="n">Neutron <span class="chip-count" id="countN">0</span></button>
+      <button class="chip e" data-type="e">Electron <span class="chip-count" id="countE">0</span></button>
+      <button class="btn" id="chipModeBtn" title="Toggle add / remove tap mode">＋ Add</button>
+      <button class="btn" id="undoBtn">↶ Undo</button>
+      <button class="btn" id="clearBtn">Clear</button>
+      <button class="btn primary" id="forgeBtn">⚗ Forge Element</button>
+    </div>
+    <div class="clicknote">
+      <b>Left‑click</b> a chip to add the chosen amount · <b>Right‑click</b> a chip to remove that amount<br>
+      <b>On touch:</b> use the <b>＋ Add / － Remove</b> toggle above
+    </div>
+  </div>
+  <aside class="props">
+    <div class="props-head">
+      <div class="atom-title" id="atomTitle">Empty Space</div>
+      <div class="atom-sub" id="atomSub">Click the chips to build an atom →</div>
+      <div class="swatchbig" id="atomSwatch" style="background:#1a2136"></div>
+      <input id="propSearch" placeholder="Filter 113 properties…">
+    </div>
+    <div id="propList"></div>
+  </aside>
+</section>
+
+<section id="compound" class="screen">
+  <div class="cm-left">
+    <div class="cm-header">
+      <div class="cm-title">Compound Lab</div>
+      <div class="cm-sub">Combine forged elements into molecules</div>
+    </div>
+    <div class="recipe-bar" id="recipeBar"></div>
+    <div class="formula-box">
+      <div class="formula-label">Formula</div>
+      <div class="formula-value" id="formulaValue"><span class="formula-empty">nothing yet</span></div>
+    </div>
+    <div class="cm-elements" id="cmElements"></div>
+    <div class="cm-actions">
+      <button class="btn" id="cmClearBtn">Clear Formula</button>
+      <button class="btn primary" id="cmForgeBtn">⚗ Forge Compound</button>
+    </div>
+  </div>
+  <aside class="props">
+    <div class="props-head">
+      <div class="atom-title" id="cmTitle">No Compound</div>
+      <div class="atom-sub" id="cmSub">Pick a recipe or add elements below →</div>
+      <div class="swatchbig" id="cmSwatch" style="background:#1a2136"></div>
+      <input id="cmSearch" placeholder="Filter properties…">
+    </div>
+    <div id="cmPropList"></div>
+  </aside>
+</section>
+
+<section id="sandbox" class="screen">
+  <div class="sb-side">
+    <h3>Forged Powders</h3>
+    <div id="palette"></div>
+    <div class="sb-controls">
+      <h3>Time</h3>
+      <div class="time-row">
+        <button class="playbtn" id="playBtn" title="Pause / Resume (Space)">⏸</button>
+        <div class="time-meta">
+          <span class="time-lbl">Speed</span>
+          <span class="time-val" id="speedVal">1.00×</span>
+        </div>
+      </div>
+      <div class="slider"><input type="range" id="speed" min="0" max="11" value="4" step="1"></div>
+      <h3>Simulation</h3>
+      <div class="slider">Brush Size <span id="brushVal">4</span>
+        <input type="range" id="brush" min="1" max="16" value="4">
+      </div>
+      <div class="slider">Reactivity <span id="reactVal">1.0×</span>
+        <input type="range" id="react" min="0" max="30" value="10">
+      </div>
+      <div class="tools">
+        <button class="tool active mobile-only" id="toolPlace">✏️ Place</button>
+        <button class="tool mobile-only" id="toolErase">🧽 Erase</button>
+        <button class="tool" id="clearAllBtn">💥 Clear Canvas</button>
+        <button class="tool warn" id="clearPowdersBtn">🗑 Delete Powders</button>
+      </div>
+      <div class="sb-hint">
+        <b>Left click / drag</b> → place powder<br>
+        <b>Right click / drag</b> → erase<br>
+        <b>On touch:</b> use <b>Place / Erase</b> above<br>
+        <b>Scroll wheel</b> → brush size<br>
+        <b>✕ on a powder</b> → delete it<br>
+        <b>Space</b> → pause / resume time<br>
+        <b>Reactive pairs combine</b> into real compounds
+      </div>
+    </div>
+  </div>
+  <div class="sb-main">
+    <div class="sim-wrap"><canvas id="simCanvas" width="260" height="160"></canvas></div>
+  </div>
+</section>
+
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+"use strict";
+
+const clamp = (v, a = 0, b = 100) => Math.max(a, Math.min(b, v));
+
+function hash01(a, b, c) {
+  let h = 0x811c9dc5;
+  h = Math.imul(h ^ (a | 0), 0x01000193);
+  h = Math.imul(h ^ (b | 0), 0x01000193);
+  h = Math.imul(h ^ (c | 0), 0x01000193);
+  h ^= h >>> 13;
+  h = Math.imul(h, 0x5bd1e995);
+  h ^= h >>> 15;
+  return (h >>> 0) / 4294967296;
+}
+
+const ELEMENT_SYMBOLS = ("H He Li Be B C N O F Ne Na Mg Al Si P S Cl Ar K Ca Sc Ti V Cr Mn Fe Co Ni Cu Zn " +
+"Ga Ge As Se Br Kr Rb Sr Y Zr Nb Mo Tc Ru Rh Pd Ag Cd In Sn Sb Te I Xe Cs Ba La Ce Pr Nd Pm Sm Eu Gd Tb Dy Ho Er Tm Yb " +
+"Lu Hf Ta W Re Os Ir Pt Au Hg Tl Pb Bi Po At Rn Fr Ra Ac Th Pa U Np Pu Am Cm Bk Cf Es Fm Md No Lr Rf Db Sg Bh Hs Mt Ds " +
+"Rg Cn Nh Fl Mc Lv Ts Og").split(" ");
+
+const ELEMENT_NAMES = ("Hydrogen Helium Lithium Beryllium Boron Carbon Nitrogen Oxygen Fluorine Neon " +
+"Sodium Magnesium Aluminium Silicon Phosphorus Sulfur Chlorine Argon Potassium Calcium " +
+"Scandium Titanium Vanadium Chromium Manganese Iron Cobalt Nickel Copper Zinc " +
+"Gallium Germanium Arsenic Selenium Bromine Krypton Rubidium Strontium Yttrium Zirconium Niobium Molybdenum Technetium Ruthenium Rhodium Palladium Silver Cadmium Indium Tin Antimony Tellurium Iodine Xenon " +
+"Caesium Barium Lanthanum Cerium Praseodymium Neodymium Promethium Samarium Europium Gadolinium Terbium Dysprosium Holmium Erbium Thulium Ytterbium Lutetium Hafnium Tantalum Tungsten Rhenium Osmium Iridium Platinum Gold Mercury Thallium Lead Bismuth Polonium Astatine Radon " +
+"Francium Radium Actinium Thorium Protactinium Uranium Neptunium Plutonium Americium Curium Berkelium Californium Einsteinium Fermium Mendelevium Nobelium Lawrencium Rutherfordium Dubnium Seaborgium Bohrium Hassium Meitnerium Darmstadtium Roentgenium Copernicium Nihonium Flerovium Moscovium Livermorium Tennessine Oganesson").split(" ");
+
+/* Real physical data for Z = 1..103 */
+const ELEMENT_PHYS = [
+  null,
+  [14.01,20.28,0.00008988],[0.95,4.22,0.0001785],[453.65,1615,0.534],[1560,2742,1.85],
+  [2349,4200,2.34],[3800,4300,2.267],[63.15,77.36,0.001251],[54.36,90.20,0.001429],
+  [53.53,85.03,0.001696],[24.56,27.07,0.0008999],[370.87,1156,0.968],[923,1363,1.738],
+  [933.47,2792,2.70],[1687,3538,2.329],[317.3,550,1.823],[388.36,717.87,2.067],
+  [171.6,239.11,0.003214],[83.80,87.30,0.001784],[336.53,1032,0.862],[1115,1757,1.55],
+  [1814,3109,2.985],[1941,3560,4.506],[2183,3680,6.11],[2180,2944,7.15],
+  [1519,2334,7.21],[1811,3134,7.874],[1768,3200,8.90],[1728,3186,8.908],
+  [1357.77,2835,8.96],[692.68,1180,7.14],[302.91,2673,5.91],[1211.4,3106,5.323],
+  [1090,887,5.727],[494,958,4.81],[265.8,332.0,3.1028],[115.79,119.93,0.003749],
+  [312.46,961,1.532],[1050,1655,2.64],[1799,3609,4.472],[2128,4682,6.52],
+  [2750,5017,8.57],[2896,4912,10.28],[2430,4538,11],[2607,4423,12.45],
+  [2237,3968,12.41],[1828.05,3236,12.023],[1234.93,2435,10.49],[594.22,1040,8.65],
+  [429.75,2345,7.31],[505.08,2875,7.287],[903.78,1860,6.685],[722.66,1261,6.232],
+  [386.85,457.4,4.933],[161.4,165.03,0.005894],[301.59,944,1.93],[1000,2170,3.51],
+  [1193,3737,6.162],[1068,3716,6.77],[1208,3793,6.77],[1297,3347,7.01],
+  [1315,3273,7.26],[1345,2067,7.52],[1099,1802,5.264],[1585,3546,7.90],
+  [1629,3503,8.23],[1680,2840,8.54],[1734,2993,8.79],[1802,3141,9.066],
+  [1818,2223,9.32],[1097,1469,6.90],[1925,3675,9.841],[2506,4876,13.31],
+  [3290,5731,16.69],[3695,5828,19.25],[3459,5869,21.02],[3306,5285,22.59],
+  [2719,4701,22.56],[2041.4,4098,21.45],[1337.33,3129,19.30],[234.32,629.88,13.534],
+  [577,1746,11.85],[600.61,2022,11.34],[544.7,1837,9.78],[527,1235,9.196],
+  [575,610,7],[202,211.3,0.00973],[300,950,1.87],[973,2010,5.5],
+  [1323,3471,10.07],[2115,5061,11.72],[1841,4300,15.37],[1405.3,4404,19.1],
+  [917,4273,20.45],[912.5,3505,19.816],[1449,2880,12],[1613,3383,13.51],
+  [1259,2900,14.78],[1173,1743,15.1],[1133,1269,8.84],[1800,0,0],
+  [1100,0,0],[1100,0,0],[1900,0,0]
+];
+
+const ELEMENT_HARDNESS = {
+  3:0.6,4:5.5,5:9.5,6:10,11:0.5,12:2.5,13:2.75,14:6.5,16:2,19:0.4,20:1.75,
+  22:6,23:6.7,24:8.5,25:6,26:4,27:5,28:4,29:3,30:2.5,31:1.5,32:6,33:3.5,34:2,
+  37:0.3,38:1.5,40:5,41:6,42:5.5,44:6.5,45:6,46:4.75,47:2.5,48:2,49:1.2,50:1.5,
+  51:3,52:2.25,55:0.2,56:1.25,57:2.5,58:2.5,72:5.5,73:6.5,74:7.5,75:7,76:7,
+  77:6.5,78:3.5,79:2.5,81:1.2,82:1.5,83:2.25
+};
+
+const PAULING = [
+  2.20,-1,0.98,1.57,2.04,2.55,3.04,3.44,3.98,-1,
+  0.93,1.31,1.61,1.90,2.19,2.58,3.16,-1,
+  0.82,1.00,1.36,1.54,1.63,1.66,1.55,1.83,1.88,1.91,1.90,1.65,
+  1.81,2.01,2.18,2.55,2.96,3.00,
+  0.82,0.95,1.22,1.33,1.60,2.16,1.90,2.20,2.28,2.20,1.93,1.69,
+  1.78,1.96,2.05,2.10,2.66,2.60,
+  0.79,0.89,1.10,1.12,1.13,1.14,1.13,1.17,1.20,1.20,1.10,1.22,1.23,1.24,1.25,1.10,1.27,
+  1.30,1.50,2.36,1.90,2.20,2.20,2.28,2.54,2.00,
+  1.62,2.33,2.02,2.00,2.20,2.20,
+  0.70,0.90,1.10,1.30,1.50,1.38,1.36,1.28,1.13,1.28,1.30,1.30,1.30,1.30,1.30,1.30,1.30
+];
+
+const ELEMENT_COLORS = [
+  [225,235,250],[240,232,252],[203,203,208],[198,198,196],[62,56,50],[40,40,44],
+  [200,215,240],[178,210,250],[200,232,160],[255,180,140],[212,212,218],[202,202,200],
+  [190,196,202],[100,106,116],[224,206,110],[232,212,58],[182,222,132],[202,212,232],
+  [206,206,212],[200,200,196],[196,196,192],[186,186,192],[176,180,186],[202,202,208],
+  [166,166,172],[162,162,168],[178,182,198],[192,192,178],[202,120,68],[172,178,188],
+  [192,192,202],[156,162,168],[142,142,152],[152,92,72],[162,60,50],[202,212,232],
+  [196,196,202],[192,192,186],[186,186,182],[182,182,188],[172,176,182],[166,166,172],
+  [162,162,172],[182,182,192],[196,196,202],[192,192,198],[202,202,208],[176,182,192],
+  [186,186,196],[186,186,192],[162,162,168],[156,156,162],[92,62,92],[202,216,240],
+  [202,182,132],[192,192,186],[186,186,182],[182,182,176],[186,182,162],[182,182,176],
+  [176,176,182],[176,176,176],[176,176,182],[174,174,176],[172,172,174],[170,170,174],
+  [168,168,172],[166,166,170],[164,164,168],[162,162,166],[160,160,164],[172,172,176],
+  [152,152,162],[142,142,148],[156,156,162],[136,142,152],[182,182,188],[192,192,198],
+  [255,206,66],[182,182,192],[172,172,178],[112,118,132],[202,172,178],[162,162,168],
+  [62,42,62],[202,212,232],[172,172,178],[172,172,178],[172,172,172],[176,176,174],
+  [172,172,170],[142,152,122],[162,162,156],[152,152,152],[152,152,156],[146,146,152],
+  [162,162,166],[166,166,172],[170,170,174],[166,166,170],[162,162,166],[162,162,166],
+  [156,156,162],[156,156,162],[152,152,156],[150,150,154],[146,146,150],[142,142,146],
+  [138,138,142],[134,134,138],[166,162,142],[166,162,152],[172,166,152],[162,156,146],
+  [156,150,140],[152,146,136],[148,142,132],[144,138,128]
+];
+
+const VOLATILE = new Set([1,2,7,8,9,10,15,16,17,18,35,36,53,54,85,86]);
+
+const FAMOUS_RADIOISOTOPES = {
+  "84:126":99,"84:125":97,"84:124":96,"86:136":98,"86:134":99,"86:135":97,
+  "85:127":99,"85:126":98,"87:136":100,"88:138":94,"88:140":93,"88:137":92,
+  "89:138":92,"90:142":62,"90:140":78,"90:138":82,"91:140":76,"91:138":86,
+  "92:146":55,"92:143":68,"92:142":72,"93:144":80,"94:145":88,"94:150":78,
+  "94:143":90,"95:146":88,"96:151":84,"96:145":94,"43:56":85,"43:55":93,
+  "61:85":90,"61:86":88,"19:21":30,"37:48":28,"49:66":38,"57:82":30,
+  "62:89":35,"71:105":30,"75:112":40,"6:8":42
+};
+
+const REACTIVITY_OVERRIDE = {
+  2:2,7:8,10:2,18:3,36:5,54:8,86:12,4:18,12:20,13:22,22:25,40:22,72:28,
+  29:15,47:12,79:10,78:15,46:15,44:22,45:20
+};
+
+/* ============================================================
+   REACTIONS TABLE — element + element → compound
+   Key is "minZ:maxZ".  parts = balanced formula.
+   minTemp = heat threshold (0 = spontaneous at room temp).
+   releaseHeat = heat dumped into both cells when firing.
+============================================================ */
+const REACTIONS = {
+  /* Hydrogen */
+  "1:6":  {parts:[{Z:1,c:4},{Z:6,c:1}],formula:"CH₄",name:"Methane",minTemp:2.4,releaseHeat:0.6},
+  "1:7":  {parts:[{Z:1,c:3},{Z:7,c:1}],formula:"NH₃",name:"Ammonia",minTemp:2.0,releaseHeat:0.6},
+  "1:8":  {parts:[{Z:1,c:2},{Z:8,c:1}],formula:"H₂O",name:"Water",minTemp:1.6,releaseHeat:1.8},
+  "1:9":  {parts:[{Z:1,c:1},{Z:9,c:1}],formula:"HF",name:"Hydrogen Fluoride",minTemp:0.2,releaseHeat:2.0},
+  "1:15": {parts:[{Z:1,c:3},{Z:15,c:1}],formula:"PH₃",name:"Phosphine",minTemp:2.2,releaseHeat:0.3},
+  "1:16": {parts:[{Z:1,c:2},{Z:16,c:1}],formula:"H₂S",name:"Hydrogen Sulfide",minTemp:1.6,releaseHeat:0.4},
+  "1:17": {parts:[{Z:1,c:1},{Z:17,c:1}],formula:"HCl",name:"Hydrogen Chloride",minTemp:1.1,releaseHeat:1.0},
+  "1:35": {parts:[{Z:1,c:1},{Z:35,c:1}],formula:"HBr",name:"Hydrogen Bromide",minTemp:1.3,releaseHeat:0.8},
+  "1:53": {parts:[{Z:1,c:1},{Z:53,c:1}],formula:"HI",name:"Hydrogen Iodide",minTemp:1.7,releaseHeat:0.5},
+  /* Carbon */
+  "6:8":  {parts:[{Z:6,c:1},{Z:8,c:2}],formula:"CO₂",name:"Carbon Dioxide",minTemp:1.5,releaseHeat:1.8},
+  "6:14": {parts:[{Z:6,c:1},{Z:14,c:1}],formula:"SiC",name:"Silicon Carbide",minTemp:2.5,releaseHeat:0.6},
+  "6:16": {parts:[{Z:6,c:1},{Z:16,c:2}],formula:"CS₂",name:"Carbon Disulfide",minTemp:2.2,releaseHeat:0.7},
+  "6:17": {parts:[{Z:6,c:1},{Z:17,c:4}],formula:"CCl₄",name:"Carbon Tetrachloride",minTemp:2.4,releaseHeat:0.4},
+  /* Nitrogen */
+  "3:7":  {parts:[{Z:3,c:3},{Z:7,c:1}],formula:"Li₃N",name:"Lithium Nitride",minTemp:0.4,releaseHeat:1.4},
+  "7:8":  {parts:[{Z:7,c:1},{Z:8,c:1}],formula:"NO",name:"Nitrogen Monoxide",minTemp:2.5,releaseHeat:0.7},
+  "7:12": {parts:[{Z:7,c:2},{Z:12,c:3}],formula:"Mg₃N₂",name:"Magnesium Nitride",minTemp:1.1,releaseHeat:1.0},
+  /* Oxygen — metals */
+  "8:11": {parts:[{Z:8,c:1},{Z:11,c:2}],formula:"Na₂O",name:"Sodium Oxide",minTemp:0.4,releaseHeat:1.4},
+  "8:12": {parts:[{Z:8,c:1},{Z:12,c:1}],formula:"MgO",name:"Magnesium Oxide",minTemp:1.0,releaseHeat:2.0},
+  "8:13": {parts:[{Z:8,c:3},{Z:13,c:2}],formula:"Al₂O₃",name:"Aluminium Oxide",minTemp:0.8,releaseHeat:2.0},
+  "8:19": {parts:[{Z:8,c:1},{Z:19,c:2}],formula:"K₂O",name:"Potassium Oxide",minTemp:0.3,releaseHeat:1.5},
+  "8:20": {parts:[{Z:8,c:1},{Z:20,c:1}],formula:"CaO",name:"Calcium Oxide",minTemp:0.5,releaseHeat:1.7},
+  "8:38": {parts:[{Z:8,c:1},{Z:38,c:1}],formula:"SrO",name:"Strontium Oxide",minTemp:0.5,releaseHeat:1.7},
+  "8:56": {parts:[{Z:8,c:1},{Z:56,c:1}],formula:"BaO",name:"Barium Oxide",minTemp:0.4,releaseHeat:1.8},
+  "8:22": {parts:[{Z:8,c:2},{Z:22,c:1}],formula:"TiO₂",name:"Titanium Dioxide",minTemp:1.2,releaseHeat:1.5},
+  "8:24": {parts:[{Z:8,c:3},{Z:24,c:2}],formula:"Cr₂O₃",name:"Chromium(III) Oxide",minTemp:1.0,releaseHeat:1.5},
+  "8:25": {parts:[{Z:8,c:2},{Z:25,c:1}],formula:"MnO₂",name:"Manganese Dioxide",minTemp:1.0,releaseHeat:1.2},
+  "8:26": {parts:[{Z:8,c:3},{Z:26,c:2}],formula:"Fe₂O₃",name:"Iron(III) Oxide",minTemp:0.7,releaseHeat:1.5},
+  "8:28": {parts:[{Z:8,c:1},{Z:28,c:1}],formula:"NiO",name:"Nickel(II) Oxide",minTemp:0.9,releaseHeat:1.3},
+  "8:29": {parts:[{Z:8,c:1},{Z:29,c:1}],formula:"CuO",name:"Copper(II) Oxide",minTemp:0.9,releaseHeat:1.2},
+  "8:30": {parts:[{Z:8,c:1},{Z:30,c:1}],formula:"ZnO",name:"Zinc Oxide",minTemp:0.8,releaseHeat:1.4},
+  "8:50": {parts:[{Z:8,c:2},{Z:50,c:1}],formula:"SnO₂",name:"Tin(IV) Oxide",minTemp:1.1,releaseHeat:1.0},
+  "8:82": {parts:[{Z:8,c:1},{Z:82,c:1}],formula:"PbO",name:"Lead(II) Oxide",minTemp:0.9,releaseHeat:1.0},
+  /* Oxygen — nonmetals */
+  "8:14": {parts:[{Z:8,c:2},{Z:14,c:1}],formula:"SiO₂",name:"Silicon Dioxide",minTemp:1.1,releaseHeat:1.3},
+  "8:15": {parts:[{Z:8,c:5},{Z:15,c:2}],formula:"P₂O₅",name:"Phosphorus Pentoxide",minTemp:1.0,releaseHeat:1.5},
+  "8:16": {parts:[{Z:8,c:2},{Z:16,c:1}],formula:"SO₂",name:"Sulfur Dioxide",minTemp:0.8,releaseHeat:1.3},
+  /* Sulfur */
+  "11:16":{parts:[{Z:11,c:2},{Z:16,c:1}],formula:"Na₂S",name:"Sodium Sulfide",minTemp:0.4,releaseHeat:1.4},
+  "13:16":{parts:[{Z:13,c:2},{Z:16,c:3}],formula:"Al₂S₃",name:"Aluminium Sulfide",minTemp:0.8,releaseHeat:1.5},
+  "16:20":{parts:[{Z:16,c:1},{Z:20,c:1}],formula:"CaS",name:"Calcium Sulfide",minTemp:1.0,releaseHeat:1.3},
+  "16:25":{parts:[{Z:16,c:1},{Z:25,c:1}],formula:"MnS",name:"Manganese(II) Sulfide",minTemp:0.9,releaseHeat:1.1},
+  "16:26":{parts:[{Z:16,c:1},{Z:26,c:1}],formula:"FeS",name:"Iron(II) Sulfide",minTemp:1.0,releaseHeat:0.9},
+  "16:27":{parts:[{Z:16,c:1},{Z:27,c:1}],formula:"CoS",name:"Cobalt(II) Sulfide",minTemp:0.7,releaseHeat:0.9},
+  "16:28":{parts:[{Z:16,c:1},{Z:28,c:1}],formula:"NiS",name:"Nickel(II) Sulfide",minTemp:0.7,releaseHeat:0.9},
+  "16:29":{parts:[{Z:16,c:1},{Z:29,c:1}],formula:"CuS",name:"Copper(II) Sulfide",minTemp:0.8,releaseHeat:0.8},
+  "16:30":{parts:[{Z:16,c:1},{Z:30,c:1}],formula:"ZnS",name:"Zinc Sulfide",minTemp:0.7,releaseHeat:1.0},
+  "16:31":{parts:[{Z:16,c:3},{Z:31,c:2}],formula:"Ga₂S₃",name:"Gallium(III) Sulfide",minTemp:0.8,releaseHeat:1.1},
+  "16:47":{parts:[{Z:16,c:1},{Z:47,c:2}],formula:"Ag₂S",name:"Silver Sulfide",minTemp:0.3,releaseHeat:0.5},
+  "16:48":{parts:[{Z:16,c:1},{Z:48,c:1}],formula:"CdS",name:"Cadmium Sulfide",minTemp:0.9,releaseHeat:0.9},
+  "16:50":{parts:[{Z:16,c:1},{Z:50,c:1}],formula:"SnS",name:"Tin(II) Sulfide",minTemp:0.8,releaseHeat:1.0},
+  "16:56":{parts:[{Z:16,c:1},{Z:56,c:1}],formula:"BaS",name:"Barium Sulfide",minTemp:0.8,releaseHeat:1.1},
+  "16:80":{parts:[{Z:16,c:1},{Z:80,c:1}],formula:"HgS",name:"Mercury(II) Sulfide",minTemp:0.6,releaseHeat:0.6},
+  "16:82":{parts:[{Z:16,c:1},{Z:82,c:1}],formula:"PbS",name:"Lead(II) Sulfide",minTemp:0.7,releaseHeat:0.8},
+  /* Chlorine */
+  "11:17":{parts:[{Z:11,c:1},{Z:17,c:1}],formula:"NaCl",name:"Sodium Chloride",minTemp:0.15,releaseHeat:1.8},
+  "12:17":{parts:[{Z:12,c:1},{Z:17,c:2}],formula:"MgCl₂",name:"Magnesium Chloride",minTemp:0.4,releaseHeat:1.5},
+  "13:17":{parts:[{Z:13,c:1},{Z:17,c:3}],formula:"AlCl₃",name:"Aluminium Chloride",minTemp:0.4,releaseHeat:1.3},
+  "17:19":{parts:[{Z:17,c:1},{Z:19,c:1}],formula:"KCl",name:"Potassium Chloride",minTemp:0.15,releaseHeat:1.8},
+  "17:20":{parts:[{Z:17,c:2},{Z:20,c:1}],formula:"CaCl₂",name:"Calcium Chloride",minTemp:0.4,releaseHeat:1.5},
+  "17:26":{parts:[{Z:17,c:3},{Z:26,c:1}],formula:"FeCl₃",name:"Iron(III) Chloride",minTemp:0.3,releaseHeat:1.0},
+  "17:29":{parts:[{Z:17,c:2},{Z:29,c:1}],formula:"CuCl₂",name:"Copper(II) Chloride",minTemp:0.5,releaseHeat:0.9},
+  "17:30":{parts:[{Z:17,c:2},{Z:30,c:1}],formula:"ZnCl₂",name:"Zinc Chloride",minTemp:0.5,releaseHeat:0.9},
+  "17:47":{parts:[{Z:17,c:1},{Z:47,c:1}],formula:"AgCl",name:"Silver Chloride",minTemp:0.3,releaseHeat:1.2},
+  "17:50":{parts:[{Z:17,c:4},{Z:50,c:1}],formula:"SnCl₄",name:"Tin(IV) Chloride",minTemp:0.5,releaseHeat:0.9},
+  "17:79":{parts:[{Z:17,c:3},{Z:79,c:1}],formula:"AuCl₃",name:"Gold(III) Chloride",minTemp:0.5,releaseHeat:1.0},
+  "17:80":{parts:[{Z:17,c:2},{Z:80,c:1}],formula:"HgCl₂",name:"Mercury(II) Chloride",minTemp:0.4,releaseHeat:0.8},
+  /* Fluorine */
+  "3:9":  {parts:[{Z:3,c:1},{Z:9,c:1}],formula:"LiF",name:"Lithium Fluoride",minTemp:0.05,releaseHeat:2.8},
+  "9:11": {parts:[{Z:9,c:1},{Z:11,c:1}],formula:"NaF",name:"Sodium Fluoride",minTemp:0.05,releaseHeat:2.5},
+  "9:20": {parts:[{Z:9,c:2},{Z:20,c:1}],formula:"CaF₂",name:"Calcium Fluoride",minTemp:0.05,releaseHeat:2.5},
+  /* Other halides */
+  "11:35":{parts:[{Z:11,c:1},{Z:35,c:1}],formula:"NaBr",name:"Sodium Bromide",minTemp:0.4,releaseHeat:1.2},
+  "19:53":{parts:[{Z:19,c:1},{Z:53,c:1}],formula:"KI",name:"Potassium Iodide",minTemp:0.5,releaseHeat:0.8},
+  "14:17":{parts:[{Z:14,c:1},{Z:17,c:4}],formula:"SiCl₄",name:"Silicon Tetrachloride",minTemp:1.0,releaseHeat:0.9},
+  "15:17":{parts:[{Z:15,c:1},{Z:17,c:3}],formula:"PCl₃",name:"Phosphorus Trichloride",minTemp:0.4,releaseHeat:1.0}
+};
+
+/* ============================================================
+   Generic fallback: metal + non-metal → ionic compound
+   Uses common oxidation states.
+============================================================ */
+const METAL_OXIDATION = {
+  3:1,4:2,11:1,12:2,13:3,19:1,20:2,21:3,22:4,23:5,24:3,25:2,26:3,27:2,28:2,
+  29:2,30:2,31:3,37:1,38:2,39:3,40:4,41:5,42:6,43:7,44:3,45:3,46:2,47:1,
+  48:2,49:3,50:2,51:3,55:1,56:2,57:3,58:3,59:3,60:3,62:3,63:3,64:3,65:3,
+  66:3,67:3,68:3,69:3,70:2,71:3,72:4,73:5,74:6,75:7,76:4,77:4,78:2,79:3,
+  80:2,81:1,82:2,83:3,88:2,89:3,90:4,91:5,92:6,93:5,94:4,95:3,96:3,97:3,98:3
+};
+const NONMETAL_ANION = {
+  7:{ox:3,name:"nitride"},8:{ox:2,name:"oxide"},9:{ox:1,name:"fluoride"},
+  15:{ox:3,name:"phosphide"},16:{ox:2,name:"sulfide"},17:{ox:1,name:"chloride"},
+  33:{ox:3,name:"arsenide"},34:{ox:2,name:"selenide"},35:{ox:1,name:"bromide"},
+  52:{ox:2,name:"telluride"},53:{ox:1,name:"iodide"}
+};
+const ALKALI = new Set([3,11,19,37,55]);
+const ALKALINE = new Set([4,12,20,38,56,88]);
+
+function gcd(a, b) { while (b) { const t = b; b = a % b; a = t; } return a; }
+function toRoman(n) {
+  const m = {1:"I",2:"II",3:"III",4:"IV",5:"V",6:"VI",7:"VII",8:"VIII"};
+  return m[n] || String(n);
+}
+function capitalize(s) { return s ? s.charAt(0).toUpperCase() + s.slice(1) : s; }
+
+function predictCompound(zA, zB) {
+  let zMetal, zNon;
+  if (METAL_OXIDATION[zA] && NONMETAL_ANION[zB]) { zMetal = zA; zNon = zB; }
+  else if (METAL_OXIDATION[zB] && NONMETAL_ANION[zA]) { zMetal = zB; zNon = zA; }
+  else return null;
+  const mOx = METAL_OXIDATION[zMetal];
+  const nOx = NONMETAL_ANION[zNon].ox;
+  const g = gcd(mOx, nOx);
+  const nMetal = nOx / g, nNon = mOx / g;
+  const symM = ELEMENT_SYMBOLS[zMetal - 1] || "?";
+  const symN = ELEMENT_SYMBOLS[zNon - 1] || "?";
+  const formula = symM + (nMetal > 1 ? sub(nMetal) : "") + symN + (nNon > 1 ? sub(nNon) : "");
+  const catName = getElementName(zMetal, null).toLowerCase();
+  const anName = NONMETAL_ANION[zNon].name;
+  const needsRoman = !ALKALI.has(zMetal) && !ALKALINE.has(zMetal) && mOx > 1;
+  const name = capitalize(catName) + (needsRoman ? "(" + toRoman(mOx) + ")" : "") + " " + anName;
+  return {
+    parts: [{Z: zMetal, c: nMetal}, {Z: zNon, c: nNon}],
+    formula, name, metalZ: zMetal
+  };
+}
+
+function lookupReaction(zA, zB) {
+  if (zA === zB || zA <= 0 || zB <= 0) return null;
+  const lo = Math.min(zA, zB), hi = Math.max(zA, zB);
+  const key = lo + ":" + hi;
+  const known = REACTIONS[key];
+  if (known) return { parts: known.parts, formula: known.formula, name: known.name,
+    minTemp: known.minTemp, releaseHeat: known.releaseHeat, key };
+  const gen = predictCompound(zA, zB);
+  if (gen) {
+    const minTemp = ALKALI.has(gen.metalZ) ? 0.3 :
+                    ALKALINE.has(gen.metalZ) ? 0.6 :
+                    gen.metalZ <= 30 ? 0.9 : 1.2;
+    return { parts: gen.parts, formula: gen.formula, name: gen.name,
+      minTemp, releaseHeat: 1.1, key };
+  }
+  return null;
+}
+
+const SUP = "⁰¹²³⁴⁵⁶⁷⁸⁹";
+const SUB = "₀₁₂₃₄₅₆₇₈₉";
+const sup = n => String(n).split("").map(d => SUP[+d]).join("");
+const sub = n => String(n).split("").map(d => SUB[+d]).join("");
+
+function getEN(Z) {
+  if (Z >= 1 && Z <= PAULING.length && PAULING[Z-1] > 0) return PAULING[Z-1];
+  return 2.5;
+}
+
+const NAME_PREFIXES = ["Aur","Bery","Cal","Drav","El","Ferr","Gal","Hyl","Ith","Jor","Kal","Lor","Mor","Nyx","Oph","Pyr","Quel","Reth","Syl","Tor","Uln","Vor","Wyr","Xen","Yth","Zan","Bry","Cry","Dyn","Eth","Fyr","Gly","Hyr","Isa","Jyn","Kry","Lyn","Myn","Nys","Ora","Pel","Qar","Ryv","Seph","Tir","Ulm","Vex","Wol","Xyl","Zel","Thal","Phor","Cras","Skar","Tarn","Vord","Kest","Malk","Nask","Drex","Glam","Hesk","Lorn","Plex","Quin","Stel","Vask","Wist"];
+const NAME_MIDDLES = ["an","ar","el","en","in","on","or","al","am","em","om","ur","yr","es","os"];
+const SUFFIX_METAL = ["ium","ium","ium","ium","um","ium"];
+const SUFFIX_NOBLE = ["on","on","on","en"];
+const SUFFIX_HALOGEN = ["ine","ine","ine","yne"];
+const SUFFIX_NONMETAL = ["gen","on","ine","ane","ene"];
+
+function generateElementName(Z, props) {
+  const seed = Z * 9973 + (props ? Math.floor((props.electronegativity||2) * 137) : 0);
+  const h1 = hash01(seed, 7, 13), h2 = hash01(seed, 17, 23), h3 = hash01(seed, 29, 41);
+  const p = NAME_PREFIXES[Math.floor(h1 * NAME_PREFIXES.length)];
+  const m = NAME_MIDDLES[Math.floor(h2 * NAME_MIDDLES.length)];
+  let suffixes;
+  if (!props) suffixes = SUFFIX_METAL;
+  else if (props.electronegativity > 3.2) suffixes = SUFFIX_HALOGEN;
+  else if (props.electronegativity > 2.6 && props.metallicCharacter < 30) suffixes = SUFFIX_NONMETAL;
+  else if (props.metallicCharacter < 15 && props.electronegativity < 1.5) suffixes = SUFFIX_NOBLE;
+  else if (props.metallicCharacter > 55) suffixes = SUFFIX_METAL;
+  else suffixes = SUFFIX_NONMETAL;
+  const s = suffixes[Math.floor(h3 * suffixes.length)];
+  const raw = p + m + s;
+  return raw.charAt(0).toUpperCase() + raw.slice(1).toLowerCase();
+}
+function getElementName(Z, props) {
+  if (Z >= 1 && Z <= ELEMENT_NAMES.length) return ELEMENT_NAMES[Z - 1];
+  return generateElementName(Z, props);
+}
+function getElementSymbol(Z, props) {
+  if (Z >= 1 && Z <= ELEMENT_SYMBOLS.length) return ELEMENT_SYMBOLS[Z - 1];
+  if (Z === 0) return "Nu";
+  return generateElementName(Z, props).charAt(0);
+}
+function stableNForZ(Z) {
+  if (Z <= 0) return 0;
+  if (Z === 1) return 0;
+  if (Z <= 20) return Z;
+  if (Z <= 40) return Math.round(Z * 1.2);
+  if (Z <= 83) return Math.round(Z * 1.4);
+  return Math.round(Z * 1.55);
+}
+
+function hslToRgb(h, s, l) {
+  let r, g, b;
+  if (s === 0) { r = g = b = l; }
+  else {
+    const hue2rgb = (p, q, t) => {
+      if (t < 0) t += 1; if (t > 1) t -= 1;
+      if (t < 1 / 6) return p + (q - p) * 6 * t;
+      if (t < 1 / 2) return q;
+      if (t < 2 / 3) return p + (q - p) * (2 / 3 - t) * 6;
+      return p;
+    };
+    const q = l < 0.5 ? l * (1 + s) : l + s - l * s;
+    const p = 2 * l - q;
+    r = hue2rgb(p, q, h + 1 / 3); g = hue2rgb(p, q, h); b = hue2rgb(p, q, h - 1 / 3);
+  }
+  return [r, g, b];
+}
+function rgbToHsl(r, g, b) {
+  r /= 255; g /= 255; b /= 255;
+  const max = Math.max(r, g, b), min = Math.min(r, g, b);
+  const l = (max + min) / 2;
+  let hh = 0, ss = 0;
+  if (max !== min) {
+    const d = max - min;
+    ss = l > 0.5 ? d / (2 - max - min) : d / (max + min);
+    if (max === r) hh = (g - b) / d + (g < b ? 6 : 0);
+    else if (max === g) hh = (b - r) / d + 2;
+    else hh = (r - g) / d + 4;
+    hh *= 60;
+  }
+  return [hh, ss * 100, l * 100];
+}
+
+const ORBITALS = [[1,2],[2,2],[2,6],[3,2],[3,6],[4,2],[3,10],[4,6],[5,2],[4,10],[5,6],[6,2],[4,14],[5,10],[6,6],[7,2],[5,14],[6,10],[7,6]];
+const ORB_NAMES = ["1s","2s","2p","3s","3p","4s","3d","4p","5s","4d","5p","6s","4f","5d","6p","7s","5f","6d","7p"];
+
+function electronConfig(E) {
+  let rem = Math.max(0, E);
+  const shells = [0, 0, 0, 0, 0, 0, 0];
+  for (let i = 0; i < ORBITALS.length; i++) {
+    if (rem <= 0) break;
+    const take = Math.min(ORBITALS[i][1], rem);
+    rem -= take;
+    shells[ORBITALS[i][0] - 1] += take;
+  }
+  if (rem > 0) shells[6] += rem;
+  return shells;
+}
+function formatConfig(E) {
+  let rem = Math.max(0, E);
+  const parts = [];
+  for (let i = 0; i < ORBITALS.length; i++) {
+    if (rem <= 0) break;
+    const take = Math.min(ORBITALS[i][1], rem);
+    rem -= take;
+    parts.push(ORB_NAMES[i] + sup(take));
+  }
+  if (rem > 0) parts.push("…" + sup(rem));
+  return parts.join(" ") || "—";
+}
+
+function deriveAtom(P, N, E) {
+  const Z = P, A = P + N, charge = P - E;
+  const shells = electronConfig(E);
+  let period = 1;
+  for (let i = 0; i < 7; i++) if (shells[i] > 0) period = i + 1;
+  const valence = shells[period - 1] || 0;
+  const r = i => hash01(Z * 7919 + N * 4517 + E * 1301, i * 131, i * i * 17 + 3);
+
+  let lowN, highN;
+  if (Z <= 20) { lowN = Math.max(0, Z - 1); highN = Z + 1; }
+  else if (Z <= 83) { lowN = Math.round(Z * 1.15); highN = Math.round(Z * 1.45); }
+  else { lowN = Math.round(Z * 1.45); highN = Math.round(Z * 1.60); }
+  let dev = 0;
+  if (N > highN) dev = (N - highN) / Math.max(1, highN);
+  else if (N < lowN) dev = (lowN - N) / Math.max(1, lowN);
+  const tooHeavy = Math.max(0, Z - 83);
+  const stability = clamp(100 - dev * 145 - tooHeavy * 6 - Math.abs(charge) * 2.2);
+
+  const isoKey = Z + ":" + N;
+  let radio;
+  if (FAMOUS_RADIOISOTOPES[isoKey] !== undefined) radio = FAMOUS_RADIOISOTOPES[isoKey];
+  else if (Z > 83) radio = clamp(60 + (Z - 84) * 2 + dev * 40);
+  else if (Z === 0) radio = 0;
+  else radio = clamp((100 - stability) * 0.9);
+
+  const v = {};
+  v.atomicNumber = Z; v.neutronCount = N; v.massNumber = A; v.electronCount = E;
+  v.netCharge = charge;
+  v.atomicMass = +(Z * 1.00728 + N * 1.00866 + E * 0.000549).toFixed(5);
+  v.massDefect = +(A * 0.0088 * (0.35 + 0.65 * r(2))).toFixed(4);
+  v.bindingEnergy = +clamp(8.8 - Math.abs(A - 56) * 0.012 - Math.max(0, A - 200) * 0.012 - dev * 1.6, 0, 9).toFixed(2);
+  v.neutronRatio = +(N / Math.max(1, Z)).toFixed(3);
+  v.nuclearStability = +stability.toFixed(1);
+  v.radioactivity = +radio.toFixed(1);
+  v.halfLifeYears = Math.pow(10, clamp(12 - radio / 8, -5, 12));
+  v.decayMode = radio > 40 ? (N > highN ? "β⁻" : (N < lowN ? "β⁺ / EC" : "α")) : "Stable";
+  v.period = period; v.valenceElectrons = valence;
+  v.coreElectrons = Math.max(0, E - valence);
+  v.atomicRadius = +clamp(60 + period * 38 - valence * 3.5 + (r(3) - 0.5) * 24, 25, 320).toFixed(1);
+  v.covalentRadius = +(v.atomicRadius * 0.86).toFixed(1);
+  v.ionicRadius = +Math.max(10, v.atomicRadius * (1 + charge * 0.045)).toFixed(1);
+  v.electronConfiguration = formatConfig(E);
+  v.shellOccupancy = shells.join(" · ");
+  v.packingFraction = +(0.35 + valence * 0.045 + r(4) * 0.3).toFixed(3);
+
+  const realPhys = (Z >= 1 && Z < ELEMENT_PHYS.length) ? ELEMENT_PHYS[Z] : null;
+  let mp, bp, dens;
+  if (realPhys && realPhys[0] > 0) {
+    mp = realPhys[0]; bp = realPhys[1] || realPhys[0] * 1.5;
+    dens = realPhys[2] > 0 ? realPhys[2] : null;
+  } else {
+    let meltBase = 90 + Z * 21 + period * 115 - valence * 34 + (r(5) - 0.5) * 420;
+    if (VOLATILE.has(Z)) meltBase = (90 + Z * 21 + period * 115 - valence * 34) * 0.09 + (r(5) - 0.5) * 70;
+    mp = Math.round(clamp(meltBase, 1, 4200));
+    bp = Math.round(clamp(mp * (1.25 + r(6) * 0.85) + 40, 2, 6000));
+    dens = null;
+  }
+  v.meltingPoint = Math.round(mp);
+  v.boilingPoint = Math.round(bp);
+  v.criticalTemperature = Math.round(bp * (1.25 + r(7) * 0.4));
+  v.criticalPressure = +(1 + r(8) * 22).toFixed(2);
+  if (mp > bp) v.stateAtSTP = 293 < mp ? "Solid" : "Gas";
+  else v.stateAtSTP = 293 < mp ? "Solid" : (293 < bp ? "Liquid" : "Gas");
+  if (dens !== null) v.density = +dens.toFixed(6);
+  else {
+    let d = clamp(0.3 + Z * 0.08 + period * 0.6 - valence * 0.15, 0.08, 25);
+    if (v.stateAtSTP === "Gas") d = clamp(d * 0.02, 0.0001, 0.5);
+    else if (v.stateAtSTP === "Liquid") d *= 0.8;
+    d *= 0.75 + r(9) * 0.5;
+    v.density = +d.toFixed(4);
+  }
+  v.molarVolume = +(v.atomicMass / Math.max(0.0001, v.density)).toFixed(2);
+  v.hardness = ELEMENT_HARDNESS[Z] !== undefined ? ELEMENT_HARDNESS[Z] :
+    +clamp(0.5 + Z * 0.045 + period * 0.3 + (r(10) - 0.5) * 3, 0.1, 10).toFixed(1);
+  v.malleability = +clamp(35 + valence * 6 - period * 4 + (r(11) - 0.5) * 55).toFixed(1);
+  v.ductility = +clamp(32 + valence * 5.5 - period * 3.5 + (r(12) - 0.5) * 55).toFixed(1);
+  v.brittleness = +clamp(100 - (v.malleability + v.ductility) / 2).toFixed(1);
+  v.elasticity = +clamp(20 + v.hardness * 6 + (r(13) - 0.5) * 40).toFixed(1);
+  v.porosity = +clamp(10 + r(14) * 70 - v.hardness * 3).toFixed(1);
+  v.grainSize = +(0.5 + r(15) * 120).toFixed(2);
+  v.friability = +clamp(v.brittleness * 0.8 + r(16) * 25).toFixed(1);
+  v.abrasiveness = +clamp(v.hardness * 8 + r(17) * 20).toFixed(1);
+
+  const metallic = clamp(period * 7 + valence * 5 - Math.abs(valence - 2) * 5 + (r(18) - 0.4) * 35);
+  v.metallicCharacter = +metallic.toFixed(1);
+  v.nonmetallicCharacter = +(100 - metallic).toFixed(1);
+  v.thermalConductivity = +clamp(metallic * 2.6 + r(19) * 30).toFixed(2);
+  v.specificHeat = +(0.3 + r(20) * 4.2).toFixed(2);
+  v.thermalExpansion = +(2 + r(21) * 26).toFixed(2);
+  v.thermalDiffusivity = +(v.thermalConductivity / Math.max(0.2, v.specificHeat * Math.max(0.001, v.density)) * 10).toFixed(3);
+  v.heatOfFusion = +(1 + r(22) * 45).toFixed(2);
+  v.heatOfVaporization = +(5 + r(23) * 320).toFixed(2);
+  v.sublimationPoint = Math.round(v.meltingPoint * (0.8 + r(24) * 0.7));
+  v.volatility = +clamp(100 - v.boilingPoint / 60 + r(25) * 15).toFixed(1);
+  v.electricalConductivity = Math.pow(metallic / 10, 3.4) * 1e6;
+  v.resistivity = 1 / Math.max(1e-8, v.electricalConductivity);
+  v.bandGap = +Math.max(0, (100 - metallic) / 100 * 6.5 * (0.4 + r(26))).toFixed(3);
+  v.semiconductorType = v.bandGap < 0.05 ? "Conductor" : (v.bandGap < 3.2 ? (r(27) < 0.5 ? "n-type" : "p-type") : "Insulator");
+  v.dielectricStrength = +(2 + r(28) * 120).toFixed(2);
+  v.permittivity = +(1 + r(29) * 90).toFixed(2);
+  v.workFunction = +(2 + metallic / 20 + r(30) * 2.5).toFixed(2);
+  v.superconductivityTemp = +(r(31) < 0.12 ? r(32) * 90 : 0).toFixed(2);
+  v.piezoelectricity = +clamp(r(33) * 90 * (1 - metallic / 150)).toFixed(1);
+  v.thermoelectricity = +clamp(metallic * 0.7 + r(34) * 40).toFixed(1);
+  const ferro = clamp((Z > 25 && Z < 30) || (Z > 58 && Z < 72) ? 60 + r(35) * 40 : r(36) * 22);
+  v.ferromagnetism = +ferro.toFixed(1);
+  v.paramagnetism = +clamp(30 + r(37) * 60 - ferro * 0.5).toFixed(1);
+  v.diamagnetism = +clamp(100 - v.paramagnetism - ferro * 0.6).toFixed(1);
+  v.magneticSusceptibility = +((v.paramagnetism - v.diamagnetism) * (0.3 + r(38))).toFixed(2);
+  v.curieTemperature = Math.round(200 + ferro * 9 + r(39) * 300);
+  v.permeability = +(1 + ferro / 12).toFixed(3);
+
+  let colorRGB;
+  if (Z >= 1 && Z <= ELEMENT_COLORS.length) colorRGB = ELEMENT_COLORS[Z - 1].slice();
+  else {
+    const hh = ((Z * 37 + N * 13 + E * 7) % 360) / 360;
+    const ss = clamp(35 + r(40) * 60) / 100;
+    const ll = clamp(28 + r(41) * 52) / 100;
+    const [rr, gg, bb] = hslToRgb(hh, ss, ll);
+    colorRGB = [Math.round(rr * 255), Math.round(gg * 255), Math.round(bb * 255)];
+  }
+  v.elementColor = colorRGB;
+  const [cH, cS, cL] = rgbToHsl(colorRGB[0], colorRGB[1], colorRGB[2]);
+  v.colorHue = Math.round(cH); v.colorSaturation = Math.round(cS); v.colorLightness = Math.round(cL);
+  v.reflectivity = +clamp(metallic * 0.8 + r(42) * 25).toFixed(1);
+  v.refractiveIndex = +(1.05 + r(43) * 1.9).toFixed(3);
+  v.opacity = +clamp(40 + v.density * 4 + r(44) * 30).toFixed(1);
+  v.luster = +clamp(metallic * 0.9 + r(45) * 20).toFixed(1);
+  v.photoconductivity = +clamp(r(46) * 100 * (1 - metallic / 130)).toFixed(1);
+
+  const rawEN = (Z >= 1 && Z <= PAULING.length) ? PAULING[Z - 1] : -1;
+  const isNoble = rawEN < 0;
+  const en = isNoble ? (2.4 + r(47) * 0.7) : rawEN;
+  v.electronegativity = +en.toFixed(2);
+  v.ionizationEnergy = +clamp(3.5 + en * 3.4 + period * 0.6 + r(48)).toFixed(2);
+  v.electronAffinity = +clamp(en * 55 + r(49) * 80).toFixed(1);
+  const ox = [];
+  if (valence <= 4) { for (let k = 1; k <= valence; k++) if (r(50 + k) < 0.6) ox.push(k); }
+  else { for (let k = 1; k <= 8 - valence; k++) if (r(60 + k) < 0.6) ox.push(-k); }
+  v.oxidationStates = ox.length ? ox.map(o => (o > 0 ? "+" : "") + o).join(", ") : "0";
+
+  let react = 30 + Math.abs(en - 2.2) * 22 + r(70) * 18 - stability * 0.10;
+  if (isNoble) react *= 0.16;
+  if (Z === 0) react = 4;
+  if (REACTIVITY_OVERRIDE[Z] !== undefined) react = REACTIVITY_OVERRIDE[Z] + r(70) * 5;
+  v.reactivity = +clamp(react).toFixed(1);
+  v.reactivityWater = +clamp(v.reactivity * 0.7 + (en < 1.6 ? 35 : 0) + r(71) * 15).toFixed(1);
+  v.reactivityOxygen = +clamp(v.reactivity * 0.85 + r(72) * 20).toFixed(1);
+  v.reactivityAcid = +clamp(v.reactivity * 0.6 + (en < 1.8 ? 25 : 0) + r(73) * 20).toFixed(1);
+  v.oxidizingPower = +clamp((en - 0.5) * 26 + r(74) * 14).toFixed(1);
+  v.reducingPower = +clamp(100 - v.oxidizingPower + r(75) * 12).toFixed(1);
+  v.corrosiveness = +clamp(v.oxidizingPower * 0.55 + v.reactivityWater * 0.35 + r(76) * 15).toFixed(1);
+  v.acidity = +clamp((en - 1.5) * 30 + r(77) * 18).toFixed(1);
+  v.basicity = +clamp((2.6 - en) * 32 + r(78) * 18).toFixed(1);
+  v.amphoteric = +clamp(100 - Math.abs(v.acidity - v.basicity)).toFixed(1);
+  v.catalyticActivity = +clamp((Z > 21 && Z < 31 ? 55 : 15) + r(79) * 40).toFixed(1);
+  v.hydrogenBonding = +clamp((en > 2.4 ? 60 : 10) + r(80) * 35).toFixed(1);
+  v.electropositivity = +clamp(100 - en * 24).toFixed(1);
+  v.polarizability = +(0.4 + Math.pow(v.atomicRadius / 100, 2.2) * 12 + r(81) * 2).toFixed(2);
+  v.solubilityWater = +clamp(v.polarizability * 4 + v.hydrogenBonding * 0.4 + r(82) * 25).toFixed(1);
+  v.solubilityAcid = +clamp(v.basicity * 0.7 + r(83) * 30).toFixed(1);
+  v.hygroscopicity = +clamp(v.solubilityWater * 0.6 + r(84) * 30).toFixed(1);
+  v.deliquescence = +clamp(v.hygroscopicity - 35 + r(85) * 30).toFixed(1);
+  v.efflorescence = +clamp(r(86) * 80 * (v.stateAtSTP !== "Gas" ? 1 : 0)).toFixed(1);
+  v.surfaceTension = +clamp(15 + v.density * 6 + r(87) * 45).toFixed(1);
+  v.viscosity = +(0.2 + r(88) * 40 + (v.stateAtSTP === "Liquid" ? r(89) * 15 : 0)).toFixed(2);
+  const flamm = clamp(v.reducingPower * 0.5 + (v.stateAtSTP === "Gas" ? 25 : 0) + r(90) * 25);
+  const explo = clamp(v.reactivity * 0.35 + (v.stateAtSTP === "Gas" ? 20 : 0) + r(91) * 40 - stability * 0.08);
+  v.flammability = +flamm.toFixed(1);
+  v.explosiveness = +explo.toFixed(1);
+  v.flashPoint = Math.round(clamp(v.meltingPoint * 0.6 + 100 - v.flammability * 4, 60, 900));
+  v.autoignitionTemp = Math.round(clamp(v.flashPoint + 120 + r(92) * 500, 150, 1400));
+  v.heatOfCombustion = +clamp(v.flammability * 8 + r(93) * 200).toFixed(1);
+  v.flammabilityLimit = +(2 + r(94) * 60).toFixed(1);
+  v.toxicity = +clamp((Z > 80 ? 45 : 10) + r(95) * 55).toFixed(1);
+  v.carcinogenicity = +clamp(r(96) * 70 + (Z > 88 ? 20 : 0)).toFixed(1);
+  v.mutagenicity = +clamp(r(97) * 65 + radio * 0.2).toFixed(1);
+  v.allergenicity = +clamp(r(98) * 60).toFixed(1);
+  v.hazardClass = radio > 70 ? "Radioactive" : (v.explosiveness > 70 ? "Explosive" :
+    (v.toxicity > 70 ? "Toxic" : (v.corrosiveness > 70 ? "Corrosive" :
+    (v.flammability > 70 ? "Flammable" : "Low Hazard"))));
+  v.storageStability = +clamp(100 - v.reactivity * 0.5 - radio * 0.4 + r(99) * 20).toFixed(1);
+  const crystals = ["Cubic","Hexagonal","Tetragonal","Orthorhombic","Monoclinic","Triclinic","Rhombohedral","Amorphous"];
+  v.crystalSystem = v.stateAtSTP === "Gas" ? "—" : crystals[Math.floor(r(100) * crystals.length)];
+  v.coordinationNumber = Math.round(2 + r(101) * 10);
+  v.allotropy = +clamp(r(102) * 90).toFixed(1);
+  v.vaporPressure = Math.pow(10, -3 + r(103) * 6) * (v.stateAtSTP === "Gas" ? 100 : 1);
+  v.nutrientValue = +clamp((Z < 35 ? 30 : 5) + r(104) * 60).toFixed(1);
+  return v;
+}
+
+const META = [
+  ["compoundName","Compound Name","Identity","","str"],
+  ["formula","Chemical Formula","Identity","","str"],
+  ["molarMass","Molar Mass","Identity","g/mol","f3"],
+  ["atomCount","Atoms per Molecule","Identity","","i"],
+  ["elementCount","Distinct Elements","Identity","","i"],
+  ["complexity","Structural Complexity","Identity","%","i"],
+  ["atomicNumber","Atomic Number","Nuclear","","i"],
+  ["neutronCount","Neutron Count","Nuclear","","i"],
+  ["massNumber","Mass Number","Nuclear","","i"],
+  ["electronCount","Electron Count","Nuclear","","i"],
+  ["netCharge","Net Charge","Nuclear","e","i"],
+  ["atomicMass","Atomic Mass","Nuclear","u","f3"],
+  ["bindingEnergy","Binding Energy","Nuclear","MeV/A","f2"],
+  ["nuclearStability","Nuclear Stability","Nuclear","%","f1"],
+  ["radioactivity","Radioactivity","Nuclear","","f1"],
+  ["halfLifeYears","Half-Life","Nuclear","years","exp"],
+  ["decayMode","Decay Mode","Nuclear","","str"],
+  ["period","Period","Atomic","","i"],
+  ["valenceElectrons","Valence Electrons","Atomic","","i"],
+  ["coreElectrons","Core Electrons","Atomic","","i"],
+  ["atomicRadius","Atomic Radius","Atomic","pm","f1"],
+  ["covalentRadius","Covalent Radius","Atomic","pm","f1"],
+  ["ionicRadius","Ionic Radius","Atomic","pm","f1"],
+  ["electronConfiguration","Electron Configuration","Atomic","","str"],
+  ["shellOccupancy","Shell Occupancy","Atomic","","str"],
+  ["packingFraction","Packing Fraction","Atomic","","f3"],
+  ["density","Density","Physical","g/cm³","f6"],
+  ["molarVolume","Molar Volume","Physical","cm³/mol","f2"],
+  ["meltingPoint","Melting Point","Physical","K","i"],
+  ["boilingPoint","Boiling Point","Physical","K","i"],
+  ["criticalTemperature","Critical Temperature","Physical","K","i"],
+  ["criticalPressure","Critical Pressure","Physical","MPa","f2"],
+  ["stateAtSTP","State at 293 K","Physical","","str"],
+  ["hardness","Hardness (Mohs)","Physical","","f1"],
+  ["malleability","Malleability","Physical","","f1"],
+  ["ductility","Ductility","Physical","","f1"],
+  ["brittleness","Brittleness","Physical","","f1"],
+  ["elasticity","Elasticity","Physical","","f1"],
+  ["porosity","Porosity","Physical","","f1"],
+  ["grainSize","Grain Size","Physical","µm","f2"],
+  ["friability","Friability","Physical","","f1"],
+  ["abrasiveness","Abrasiveness","Physical","","f1"],
+  ["thermalConductivity","Thermal Conductivity","Thermal","W/m·K","f2"],
+  ["specificHeat","Specific Heat","Thermal","J/kg·K","f2"],
+  ["thermalExpansion","Thermal Expansion","Thermal","10⁻⁶/K","f2"],
+  ["thermalDiffusivity","Thermal Diffusivity","Thermal","mm²/s","f3"],
+  ["heatOfFusion","Heat of Fusion","Thermal","kJ/mol","f2"],
+  ["heatOfVaporization","Heat of Vaporization","Thermal","kJ/mol","f2"],
+  ["sublimationPoint","Sublimation Point","Thermal","K","i"],
+  ["volatility","Volatility","Thermal","","f1"],
+  ["electricalConductivity","Electrical Conductivity","Electrical","S/m","exp"],
+  ["resistivity","Resistivity","Electrical","Ω·m","exp"],
+  ["bandGap","Band Gap","Electrical","eV","f3"],
+  ["semiconductorType","Semiconductor Type","Electrical","","str"],
+  ["dielectricStrength","Dielectric Strength","Electrical","MV/m","f2"],
+  ["permittivity","Relative Permittivity","Electrical","","f2"],
+  ["workFunction","Work Function","Electrical","eV","f2"],
+  ["superconductivityTemp","Superconductivity Temp","Electrical","K","f2"],
+  ["piezoelectricity","Piezoelectricity","Electrical","","f1"],
+  ["thermoelectricity","Thermoelectricity","Electrical","","f1"],
+  ["ferromagnetism","Ferromagnetism","Magnetic","","f1"],
+  ["paramagnetism","Paramagnetism","Magnetic","","f1"],
+  ["diamagnetism","Diamagnetism","Magnetic","","f1"],
+  ["magneticSusceptibility","Magnetic Susceptibility","Magnetic","10⁻⁶","f2"],
+  ["curieTemperature","Curie Temperature","Magnetic","K","i"],
+  ["permeability","Relative Permeability","Magnetic","","f3"],
+  ["colorHue","Colour Hue","Optical","°","i"],
+  ["colorSaturation","Colour Saturation","Optical","%","i"],
+  ["colorLightness","Colour Lightness","Optical","%","i"],
+  ["reflectivity","Reflectivity","Optical","%","f1"],
+  ["refractiveIndex","Refractive Index","Optical","","f3"],
+  ["opacity","Opacity","Optical","%","f1"],
+  ["luster","Lustre","Optical","","f1"],
+  ["photoconductivity","Photoconductivity","Optical","","f1"],
+  ["electronegativity","Electronegativity","Chemical","Pauling","f2"],
+  ["ionizationEnergy","Ionization Energy","Chemical","eV","f2"],
+  ["electronAffinity","Electron Affinity","Chemical","kJ/mol","f1"],
+  ["oxidationStates","Oxidation States","Chemical","","str"],
+  ["reactivity","Reactivity","Chemical","","f1"],
+  ["reactivityWater","Reactivity with Water","Chemical","","f1"],
+  ["reactivityOxygen","Reactivity with Oxygen","Chemical","","f1"],
+  ["reactivityAcid","Reactivity with Acid","Chemical","","f1"],
+  ["oxidizingPower","Oxidizing Power","Chemical","","f1"],
+  ["reducingPower","Reducing Power","Chemical","","f1"],
+  ["corrosiveness","Corrosiveness","Chemical","","f1"],
+  ["acidity","Acidity","Chemical","","f1"],
+  ["basicity","Basicity","Chemical","","f1"],
+  ["amphoteric","Amphoteric Character","Chemical","","f1"],
+  ["catalyticActivity","Catalytic Activity","Chemical","","f1"],
+  ["hydrogenBonding","Hydrogen Bonding","Chemical","","f1"],
+  ["electropositivity","Electropositivity","Chemical","","f1"],
+  ["polarizability","Polarizability","Chemical","Å³","f2"],
+  ["metallicCharacter","Metallic Character","Chemical","","f1"],
+  ["nonmetallicCharacter","Non-metallic Character","Chemical","","f1"],
+  ["solubilityWater","Solubility in Water","Solution","","f1"],
+  ["solubilityAcid","Solubility in Acid","Solution","","f1"],
+  ["hygroscopicity","Hygroscopicity","Solution","","f1"],
+  ["deliquescence","Deliquescence","Solution","","f1"],
+  ["efflorescence","Efflorescence","Solution","","f1"],
+  ["surfaceTension","Surface Tension","Solution","mN/m","f1"],
+  ["viscosity","Viscosity","Solution","mPa·s","f2"],
+  ["flammability","Flammability","Hazard","","f1"],
+  ["explosiveness","Explosiveness","Hazard","","f1"],
+  ["flashPoint","Flash Point","Hazard","K","i"],
+  ["autoignitionTemp","Autoignition Temp","Hazard","K","i"],
+  ["heatOfCombustion","Heat of Combustion","Hazard","kJ/mol","f1"],
+  ["flammabilityLimit","Flammability Limit","Hazard","%","f1"],
+  ["toxicity","Toxicity","Hazard","","f1"],
+  ["carcinogenicity","Carcinogenicity","Hazard","","f1"],
+  ["mutagenicity","Mutagenicity","Hazard","","f1"],
+  ["allergenicity","Allergenicity","Hazard","","f1"],
+  ["hazardClass","Hazard Class","Hazard","","str"],
+  ["storageStability","Storage Stability","Hazard","","f1"],
+  ["crystalSystem","Crystal System","Exotic","","str"],
+  ["coordinationNumber","Coordination Number","Exotic","","i"],
+  ["allotropy","Allotropy","Exotic","","f1"],
+  ["vaporPressure","Vapour Pressure","Exotic","kPa","exp"],
+  ["nutrientValue","Nutrient Value","Exotic","","f1"]
+];
+
+function fmtVal(x, fmt) {
+  if (x === undefined || x === null) return "—";
+  if (fmt === "str") return x;
+  const n = Number(x);
+  if (!isFinite(n)) return "—";
+  if (fmt === "exp") return n.toExponential(2);
+  if (fmt === "i") return Math.round(n).toString();
+  if (fmt === "f1") return n.toFixed(1);
+  if (fmt === "f2") return n.toFixed(2);
+  if (fmt === "f3") return n.toFixed(3);
+  if (fmt === "f4") return n.toFixed(4);
+  if (fmt === "f6") return n.toFixed(6).replace(/0+$/,"").replace(/\.$/,"");
+  return String(x);
+}
+
+function renderPropertyList(props, listEl, query) {
+  if (!props) { listEl.innerHTML = '<div class="empty">No compound yet.</div>'; return; }
+  const cats = {};
+  for (const [key, label, cat, unit, fmt] of META) {
+    if (props[key] === undefined) continue;
+    if (query && !(label.toLowerCase().includes(query) || cat.toLowerCase().includes(query))) continue;
+    (cats[cat] = cats[cat] || []).push([key, label, unit, fmt]);
+  }
+  let html = "";
+  for (const cat in cats) {
+    html += `<div class="cat">${cat}</div>`;
+    for (const [key, label, unit, fmt] of cats[cat]) {
+      html += `<div class="prow"><span class="pk">${label}</span><span class="pv">${fmtVal(props[key], fmt)}${unit ? ` <em>${unit}</em>` : ""}</span></div>`;
+    }
+  }
+  listEl.innerHTML = html || '<div class="empty">No matching properties.</div>';
+}
+
+const MAX_NUCLEONS = 2000, MAX_ELECTRONS = 1200;
+const atom = { p: 0, n: 0, e: 0, nucleons: [] };
+let currentProps = null, addQty = 1;
+
+const atomCanvas = document.getElementById("atomCanvas");
+const atomCtx = atomCanvas.getContext("2d");
+const AC = 900, ACX = 450, ACY = 450;
+
+function nucleusRadius() { return 10 + 9 * Math.sqrt(atom.nucleons.length); }
+function nucleusDropRadius() { return Math.max(92, nucleusRadius() * 1.55 + 34); }
+function nucleonPts(count) {
+  const out = [];
+  for (let i = 0; i < count; i++) {
+    const a = i * 2.39996, r = 9 * Math.sqrt(i);
+    out.push([r * Math.cos(a), r * Math.sin(a)]);
+  }
+  return out;
+}
+
+function drawAtom(ts) {
+  const ctx = atomCtx;
+  ctx.fillStyle = "#080a12"; ctx.fillRect(0, 0, AC, AC);
+  const shells = electronConfig(atom.e);
+  let maxShell = 0;
+  for (let i = 0; i < 7; i++) if (shells[i] > 0) maxShell = i;
+  const nucR = nucleusRadius();
+  const nShells = Math.max(2, maxShell + 2);
+  const outer = nucR + 46 + (nShells - 1) * 48;
+  const scale = Math.min(1, 415 / Math.max(1, outer));
+  ctx.save();
+  ctx.translate(ACX, ACY); ctx.scale(scale, scale);
+  const dropR = Math.max(92, nucR * 1.55 + 34);
+  ctx.beginPath(); ctx.arc(0, 0, dropR, 0, Math.PI * 2);
+  ctx.strokeStyle = "rgba(255,110,110,0.13)";
+  ctx.setLineDash([7, 9]); ctx.lineWidth = 2; ctx.stroke(); ctx.setLineDash([]);
+  for (let s = 0; s < nShells; s++) {
+    const R = nucR + 46 + s * 48;
+    ctx.beginPath(); ctx.arc(0, 0, R, 0, Math.PI * 2);
+    ctx.strokeStyle = s <= maxShell ? "rgba(95,155,255,0.24)" : "rgba(95,155,255,0.07)";
+    ctx.lineWidth = 1.5; ctx.stroke();
+  }
+  for (let s = 0; s < 7; s++) {
+    const count = shells[s]; if (!count) continue;
+    const R = nucR + 46 + s * 48;
+    const spin = ts * 0.00022 / (s + 1);
+    const shown = Math.min(count, 40);
+    for (let k = 0; k < shown; k++) {
+      const a = spin + k * Math.PI * 2 / shown;
+      const x = Math.cos(a) * R, y = Math.sin(a) * R;
+      ctx.beginPath(); ctx.arc(x, y, 5.5, 0, Math.PI * 2);
+      ctx.fillStyle = "#5fe0ff"; ctx.shadowColor = "#3ec8ff"; ctx.shadowBlur = 14;
+      ctx.fill(); ctx.shadowBlur = 0;
+    }
+  }
+  const pts = nucleonPts(atom.nucleons.length);
+  for (let i = 0; i < atom.nucleons.length; i++) {
+    const t = atom.nucleons[i];
+    ctx.beginPath(); ctx.arc(pts[i][0], pts[i][1], 8.5, 0, Math.PI * 2);
+    ctx.fillStyle = t === "p" ? "#ff5f5f" : "#9aa4bb";
+    ctx.shadowColor = t === "p" ? "#ff3b3b" : "#7b869c"; ctx.shadowBlur = 9;
+    ctx.fill(); ctx.shadowBlur = 0;
+  }
+  if (atom.nucleons.length === 0) {
+    ctx.beginPath(); ctx.arc(0, 0, 26, 0, Math.PI * 2);
+    ctx.strokeStyle = "rgba(255,120,120,0.25)"; ctx.lineWidth = 1.5; ctx.stroke();
+  }
+  ctx.restore();
+}
+
+const hintEl = document.getElementById("atomHint");
+let hintTimer = null;
+function showHint(msg, cls) {
+  hintEl.textContent = msg;
+  hintEl.className = "hint show " + (cls || "");
+  clearTimeout(hintTimer);
+  hintTimer = setTimeout(() => { hintEl.className = "hint"; }, 1400);
+}
+
+function updateCounts() {
+  document.getElementById("countP").textContent = atom.p;
+  document.getElementById("countN").textContent = atom.n;
+  document.getElementById("countE").textContent = atom.e;
+}
+
+function refreshAtom() {
+  updateCounts();
+  currentProps = (atom.p + atom.n + atom.e) > 0 ? deriveAtom(atom.p, atom.n, atom.e) : null;
+  const list = document.getElementById("propList");
+  const title = document.getElementById("atomTitle");
+  const sub = document.getElementById("atomSub");
+  const sw = document.getElementById("atomSwatch");
+  if (!currentProps) {
+    title.textContent = "Empty Space";
+    sub.textContent = "Click the chips to build an atom →";
+    sw.style.background = "#1a2136";
+    list.innerHTML = '<div class="empty">Choose an <b>Amount</b>, then click a <b>Proton</b> or <b>Neutron</b> chip to fill the nucleus, and an <b>Electron</b> chip to fill the outer shells.<br><br>Right‑click (or use the ＋/－ toggle) to remove.</div>';
+    return;
+  }
+  const sym = getElementSymbol(atom.p, currentProps);
+  const elName = getElementName(atom.p, currentProps);
+  const chg = atom.p - atom.e;
+  const chargeStr = chg === 0 ? "" : (Math.abs(chg) === 1 ? (chg > 0 ? "⁺" : "⁻") : sup(Math.abs(chg)) + (chg > 0 ? "⁺" : "⁻"));
+  title.textContent = sym + "-" + (atom.p + atom.n) + chargeStr;
+  sub.textContent = `${elName}  ·  ${atom.p} p · ${atom.n} n · ${atom.e} e⁻  ·  ${currentProps.electronConfiguration}  ·  ${currentProps.stateAtSTP}`;
+  const rgb = currentProps.elementColor;
+  sw.style.background = `linear-gradient(90deg, rgb(${rgb[0]},${rgb[1]},${rgb[2]}), #1a2136)`;
+  renderPropertyList(currentProps, list, document.getElementById("propSearch").value.toLowerCase());
+}
+document.getElementById("propSearch").addEventListener("input", () => {
+  if (currentProps) renderPropertyList(currentProps, document.getElementById("propList"),
+    document.getElementById("propSearch").value.toLowerCase());
+});
+
+const qtyInput = document.getElementById("qtyInput");
+const QTY_MAX = 999;
+function setQty(n) {
+  addQty = Math.max(1, Math.min(QTY_MAX, Math.round(Number(n)) || 1));
+  qtyInput.value = addQty;
+  document.querySelectorAll(".qpreset").forEach(b => b.classList.toggle("sel", +b.dataset.q === addQty));
+}
+document.getElementById("qtyMinus").onclick = () => setQty(addQty - 1);
+document.getElementById("qtyPlus").onclick = () => setQty(addQty + 1);
+qtyInput.addEventListener("input", () => {
+  const v = parseInt(qtyInput.value, 10);
+  if (!isNaN(v)) addQty = Math.max(1, Math.min(QTY_MAX, v));
+  document.querySelectorAll(".qpreset").forEach(b => b.classList.toggle("sel", +b.dataset.q === addQty));
+});
+qtyInput.addEventListener("blur", () => setQty(addQty));
+qtyInput.addEventListener("keydown", e => { if (e.key === "Enter") { setQty(addQty); qtyInput.blur(); } });
+document.querySelectorAll(".qpreset").forEach(b => { b.onclick = () => setQty(+b.dataset.q); });
+
+/* ---- ADD / REMOVE tap-mode toggle (mainly for touch devices) ---- */
+let chipRemoveMode = false;
+const chipModeBtn = document.getElementById("chipModeBtn");
+chipModeBtn.addEventListener("click", () => {
+  chipRemoveMode = !chipRemoveMode;
+  chipModeBtn.textContent = chipRemoveMode ? "－ Remove" : "＋ Add";
+  chipModeBtn.classList.toggle("on-remove", chipRemoveMode);
+});
+
+function plural(n, s) { return n === 1 ? s : s + "s"; }
+function removeNucleons(type, n) {
+  for (let k = 0; k < n; k++) {
+    const idx = atom.nucleons.lastIndexOf(type);
+    if (idx < 0) break;
+    atom.nucleons.splice(idx, 1);
+  }
+}
+function addParticle(type, count) {
+  count = Math.round(count);
+  if (!count) return;
+  const name = type === "p" ? "Proton" : type === "n" ? "Neutron" : "Electron";
+  if (count > 0) {
+    let actual = count;
+    if (type === "e") actual = Math.min(actual, MAX_ELECTRONS - atom.e);
+    else actual = Math.min(actual, MAX_NUCLEONS - atom.nucleons.length);
+    if (actual <= 0) { showHint(type === "e" ? "Electron shell is full" : "Nucleus is full", "err"); return; }
+    if (type === "p") { atom.p += actual; for (let i = 0; i < actual; i++) atom.nucleons.push("p"); }
+    else if (type === "n") { atom.n += actual; for (let i = 0; i < actual; i++) atom.nucleons.push("n"); }
+    else atom.e += actual;
+    showHint(`+${actual} ${plural(actual, name)}`, "ok");
+  } else {
+    const want = -count; let actual = 0;
+    if (type === "p") { actual = Math.min(want, atom.p); atom.p -= actual; removeNucleons("p", actual); }
+    else if (type === "n") { actual = Math.min(want, atom.n); atom.n -= actual; removeNucleons("n", actual); }
+    else { actual = Math.min(want, atom.e); atom.e -= actual; }
+    if (actual <= 0) return;
+    showHint(`−${actual} ${plural(actual, name)}`);
+  }
+  refreshAtom();
+}
+document.querySelectorAll(".chip").forEach(chip => {
+  chip.addEventListener("click", e => {
+    e.preventDefault();
+    addParticle(chip.dataset.type, chipRemoveMode ? -addQty : addQty);
+    chip.classList.remove("flash"); void chip.offsetWidth; chip.classList.add("flash");
+  });
+  chip.addEventListener("contextmenu", e => { e.preventDefault(); addParticle(chip.dataset.type, -addQty); });
+});
+atomCanvas.addEventListener("contextmenu", e => e.preventDefault());
+document.getElementById("undoBtn").onclick = () => {
+  if (atom.nucleons.length) {
+    const t = atom.nucleons.pop(); atom[t]--;
+    showHint(`−1 ${t === "p" ? "Proton" : "Neutron"}`);
+  } else if (atom.e > 0) { atom.e--; showHint("−1 Electron"); } else return;
+  refreshAtom();
+};
+document.getElementById("clearBtn").onclick = () => {
+  atom.p = atom.n = atom.e = 0; atom.nucleons = []; refreshAtom();
+};
+
+const powders = [];
+const forgedElements = [];
+const simCanvas = document.getElementById("simCanvas");
+const simCtx = simCanvas.getContext("2d");
+
+function chargeStr(c) {
+  if (c === 0) return "";
+  const sign = c > 0 ? "⁺" : "⁻";
+  const a = Math.abs(c);
+  return (a === 1 ? "" : sup(a)) + sign;
+}
+function powderName(at, props) {
+  return getElementSymbol(at.p, props) + "-" + (at.p + at.n) + chargeStr(at.p - at.e);
+}
+
+function makePowderFromProps(props, name, atomRef) {
+  const rgb = props.elementColor.slice();
+  const phase = props.stateAtSTP === "Gas" ? "gas" : (props.stateAtSTP === "Liquid" ? "liquid" : "solid");
+  return {
+    atom: atomRef, props, name, rgb,
+    elementZ: atomRef ? atomRef.p : null,
+    density: Math.max(0.04, props.density),
+    phase,
+    reactivity: props.reactivity,
+    explosiveness: props.explosiveness,
+    flammability: props.flammability,
+    corrosiveness: props.corrosiveness,
+    radio: props.radioactivity,
+    magnet: props.ferromagnetism - props.diamagnetism * 0.5,
+    en: props.electronegativity,
+    spread: clamp(0.58 - props.hardness * 0.07, 0.015, 0.58),
+    fluidity: Math.round(clamp(11 - props.viscosity / 16, 1, 11)),
+    ignition: clamp(2.6 - props.flammability / 55, 0.45, 2.6),
+    cond: clamp(0.05 + props.thermalConductivity / 45, 0.02, 0.9),
+    extinguish: props.extinguish === true
+  };
+}
+function makePowder(at) {
+  const props = deriveAtom(at.p, at.n, at.e);
+  return makePowderFromProps(props, powderName(at, props), { p: at.p, n: at.n, e: at.e });
+}
+
+function rebuildForgedElements() {
+  forgedElements.length = 0;
+  for (const p of powders) {
+    if (!p.atom) continue;
+    const key = p.atom.p + ":" + p.atom.n + ":" + p.atom.e;
+    if (forgedElements.some(e => e.key === key)) continue;
+    forgedElements.push({
+      key, p: p.atom.p, n: p.atom.n, e: p.atom.e,
+      name: p.name,
+      symbol: getElementSymbol(p.atom.p, p.props),
+      displayName: getElementName(p.atom.p, p.props),
+      rgb: p.rgb.slice()
+    });
+  }
+}
+function pruneCompoundParts() {
+  const availableZ = new Set(forgedElements.map(e => e.p));
+  for (let i = compoundParts.length - 1; i >= 0; i--) {
+    if (!availableZ.has(compoundParts[i].Z)) compoundParts.splice(i, 1);
+  }
+}
+function syncCompoundLab() {
+  rebuildForgedElements();
+  pruneCompoundParts();
+  refreshCompound();
+  renderRecipes();
+}
+
+document.getElementById("forgeBtn").onclick = () => {
+  if (atom.p + atom.n + atom.e === 0) { showHint("Build an atom first!", "err"); return; }
+  const exists = powders.find(p => p.atom &&
+    p.atom.p === atom.p && p.atom.n === atom.n && p.atom.e === atom.e);
+  if (exists) {
+    selectedPowder = powders.indexOf(exists);
+    toast(`Already forged: ${exists.name}`);
+  } else {
+    const p = makePowder(atom);
+    powders.push(p);
+    selectedPowder = powders.length - 1;
+    toast(`⚗ Forged ${p.name}`, false, true);
+  }
+  renderPalette();
+  syncCompoundLab();
+  switchTab("sandbox");
+};
+
+const KNOWN_COMPOUNDS = {
+  "1:2,8:1": { name:"Water", formula:"H₂O", color:[125,185,235], mp:273, bp:373, density:1.000,
+    reactivity:8, corrosiveness:4, toxicity:0, flammability:0, explosiveness:0, extinguish:true,
+    crystalSystem:"Hexagonal", viscosity:1.00, hardness:0.5, electronegativity:2.30,
+    solubilityWater:100, surfaceTension:72 },
+  "1:2,8:2": { name:"Hydrogen Peroxide", formula:"H₂O₂", color:[215,232,242], mp:272, bp:423, density:1.135,
+    reactivity:38, corrosiveness:42, toxicity:30, flammability:0, explosiveness:15, extinguish:true,
+    viscosity:1.25, crystalSystem:"Tetragonal" },
+  "1:3,7:1": { name:"Ammonia", formula:"NH₃", color:[196,218,214], mp:195, bp:240, density:0.00073,
+    reactivity:42, corrosiveness:32, toxicity:62, flammability:22, explosiveness:16 },
+  "1:4,6:1": { name:"Methane", formula:"CH₄", color:[212,220,222], mp:91, bp:112, density:0.00066,
+    reactivity:48, corrosiveness:2, toxicity:5, flammability:88, explosiveness:72 },
+  "6:1,8:2": { name:"Carbon Dioxide", formula:"CO₂", color:[204,218,228], mp:216, bp:194, density:0.00198,
+    reactivity:10, corrosiveness:12, toxicity:32, flammability:0, explosiveness:0 },
+  "6:1,8:1": { name:"Carbon Monoxide", formula:"CO", color:[198,204,210], mp:68, bp:81, density:0.00125,
+    reactivity:56, corrosiveness:8, toxicity:92, flammability:82, explosiveness:76 },
+  "8:2": { name:"Oxygen", formula:"O₂", color:[182,212,248], mp:54, bp:90, density:0.00143,
+    reactivity:32, corrosiveness:22, toxicity:0, flammability:0, explosiveness:0 },
+  "7:2": { name:"Nitrogen", formula:"N₂", color:[204,216,238], mp:63, bp:77, density:0.00125,
+    reactivity:3, corrosiveness:0, toxicity:0, flammability:0, explosiveness:0 },
+  "1:2": { name:"Hydrogen", formula:"H₂", color:[228,236,248], mp:14, bp:20, density:0.00009,
+    reactivity:44, corrosiveness:0, toxicity:0, flammability:96, explosiveness:92 },
+  "17:2": { name:"Chlorine", formula:"Cl₂", color:[188,224,138], mp:172, bp:239, density:0.0032,
+    reactivity:58, corrosiveness:78, toxicity:88, flammability:0, explosiveness:18 },
+  "8:3": { name:"Ozone", formula:"O₃", color:[186,220,246], mp:80, bp:161, density:0.00214,
+    reactivity:62, corrosiveness:60, toxicity:82, flammability:0, explosiveness:32 },
+  "11:1,17:1": { name:"Sodium Chloride", formula:"NaCl", color:[246,246,250], mp:1074, bp:1738, density:2.165,
+    reactivity:14, corrosiveness:18, toxicity:2, hardness:2.5, electronegativity:2.23,
+    crystalSystem:"Cubic", solubilityWater:36 },
+  "17:1,19:1": { name:"Potassium Chloride", formula:"KCl", color:[242,242,248], mp:1041, bp:1690, density:1.984,
+    reactivity:14, corrosiveness:18, hardness:2.2, crystalSystem:"Cubic" },
+  "9:1,11:1": { name:"Sodium Fluoride", formula:"NaF", color:[240,244,250], mp:1266, bp:1973, density:2.558,
+    reactivity:18, corrosiveness:30, toxicity:52, hardness:3.2, crystalSystem:"Cubic" },
+  "1:1,8:1,11:1": { name:"Sodium Hydroxide", formula:"NaOH", color:[248,248,252], mp:591, bp:1662, density:2.13,
+    reactivity:54, corrosiveness:92, toxicity:72, hardness:2.5, crystalSystem:"Orthorhombic" },
+  "1:1,6:1,8:3,11:1": { name:"Baking Soda", formula:"NaHCO₃", color:[242,242,248], mp:323, bp:851, density:2.20,
+    reactivity:28, corrosiveness:22, toxicity:4, hardness:2.5 },
+  "1:1,7:1,8:3": { name:"Nitric Acid", formula:"HNO₃", color:[240,236,196], mp:231, bp:356, density:1.513,
+    reactivity:72, corrosiveness:96, toxicity:76, oxidizingPower:92, crystalSystem:"—" },
+  "1:2,8:4,16:1": { name:"Sulfuric Acid", formula:"H₂SO₄", color:[236,228,186], mp:283, bp:610, density:1.830,
+    reactivity:70, corrosiveness:98, toxicity:82, viscosity:24, crystalSystem:"—" },
+  "1:1,17:1": { name:"Hydrochloric Acid", formula:"HCl", color:[204,222,192], mp:247, bp:383, density:0.00149,
+    reactivity:62, corrosiveness:88, toxicity:70, acidity:95, crystalSystem:"—" },
+  "1:3,8:4,15:1": { name:"Phosphoric Acid", formula:"H₃PO₄", color:[240,236,220], mp:315, bp:431, density:1.885,
+    reactivity:52, corrosiveness:60, toxicity:38, viscosity:80 },
+  "1:1,6:1,8:3,20:1": { name:"Calcium Carbonate", formula:"CaCO₃", color:[245,245,240], mp:1098, bp:1612, density:2.711,
+    reactivity:8, corrosiveness:14, hardness:3.0, crystalSystem:"Rhombohedral" },
+  "8:1,20:1": { name:"Quicklime", formula:"CaO", color:[246,246,242], mp:2886, bp:3120, density:3.34,
+    reactivity:38, corrosiveness:64, hardness:3.5, crystalSystem:"Cubic" },
+  "8:1,12:1": { name:"Magnesium Oxide", formula:"MgO", color:[250,250,248], mp:3125, bp:3873, density:3.58,
+    reactivity:14, corrosiveness:22, hardness:5.5, crystalSystem:"Cubic" },
+  "8:3,13:2": { name:"Alumina", formula:"Al₂O₃", color:[242,242,248], mp:2345, bp:3250, density:3.95,
+    reactivity:6, corrosiveness:10, hardness:9.0, crystalSystem:"Hexagonal" },
+  "8:2,14:1": { name:"Silica", formula:"SiO₂", color:[228,230,238], mp:1983, bp:2950, density:2.648,
+    reactivity:4, corrosiveness:6, hardness:7.0, crystalSystem:"Hexagonal" },
+  "8:2,22:1": { name:"Titanium Dioxide", formula:"TiO₂", color:[252,252,254], mp:2116, bp:3245, density:4.23,
+    reactivity:5, corrosiveness:6, hardness:6.0, crystalSystem:"Tetragonal" },
+  "8:3,26:2": { name:"Rust", formula:"Fe₂O₃", color:[168,76,44], mp:1838, bp:2623, density:5.24,
+    reactivity:6, corrosiveness:10, hardness:6.5, ferromagnetism:24, crystalSystem:"Rhombohedral" },
+  "16:2,26:1": { name:"Pyrite", formula:"FeS₂", color:[204,170,60], mp:1450, bp:2200, density:5.01,
+    reactivity:10, corrosiveness:12, hardness:6.5, luster:88, crystalSystem:"Cubic" },
+  "8:4,16:1,29:1": { name:"Copper Sulfate", formula:"CuSO₄", color:[72,140,204], mp:423, bp:923, density:3.60,
+    reactivity:28, corrosiveness:44, toxicity:62, hardness:2.5, crystalSystem:"Triclinic" },
+  "8:4,19:1,25:1": { name:"Potassium Permanganate", formula:"KMnO₄", color:[130,42,150], mp:513, bp:770, density:2.70,
+    reactivity:52, corrosiveness:66, toxicity:70, oxidizingPower:92, crystalSystem:"Orthorhombic" },
+  "7:1,8:3,47:1": { name:"Silver Nitrate", formula:"AgNO₃", color:[234,234,238], mp:483, bp:717, density:4.35,
+    reactivity:42, corrosiveness:58, toxicity:68, oxidizingPower:74, crystalSystem:"Orthorhombic" },
+  "16:1,82:1": { name:"Lead Sulfide", formula:"PbS", color:[64,64,72], mp:1387, bp:1555, density:7.60,
+    reactivity:4, corrosiveness:10, toxicity:94, hardness:2.5, crystalSystem:"Cubic" },
+  "53:2,82:1": { name:"Lead Iodide", formula:"PbI₂", color:[232,202,48], mp:675, bp:1163, density:6.16,
+    reactivity:10, corrosiveness:16, toxicity:88, crystalSystem:"Hexagonal" },
+  "1:12,6:6,8:6": { name:"Glucose", formula:"C₆H₁₂O₆", color:[248,248,244], mp:419, bp:700, density:1.54,
+    reactivity:18, corrosiveness:4, toxicity:0, flammability:44, hardness:2.0, crystalSystem:"Monoclinic" },
+  "1:6,6:2,8:1": { name:"Ethanol", formula:"C₂H₆O", color:[228,232,238], mp:159, bp:351, density:0.789,
+    reactivity:30, corrosiveness:8, toxicity:42, flammability:82, viscosity:1.10, crystalSystem:"—" },
+  "1:4,6:2,8:2": { name:"Acetic Acid", formula:"C₂H₄O₂", color:[236,236,226], mp:290, bp:391, density:1.049,
+    reactivity:38, corrosiveness:72, toxicity:52, flammability:58, acidity:94, crystalSystem:"—" },
+  "1:6,6:6": { name:"Benzene", formula:"C₆H₆", color:[226,226,232], mp:279, bp:353, density:0.876,
+    reactivity:30, corrosiveness:22, toxicity:88, carcinogenicity:92, flammability:88, viscosity:0.65 },
+  "8:2,16:1": { name:"Sulfur Dioxide", formula:"SO₂", color:[208,212,218], mp:200, bp:263, density:0.00263,
+    reactivity:40, corrosiveness:56, toxicity:78, acidity:82 },
+  "8:3,16:1": { name:"Sulfur Trioxide", formula:"SO₃", color:[208,208,214], mp:290, bp:318, density:1.920,
+    reactivity:54, corrosiveness:88, toxicity:78, acidity:98, crystalSystem:"—" },
+  "7:1,8:2": { name:"Nitrogen Dioxide", formula:"NO₂", color:[182,82,52], mp:262, bp:294, density:0.00188,
+    reactivity:52, corrosiveness:60, toxicity:88 },
+  "7:2,8:1": { name:"Nitrous Oxide", formula:"N₂O", color:[208,216,228], mp:182, bp:184, density:0.00198,
+    reactivity:14, corrosiveness:4, toxicity:8, explosiveness:32 },
+  "8:2,84:1": { name:"Polonium Dioxide", formula:"PoO₂", color:[36,34,30], mp:773, bp:1273, density:8.9,
+    reactivity:14, corrosiveness:36, toxicity:100, radioactivity:96, hardness:4.5, crystalSystem:"Tetragonal" },
+  "8:1,84:1": { name:"Polonium Monoxide", formula:"PoO", color:[42,38,34], mp:773, bp:1250, density:9.4,
+    reactivity:18, corrosiveness:40, toxicity:98, radioactivity:96, hardness:4.0 },
+  "8:2,92:1": { name:"Uranium Dioxide", formula:"UO₂", color:[28,30,24], mp:3138, bp:3800, density:10.97,
+    reactivity:10, corrosiveness:20, toxicity:92, radioactivity:56, hardness:6.0, crystalSystem:"Cubic" },
+  "8:3,92:1": { name:"Uranium Trioxide", formula:"UO₃", color:[212,140,44], mp:900, bp:1800, density:7.29,
+    reactivity:18, corrosiveness:34, toxicity:90, radioactivity:56, hardness:4.0 },
+  "6:1,8:2,88:1": { name:"Radium Carbonate", formula:"RaCO₃", color:[240,240,232], mp:1250, bp:1800, density:5.20,
+    reactivity:8, corrosiveness:18, toxicity:96, radioactivity:92, hardness:3.5 },
+  "8:2,94:1": { name:"Plutonium Dioxide", formula:"PuO₂", color:[186,166,74], mp:3017, bp:3530, density:11.5,
+    reactivity:8, corrosiveness:16, toxicity:98, radioactivity:88, hardness:6.5, crystalSystem:"Cubic" },
+  "17:2,88:1": { name:"Radium Chloride", formula:"RaCl₂", color:[240,240,244], mp:1273, bp:2023, density:4.90,
+    reactivity:14, corrosiveness:22, toxicity:94, radioactivity:92, hardness:3.0 }
+};
+
+const RECIPES = [
+  { label:"💧 Water",          parts:[{Z:1,c:2},{Z:8,c:1}] },
+  { label:"🧂 Table Salt",     parts:[{Z:11,c:1},{Z:17,c:1}] },
+  { label:"💨 CO₂",            parts:[{Z:6,c:1},{Z:8,c:2}] },
+  { label:"🔥 Methane",        parts:[{Z:1,c:4},{Z:6,c:1}] },
+  { label:"💨 Ammonia",        parts:[{Z:1,c:3},{Z:7,c:1}] },
+  { label:"🟠 Rust",           parts:[{Z:8,c:3},{Z:26,c:2}] },
+  { label:"💜 KMnO₄",          parts:[{Z:8,c:4},{Z:19,c:1},{Z:25,c:1}] },
+  { label:"🧪 Sulfuric Acid",  parts:[{Z:1,c:2},{Z:8,c:4},{Z:16,c:1}] },
+  { label:"🟡 Ga₂S₃",          parts:[{Z:16,c:3},{Z:31,c:2}] },
+  { label:"☢️ Polonium Dioxide", parts:[{Z:8,c:2},{Z:84,c:1}] },
+  { label:"☢️ Uranium Dioxide",  parts:[{Z:8,c:2},{Z:92,c:1}] }
+];
+
+function compoundKey(parts) {
+  const sorted = parts.filter(p => p.c > 0).slice().sort((a,b) => a.Z - b.Z);
+  return sorted.map(p => p.Z + ":" + p.c).join(",");
+}
+
+function buildGenericFormula(parts) {
+  const sorted = parts.filter(p => p.c > 0).slice().sort((a, b) => {
+    const ea = getEN(a.Z), eb = getEN(b.Z);
+    if (ea !== eb) return ea - eb;
+    return a.Z - b.Z;
+  });
+  return sorted.map(p => {
+    const sym = getElementSymbol(p.Z);
+    return sym + (p.c > 1 ? sub(p.c) : "");
+  }).join("");
+}
+const GREEK = { 1:"mono",2:"di",3:"tri",4:"tetra",5:"penta",6:"hexa",7:"hepta",8:"octa",9:"nona",10:"deca" };
+const ANION_SUFFIXES = { 8:"oxide",16:"sulfide",17:"chloride",9:"fluoride",35:"bromide",
+  53:"iodide",7:"nitride",15:"phosphide",6:"carbide",14:"silicide",
+  34:"selenide",52:"telluride",33:"arsenide",5:"boride" };
+
+function buildGenericName(parts) {
+  const filtered = parts.filter(p => p.c > 0);
+  if (filtered.length === 2) {
+    const sorted = filtered.slice().sort((x, y) => {
+      const ex = getEN(x.Z), ey = getEN(y.Z);
+      if (ex !== ey) return ex - ey;
+      return x.Z - y.Z;
+    });
+    const cat = sorted[0], an = sorted[1];
+    const catName = (cat.Z >= 1 && cat.Z <= ELEMENT_NAMES.length)
+      ? ELEMENT_NAMES[cat.Z - 1].toLowerCase()
+      : generateElementName(cat.Z, deriveAtom(cat.Z, stableNForZ(cat.Z), cat.Z)).toLowerCase();
+    const anName = ANION_SUFFIXES[an.Z] ||
+      ((an.Z >= 1 && an.Z <= ELEMENT_NAMES.length)
+        ? ELEMENT_NAMES[an.Z - 1].toLowerCase()
+        : generateElementName(an.Z, deriveAtom(an.Z, stableNForZ(an.Z), an.Z)).toLowerCase());
+    let catPart = capitalize(catName);
+    let anPart = anName;
+    if (cat.c > 1) catPart = capitalize((GREEK[cat.c] || cat.c + "-") + catName);
+    if (an.c > 1) anPart = (GREEK[an.c] || an.c + "-") + anName;
+    return catPart + " " + anPart;
+  }
+  if (filtered.length > 2) {
+    const sorted = filtered.slice().sort((a,b) => a.Z - b.Z);
+    return sorted.map(p => {
+      const n = (p.Z >= 1 && p.Z <= ELEMENT_NAMES.length)
+        ? ELEMENT_NAMES[p.Z - 1] : generateElementName(p.Z);
+      return capitalize(n.toLowerCase()) + (p.c > 1 ? "(" + p.c + ")" : "");
+    }).join(" ");
+  }
+  return buildGenericFormula(filtered) + " compound";
+}
+
+function deriveCompound(parts) {
+  const filtered = parts.filter(p => p.c > 0);
+  if (filtered.length === 0) return null;
+  const key = compoundKey(filtered);
+  const known = KNOWN_COMPOUNDS[key];
+  const totalAtoms = filtered.reduce((s,p)=>s+p.c, 0);
+  const perElement = filtered.map(p => {
+    const el = forgedElements.find(e => e.p === p.Z);
+    const n = el ? el.n : stableNForZ(p.Z);
+    return { z: p.Z, count: p.c, props: deriveAtom(p.Z, n, p.Z) };
+  });
+  const wavg = k => perElement.reduce((s,e) => s + (e.props[k] || 0) * e.count, 0) / totalAtoms;
+
+  const v = {};
+  v.compoundName = known ? known.name : buildGenericName(filtered);
+  v.formula = known ? known.formula : buildGenericFormula(filtered);
+  v.atomCount = totalAtoms;
+  v.elementCount = filtered.length;
+  v.molarMass = +perElement.reduce((s,e) => s + e.props.atomicMass * e.count, 0).toFixed(3);
+  v.complexity = Math.min(100, totalAtoms * 3 + filtered.length * 8);
+
+  let colorRGB;
+  if (known && known.color) colorRGB = known.color.slice();
+  else {
+    let r=0,g=0,b=0;
+    perElement.forEach(e => {
+      r += e.props.elementColor[0] * e.count;
+      g += e.props.elementColor[1] * e.count;
+      b += e.props.elementColor[2] * e.count;
+    });
+    r /= totalAtoms; g /= totalAtoms; b /= totalAtoms;
+    const grey = (r+g+b)/3, mute = 0.32;
+    colorRGB = [Math.round(r*(1-mute)+grey*mute), Math.round(g*(1-mute)+grey*mute), Math.round(b*(1-mute)+grey*mute)];
+  }
+  v.elementColor = colorRGB;
+  const [cH,cS,cL] = rgbToHsl(colorRGB[0], colorRGB[1], colorRGB[2]);
+  v.colorHue = Math.round(cH); v.colorSaturation = Math.round(cS); v.colorLightness = Math.round(cL);
+
+  let mp, bp, dens;
+  if (known) { mp = known.mp; bp = known.bp; dens = known.density; }
+  else { mp = Math.round(wavg("meltingPoint") * 1.05); bp = Math.round(wavg("boilingPoint") * 1.05); dens = Math.max(0.05, wavg("density") * 1.1); }
+  v.meltingPoint = mp; v.boilingPoint = bp; v.density = +dens.toFixed(6);
+  v.stateAtSTP = (mp > bp) ? (293 < mp ? "Solid" : "Gas") : (293 < mp ? "Solid" : (293 < bp ? "Liquid" : "Gas"));
+  v.molarVolume = +(v.molarMass / Math.max(0.0001, dens)).toFixed(2);
+  v.criticalTemperature = Math.round(bp * 1.35);
+  v.criticalPressure = +(wavg("criticalPressure") * 1.2).toFixed(2);
+
+  const enValues = perElement.map(e => e.props.electronegativity);
+  const enRange = Math.max(...enValues) - Math.min(...enValues);
+  const ionicness = Math.min(1, enRange / 2.5);
+  const avgReact = wavg("reactivity");
+  let computedReact;
+  if (ionicness > 0.7) computedReact = avgReact * 0.25;
+  else if (ionicness > 0.4) computedReact = avgReact * 0.5;
+  else computedReact = avgReact * 0.7;
+
+  const react = known && known.reactivity != null ? known.reactivity : computedReact;
+  const corr  = known && known.corrosiveness != null ? known.corrosiveness : wavg("corrosiveness") * 0.5;
+  const flam  = known && known.flammability != null ? known.flammability : wavg("flammability") * 0.4;
+  const exp   = known && known.explosiveness != null ? known.explosiveness : wavg("explosiveness") * 0.3;
+  const tox   = known && known.toxicity != null ? known.toxicity : wavg("toxicity") * 0.6;
+  const maxRadio = Math.max(...perElement.map(e => e.props.radioactivity), 0);
+  const rad = known && known.radioactivity != null ? known.radioactivity : maxRadio;
+
+  v.reactivity = +clamp(react).toFixed(1);
+  v.corrosiveness = +clamp(corr).toFixed(1);
+  v.flammability = +clamp(flam).toFixed(1);
+  v.explosiveness = +clamp(exp).toFixed(1);
+  v.toxicity = +clamp(tox).toFixed(1);
+  v.radioactivity = +clamp(rad).toFixed(1);
+
+  v.reactivityWater = +clamp(v.reactivity * 0.7 + wavg("reactivityWater") * 0.2).toFixed(1);
+  v.reactivityOxygen = +clamp(v.reactivity * 0.85).toFixed(1);
+  v.reactivityAcid = +clamp(v.reactivity * 0.6 + wavg("reactivityAcid") * 0.2).toFixed(1);
+  v.oxidizingPower = +(known && known.oxidizingPower != null ? known.oxidizingPower : clamp(wavg("oxidizingPower") * 0.8)).toFixed(1);
+  v.reducingPower = +clamp(100 - v.oxidizingPower + 5).toFixed(1);
+  v.acidity = +(known && known.acidity != null ? known.acidity : clamp(wavg("acidity") * 1.1)).toFixed(1);
+  v.basicity = +clamp(wavg("basicity") * 1.1).toFixed(1);
+  v.amphoteric = +clamp(100 - Math.abs(v.acidity - v.basicity)).toFixed(1);
+  v.electronegativity = +(known && known.electronegativity != null ? known.electronegativity : wavg("electronegativity")).toFixed(2);
+  v.ionizationEnergy = +clamp(wavg("ionizationEnergy") * 1.05).toFixed(2);
+  v.electronAffinity = +clamp(wavg("electronAffinity") * 1.05).toFixed(1);
+  v.polarizability = +(wavg("polarizability") * 1.3).toFixed(2);
+  v.hydrogenBonding = +clamp(wavg("hydrogenBonding") * 1.2).toFixed(1);
+  v.catalyticActivity = +clamp(wavg("catalyticActivity") * 0.9).toFixed(1);
+  v.electropositivity = +clamp(100 - v.electronegativity * 24).toFixed(1);
+  v.hardness = +(known && known.hardness != null ? known.hardness : clamp(wavg("hardness") * 1.1, 0.1, 10)).toFixed(1);
+  v.malleability = +clamp(wavg("malleability") * 0.6).toFixed(1);
+  v.ductility = +clamp(wavg("ductility") * 0.6).toFixed(1);
+  v.brittleness = +clamp(v.hardness > 4 ? 80 : 45).toFixed(1);
+  v.elasticity = +clamp(wavg("elasticity") * 0.9).toFixed(1);
+  v.porosity = +clamp(wavg("porosity") * 0.7).toFixed(1);
+  v.friability = +clamp(v.brittleness * 0.7 + 15).toFixed(1);
+  v.abrasiveness = +clamp(v.hardness * 6 + 10).toFixed(1);
+  v.grainSize = +(wavg("grainSize") * 0.9).toFixed(2);
+  v.packingFraction = +(wavg("packingFraction") * 1.05).toFixed(3);
+  v.thermalConductivity = +(wavg("thermalConductivity") * 0.7).toFixed(2);
+  v.specificHeat = +(wavg("specificHeat") * 1.3).toFixed(2);
+  v.thermalExpansion = +(wavg("thermalExpansion") * 0.8).toFixed(2);
+  v.thermalDiffusivity = +(v.thermalConductivity / Math.max(0.2, v.specificHeat * Math.max(0.001, dens)) * 10).toFixed(3);
+  v.heatOfFusion = +(wavg("heatOfFusion") * 1.5).toFixed(2);
+  v.heatOfVaporization = +(wavg("heatOfVaporization") * 1.3).toFixed(2);
+  v.sublimationPoint = Math.round(mp * 0.85);
+  v.volatility = +clamp(100 - bp/60 + 12).toFixed(1);
+  v.electricalConductivity = +(wavg("electricalConductivity") * 0.5).toFixed(2);
+  v.resistivity = 1 / Math.max(1e-8, v.electricalConductivity);
+  v.bandGap = +(wavg("bandGap") * 1.2).toFixed(3);
+  v.semiconductorType = v.bandGap < 0.05 ? "Conductor" : (v.bandGap < 3.2 ? "Semiconductor" : "Insulator");
+  v.dielectricStrength = +(wavg("dielectricStrength") * 1.1).toFixed(2);
+  v.permittivity = +(wavg("permittivity") * 1.2).toFixed(2);
+  v.workFunction = +(wavg("workFunction") * 0.9).toFixed(2);
+  v.superconductivityTemp = +(wavg("superconductivityTemp") * 0.5).toFixed(2);
+  v.piezoelectricity = +clamp(wavg("piezoelectricity") * 1.1).toFixed(1);
+  v.thermoelectricity = +clamp(wavg("thermoelectricity") * 0.8).toFixed(1);
+  v.ferromagnetism = +clamp(wavg("ferromagnetism") * (known && known.ferromagnetism != null ? 1 : 0.7)).toFixed(1);
+  v.paramagnetism = +clamp(wavg("paramagnetism") * 0.8).toFixed(1);
+  v.diamagnetism = +clamp(wavg("diamagnetism") * 0.9).toFixed(1);
+  v.magneticSusceptibility = +((v.paramagnetism - v.diamagnetism) * 0.4).toFixed(2);
+  v.curieTemperature = Math.round(wavg("curieTemperature") * 0.8);
+  v.permeability = +(1 + v.ferromagnetism / 14).toFixed(3);
+  v.reflectivity = +clamp(wavg("reflectivity") * (known && known.luster != null ? 1 : 0.7)).toFixed(1);
+  v.refractiveIndex = +(wavg("refractiveIndex") * 1.05).toFixed(3);
+  v.opacity = +clamp(wavg("opacity") * 1.1).toFixed(1);
+  v.luster = +(known && known.luster != null ? known.luster : clamp(wavg("luster") * 0.7)).toFixed(1);
+  v.photoconductivity = +clamp(wavg("photoconductivity") * 0.6).toFixed(1);
+  v.solubilityWater = +(known && known.solubilityWater != null ? known.solubilityWater : clamp(wavg("solubilityWater") * 1.2)).toFixed(1);
+  v.solubilityAcid = +clamp(wavg("solubilityAcid") * 1.1).toFixed(1);
+  v.hygroscopicity = +clamp(wavg("hygroscopicity") * 1.1).toFixed(1);
+  v.deliquescence = +clamp(v.hygroscopicity - 25).toFixed(1);
+  v.efflorescence = +clamp(wavg("efflorescence") * 0.7).toFixed(1);
+  v.surfaceTension = +(known && known.surfaceTension != null ? known.surfaceTension : clamp(wavg("surfaceTension") * 1.2)).toFixed(1);
+  v.viscosity = +(known && known.viscosity != null ? known.viscosity : wavg("viscosity") * (v.stateAtSTP === "Liquid" ? 1.2 : 0.8)).toFixed(2);
+  v.flashPoint = Math.round(clamp(mp * 0.6 + 100 - v.flammability * 4, 60, 900));
+  v.autoignitionTemp = Math.round(v.flashPoint + 200);
+  v.heatOfCombustion = +clamp(v.flammability * 8 + 30).toFixed(1);
+  v.flammabilityLimit = +(2 + v.flammability * 0.5).toFixed(1);
+  v.carcinogenicity = +clamp((known && known.carcinogenicity != null ? known.carcinogenicity : wavg("carcinogenicity") * 0.8)).toFixed(1);
+  v.mutagenicity = +clamp(wavg("mutagenicity") * 0.8).toFixed(1);
+  v.allergenicity = +clamp(wavg("allergenicity") * 0.8).toFixed(1);
+  v.storageStability = +clamp(100 - v.reactivity * 0.5 - v.radioactivity * 0.4).toFixed(1);
+  v.hazardClass = v.radioactivity > 70 ? "Radioactive" :
+                  v.explosiveness > 70 ? "Explosive" :
+                  v.toxicity > 70 ? "Toxic" :
+                  v.corrosiveness > 70 ? "Corrosive" :
+                  v.flammability > 70 ? "Flammable" : "Low Hazard";
+  v.crystalSystem = v.stateAtSTP === "Gas" ? "—" :
+    (known && known.crystalSystem ? known.crystalSystem :
+      ["Cubic","Hexagonal","Monoclinic","Orthorhombic"][compoundKey(filtered).length % 4]);
+  v.coordinationNumber = Math.round(wavg("coordinationNumber") * 0.9);
+  v.allotropy = +clamp(wavg("allotropy") * 0.6).toFixed(1);
+  v.vaporPressure = +(Math.pow(10, -3 + Math.log10(Math.max(1, bp)))).toFixed(4);
+  v.nutrientValue = +clamp(wavg("nutrientValue") * 1.2).toFixed(1);
+  v.atomicRadius = +(wavg("atomicRadius") * 1.1).toFixed(1);
+  v.covalentRadius = +(v.atomicRadius * 0.9).toFixed(1);
+  v.ionicRadius = +(v.atomicRadius * 1.05).toFixed(1);
+  v.extinguish = known && known.extinguish === true;
+  return v;
+}
+
+const compoundParts = [];
+let currentCompoundProps = null;
+
+function getPart(z) {
+  let p = compoundParts.find(p => p.Z === z);
+  if (!p) { p = { Z: z, c: 0 }; compoundParts.push(p); }
+  return p;
+}
+function setPart(z, count) {
+  const p = getPart(z);
+  p.c = Math.max(0, Math.min(99, count));
+  if (p.c === 0) compoundParts.splice(compoundParts.indexOf(p), 1);
+  refreshCompound();
+}
+function clearFormula() { compoundParts.length = 0; refreshCompound(); }
+
+function refreshCompound() {
+  const fv = document.getElementById("formulaValue");
+  const parts = compoundParts.filter(p => p.c > 0);
+  if (parts.length === 0) fv.innerHTML = '<span class="formula-empty">nothing yet</span>';
+  else {
+    const key = compoundKey(parts);
+    const known = KNOWN_COMPOUNDS[key];
+    fv.textContent = known ? known.formula : buildGenericFormula(parts);
+  }
+  currentCompoundProps = parts.length > 0 ? deriveCompound(parts) : null;
+  const title = document.getElementById("cmTitle");
+  const sub = document.getElementById("cmSub");
+  const sw = document.getElementById("cmSwatch");
+  if (!currentCompoundProps) {
+    title.textContent = "No Compound";
+    sub.textContent = "Pick a recipe or add elements below →";
+    sw.style.background = "#1a2136";
+    renderPropertyList(null, document.getElementById("cmPropList"), "");
+  } else {
+    title.textContent = currentCompoundProps.compoundName;
+    sub.textContent = `${currentCompoundProps.formula}  ·  ${currentCompoundProps.molarMass} g/mol  ·  ${currentCompoundProps.stateAtSTP}`;
+    const rgb = currentCompoundProps.elementColor;
+    sw.style.background = `linear-gradient(90deg, rgb(${rgb[0]},${rgb[1]},${rgb[2]}), #1a2136)`;
+    renderPropertyList(currentCompoundProps, document.getElementById("cmPropList"),
+      document.getElementById("cmSearch").value.toLowerCase());
+  }
+  renderCompoundElements();
+}
+
+function renderCompoundElements() {
+  const wrap = document.getElementById("cmElements");
+  if (forgedElements.length === 0) {
+    wrap.innerHTML = '<div class="cm-empty">No elements forged yet.<br><br>Go to the <b>Atom Lab</b> and forge some elements first.</div>';
+    return;
+  }
+  let html = "";
+  forgedElements.forEach(el => {
+    const part = compoundParts.find(p => p.Z === el.p);
+    const count = part ? part.c : 0;
+    const active = count > 0;
+    html += `<div class="cm-el ${active ? "active" : ""}">
+      <div class="cm-el-swatch" style="background:rgb(${el.rgb[0]},${el.rgb[1]},${el.rgb[2]})"></div>
+      <div class="cm-el-info">
+        <div class="cm-el-name">${el.displayName}</div>
+        <div class="cm-el-sub">Z = ${el.p}  ·  ${el.name}</div>
+      </div>
+      <div class="cm-el-count">
+        <button data-z="${el.p}" data-act="dec" ${count === 0 ? "disabled" : ""}>−</button>
+        <span class="cm-el-count-num ${count === 0 ? "zero" : ""}">${count}</span>
+        <button data-z="${el.p}" data-act="inc">+</button>
+      </div>
+    </div>`;
+  });
+  wrap.innerHTML = html;
+  wrap.querySelectorAll("button[data-z]").forEach(btn => {
+    btn.onclick = () => {
+      const z = +btn.dataset.z;
+      const p = getPart(z);
+      setPart(z, p.c + (btn.dataset.act === "inc" ? 1 : -1));
+    };
+  });
+}
+
+function renderRecipes() {
+  const bar = document.getElementById("recipeBar");
+  let html = "";
+  RECIPES.forEach((r, i) => {
+    const available = r.parts.every(p => forgedElements.some(el => el.p === p.Z));
+    html += `<button class="recipe" data-i="${i}" ${available ? "" : "disabled"}
+      title="${available ? "Click to add this formula" : "Forge the required elements first"}">${r.label}</button>`;
+  });
+  bar.innerHTML = html;
+  bar.querySelectorAll(".recipe").forEach(btn => {
+    if (btn.disabled) return;
+    btn.onclick = () => {
+      const r = RECIPES[+btn.dataset.i];
+      compoundParts.length = 0;
+      r.parts.forEach(p => compoundParts.push({ Z: p.Z, c: p.c }));
+      refreshCompound();
+    };
+  });
+}
+
+document.getElementById("cmClearBtn").onclick = clearFormula;
+document.getElementById("cmForgeBtn").onclick = () => {
+  const parts = compoundParts.filter(p => p.c > 0);
+  if (parts.length === 0) { toast("Build a formula first", true); return; }
+  const props = deriveCompound(parts);
+  const key = compoundKey(parts);
+  const exists = powders.find(p => p.compoundKey === key);
+  if (exists) {
+    selectedPowder = powders.indexOf(exists);
+    toast(`Already forged: ${exists.name}`);
+  } else {
+    const powder = makePowderFromProps(props, props.formula, null);
+    powder.compoundKey = key;
+    powder.isCompound = true;
+    powders.push(powder);
+    selectedPowder = powders.length - 1;
+    toast(`⚗ Forged ${props.formula} — ${props.compoundName}`, false, true);
+  }
+  renderPalette();
+  switchTab("sandbox");
+};
+document.getElementById("cmSearch").addEventListener("input", () => {
+  if (currentCompoundProps) renderPropertyList(currentCompoundProps,
+    document.getElementById("cmPropList"),
+    document.getElementById("cmSearch").value.toLowerCase());
+});
+
+/* ============================================================
+   SANDBOX
+============================================================ */
+const GW = 260, GH = 160;
+const EMPTY = 0, WALL = 1, FIRE = 2, PB = 3;
+const N = GW * GH;
+const mat = new Uint16Array(N);
+const heat = new Float32Array(N);
+const life = new Float32Array(N);
+const moved = new Uint8Array(N);
+const heatTmp = new Float32Array(N);
+
+let frame = 0, selectedPowder = 0, brushSize = 4, reactRate = 1;
+const SPEEDS = [0.10,0.25,0.50,0.75,1.00,1.50,2.00,3.00,4.00,6.00,8.00,12.00];
+let speedIndex = 4, paused = false, speedAccum = 0;
+const imgData = simCtx.createImageData(GW, GH);
+
+/* ---- Touch tool mode (place / erase) ---- */
+let sandboxTool = "place";
+const toolPlaceBtn = document.getElementById("toolPlace");
+const toolEraseBtn = document.getElementById("toolErase");
+function setSandboxTool(m) {
+  sandboxTool = m;
+  toolPlaceBtn.classList.toggle("active", m === "place");
+  toolEraseBtn.classList.toggle("active", m === "erase");
+}
+toolPlaceBtn.addEventListener("click", () => setSandboxTool("place"));
+toolEraseBtn.addEventListener("click", () => setSandboxTool("erase"));
+
+function buildFloor() {
+  for (let x = 0; x < GW; x++) {
+    mat[(GH - 1) * GW + x] = WALL; mat[(GH - 2) * GW + x] = WALL;
+    for (let y = 0; y < 2; y++) mat[y * GW + x] = WALL;
+  }
+  for (let y = 0; y < GH; y++) { mat[y * GW] = WALL; mat[y * GW + GW - 1] = WALL; }
+}
+buildFloor();
+
+function swap(a, b) {
+  const m = mat[a]; mat[a] = mat[b]; mat[b] = m;
+  const t = heat[a]; heat[a] = heat[b]; heat[b] = t;
+  const l = life[a]; life[a] = life[b]; life[b] = l;
+}
+function condAt(i) {
+  const m = mat[i];
+  if (m === EMPTY) return 0.12;
+  if (m === WALL) return 0.35;
+  if (m === FIRE) return 0.6;
+  const p = powders[m - PB]; return p ? p.cond : 0.2;
+}
+function conductPass() {
+  heatTmp.set(heat);
+  for (let y = 0; y < GH; y++) for (let x = 0; x < GW; x++) {
+    const i = y * GW + x; const c = condAt(i);
+    if (x + 1 < GW) { const j = i + 1; const d = (heatTmp[j] - heatTmp[i]) * c * 0.22; heat[i] += d; heat[j] -= d; }
+    if (y + 1 < GH) { const j = i + GW; const d = (heatTmp[j] - heatTmp[i]) * c * 0.22; heat[i] += d; heat[j] -= d; }
+  }
+}
+function trySwap(i, j, p, prob) {
+  if (moved[i] || moved[j]) return false;
+  const mj = mat[j];
+  if (mj === WALL) return false;
+  if (mj === EMPTY || mj === FIRE) {
+    if (Math.random() > prob) return false;
+    swap(i, j); moved[j] = 1; moved[i] = 1; return true;
+  }
+  const q = powders[mj - PB];
+  if (!q) return false;
+  if (q.density > p.density) return false;
+  if (Math.abs(q.density - p.density) < 0.001 && Math.random() < 0.5) return false;
+  if (Math.random() > prob) return false;
+  swap(i, j); moved[j] = 1; moved[i] = 1; return true;
+}
+function explode(x, y, p) {
+  const R = 3 + Math.floor(p.explosiveness / 11);
+  for (let dy = -R; dy <= R; dy++) for (let dx = -R; dx <= R; dx++) {
+    const nx = x + dx, ny = y + dy;
+    if (nx < 1 || nx >= GW - 1 || ny < 1 || ny >= GH - 1) continue;
+    const d = Math.hypot(dx, dy); if (d > R) continue;
+    const j = ny * GW + nx;
+    if (mat[j] === WALL) continue;
+    if (Math.random() < 1 - (d / R) * 0.75) {
+      mat[j] = Math.random() < 0.3 ? FIRE : EMPTY;
+      life[j] = 1; heat[j] = Math.min(3, heat[j] + 1.6 * (1 - d / R)); moved[j] = 1;
+    }
+  }
+}
+function doReact(i, j, p, q) {
+  const energy = (p.reactivity + q.reactivity) / 200 * (1 + Math.abs(p.en - q.en));
+  heat[i] = Math.min(3, heat[i] + energy * 0.55);
+  heat[j] = Math.min(3, heat[j] + energy * 0.55);
+  if (Math.random() < p.corrosiveness / 220) mat[j] = mat[i];
+  else if (Math.random() < q.corrosiveness / 220) mat[i] = mat[j];
+  else if (Math.random() < 0.04) { mat[i] = EMPTY; mat[j] = EMPTY; }
+  if (energy > 1.5 && p.reactivity > 40 && q.reactivity > 40) {
+    if (Math.random() < 0.12 && mat[j] === EMPTY) { mat[j] = FIRE; life[j] = 1; }
+  }
+}
+
+/* Get or create a compound powder from a reaction descriptor */
+function getOrCreateCompound(react) {
+  const existing = powders.find(p => p.isCompound && p.compoundKey === react.key);
+  if (existing) return existing;
+  const props = deriveCompound(react.parts);
+  if (!props) return null;
+  const p = makePowderFromProps(props, props.formula, null);
+  p.compoundKey = react.key;
+  p.isCompound = true;
+  powders.push(p);
+  renderPalette();
+  return p;
+}
+
+/* Compound-forming reaction between two powders */
+function tryCompoundReact(i, j, p, q) {
+  if (p.elementZ === null || q.elementZ === null) return false;
+  if (p.elementZ === q.elementZ) return false;
+  const react = lookupReaction(p.elementZ, q.elementZ);
+  if (!react) return false;
+  if (heat[i] < react.minTemp && heat[j] < react.minTemp) return false;
+  /* Probability gate — spontaneous reactions fire quickly */
+  const chance = react.minTemp < 0.5 ? 0.7 :
+                 react.minTemp < 1.2 ? 0.22 :
+                 react.minTemp < 2.0 ? 0.08 : 0.03;
+  if (Math.random() > chance) return false;
+  const c = getOrCreateCompound(react);
+  if (!c) return false;
+  const cIdx = PB + powders.indexOf(c);
+  mat[i] = cIdx;
+  mat[j] = cIdx;
+  heat[i] = Math.min(3, heat[i] + react.releaseHeat);
+  heat[j] = Math.min(3, heat[j] + react.releaseHeat);
+  moved[i] = 1; moved[j] = 1;
+  if (Math.random() < 0.35) toast(`⚗ ${react.formula} formed!`, false, false, true);
+  return true;
+}
+
+function tryReact(x, y, i, p) {
+  /* ---- 1. Compound-forming reactions (element + element) ---- */
+  if (p.elementZ !== null) {
+    const nbs = [];
+    if (x + 1 < GW) nbs.push(i + 1);
+    if (y + 1 < GH) nbs.push(i + GW);
+    if (x - 1 >= 0) nbs.push(i - 1);
+    if (y - 1 >= 0) nbs.push(i - GW);
+    for (const j of nbs) {
+      const mj = mat[j];
+      if (mj < PB) continue;
+      const q = powders[mj - PB];
+      if (!q || q === p) continue;
+      if (tryCompoundReact(i, j, p, q)) return;
+    }
+  }
+  /* ---- 2. Generic corrosion / heating (existing behaviour) ---- */
+  if (p.reactivity < 12) return;
+  const nbs = [];
+  if (x + 1 < GW) nbs.push(i + 1);
+  if (y + 1 < GH) nbs.push(i + GW);
+  if (x - 1 >= 0) nbs.push(i - 1);
+  for (const j of nbs) {
+    const mj = mat[j];
+    if (mj < PB) continue;
+    const q = powders[mj - PB];
+    if (!q || q === p) continue;
+    if (q.reactivity < 12) continue;
+    const diff = Math.abs(p.en - q.en);
+    const chance = (p.reactivity * q.reactivity) / 45000 * (0.4 + diff) * reactRate;
+    if (Math.random() < chance) { doReact(i, j, p, q); return; }
+  }
+}
+function updateFire(x, y, i) {
+  if (moved[i]) return;
+  const nbs = [];
+  if (x > 0) nbs.push(i - 1); if (x < GW - 1) nbs.push(i + 1);
+  if (y > 0) nbs.push(i - GW); if (y < GH - 1) nbs.push(i + GW);
+  for (const j of nbs) {
+    const mj = mat[j];
+    if (mj >= PB) { const q = powders[mj - PB]; if (q && q.extinguish) { mat[i] = Math.random() < 0.5 ? EMPTY : mat[j]; heat[i] *= 0.4; return; } }
+  }
+  life[i] -= 0.018 + Math.random() * 0.022;
+  heat[i] = Math.min(3, heat[i] + 0.035);
+  if (life[i] <= 0) { mat[i] = EMPTY; heat[i] *= 0.4; return; }
+  for (const j of nbs) {
+    const mj = mat[j];
+    if (mj >= PB) {
+      const q = powders[mj - PB];
+      if (!q || q.extinguish) continue;
+      if (q.flammability > 22 && Math.random() < q.flammability / 2200) { mat[j] = FIRE; life[j] = 1; moved[j] = 1; }
+      if (q.explosiveness > 40 && Math.random() < q.explosiveness / 7000) explode(j % GW, (j / GW) | 0, q);
+    } else if (mj === EMPTY && Math.random() < 0.0015) { mat[j] = FIRE; life[j] = 1; moved[j] = 1; }
+  }
+  if (y > 1 && Math.random() < 0.55) {
+    const j = i - GW; if (mat[j] === EMPTY && !moved[j]) { swap(i, j); moved[j] = 1; moved[i] = 1; }
+  }
+}
+function updatePowder(x, y, i, p) {
+  if (moved[i]) return;
+  if (((frame + i) & 1) === 0) tryReact(x, y, i, p);
+  if (moved[i]) return; /* Reacted → stop processing this cell this frame */
+  const T = heat[i];
+  if (p.radio > 45 && Math.random() < p.radio / 400000) {
+    const dx = (Math.random() * 5 | 0) - 2, dy = (Math.random() * 5 | 0) - 2;
+    const nx = x + dx, ny = y + dy;
+    if (nx > 0 && nx < GW - 1 && ny > 0 && ny < GH - 1) {
+      const j = ny * GW + nx;
+      if (mat[j] >= PB && powders.length > 1) { mat[j] = PB + (Math.random() * powders.length | 0); heat[j] = Math.min(3, heat[j] + 0.35); }
+    }
+  }
+  if (p.radio > 60 && Math.random() < p.radio / 20000) heat[i] = Math.min(3, heat[i] + 0.03);
+  if (p.explosiveness > 25 && T > p.ignition + 0.35 && Math.random() < p.explosiveness / 1800) { explode(x, y, p); return; }
+  if (p.flammability > 25 && T > p.ignition && Math.random() < p.flammability / 500) { mat[i] = FIRE; life[i] = 1; heat[i] = Math.min(3, heat[i] + 0.5); return; }
+  const below = i + GW; const canDown = y < GH - 1;
+  if (p.phase === "gas") {
+    if (y > 1) {
+      if (trySwap(i, i - GW, p, 0.92)) return;
+      const dx = Math.random() < 0.5 ? -1 : 1; const nx = x + dx;
+      if (nx > 0 && nx < GW - 1 && trySwap(i, i + dx, p, 0.5)) return;
+    }
+    if (Math.random() < 0.004) mat[i] = EMPTY;
+    return;
+  }
+  if (p.magnet > 45 && Math.random() < 0.35) {
+    for (const dx of [-1, 1]) {
+      const nx = x + dx; if (nx < 1 || nx >= GW - 1) continue;
+      const j = i + dx;
+      if (mat[j] >= PB) { const q = powders[mat[j] - PB]; if (q && q.magnet > 45 && Math.random() < 0.4) if (trySwap(i, j, p, 0.7)) return; }
+    }
+  }
+  if (p.phase === "solid") {
+    if (canDown && trySwap(i, below, p, 1)) return;
+    if (Math.random() < p.spread && canDown) {
+      const dx = Math.random() < 0.5 ? -1 : 1; const nx = x + dx;
+      if (nx > 0 && nx < GW - 1) if (trySwap(i, below + dx, p, 0.9)) return;
+    }
+    return;
+  }
+  if (canDown && trySwap(i, below, p, 1)) return;
+  const f = p.fluidity; const dir = Math.random() < 0.5 ? -1 : 1;
+  for (let s = 1; s <= f; s++) {
+    const nx = x + dir * s; if (nx < 1 || nx >= GW - 1) break;
+    const j = i + dir * s;
+    if (mat[j] === EMPTY || mat[j] === FIRE) { if (trySwap(i, j, p, 0.95)) return; break; }
+    if (mat[j] === WALL) break;
+    const q = mat[j] >= PB ? powders[mat[j] - PB] : null;
+    if (q && q.density < p.density && Math.random() < 0.2) if (trySwap(i, j, p, 0.6)) return;
+  }
+  for (const dx of [dir, -dir]) {
+    const nx = x + dx; if (nx < 1 || nx >= GW - 1 || !canDown) continue;
+    if (trySwap(i, below + dx, p, 0.5)) return;
+  }
+}
+function step() {
+  frame++; moved.fill(0); conductPass();
+  const dir = (frame & 1) ? 1 : -1;
+  for (let y = GH - 1; y >= 0; y--) for (let k = 0; k < GW; k++) {
+    const x = dir > 0 ? k : GW - 1 - k; const i = y * GW + x;
+    if (heat[i] > 0) heat[i] *= 0.995;
+    if (heat[i] < 0.002) heat[i] = 0;
+    const m = mat[i];
+    if (m === EMPTY || m === WALL) continue;
+    if (m === FIRE) { updateFire(x, y, i); continue; }
+    const p = powders[m - PB]; if (!p) { mat[i] = EMPTY; continue; }
+    updatePowder(x, y, i, p);
+  }
+}
+function render() {
+  const d = imgData.data;
+  for (let i = 0; i < N; i++) {
+    const m = mat[i]; let r, g, b;
+    if (m === EMPTY) { const t = heat[i]; r = 10 + t * 170; g = 12 + t * 75; b = 20 + t * 12; }
+    else if (m === WALL) { r = 68; g = 76; b = 96; const t = heat[i]; if (t > 0.1) { r += t * 100; g += t * 40; } }
+    else if (m === FIRE) { const l = Math.max(0, life[i]); r = 255; g = 110 + 130 * l; b = 25 * l; }
+    else {
+      const p = powders[m - PB];
+      if (!p) { r = 255; g = 0; b = 255; }
+      else {
+        r = p.rgb[0]; g = p.rgb[1]; b = p.rgb[2];
+        const t = heat[i];
+        if (t > 0.12) { const k = Math.min(1, t * 0.75); r += (255 - r) * k; g += (190 - g) * k * 0.85; b += (90 - b) * k * 0.5; }
+      }
+    }
+    const o = i * 4;
+    d[o] = r < 0 ? 0 : r > 255 ? 255 : r;
+    d[o+1] = g < 0 ? 0 : g > 255 ? 255 : g;
+    d[o+2] = b < 0 ? 0 : b > 255 ? 255 : b;
+    d[o+3] = 255;
+  }
+  simCtx.putImageData(imgData, 0, 0);
+}
+
+const paletteEl = document.getElementById("palette");
+function deletePowder(idx) {
+  if (idx < 0 || idx >= powders.length) return;
+  const remap = new Uint16Array(powders.length);
+  for (let i = 0; i < powders.length; i++) {
+    if (i === idx) remap[i] = EMPTY;
+    else if (i < idx) remap[i] = PB + i;
+    else remap[i] = PB + (i - 1);
+  }
+  for (let i = 0; i < N; i++) if (mat[i] >= PB) mat[i] = remap[mat[i] - PB];
+  const removedName = powders[idx].name;
+  powders.splice(idx, 1);
+  if (powders.length === 0) selectedPowder = 0;
+  else if (selectedPowder === idx) selectedPowder = Math.min(idx, powders.length - 1);
+  else if (selectedPowder > idx) selectedPowder--;
+  renderPalette(); syncCompoundLab();
+  toast(`Deleted ${removedName}`, true);
+}
+function renderPalette() {
+  if (powders.length === 0) {
+    paletteEl.innerHTML = '<div class="empty" style="padding:26px 14px">No powders yet.<br><br>Forge an element or compound first.</div>';
+    return;
+  }
+  let html = "";
+  powders.forEach((p, idx) => {
+    const cls = p.phase === "solid" ? "phase-solid" : p.phase === "liquid" ? "phase-liquid" : "phase-gas";
+    const label = p.phase === "solid" ? "Solid" : p.phase === "liquid" ? "Liquid" : "Gas";
+    const name = p.isCompound ? p.props.formula : p.name;
+    const title = p.isCompound ? p.props.compoundName : p.name;
+    html += `<div class="pitem ${idx === selectedPowder ? "sel" : ""}" data-idx="${idx}" title="${title}">
+      <span class="swatch" style="background:rgb(${p.rgb[0]},${p.rgb[1]},${p.rgb[2]})"></span>
+      <span class="pname">${name}</span>
+      <span class="phase-badge ${cls}">${label}</span>
+      <button class="pdel" data-del="${idx}" title="Delete powder">✕</button>
+    </div>`;
+  });
+  paletteEl.innerHTML = html;
+  paletteEl.querySelectorAll(".pitem").forEach(node => {
+    node.onclick = () => { selectedPowder = +node.dataset.idx; renderPalette(); };
+  });
+  paletteEl.querySelectorAll(".pdel").forEach(btn => {
+    btn.onclick = e => { e.stopPropagation(); deletePowder(+btn.dataset.del); };
+  });
+}
+
+const brushEl = document.getElementById("brush");
+const reactEl = document.getElementById("react");
+const brushValEl = document.getElementById("brushVal");
+const reactValEl = document.getElementById("reactVal");
+const speedEl = document.getElementById("speed");
+const speedValEl = document.getElementById("speedVal");
+const playBtn = document.getElementById("playBtn");
+
+brushEl.oninput = () => { brushSize = +brushEl.value; brushValEl.textContent = brushSize; };
+reactEl.oninput = () => { reactRate = +reactEl.value / 10; reactValEl.textContent = reactRate.toFixed(1) + "×"; };
+function updateSpeedDisplay() {
+  const s = SPEEDS[speedIndex]; let txt;
+  if (s < 1) txt = s.toFixed(2) + "×";
+  else if (s < 10) txt = (Math.round(s * 100) / 100).toString() + "×";
+  else txt = s.toFixed(0) + "×";
+  speedValEl.textContent = txt;
+}
+speedEl.oninput = () => { speedIndex = +speedEl.value; updateSpeedDisplay(); };
+updateSpeedDisplay();
+function setPaused(p) {
+  paused = p; playBtn.textContent = paused ? "▶" : "⏸";
+  playBtn.classList.toggle("paused", paused);
+  playBtn.title = paused ? "Resume (Space)" : "Pause (Space)";
+}
+playBtn.onclick = () => setPaused(!paused);
+document.addEventListener("keydown", e => {
+  if (e.code === "Space" && activeTab === "sandbox") {
+    const ae = document.activeElement;
+    if (ae && (ae.tagName === "INPUT" || ae.tagName === "BUTTON" || ae.tagName === "TEXTAREA")) return;
+    e.preventDefault(); setPaused(!paused);
+  }
+});
+document.getElementById("clearAllBtn").onclick = () => { mat.fill(0); heat.fill(0); life.fill(0); buildFloor(); toast("Canvas cleared"); };
+document.getElementById("clearPowdersBtn").onclick = () => {
+  if (powders.length === 0) { toast("No powders to delete", true); return; }
+  const count = powders.length; powders.length = 0; selectedPowder = 0;
+  for (let i = 0; i < N; i++) if (mat[i] >= PB) mat[i] = EMPTY;
+  renderPalette(); syncCompoundLab();
+  toast(`Deleted ${count} powder${count === 1 ? "" : "s"}`, true);
+};
+
+let paintMode = null, paintX = 0, paintY = 0;
+function applyBrush(gx, gy, mode, full) {
+  const r = brushSize;
+  if (mode === "place") {
+    if (!powders[selectedPowder]) return;
+    const cells = [];
+    for (let dy = -r; dy <= r; dy++) for (let dx = -r; dx <= r; dx++) {
+      if (dx * dx + dy * dy > r * r) continue;
+      const x = gx + dx, y = gy + dy;
+      if (x < 1 || x >= GW - 1 || y < 1 || y >= GH - 1) continue;
+      const i = y * GW + x; if (mat[i] === EMPTY) cells.push(i);
+    }
+    if (!cells.length) return;
+    const n = full ? cells.length : Math.min(cells.length, Math.max(1, Math.round(brushSize * brushSize * 0.6)));
+    for (let k = 0; k < n; k++) {
+      const idx = k + ((Math.random() * (cells.length - k)) | 0);
+      const tmp = cells[k]; cells[k] = cells[idx]; cells[idx] = tmp;
+      mat[cells[k]] = PB + selectedPowder; heat[cells[k]] = 0;
+    }
+  } else if (mode === "erase") {
+    for (let dy = -r; dy <= r; dy++) for (let dx = -r; dx <= r; dx++) {
+      if (dx * dx + dy * dy > r * r) continue;
+      const x = gx + dx, y = gy + dy;
+      if (x < 1 || x >= GW - 1 || y < 1 || y >= GH - 1) continue;
+      const i = y * GW + x; if (mat[i] !== WALL) { mat[i] = EMPTY; heat[i] = 0; life[i] = 0; }
+    }
+  }
+}
+function canvasPos(e) {
+  const r = simCanvas.getBoundingClientRect();
+  return [Math.floor((e.clientX - r.left) / r.width * GW), Math.floor((e.clientY - r.top) / r.height * GH)];
+}
+simCanvas.addEventListener("pointerdown", e => {
+  e.preventDefault();
+  try { simCanvas.setPointerCapture(e.pointerId); } catch (err) {}
+  const [x, y] = canvasPos(e); paintX = x; paintY = y;
+  let mode;
+  if (e.pointerType === "mouse") mode = (e.button === 2) ? "erase" : "place";
+  else mode = sandboxTool;
+  paintMode = mode;
+  applyBrush(x, y, mode, true);
+});
+simCanvas.addEventListener("pointermove", e => {
+  if (!paintMode) return; const [x, y] = canvasPos(e); paintX = x; paintY = y;
+});
+const endPaint = () => { paintMode = null; };
+simCanvas.addEventListener("pointerup", endPaint);
+simCanvas.addEventListener("pointercancel", endPaint);
+simCanvas.addEventListener("pointerleave", e => { if (e.buttons === 0) endPaint(); });
+simCanvas.addEventListener("contextmenu", e => e.preventDefault());
+simCanvas.addEventListener("wheel", e => {
+  e.preventDefault();
+  const dir = e.deltaY > 0 ? -1 : 1;
+  brushSize = clamp(brushSize + dir, 1, 16);
+  brushEl.value = brushSize; brushValEl.textContent = brushSize;
+}, { passive: false });
+
+function fitCanvas(canvas, aspectW, aspectH) {
+  const wrap = canvas.parentElement; if (!wrap) return;
+  const w = wrap.clientWidth, h = wrap.clientHeight; if (w <= 0 || h <= 0) return;
+  let cw, ch;
+  if (w / h > aspectW / aspectH) { ch = h; cw = h * aspectW / aspectH; }
+  else { cw = w; ch = w * aspectH / aspectW; }
+  canvas.style.width = Math.max(1, Math.floor(cw)) + "px";
+  canvas.style.height = Math.max(1, Math.floor(ch)) + "px";
+}
+function fitAllCanvases() { fitCanvas(atomCanvas, 1, 1); fitCanvas(simCanvas, 260, 160); }
+if (window.ResizeObserver) {
+  const ro = new ResizeObserver(() => fitAllCanvases());
+  ro.observe(atomCanvas.parentElement); ro.observe(simCanvas.parentElement);
+}
+window.addEventListener("resize", fitAllCanvases);
+window.addEventListener("orientationchange", () => setTimeout(fitAllCanvases, 120));
+
+let activeTab = "atom";
+function switchTab(name) {
+  activeTab = name;
+  document.querySelectorAll(".tab").forEach(t => t.classList.toggle("active", t.dataset.tab === name));
+  document.querySelectorAll(".screen").forEach(s => s.classList.toggle("active", s.id === name));
+  if (name === "compound") { renderRecipes(); refreshCompound(); }
+  requestAnimationFrame(fitAllCanvases);
+}
+document.querySelectorAll(".tab").forEach(t => { t.onclick = () => switchTab(t.dataset.tab); });
+
+let toastTimer = null;
+function toast(msg, warn, good, rx) {
+  const el = document.getElementById("toast");
+  el.textContent = msg;
+  el.className = "toast show" + (warn ? " warn" : "") + (good ? " good" : "") + (rx ? " rx" : "");
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => { el.className = "toast"; }, 1900);
+}
+
+function loop(ts) {
+  requestAnimationFrame(loop);
+  if (activeTab === "atom") drawAtom(ts || 0);
+  else if (activeTab === "sandbox") {
+    if (paintMode) applyBrush(paintX, paintY, paintMode, false);
+    if (!paused) {
+      speedAccum += SPEEDS[speedIndex];
+      let steps = Math.floor(speedAccum); speedAccum -= steps;
+      if (steps > 24) steps = 24;
+      for (let s = 0; s < steps; s++) step();
+    }
+    render();
+  }
+}
+
+refreshAtom();
+syncCompoundLab();
+requestAnimationFrame(loop);
+requestAnimationFrame(fitAllCanvases);
+setTimeout(fitAllCanvases, 0);
+setTimeout(fitAllCanvases, 120);
+</script>
+</body>
+</html>
