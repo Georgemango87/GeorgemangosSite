@@ -1,0 +1,3949 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>MathLab — Mathematical Construction Environment</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, "Liberation Mono", monospace;
+  --sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Inter, Roboto, "Helvetica Neue", sans-serif;
+  --radius: 9px;
+}
+html[data-theme="dark"]{
+  --bg:#0c1016; --panel:#121820; --panel2:#0f151c; --panel3:#171f29;
+  --border:#222c38; --border2:#2c3947;
+  --text:#dbe4ee; --muted:#7c8b9d; --dim:#5b6878;
+  --accent:#4cc2ff; --accent2:#7ee787; --accent3:#d2a8ff;
+  --err:#ff7b72; --warn:#ffd866;
+  --grid:#1a222c; --grid2:#232e3a; --axis:#46586c;
+  --shadow: 0 8px 30px rgba(0,0,0,.45);
+  --sel:#1c3a52;
+}
+html[data-theme="light"]{
+  --bg:#eef1f6; --panel:#ffffff; --panel2:#f6f8fb; --panel3:#eef2f7;
+  --border:#dde3ea; --border2:#cbd4de;
+  --text:#16202c; --muted:#63738a; --dim:#8b98a8;
+  --accent:#0b7fd4; --accent2:#0f8a4c; --accent3:#7c3aed;
+  --err:#c0392b; --warn:#a97c00;
+  --grid:#e6ebf1; --grid2:#d8e0e9; --axis:#95a4b5;
+  --shadow: 0 8px 30px rgba(20,40,70,.12);
+  --sel:#dcecfb;
+}
+html,body{height:100%}
+body{background:var(--bg); color:var(--text); font-family:var(--sans); font-size:14px; line-height:1.45; overflow:hidden;}
+button, input, select, textarea{font-family:inherit; color:inherit}
+button{cursor:pointer; background:none; border:none}
+::-webkit-scrollbar{width:10px;height:10px}
+::-webkit-scrollbar-thumb{background:var(--border2); border-radius:6px; border:3px solid transparent; background-clip:content-box}
+::-webkit-scrollbar-thumb:hover{background:var(--muted); background-clip:content-box}
+::-webkit-scrollbar-track{background:transparent}
+
+.app{display:flex; flex-direction:column; height:100vh; overflow:hidden}
+
+.topbar{display:flex; align-items:center; justify-content:space-between; gap:16px; padding:0 14px; height:52px; flex:0 0 auto; background:var(--panel); border-bottom:1px solid var(--border);}
+.brand{display:flex; align-items:center; gap:11px; min-width:0}
+.brand .logo{width:32px;height:32px;flex:0 0 auto; display:grid; place-items:center; border-radius:8px; background:linear-gradient(145deg,var(--accent),var(--accent3)); color:#06121c; font-weight:800; font-size:17px;}
+.brand h1{font-size:15px; font-weight:650; letter-spacing:.2px; white-space:nowrap}
+.brand p{font-size:11px; color:var(--muted); white-space:nowrap; margin-top:-1px}
+.topbar-actions{display:flex; align-items:center; gap:6px; flex-wrap:wrap; justify-content:flex-end}
+
+.tbtn{border:1px solid var(--border); background:var(--panel2); color:var(--text); padding:5px 11px; border-radius:7px; font-size:12.5px; transition:.13s; white-space:nowrap;}
+.tbtn:hover{border-color:var(--border2); background:var(--panel3)}
+.tbtn.primary{background:var(--accent); color:#04121d; border-color:transparent; font-weight:600}
+.tbtn.primary:hover{filter:brightness(1.1)}
+.tbtn.icon{padding:5px 9px}
+
+main{flex:1 1 auto; display:grid; gap:1px; background:var(--border); grid-template-columns: 350px minmax(0,1fr) 340px; overflow:hidden;}
+.panel{background:var(--bg); display:flex; flex-direction:column; overflow:hidden; min-width:0; min-height:0}
+.panel.left{background:var(--panel2)}
+.panel.right{background:var(--panel2)}
+
+.panel-head{display:flex; align-items:center; justify-content:space-between; gap:8px; padding:8px 12px; font-size:11px; font-weight:700; letter-spacing:.09em; text-transform:uppercase; color:var(--muted); flex:0 0 auto; border-bottom:1px solid var(--border); background:var(--panel);}
+.panel-head .hint{font-size:10px; text-transform:none; letter-spacing:0; color:var(--dim); font-weight:400}
+
+.editor-block{flex:0 0 auto; display:flex; flex-direction:column; border-bottom:1px solid var(--border)}
+.editor-wrap{position:relative; height:172px; background:var(--panel2)}
+.editor-wrap pre, .editor-wrap textarea{position:absolute; inset:0; margin:0; padding:10px 12px; font-family:var(--mono); font-size:12.5px; line-height:1.6; white-space:pre; overflow:auto; border:0; tab-size:4; word-wrap:normal;}
+.editor-wrap textarea{color:transparent; background:transparent; caret-color:var(--accent); resize:none; outline:none; overflow:auto; z-index:2;}
+.editor-wrap textarea::selection{background:rgba(76,194,255,.3)}
+.editor-wrap pre{pointer-events:none; z-index:1; color:var(--text); overflow:hidden}
+.tk-num{color:#f0b072}.tk-fn{color:var(--accent)}.tk-obj{color:var(--accent2)}.tk-const{color:var(--accent3)}.tk-op{color:#9fb3c8}.tk-punc{color:var(--muted)}.tk-com{color:var(--dim); font-style:italic}
+html[data-theme="light"] .tk-num{color:#b45309} html[data-theme="light"] .tk-op{color:#475569}
+
+.autocomplete{position:absolute; left:10px; right:10px; bottom:6px; z-index:20; background:var(--panel3); border:1px solid var(--border2); border-radius:8px; box-shadow:var(--shadow); max-height:150px; overflow:auto; display:none;}
+.autocomplete.open{display:block}
+.ac-item{padding:4px 10px; font-family:var(--mono); font-size:12px; display:flex; justify-content:space-between; gap:10px; cursor:pointer}
+.ac-item .kind{color:var(--dim); font-size:10.5px}
+.ac-item.active,.ac-item:hover{background:var(--sel)}
+
+.errors{max-height:96px; overflow:auto; font-family:var(--mono); font-size:11.5px}
+.errors:empty{display:none}
+.err-item{padding:4px 12px; color:var(--err); border-bottom:1px solid var(--border); display:flex; gap:8px}
+.err-item .ln{color:var(--dim); flex:0 0 auto}
+
+.search-row{padding:7px 10px; border-bottom:1px solid var(--border); flex:0 0 auto}
+.search-row input{width:100%; background:var(--panel2); border:1px solid var(--border); border-radius:6px; padding:5px 9px; font-size:12px; outline:none;}
+.search-row input:focus{border-color:var(--accent)}
+
+.object-list{flex:1 1 auto; overflow-y:auto; min-height:80px}
+.obj{display:flex; gap:7px; padding:7px 10px; border-bottom:1px solid var(--border); cursor:pointer; transition:background .1s; align-items:flex-start;}
+.obj:hover{background:var(--panel3)}
+.obj.selected{background:var(--sel)}
+.obj.hidden-obj{opacity:.45}
+.obj-eye{flex:0 0 auto; width:18px; height:18px; border-radius:4px; display:grid; place-items:center; font-size:11px; color:var(--muted); margin-top:1px;}
+.obj-eye:hover{background:var(--border2); color:var(--text)}
+.obj-main{flex:1 1 auto; min-width:0}
+.obj-head{display:flex; align-items:baseline; gap:7px}
+.obj-name{font-family:var(--mono); font-size:13px; font-weight:650; white-space:nowrap; overflow:hidden; text-overflow:ellipsis}
+.obj-kind{font-size:9.5px; text-transform:uppercase; letter-spacing:.06em; color:var(--dim); border:1px solid var(--border2); padding:0 4px; border-radius:4px; flex:0 0 auto;}
+.obj-src{font-family:var(--mono); font-size:11px; color:var(--muted); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; margin-top:1px}
+.obj-val{font-family:var(--mono); font-size:11.5px; color:var(--accent2); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; margin-top:1px}
+.obj-val.err{color:var(--err)}
+.obj-actions{flex:0 0 auto; display:flex; gap:2px; opacity:0; transition:.12s}
+.obj:hover .obj-actions{opacity:1}
+.mini{width:20px;height:20px;border-radius:4px;display:grid;place-items:center;font-size:11px;color:var(--muted)}
+.mini:hover{background:var(--border2); color:var(--text)}
+.mini.on{color:var(--accent); background:rgba(76,194,255,.13)}
+.mini.danger:hover{color:var(--err)}
+.empty-note{padding:16px 14px; color:var(--dim); font-size:12px; text-align:center; line-height:1.7}
+
+.param-block{flex:0 0 auto; max-height:230px; display:flex; flex-direction:column; border-top:1px solid var(--border)}
+.param-list{overflow-y:auto; padding:4px 10px 10px}
+.param{padding:5px 0}
+.param-head{display:flex; align-items:center; gap:8px; font-family:var(--mono); font-size:12px}
+.param-head .nm{color:var(--accent); font-weight:600; min-width:14px}
+.param-head .val{margin-left:auto; color:var(--accent2)}
+.param input[type=range]{width:100%; accent-color:var(--accent); height:16px; margin-top:2px}
+.param-cfg{display:flex; gap:5px; margin-top:2px}
+.param-cfg input{width:100%; background:var(--panel2); border:1px solid var(--border); border-radius:5px; padding:2px 6px; font-size:10.5px; font-family:var(--mono); outline:none;}
+.param-cfg input:focus{border-color:var(--accent)}
+
+.center-head{display:flex; align-items:center; gap:8px; padding:6px 10px; border-bottom:1px solid var(--border); background:var(--panel); flex:0 0 auto; flex-wrap:wrap}
+.vtabs{display:flex; gap:2px; background:var(--panel2); padding:2px; border-radius:7px; border:1px solid var(--border)}
+.vtab{padding:4px 12px; font-size:12px; border-radius:5px; color:var(--muted)}
+.vtab.active{background:var(--panel3); color:var(--text); box-shadow:0 1px 3px rgba(0,0,0,.2)}
+.spacer{flex:1 1 auto}
+.iconbtn{border:1px solid var(--border); background:var(--panel2); border-radius:6px; padding:4px 9px; font-size:12px; color:var(--muted)}
+.iconbtn:hover{color:var(--text); border-color:var(--border2)}
+
+.canvas-wrap{position:relative; flex:1 1 auto; min-height:0; background:var(--panel2); overflow:hidden}
+.canvas-wrap canvas{position:absolute; inset:0; width:100%; height:100%; display:block}
+.readout{position:absolute; left:10px; bottom:8px; font-family:var(--mono); font-size:11px; color:var(--muted); background:color-mix(in srgb, var(--panel) 85%, transparent); padding:3px 8px; border-radius:5px; border:1px solid var(--border); pointer-events:none;}
+.simbar{flex:0 0 auto; display:flex; align-items:center; gap:9px; padding:7px 12px; border-top:1px solid var(--border); background:var(--panel); flex-wrap:wrap; font-size:12px; font-family:var(--mono); color:var(--muted);}
+.simbar button{width:28px;height:26px;border:1px solid var(--border); border-radius:6px; background:var(--panel2); color:var(--text); font-size:12px; display:grid;place-items:center}
+.simbar button:hover{border-color:var(--accent); color:var(--accent)}
+.simbar .lbl{color:var(--dim); font-size:11px}
+.simbar .tval{color:var(--accent2); min-width:64px; display:inline-block}
+.simbar input[type=number]{width:62px; background:var(--panel2); border:1px solid var(--border); border-radius:5px; padding:2px 6px; font-family:var(--mono); font-size:11.5px; outline:none}
+.simbar input[type=number]:focus{border-color:var(--accent)}
+.simbar input[type=range]{width:90px; accent-color:var(--accent)}
+
+.itabs{display:flex; gap:1px; padding:6px 8px 0; border-bottom:1px solid var(--border); background:var(--panel); flex:0 0 auto; overflow-x:auto}
+.itab{padding:5px 10px; font-size:11.5px; color:var(--muted); border-bottom:2px solid transparent; white-space:nowrap}
+.itab:hover{color:var(--text)}
+.itab.active{color:var(--accent); border-bottom-color:var(--accent)}
+.inspector{flex:1 1 auto; overflow-y:auto; padding:12px; min-height:0}
+.insp-title{font-family:var(--mono); font-size:15px; font-weight:650; margin-bottom:2px; word-break:break-all}
+.insp-sub{font-size:11px; color:var(--dim); margin-bottom:12px}
+.field{margin-bottom:10px}
+.field label{display:block; font-size:10.5px; text-transform:uppercase; letter-spacing:.07em; color:var(--muted); margin-bottom:4px; font-weight:600}
+.field input[type=text], .field input[type=number], .field select{width:100%; background:var(--panel2); border:1px solid var(--border); border-radius:6px; padding:5px 9px; font-size:12.5px; font-family:var(--mono); outline:none;}
+.field input:focus, .field select:focus{border-color:var(--accent)}
+.row2{display:grid; grid-template-columns:1fr 1fr; gap:8px}
+.row3{display:grid; grid-template-columns:1fr 1fr 1fr; gap:8px}
+.valbox{font-family:var(--mono); font-size:12.5px; background:var(--panel2); border:1px solid var(--border); border-radius:7px; padding:9px 11px; word-break:break-word; white-space:pre-wrap; max-height:220px; overflow:auto;}
+.valbox.err{color:var(--err); border-color:color-mix(in srgb, var(--err) 40%, var(--border))}
+table.data{width:100%; border-collapse:collapse; font-family:var(--mono); font-size:11.5px}
+table.data th{text-align:right; padding:4px 7px; color:var(--muted); border-bottom:1px solid var(--border2); font-weight:600; position:sticky; top:0; background:var(--panel2)}
+table.data td{text-align:right; padding:3px 7px; border-bottom:1px solid var(--border)}
+table.data tr:hover td{background:var(--panel3)}
+.tbl-scroll{max-height:340px; overflow:auto; border:1px solid var(--border); border-radius:7px; background:var(--panel2)}
+.treebox{border:1px solid var(--border); border-radius:7px; background:var(--panel2); overflow:auto; padding:8px}
+.dep-list{list-style:none; font-family:var(--mono); font-size:12px}
+.dep-list li{padding:4px 8px; border:1px solid var(--border); border-radius:5px; margin-bottom:4px; background:var(--panel2); cursor:pointer}
+.dep-list li:hover{border-color:var(--accent)}
+.note{font-size:11px; color:var(--dim); line-height:1.6; margin-top:8px}
+.steps{font-family:var(--mono); font-size:12px; line-height:1.9}
+.steps .arrow{color:var(--dim); display:block; text-align:center; font-size:10px}
+.steps .stp{background:var(--panel2); border:1px solid var(--border); border-radius:6px; padding:6px 10px; word-break:break-word}
+.steps .stp.first{border-color:var(--accent); }
+.chip{display:inline-block; font-family:var(--mono); font-size:10.5px; padding:1px 6px; border-radius:5px; background:var(--panel3); border:1px solid var(--border2); margin:0 4px 4px 0}
+.btnrow{display:flex; gap:6px; flex-wrap:wrap; margin-top:8px}
+
+.build-wrap, .system-wrap{position:absolute; inset:0; overflow:auto; background:var(--panel2);}
+.build-toolbar{position:sticky; top:0; z-index:5; display:flex; align-items:center; gap:10px; padding:6px 12px; background:var(--panel); border-bottom:1px solid var(--border); font-size:12px; font-family:var(--mono); color:var(--muted);}
+.build-toolbar .tname{color:var(--accent); font-weight:600;}
+.build-toolbar .ttype{color:var(--dim);}
+.build-toolbar .tinfo{color:var(--dim); margin-left:auto;}
+.build-canvas, .system-canvas{position:relative;}
+svg.diagram{display:block; font-family:var(--mono)}
+svg.diagram .node rect{transition:.12s}
+svg.diagram .node{cursor:pointer}
+svg.diagram .node:hover rect{stroke-width:2}
+svg.diagram .node.selected rect{stroke-width:2.5; filter:drop-shadow(0 0 6px rgba(76,194,255,.5))}
+svg.diagram .edge{stroke-width:1.4; fill:none}
+svg.diagram text{pointer-events:none; user-select:none}
+.legend{padding:8px 12px; font-size:11px; font-family:var(--mono); color:var(--dim); display:flex; gap:14px; flex-wrap:wrap; border-bottom:1px solid var(--border);}
+.legend span{display:inline-flex; align-items:center; gap:5px}
+.legend i{display:inline-block; width:9px; height:9px; border-radius:2px;}
+
+.statusbar{flex:0 0 auto; height:26px; display:flex; align-items:center; gap:14px; padding:0 14px; background:var(--panel); border-top:1px solid var(--border); font-size:11px; color:var(--muted); font-family:var(--mono); overflow:hidden; white-space:nowrap;}
+.statusbar .ok{color:var(--accent2)}
+.statusbar .bad{color:var(--err)}
+
+.modal-bg{position:fixed; inset:0; background:rgba(0,0,0,.55); display:none; place-items:center; z-index:100; padding:20px;}
+.modal-bg.open{display:grid}
+.modal{background:var(--panel); border:1px solid var(--border2); border-radius:12px; box-shadow:var(--shadow); max-width:680px; width:100%; max-height:80vh; overflow:auto; padding:22px 24px;}
+.modal h2{font-size:16px; margin-bottom:12px}
+.modal h3{font-size:12px; text-transform:uppercase; letter-spacing:.08em; color:var(--muted); margin:16px 0 6px}
+.modal code{font-family:var(--mono); font-size:12px; background:var(--panel3); padding:1px 5px; border-radius:4px}
+.modal p{font-size:13px; color:var(--muted); line-height:1.7}
+.modal .close{float:right; color:var(--muted); font-size:18px; line-height:1}
+
+@media (max-width: 1180px){
+  main{grid-template-columns: 1fr; grid-template-rows: auto auto auto; overflow-y:auto}
+  .panel{max-height:none}
+  .editor-wrap{height:150px}
+  .canvas-wrap{height:56vh; min-height:340px}
+  body{overflow:auto}
+  .app{height:auto; min-height:100vh}
+}
+</style>
+</head>
+<body>
+<div class="app">
+
+  <header class="topbar">
+    <div class="brand">
+      <div class="logo">∑</div>
+      <div>
+        <h1>MathLab</h1>
+        <p>Mathematical Construction Environment</p>
+      </div>
+    </div>
+    <div class="topbar-actions">
+      <select id="examples" class="tbtn" title="Load an example">
+        <option value="">Examples ▾</option>
+        <option value="basics">Basics &amp; dependency</option>
+        <option value="transform">Transformations</option>
+        <option value="calculus">Calculus chain</option>
+        <option value="fib">Fibonacci (recursion)</option>
+        <option value="logistic">Logistic map (iteration)</option>
+        <option value="projectile">Projectile (stateful)</option>
+        <option value="mandel">Mandelbrot iteration</option>
+        <option value="conditional">Conditional function</option>
+        <option value="compose">Function composition</option>
+        <option value="polar">Parametric &amp; polar</option>
+        <option value="linalg">Vectors &amp; matrices</option>
+        <option value="sets">Sets &amp; relations</option>
+        <option value="sim">Simulation over time</option>
+      </select>
+      <button class="tbtn" id="btnExport">Export</button>
+      <button class="tbtn" id="btnImport">Import</button>
+      <input type="file" id="fileInput" accept=".json,application/json" hidden>
+      <button class="tbtn icon" id="btnTheme" title="Toggle theme">◑</button>
+      <button class="tbtn icon" id="btnHelp" title="Help / syntax reference">?</button>
+    </div>
+  </header>
+
+  <main>
+    <section class="panel left">
+      <div class="editor-block">
+        <div class="panel-head">
+          <span>Program</span>
+          <span style="display:flex;gap:6px;align-items:center">
+            <span class="hint">Ctrl+Enter to run</span>
+            <button class="tbtn primary" id="btnRun" style="padding:3px 10px;font-size:11.5px">Run ▸</button>
+          </span>
+        </div>
+        <div class="editor-wrap">
+          <pre id="highlight" aria-hidden="true"></pre>
+          <textarea id="code" spellcheck="false" autocomplete="off" autocapitalize="off" autocorrect="off"></textarea>
+          <div class="autocomplete" id="autocomplete"></div>
+        </div>
+        <div class="errors" id="editorErrors"></div>
+      </div>
+
+      <div class="panel-head">
+        <span>Objects</span>
+        <span class="hint" id="objCount">0</span>
+      </div>
+      <div class="search-row"><input id="search" type="text" placeholder="Filter objects…" autocomplete="off"></div>
+      <div class="object-list" id="objectList"></div>
+
+      <div class="param-block">
+        <div class="panel-head"><span>Parameters</span><span class="hint">sliders</span></div>
+        <div class="param-list" id="paramList"></div>
+      </div>
+    </section>
+
+    <section class="panel center">
+      <div class="center-head">
+        <div class="vtabs">
+          <button class="vtab active" data-view="system">System</button>
+          <button class="vtab" data-view="build">Build</button>
+          <button class="vtab" data-view="graph">Graph</button>
+          <button class="vtab" data-view="numberline">Number line</button>
+        </div>
+        <div class="spacer"></div>
+        <button class="iconbtn" id="zoomIn" title="Zoom in">＋</button>
+        <button class="iconbtn" id="zoomOut" title="Zoom out">－</button>
+        <button class="iconbtn" id="fitView" title="Reset view">Reset</button>
+      </div>
+      <div class="canvas-wrap">
+        <canvas id="graphCanvas" style="display:none"></canvas>
+        <canvas id="lineCanvas" style="display:none"></canvas>
+        <div class="build-wrap" id="buildWrap" style="display:none">
+          <div class="build-toolbar">
+            <span>Building</span>
+            <span class="tname" id="buildTarget">—</span>
+            <span class="ttype" id="buildType"></span>
+            <span class="tinfo" id="buildHint">click a block to edit</span>
+          </div>
+          <div class="build-canvas" id="buildCanvas"></div>
+        </div>
+        <div class="system-wrap" id="systemWrap" style="display:block">
+          <div class="legend">
+            <span><i style="background:var(--accent)"></i>value</span>
+            <span><i style="background:var(--accent2)"></i>function</span>
+            <span><i style="background:var(--accent3)"></i>structure</span>
+            <span><i style="background:var(--warn)"></i>relation</span>
+            <span style="margin-left:auto">click a node to inspect it</span>
+          </div>
+          <div class="system-canvas" id="systemCanvas"></div>
+        </div>
+        <div class="readout" id="readout">—</div>
+      </div>
+      <div class="simbar">
+        <button id="simPlay" title="Play / pause">▶</button>
+        <button id="simStep" title="Step forward">⏭</button>
+        <button id="simReset" title="Reset time">⟲</button>
+        <span class="lbl">t =</span><span class="tval" id="simT">0</span>
+        <span class="lbl">dt</span><input type="number" id="simDt" value="0.1" step="0.01" min="0.0001">
+        <span class="lbl">speed</span><input type="range" id="simSpeed" min="0.1" max="4" step="0.1" value="1">
+        <span class="lbl" id="simSpeedVal">1.0×</span>
+        <span class="spacer" style="flex:1"></span>
+        <span class="lbl">seed</span><input type="number" id="simSeed" value="12345" style="width:80px">
+        <button class="iconbtn" id="reroll" title="Reset random sequence">↻</button>
+      </div>
+    </section>
+
+    <section class="panel right">
+      <div class="itabs" id="inspectorTabs">
+        <button class="itab active" data-tab="value">Value</button>
+        <button class="itab" data-tab="table">Table</button>
+        <button class="itab" data-tab="tree">Tree</button>
+        <button class="itab" data-tab="steps">Steps</button>
+        <button class="itab" data-tab="deps">Deps</button>
+        <button class="itab" data-tab="plot">Plot</button>
+      </div>
+      <div class="inspector" id="inspector"></div>
+    </section>
+  </main>
+
+  <footer class="statusbar">
+    <span id="statusMsg">Ready.</span>
+    <span class="spacer" style="flex:1"></span>
+    <span id="statusInfo"></span>
+  </footer>
+</div>
+
+<div class="modal-bg" id="modalBg">
+  <div class="modal">
+    <button class="close" id="modalClose">✕</button>
+    <h2>MathLab — build mathematical systems</h2>
+    <p>Write a program. Each line defines something reusable. Everything is connected:
+       change one definition and the whole system re-evaluates automatically.</p>
+
+    <h3>Definitions</h3>
+    <p>
+      <code>a = 5</code> · <code>f(x) = a*x^2 + 3</code> ·
+      <code>v = [1,2,3]</code> · <code>M = [[1,2],[3,4]]</code> · <code>A = {1,2,3}</code>
+    </p>
+
+    <h3>Conditional rules</h3>
+    <p><code>f(x) = x &gt; 0 ? x^2 : -x</code> &nbsp; (ternary)</p>
+
+    <h3>Iteration / stateful systems</h3>
+    <p>
+      <code>x(0) = 0.5</code><br>
+      <code>x(n+1) = r*x(n)*(1-x(n))</code><br>
+      Then call <code>x(10)</code>, <code>x(100)</code>… and step through time with the
+      simulation controls at the bottom.
+    </p>
+
+    <h3>Recursion</h3>
+    <p><code>fib(0) = 0</code><br><code>fib(1) = 1</code><br><code>fib(n) = fib(n-1) + fib(n-2)</code></p>
+
+    <h3>Composition</h3>
+    <p><code>h(x) = g(f(x))</code> &nbsp; or &nbsp; <code>h = compose(g, f)</code></p>
+
+    <h3>Operators</h3>
+    <p><code>+ - * / ^ %</code>, comparisons <code>&lt; &gt; &lt;= &gt;= = !=</code>,
+       logic <code>and</code>/<code>or</code>, ternary <code>? :</code>,
+       sets <code>∪ ∩ \</code>. Implicit multiplication works: <code>2x</code>, <code>(x+1)(x-1)</code>.</p>
+
+    <h3>Built-in functions</h3>
+    <p><code>sin cos tan asin acos atan sinh cosh tanh sqrt cbrt abs exp ln log log2
+       floor ceil round sign min max mod gcd lcm factorial hypot atan2 compose</code></p>
+    <p>Linear algebra: <code>dot cross norm transpose det inv identity zeros ones</code><br>
+       Sets: <code>union intersect difference</code><br>
+       Calculus: <code>derivative(f)</code>, <code>integral(f,a,b)</code>, <code>limit(f,a)</code>,
+       <code>roots(f,a,b)</code>, <code>tangent(f,a)</code><br>
+       Series: <code>sum(expr, k, from, to)</code>, <code>product(expr, k, from, to)</code><br>
+       Random: <code>random()</code>, <code>random(a,b)</code></p>
+
+    <h3>Views</h3>
+    <p><b>System</b> — the whole project as a dependency graph.<br>
+       <b>Build</b> — the selected object's AST as editable blocks; edits write back to code.<br>
+       <b>Graph</b> / <b>Number line</b> — the visualisations.</p>
+
+    <h3>Parameters</h3>
+    <p>Click the ⚙ icon on a numeric object to turn it into a slider parameter.</p>
+  </div>
+</div>
+
+<script>
+"use strict";
+/* ============================================================================
+ * MathLab — Mathematical Construction Environment
+ * ----------------------------------------------------------------------------
+ * Tokenizer -> Parser -> AST -> Evaluator -> Dependency Manager -> Views
+ * No eval(). One AST shared by text editor, tree view, build view, evaluator.
+ * ========================================================================== */
+(() => {
+
+/* ==========================================================================
+ * 0. UTILITIES
+ * ========================================================================== */
+const $  = (s, r = document) => r.querySelector(s);
+const $$ = (s, r = document) => Array.from(r.querySelectorAll(s));
+function el(tag, cls, text){
+  const e = document.createElement(tag);
+  if (cls) e.className = cls;
+  if (text != null) e.textContent = text;
+  return e;
+}
+let _uid = 0;
+const uid = () => 'o' + (++_uid);
+
+function fmt(n, digits = 8){
+  if (typeof n !== 'number') return String(n);
+  if (Number.isNaN(n)) return 'NaN';
+  if (n === Infinity) return '∞';
+  if (n === -Infinity) return '-∞';
+  if (Object.is(n, -0)) n = 0;
+  if (Number.isInteger(n) && Math.abs(n) < 1e15) return String(n);
+  const a = Math.abs(n);
+  if (a !== 0 && (a < 1e-4 || a >= 1e12)) return n.toExponential(4).replace('e+', 'e');
+  return String(Number(n.toPrecision(digits)));
+}
+function esc(s){
+  return String(s).replace(/[&<>"']/g, c => (
+    { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]
+  ));
+}
+function cloneAST(n){
+  if (n === null || typeof n !== 'object') return n;
+  if (Array.isArray(n)) return n.map(cloneAST);
+  const o = {};
+  for (const k in n) o[k] = cloneAST(n[k]);
+  return o;
+}
+
+/* ==========================================================================
+ * 1. ERROR
+ * ========================================================================== */
+class MathError extends Error {
+  constructor(message, pos){ super(message); this.name = 'MathError'; this.pos = pos; }
+}
+const fail = (msg) => { throw new MathError(msg); };
+
+/* ==========================================================================
+ * 2. VALUE TYPES
+ * ========================================================================== */
+class Vec { constructor(data){ this.data = data; } toString(){ return '[' + this.data.map(fmt).join(', ') + ']'; } }
+class Mat { constructor(rows){ this.rows = rows; } toString(){ return '[' + this.rows.map(r => '[' + r.map(fmt).join(', ') + ']').join(', ') + ']'; } }
+class SetVal { constructor(items){ this.items = items; } toString(){ return '{' + this.items.map(formatValue).join(', ') + '}'; } }
+class FnVal {
+  constructor(params, fn, ast){ this.params = params; this.fn = fn; this.ast = ast || null; }
+  call(args){ return this.fn(args); }
+  get param(){ return this.params[0]; }
+  toString(){ return 'function of ' + this.params.join(', '); }
+}
+function kindOfValue(v){
+  if (v instanceof FnVal)  return 'function';
+  if (v instanceof Vec)    return 'vector';
+  if (v instanceof Mat)    return 'matrix';
+  if (v instanceof SetVal) return 'set';
+  if (typeof v === 'boolean') return 'logic';
+  if (typeof v === 'number')  return 'number';
+  return 'unknown';
+}
+function formatValue(v){
+  if (v === undefined) return '—';
+  if (v === null) return 'null';
+  if (typeof v === 'number') return fmt(v);
+  if (typeof v === 'boolean') return v ? 'true' : 'false';
+  if (v instanceof Vec) return '[' + v.data.map(fmt).join(', ') + ']';
+  if (v instanceof Mat) return '[' + v.rows.map(r => '[' + r.map(fmt).join(', ') + ']').join(', ') + ']';
+  if (v instanceof SetVal) return '{' + v.items.map(formatValue).join(', ') + '}';
+  if (v instanceof FnVal) return 'function of ' + v.params.join(', ');
+  return String(v);
+}
+function asNum(v, where){
+  if (typeof v === 'number') return v;
+  if (typeof v === 'boolean') return v ? 1 : 0;
+  fail((where ? where + ': ' : '') + 'expected a number but got ' + formatValue(v) + '.');
+}
+function asVec(v, where){
+  if (v instanceof Vec) return v;
+  fail((where ? where + ': ' : '') + 'expected a vector but got ' + formatValue(v) + '.');
+}
+function asMat(v, where){
+  if (v instanceof Mat) return v;
+  fail((where ? where + ': ' : '') + 'expected a matrix but got ' + formatValue(v) + '.');
+}
+
+/* ==========================================================================
+ * 3. TOKENIZER
+ * ========================================================================== */
+const TOK = {
+  NUM:'num', IDENT:'ident', OP:'op',
+  LPAREN:'lparen', RPAREN:'rparen',
+  LBRACK:'lbrack', RBRACK:'rbrack',
+  LBRACE:'lbrace', RBRACE:'rbrace',
+  COMMA:'comma', EOF:'eof'
+};
+const SUP = { '⁰':'0','¹':'1','²':'2','³':'3','⁴':'4','⁵':'5','⁶':'6','⁷':'7','⁸':'8','⁹':'9' };
+function normalizeInput(src){
+  let out = '';
+  for (let i = 0; i < src.length; i++){
+    const ch = src[i];
+    if (SUP[ch]){
+      let d = '';
+      while (i < src.length && SUP[src[i]]) { d += SUP[src[i]]; i++; }
+      i--;
+      out += '^(' + d + ')';
+      continue;
+    }
+    switch (ch){
+      case '×': case '·': case '⋅': case '∙': out += '*'; break;
+      case '÷': out += '/'; break;
+      case '−': case '–': case '—': out += '-'; break;
+      case '≤': out += '<='; break;
+      case '≥': out += '>='; break;
+      case '≠': out += '!='; break;
+      case '√': out += 'sqrt'; break;
+      case 'π': out += 'pi'; break;
+      case 'τ': out += 'tau'; break;
+      case 'φ': out += 'phi'; break;
+      case 'θ': out += 'theta'; break;
+      case '∞': out += 'Infinity'; break;
+      case '∧': out += ' and '; break;
+      case '∨': out += ' or '; break;
+      default: out += ch;
+    }
+  }
+  return out;
+}
+const RE_ID_START = /[A-Za-z_\u0370-\u03FF\u1F00-\u1FFF]/;
+const RE_ID_CHAR  = /[A-Za-z0-9_\u0370-\u03FF\u1F00-\u1FFF]/;
+function tokenize(src){
+  const toks = [];
+  let i = 0;
+  const push = (type, value, pos) => toks.push({ type, value, pos });
+
+  while (i < src.length){
+    const c = src[i];
+    if (c === ' ' || c === '\t' || c === '\r' || c === '\n'){ i++; continue; }
+
+    if (/[0-9]/.test(c) || (c === '.' && /[0-9]/.test(src[i + 1] || ''))){
+      const start = i;
+      while (i < src.length && /[0-9]/.test(src[i])) i++;
+      if (src[i] === '.'){ i++; while (i < src.length && /[0-9]/.test(src[i])) i++; }
+      if (src[i] === 'e' || src[i] === 'E'){
+        const save = i; i++;
+        if (src[i] === '+' || src[i] === '-') i++;
+        if (/[0-9]/.test(src[i] || '')){ while (i < src.length && /[0-9]/.test(src[i])) i++; }
+        else i = save;
+      }
+      push(TOK.NUM, parseFloat(src.slice(start, i)), start);
+      continue;
+    }
+
+    if (RE_ID_START.test(c)){
+      const start = i;
+      while (i < src.length && RE_ID_CHAR.test(src[i])) i++;
+      push(TOK.IDENT, src.slice(start, i), start);
+      continue;
+    }
+
+    const two = src.substr(i, 2);
+    if (two === '<=' || two === '>=' || two === '!=' || two === '==' || two === '**'){
+      push(TOK.OP, two === '**' ? '^' : two, i);
+      i += 2;
+      continue;
+    }
+
+    if (c === '('){ push(TOK.LPAREN, '(', i); i++; continue; }
+    if (c === ')'){ push(TOK.RPAREN, ')', i); i++; continue; }
+    if (c === '['){ push(TOK.LBRACK, '[', i); i++; continue; }
+    if (c === ']'){ push(TOK.RBRACK, ']', i); i++; continue; }
+    if (c === '{'){ push(TOK.LBRACE, '{', i); i++; continue; }
+    if (c === '}'){ push(TOK.RBRACE, '}', i); i++; continue; }
+    if (c === ',' || c === ';'){ push(TOK.COMMA, ',', i); i++; continue; }
+
+    if ('+-*/^%<>=!∪∩\\?:'.indexOf(c) >= 0){
+      push(TOK.OP, c, i); i++; continue;
+    }
+
+    fail(`Unexpected character "${c}" at position ${i + 1}.`);
+  }
+  push(TOK.EOF, null, src.length);
+  return toks;
+}
+
+/* ==========================================================================
+ * 4. PARSER
+ * ========================================================================== */
+class Parser {
+  constructor(tokens){ this.toks = tokens; this.i = 0; }
+  peek(k = 0){ return this.toks[Math.min(this.i + k, this.toks.length - 1)]; }
+  next(){ return this.toks[this.i++]; }
+  at(type, value){
+    const t = this.peek();
+    return t.type === type && (value === undefined || t.value === value);
+  }
+  atOp(v){ return this.at(TOK.OP, v); }
+  expect(type, value, msg){
+    const t = this.peek();
+    if (t.type !== type || (value !== undefined && t.value !== value)){
+      fail(msg || `Expected ${value !== undefined ? '"' + value + '"' : type} but found ${this.describe(t)}.`);
+    }
+    return this.next();
+  }
+  describe(t){
+    if (t.type === TOK.EOF) return 'end of expression';
+    return '"' + t.value + '"';
+  }
+  atEnd(){ return this.peek().type === TOK.EOF; }
+  expectEnd(){
+    if (!this.atEnd()) fail(`Unexpected ${this.describe(this.peek())} after the end of the expression.`);
+  }
+
+  parseStatement(){
+    const startPos = this.peek().pos;
+
+    if (this.peek().type === TOK.IDENT && this.peek(1).type === TOK.LPAREN){
+      const save = this.i;
+      const name = this.next().value;
+      this.next(); // (
+      const params = [];
+      let ok = true;
+      if (!this.at(TOK.RPAREN)){
+        for (;;){
+          try {
+            const patAST = this.parseExpr();
+            if (patAST.type === 'sym')      params.push({ kind: 'sym', name: patAST.name });
+            else if (patAST.type === 'num') params.push({ kind: 'lit', value: patAST.value });
+            else                            params.push({ kind: 'expr', ast: patAST });
+          } catch (e){ ok = false; break; }
+          if (this.at(TOK.COMMA)){ this.next(); continue; }
+          break;
+        }
+      }
+      if (ok && this.at(TOK.RPAREN)){
+        this.next();
+        if (this.atOp('=')){
+          this.next();
+          const body = this.parseExpr();
+          this.expectEnd();
+          return { kind: 'funcdef', name, params, body, pos: startPos };
+        }
+      }
+      this.i = save;
+    }
+
+    if (this.peek().type === TOK.IDENT && this.peek(1).type === TOK.OP && this.peek(1).value === '='){
+      const name = this.next().value;
+      this.next();
+      const body = this.parseExpr();
+      this.expectEnd();
+      return { kind: 'vardef', name, body, pos: startPos };
+    }
+
+    const body = this.parseExpr();
+    this.expectEnd();
+    return { kind: 'expr', body, pos: startPos };
+  }
+
+  parseExpr(){ return this.parseTernary(); }
+
+  parseTernary(){
+    const cond = this.parseLogic();
+    if (this.atOp('?')){
+      this.next();
+      const thenExpr = this.parseTernary();
+      this.expect(TOK.OP, ':', 'Expected ":" to complete the conditional expression.');
+      const elseExpr = this.parseTernary();
+      return { type: 'if', cond, then: thenExpr, else: elseExpr };
+    }
+    return cond;
+  }
+
+  parseLogic(){
+    let left = this.parseComparison();
+    for (;;){
+      const t = this.peek();
+      if (t.type === TOK.IDENT){
+        const w = t.value.toLowerCase();
+        if (w === 'and' || w === 'or'){
+          this.next();
+          const right = this.parseComparison();
+          left = { type: 'logic', op: w, left, right };
+          continue;
+        }
+      }
+      break;
+    }
+    return left;
+  }
+
+  parseComparison(){
+    const left = this.parseAdditive();
+    const t = this.peek();
+    if (t.type === TOK.OP && ['=', '==', '!=', '<', '>', '<=', '>='].includes(t.value)){
+      this.next();
+      const right = this.parseAdditive();
+      return { type: 'cmp', op: t.value === '==' ? '=' : t.value, left, right };
+    }
+    return left;
+  }
+
+  parseAdditive(){
+    let left = this.parseTerm();
+    for (;;){
+      const t = this.peek();
+      if (t.type === TOK.OP && (t.value === '+' || t.value === '-')){
+        this.next();
+        const right = this.parseTerm();
+        left = { type: 'bin', op: t.value, left, right };
+        continue;
+      }
+      break;
+    }
+    return left;
+  }
+
+  parseTerm(){
+    let left = this.parseUnary();
+    for (;;){
+      const t = this.peek();
+      if (t.type === TOK.OP && (t.value === '*' || t.value === '/' || t.value === '%')){
+        this.next();
+        const right = this.parseUnary();
+        left = { type: 'bin', op: t.value, left, right };
+        continue;
+      }
+      if (t.type === TOK.NUM || t.type === TOK.LPAREN || t.type === TOK.LBRACK || t.type === TOK.LBRACE ||
+          (t.type === TOK.IDENT && !['and', 'or'].includes(t.value.toLowerCase()))){
+        const right = this.parseUnary();
+        left = { type: 'bin', op: '*', left, right };
+        continue;
+      }
+      break;
+    }
+    return left;
+  }
+
+  parseUnary(){
+    const t = this.peek();
+    if (t.type === TOK.OP && (t.value === '-' || t.value === '+')){
+      this.next();
+      const a = this.parseUnary();
+      return t.value === '-' ? { type: 'un', op: '-', arg: a } : a;
+    }
+    return this.parsePower();
+  }
+
+  parsePower(){
+    const base = this.parsePostfix();
+    if (this.atOp('^')){
+      this.next();
+      const exponent = this.parseUnary();
+      return { type: 'bin', op: '^', left: base, right: exponent };
+    }
+    return base;
+  }
+
+  parsePostfix(){
+    let node = this.parsePrimary();
+    while (this.atOp('!')){
+      this.next();
+      node = { type: 'call', name: 'factorial', args: [node] };
+    }
+    return node;
+  }
+
+  parsePrimary(){
+    const t = this.peek();
+
+    if (t.type === TOK.NUM){ this.next(); return { type: 'num', value: t.value }; }
+
+    if (t.type === TOK.IDENT){
+      this.next();
+      const name = t.value;
+      if (this.at(TOK.LPAREN)){
+        this.next();
+        const args = [];
+        if (!this.at(TOK.RPAREN)){
+          args.push(this.parseExpr());
+          while (this.at(TOK.COMMA)){ this.next(); args.push(this.parseExpr()); }
+        }
+        this.expect(TOK.RPAREN, undefined, `Expected ")" to close the call to ${name}().`);
+        return { type: 'call', name, args };
+      }
+      return { type: 'sym', name };
+    }
+
+    if (t.type === TOK.LPAREN){
+      this.next();
+      const first = this.parseExpr();
+      if (this.at(TOK.COMMA)){
+        const items = [first];
+        while (this.at(TOK.COMMA)){ this.next(); items.push(this.parseExpr()); }
+        this.expect(TOK.RPAREN, undefined, 'Expected ")" to close the tuple.');
+        return { type: 'vec', items };
+      }
+      this.expect(TOK.RPAREN, undefined, 'Expected ")" to close the group.');
+      return first;
+    }
+
+    if (t.type === TOK.LBRACK){
+      this.next();
+      const rows = [];
+      if (!this.at(TOK.RBRACK)){
+        for (;;){
+          if (this.at(TOK.LBRACK)){
+            this.next();
+            const row = [];
+            if (!this.at(TOK.RBRACK)){
+              row.push(this.parseExpr());
+              while (this.at(TOK.COMMA)){ this.next(); row.push(this.parseExpr()); }
+            }
+            this.expect(TOK.RBRACK, undefined, 'Expected "]" to close the matrix row.');
+            rows.push(row);
+          } else {
+            rows.push([this.parseExpr()]);
+          }
+          if (this.at(TOK.COMMA)){ this.next(); continue; }
+          break;
+        }
+      }
+      this.expect(TOK.RBRACK, undefined, 'Expected "]" to close the vector/matrix.');
+      if (rows.length === 1) return { type: 'vec', items: rows[0] };
+      if (rows.every(r => r.length === 1)) return { type: 'vec', items: rows.map(r => r[0]) };
+      if (rows.every(r => r.length === rows[0].length)) return { type: 'mat', rows };
+      fail('All rows of a matrix must have the same number of entries.');
+    }
+
+    if (t.type === TOK.LBRACE){
+      this.next();
+      const items = [];
+      if (!this.at(TOK.RBRACE)){
+        items.push(this.parseExpr());
+        while (this.at(TOK.COMMA)){ this.next(); items.push(this.parseExpr()); }
+      }
+      this.expect(TOK.RBRACE, undefined, 'Expected "}" to close the set.');
+      return { type: 'set', items };
+    }
+
+    fail(`Unexpected ${this.describe(t)} — expected a number, name, function call or bracket.`);
+  }
+}
+function parseStatementString(src){
+  const p = new Parser(tokenize(normalizeInput(src)));
+  return p.parseStatement();
+}
+
+/* ==========================================================================
+ * 5. AST UTILITIES
+ * ========================================================================== */
+const PREC = { cmp: 1, logic: 1, '+': 2, '-': 2, '*': 3, '/': 3, '%': 3, '^': 4, un: 3 };
+
+function astToString(n, parentPrec = 0){
+  if (!n) return '?';
+  switch (n.type){
+    case 'num': return fmt(n.value);
+    case 'sym': return n.name;
+    case 'un': {
+      const s = '-' + astToString(n.arg, PREC.un);
+      return PREC.un < parentPrec ? '(' + s + ')' : s;
+    }
+    case 'bin': {
+      const p = PREC[n.op] || 2;
+      const s = astToString(n.left, p) + ' ' + n.op + ' ' + astToString(n.right, p + (n.op === '^' ? 0 : 1));
+      return p < parentPrec ? '(' + s + ')' : s;
+    }
+    case 'call': return n.name + '(' + n.args.map(a => astToString(a, 0)).join(', ') + ')';
+    case 'vec': return '[' + n.items.map(a => astToString(a, 0)).join(', ') + ']';
+    case 'mat': return '[' + n.rows.map(r => '[' + r.map(a => astToString(a, 0)).join(', ') + ']').join(', ') + ']';
+    case 'set': return '{' + n.items.map(a => astToString(a, 0)).join(', ') + '}';
+    case 'cmp': return astToString(n.left, 1) + ' ' + n.op + ' ' + astToString(n.right, 1);
+    case 'logic': return astToString(n.left, 1) + ' ' + n.op.toUpperCase() + ' ' + astToString(n.right, 1);
+    case 'if': return '(' + astToString(n.cond, 0) + ' ? ' + astToString(n.then, 0) + ' : ' + astToString(n.else, 0) + ')';
+    default: return '?';
+  }
+}
+
+function walkAST(n, fn){
+  if (!n || typeof n !== 'object') return;
+  fn(n);
+  switch (n.type){
+    case 'un': walkAST(n.arg, fn); break;
+    case 'bin': walkAST(n.left, fn); walkAST(n.right, fn); break;
+    case 'cmp': walkAST(n.left, fn); walkAST(n.right, fn); break;
+    case 'logic': walkAST(n.left, fn); walkAST(n.right, fn); break;
+    case 'if': walkAST(n.cond, fn); walkAST(n.then, fn); walkAST(n.else, fn); break;
+    case 'call': n.args.forEach(a => walkAST(a, fn)); break;
+    case 'vec': n.items.forEach(a => walkAST(a, fn)); break;
+    case 'set': n.items.forEach(a => walkAST(a, fn)); break;
+    case 'mat': n.rows.forEach(r => r.forEach(a => walkAST(a, fn))); break;
+  }
+}
+
+/* Collect free symbol names. `bound` names are skipped, including call names. */
+function collectSymbols(n, bound, out){
+  if (!n || typeof n !== 'object') return out;
+  switch (n.type){
+    case 'sym':
+      if (!bound.has(n.name)) out.add(n.name);
+      break;
+    case 'un': collectSymbols(n.arg, bound, out); break;
+    case 'bin': collectSymbols(n.left, bound, out); collectSymbols(n.right, bound, out); break;
+    case 'cmp': collectSymbols(n.left, bound, out); collectSymbols(n.right, bound, out); break;
+    case 'logic': collectSymbols(n.left, bound, out); collectSymbols(n.right, bound, out); break;
+    case 'if':
+      collectSymbols(n.cond, bound, out);
+      collectSymbols(n.then, bound, out);
+      collectSymbols(n.else, bound, out);
+      break;
+    case 'call':
+      /* FIX: was unconditional — now respects `bound` so a function's own name
+         is not added to its dependency set (which broke `x(n+1) = ...`). */
+      if (!bound.has(n.name)) out.add(n.name);
+      n.args.forEach(a => collectSymbols(a, bound, out));
+      break;
+    case 'vec': n.items.forEach(a => collectSymbols(a, bound, out)); break;
+    case 'set': n.items.forEach(a => collectSymbols(a, bound, out)); break;
+    case 'mat': n.rows.forEach(r => r.forEach(a => collectSymbols(a, bound, out))); break;
+  }
+  return out;
+}
+
+/* ==========================================================================
+ * 6. SIMPLIFIER
+ * ========================================================================== */
+function numNode(v){ return { type: 'num', value: v }; }
+function isNum(n){ return n && n.type === 'num'; }
+
+function applyNumericOp(op, a, b){
+  switch (op){
+    case '+': return a + b;
+    case '-': return a - b;
+    case '*': return a * b;
+    case '/': return b === 0 ? null : a / b;
+    case '%': return b === 0 ? null : a % b;
+    case '^': return Math.pow(a, b);
+    default: return null;
+  }
+}
+function cmpNums(a, op, b){
+  switch (op){
+    case '=':  return a === b;
+    case '!=': return a !== b;
+    case '<':  return a < b;
+    case '>':  return a > b;
+    case '<=': return a <= b;
+    case '>=': return a >= b;
+    default: return null;
+  }
+}
+
+function simplifyOnce(n){
+  if (!n || typeof n !== 'object') return n;
+  switch (n.type){
+    case 'num': case 'sym': return n;
+
+    case 'un': {
+      const a = simplifyOnce(n.arg);
+      if (isNum(a)) return numNode(-a.value);
+      if (a.type === 'un' && a.op === '-') return a.arg;
+      return { type: 'un', op: '-', arg: a };
+    }
+
+    case 'bin': {
+      const l = simplifyOnce(n.left), r = simplifyOnce(n.right);
+      const op = n.op;
+      if (isNum(l) && isNum(r)){
+        const v = applyNumericOp(op, l.value, r.value);
+        if (v !== null) return numNode(v);
+      }
+      if (op === '+'){
+        if (isNum(l) && l.value === 0) return r;
+        if (isNum(r) && r.value === 0) return l;
+      }
+      if (op === '-'){
+        if (isNum(r) && r.value === 0) return l;
+        if (isNum(l) && l.value === 0) return { type: 'un', op: '-', arg: r };
+      }
+      if (op === '*'){
+        if ((isNum(l) && l.value === 0) || (isNum(r) && r.value === 0)) return numNode(0);
+        if (isNum(l) && l.value === 1) return r;
+        if (isNum(r) && r.value === 1) return l;
+        if (isNum(r) && r.value === -1) return { type: 'un', op: '-', arg: l };
+      }
+      if (op === '/'){
+        if (isNum(r) && r.value === 1) return l;
+        if (isNum(l) && l.value === 0 && !(isNum(r) && r.value === 0)) return numNode(0);
+      }
+      if (op === '^'){
+        if (isNum(r) && r.value === 1) return l;
+        if (isNum(r) && r.value === 0) return numNode(1);
+        if (isNum(l) && l.value === 1) return numNode(1);
+        if (isNum(l) && l.value === 0 && isNum(r) && r.value > 0) return numNode(0);
+      }
+      return { type: 'bin', op, left: l, right: r };
+    }
+
+    case 'call': {
+      const args = n.args.map(simplifyOnce);
+      if (n.name === 'sqrt' && args.length === 1 && isNum(args[0]) && args[0].value >= 0){
+        const s = Math.sqrt(args[0].value);
+        if (Number.isInteger(s)) return numNode(s);
+      }
+      if (n.name === 'abs' && args.length === 1 && isNum(args[0])) return numNode(Math.abs(args[0].value));
+      if (n.name === 'exp' && args.length === 1 && isNum(args[0]) && args[0].value === 0) return numNode(1);
+      if (n.name === 'ln' && args.length === 1 && isNum(args[0]) && args[0].value === 1) return numNode(0);
+      return { type: 'call', name: n.name, args };
+    }
+
+    case 'cmp': {
+      const l = simplifyOnce(n.left), r = simplifyOnce(n.right);
+      if (isNum(l) && isNum(r)){
+        const v = cmpNums(l.value, n.op, r.value);
+        if (v !== null) return numNode(v ? 1 : 0);
+      }
+      return { type: 'cmp', op: n.op, left: l, right: r };
+    }
+
+    case 'logic': return { type: 'logic', op: n.op, left: simplifyOnce(n.left), right: simplifyOnce(n.right) };
+
+    case 'if': {
+      const c = simplifyOnce(n.cond);
+      if (isNum(c)) return c.value ? simplifyOnce(n.then) : simplifyOnce(n.else);
+      return { type: 'if', cond: c, then: simplifyOnce(n.then), else: simplifyOnce(n.else) };
+    }
+
+    case 'vec': return { type: 'vec', items: n.items.map(simplifyOnce) };
+    case 'set': return { type: 'set', items: n.items.map(simplifyOnce) };
+    case 'mat': return { type: 'mat', rows: n.rows.map(r => r.map(simplifyOnce)) };
+    default: return n;
+  }
+}
+
+function simplify(n, maxIter = 25){
+  let cur = n;
+  for (let i = 0; i < maxIter; i++){
+    const next = simplifyOnce(cur);
+    if (astToString(next) === astToString(cur)) return next;
+    cur = next;
+  }
+  return cur;
+}
+function simplifyTrace(ast){
+  const trace = [astToString(ast)];
+  let cur = ast;
+  for (let i = 0; i < 25; i++){
+    const next = simplifyOnce(cur);
+    const s = astToString(next);
+    if (s === astToString(cur)) break;
+    trace.push(s);
+    cur = next;
+    if (trace.length > 14) break;
+  }
+  return trace;
+}
+
+/* ==========================================================================
+ * 7. SYMBOLIC DIFFERENTIATION
+ * ========================================================================== */
+function diffAST(node, v, resolver){
+  if (!node) return numNode(0);
+  switch (node.type){
+    case 'num': return numNode(0);
+    case 'sym': return numNode(node.name === v ? 1 : 0);
+    case 'un': return { type: 'un', op: '-', arg: diffAST(node.arg, v, resolver) };
+
+    case 'bin': {
+      const { left: u, right: w, op } = node;
+      const du = diffAST(u, v, resolver);
+      const dw = diffAST(w, v, resolver);
+      if (op === '+' || op === '-') return { type: 'bin', op, left: du, right: dw };
+      if (op === '*'){
+        return { type: 'bin', op: '+',
+          left:  { type: 'bin', op: '*', left: du, right: w },
+          right: { type: 'bin', op: '*', left: u,  right: dw } };
+      }
+      if (op === '/'){
+        return { type: 'bin', op: '/',
+          left: { type: 'bin', op: '-',
+            left:  { type: 'bin', op: '*', left: du, right: w },
+            right: { type: 'bin', op: '*', left: u,  right: dw } },
+          right: { type: 'bin', op: '^', left: w, right: numNode(2) } };
+      }
+      if (op === '^'){
+        if (isNum(w)){
+          return { type: 'bin', op: '*',
+            left: { type: 'bin', op: '*',
+              left: numNode(w.value),
+              right: { type: 'bin', op: '^', left: u, right: numNode(w.value - 1) } },
+            right: du };
+        }
+        return { type: 'bin', op: '*',
+          left: { type: 'bin', op: '^', left: u, right: w },
+          right: { type: 'bin', op: '+',
+            left: { type: 'bin', op: '*', left: dw, right: { type: 'call', name: 'ln', args: [u] } },
+            right: { type: 'bin', op: '/',
+              left: { type: 'bin', op: '*', left: w, right: du }, right: u } } };
+      }
+      return numNode(0);
+    }
+
+    case 'if': {
+      return {
+        type: 'if',
+        cond: node.cond,
+        then: diffAST(node.then, v, resolver),
+        else: diffAST(node.else, v, resolver)
+      };
+    }
+
+    case 'call': {
+      const name = node.name;
+      const arg = node.args[0];
+      if (!arg) return numNode(0);
+      const du = diffAST(arg, v, resolver);
+      const mul = (expr) => ({ type: 'bin', op: '*', left: expr, right: du });
+      switch (name){
+        case 'sin':  return mul({ type: 'call', name: 'cos', args: [arg] });
+        case 'cos':  return mul({ type: 'un', op: '-', arg: { type: 'call', name: 'sin', args: [arg] } });
+        case 'tan':  return { type: 'bin', op: '/', left: du,
+          right: { type: 'bin', op: '^', left: { type: 'call', name: 'cos', args: [arg] }, right: numNode(2) } };
+        case 'exp':  return mul({ type: 'call', name: 'exp', args: [arg] });
+        case 'ln':   return { type: 'bin', op: '/', left: du, right: arg };
+        case 'log':  return { type: 'bin', op: '/', left: du,
+          right: { type: 'bin', op: '*', left: arg, right: { type: 'call', name: 'ln', args: [numNode(10)] } } };
+        case 'log2': return { type: 'bin', op: '/', left: du,
+          right: { type: 'bin', op: '*', left: arg, right: { type: 'call', name: 'ln', args: [numNode(2)] } } };
+        case 'sqrt': return { type: 'bin', op: '/', left: du,
+          right: { type: 'bin', op: '*', left: numNode(2), right: { type: 'call', name: 'sqrt', args: [arg] } } };
+        case 'cbrt': return { type: 'bin', op: '/', left: du,
+          right: { type: 'bin', op: '*', left: numNode(3),
+            right: { type: 'bin', op: '^', left: { type: 'call', name: 'cbrt', args: [arg] }, right: numNode(2) } } };
+        case 'abs':  return mul({ type: 'call', name: 'sign', args: [arg] });
+        case 'asin': return { type: 'bin', op: '/', left: du,
+          right: { type: 'call', name: 'sqrt', args: [{ type: 'bin', op: '-', left: numNode(1),
+            right: { type: 'bin', op: '^', left: arg, right: numNode(2) } }] } };
+        case 'acos': return { type: 'un', op: '-', arg: { type: 'bin', op: '/', left: du,
+          right: { type: 'call', name: 'sqrt', args: [{ type: 'bin', op: '-', left: numNode(1),
+            right: { type: 'bin', op: '^', left: arg, right: numNode(2) } }] } } };
+        case 'atan': return { type: 'bin', op: '/', left: du,
+          right: { type: 'bin', op: '+', left: numNode(1),
+            right: { type: 'bin', op: '^', left: arg, right: numNode(2) } } };
+        case 'sinh': return mul({ type: 'call', name: 'cosh', args: [arg] });
+        case 'cosh': return mul({ type: 'call', name: 'sinh', args: [arg] });
+        case 'tanh': return { type: 'bin', op: '*', left: du,
+          right: { type: 'bin', op: '-', left: numNode(1),
+            right: { type: 'bin', op: '^', left: { type: 'call', name: 'tanh', args: [arg] }, right: numNode(2) } } };
+        default: break;
+      }
+      if (resolver){
+        const target = resolver(name);
+        if (target && target.body && target.params.length === 1){
+          const substituted = substituteSymbol(target.body, target.params[0], arg);
+          return diffAST(substituted, v, resolver);
+        }
+      }
+      fail(`Cannot differentiate "${name}()" symbolically.`);
+    }
+    default:
+      fail('Cannot differentiate this expression symbolically.');
+  }
+}
+
+function substituteSymbol(node, name, replacement){
+  if (!node || typeof node !== 'object') return node;
+  switch (node.type){
+    case 'sym': return node.name === name ? cloneAST(replacement) : node;
+    case 'num': return node;
+    case 'un': return { type: 'un', op: node.op, arg: substituteSymbol(node.arg, name, replacement) };
+    case 'bin': return { type: 'bin', op: node.op,
+      left: substituteSymbol(node.left, name, replacement),
+      right: substituteSymbol(node.right, name, replacement) };
+    case 'cmp': return { type: 'cmp', op: node.op,
+      left: substituteSymbol(node.left, name, replacement),
+      right: substituteSymbol(node.right, name, replacement) };
+    case 'logic': return { type: 'logic', op: node.op,
+      left: substituteSymbol(node.left, name, replacement),
+      right: substituteSymbol(node.right, name, replacement) };
+    case 'if': return { type: 'if',
+      cond: substituteSymbol(node.cond, name, replacement),
+      then: substituteSymbol(node.then, name, replacement),
+      else: substituteSymbol(node.else, name, replacement) };
+    case 'call': return { type: 'call', name: node.name,
+      args: node.args.map(a => substituteSymbol(a, name, replacement)) };
+    case 'vec': return { type: 'vec', items: node.items.map(a => substituteSymbol(a, name, replacement)) };
+    case 'set': return { type: 'set', items: node.items.map(a => substituteSymbol(a, name, replacement)) };
+    case 'mat': return { type: 'mat', rows: node.rows.map(r => r.map(a => substituteSymbol(a, name, replacement))) };
+    default: return node;
+  }
+}
+
+/* ==========================================================================
+ * 8. SYMBOLIC INTEGRATION (basic table)
+ * ========================================================================== */
+function integrateAST(node, v){
+  if (!node) return null;
+  if (node.type === 'if') return null;
+
+  if (node.type === 'num') return { type: 'bin', op: '*', left: node, right: { type: 'sym', name: v } };
+  if (node.type === 'sym'){
+    if (node.name === v)
+      return { type: 'bin', op: '/', left: { type: 'bin', op: '^', left: { type: 'sym', name: v }, right: numNode(2) }, right: numNode(2) };
+    return { type: 'bin', op: '*', left: node, right: { type: 'sym', name: v } };
+  }
+  if (node.type === 'un' && node.op === '-'){
+    const inner = integrateAST(node.arg, v);
+    return inner ? { type: 'un', op: '-', arg: inner } : null;
+  }
+  if (node.type === 'bin'){
+    if (node.op === '+' || node.op === '-'){
+      const a = integrateAST(node.left, v), b = integrateAST(node.right, v);
+      if (a && b) return { type: 'bin', op: node.op, left: a, right: b };
+      return null;
+    }
+    if (node.op === '*'){
+      const lf = collectSymbols(node.left, new Set([v]), new Set());
+      const rf = collectSymbols(node.right, new Set([v]), new Set());
+      if (!lf.has(v)){ const b = integrateAST(node.right, v); return b ? { type: 'bin', op: '*', left: node.left, right: b } : null; }
+      if (!rf.has(v)){ const a = integrateAST(node.left, v);  return a ? { type: 'bin', op: '*', left: node.right, right: a } : null; }
+      return null;
+    }
+    if (node.op === '/'){
+      const rf = collectSymbols(node.right, new Set([v]), new Set());
+      if (!rf.has(v)){ const a = integrateAST(node.left, v); return a ? { type: 'bin', op: '/', left: a, right: node.right } : null; }
+      if (isNum(node.left) && node.left.value === 1 && node.right.type === 'sym' && node.right.name === v)
+        return { type: 'call', name: 'ln', args: [{ type: 'call', name: 'abs', args: [node.right] }] };
+      return null;
+    }
+    if (node.op === '^'){
+      if (isNum(node.right) && node.left.type === 'sym' && node.left.name === v){
+        const n = node.right.value;
+        if (n === -1) return { type: 'call', name: 'ln', args: [{ type: 'call', name: 'abs', args: [node.left] }] };
+        return { type: 'bin', op: '/',
+          left: { type: 'bin', op: '^', left: node.left, right: numNode(n + 1) },
+          right: numNode(n + 1) };
+      }
+      return null;
+    }
+  }
+  if (node.type === 'call' && node.args.length === 1){
+    const arg = node.args[0];
+    if (arg.type === 'sym' && arg.name === v){
+      switch (node.name){
+        case 'sin': return { type: 'un', op: '-', arg: { type: 'call', name: 'cos', args: [arg] } };
+        case 'cos': return { type: 'call', name: 'sin', args: [arg] };
+        case 'exp': return { type: 'call', name: 'exp', args: [arg] };
+        case 'sinh': return { type: 'call', name: 'cosh', args: [arg] };
+        case 'cosh': return { type: 'call', name: 'sinh', args: [arg] };
+        default: break;
+      }
+    }
+  }
+  return null;
+}
+
+/* ==========================================================================
+ * 9. LINEAR ALGEBRA
+ * ========================================================================== */
+function matMul(A, B){
+  const n = A.rows.length, m = B.rows[0].length, k = B.rows.length;
+  if (A.rows[0].length !== k) fail(`Cannot multiply a ${A.rows.length}×${A.rows[0].length} matrix by a ${B.rows.length}×${B.rows[0].length} matrix.`);
+  const out = [];
+  for (let i = 0; i < n; i++){
+    const row = new Array(m).fill(0);
+    for (let j = 0; j < m; j++){
+      let s = 0;
+      for (let p = 0; p < k; p++) s += A.rows[i][p] * B.rows[p][j];
+      row[j] = s;
+    }
+    out.push(row);
+  }
+  return new Mat(out);
+}
+function matDet(M){
+  const n = M.rows.length;
+  if (n !== M.rows[0].length) fail('Determinant is only defined for square matrices.');
+  if (n === 1) return M.rows[0][0];
+  if (n === 2) return M.rows[0][0] * M.rows[1][1] - M.rows[0][1] * M.rows[1][0];
+  if (n > 7) fail('Determinant is only supported up to 7×7.');
+  let det = 0;
+  for (let c = 0; c < n; c++){
+    const sub = new Mat(M.rows.slice(1).map(r => r.filter((_, j) => j !== c)));
+    det += ((c % 2) ? -1 : 1) * M.rows[0][c] * matDet(sub);
+  }
+  return det;
+}
+function matInv(M){
+  const n = M.rows.length;
+  if (n !== M.rows[0].length) fail('Only square matrices can be inverted.');
+  const A = M.rows.map((r, i) => r.concat(Array.from({ length: n }, (_, j) => (i === j ? 1 : 0))));
+  for (let c = 0; c < n; c++){
+    let piv = c;
+    for (let r = c + 1; r < n; r++) if (Math.abs(A[r][c]) > Math.abs(A[piv][c])) piv = r;
+    if (Math.abs(A[piv][c]) < 1e-14) fail('Cannot calculate the inverse of this matrix because its determinant is 0.');
+    [A[c], A[piv]] = [A[piv], A[c]];
+    const p = A[c][c];
+    for (let j = 0; j < 2 * n; j++) A[c][j] /= p;
+    for (let r = 0; r < n; r++){
+      if (r === c) continue;
+      const f = A[r][c];
+      if (f === 0) continue;
+      for (let j = 0; j < 2 * n; j++) A[r][j] -= f * A[c][j];
+    }
+  }
+  return new Mat(A.map(r => r.slice(n)));
+}
+function vecDot(a, b){
+  if (a.data.length !== b.data.length) fail('Dot product requires vectors of equal length.');
+  let s = 0;
+  for (let i = 0; i < a.data.length; i++) s += a.data[i] * b.data[i];
+  return s;
+}
+function vecCross(a, b){
+  if (a.data.length !== 3 || b.data.length !== 3) fail('Cross product is only defined for 3-dimensional vectors.');
+  const [x1, y1, z1] = a.data, [x2, y2, z2] = b.data;
+  return new Vec([y1 * z2 - z1 * y2, z1 * x2 - x1 * z2, x1 * y2 - y1 * x2]);
+}
+
+/* ==========================================================================
+ * 10. CONSTANTS + BUILTINS
+ * ========================================================================== */
+const CONSTANTS = {
+  pi: Math.PI, e: Math.E, tau: Math.PI * 2, phi: (1 + Math.sqrt(5)) / 2,
+  inf: Infinity, infinity: Infinity, true: true, false: false
+};
+const BUILTIN_NAMES = [
+  'sin','cos','tan','asin','acos','atan','atan2','sinh','cosh','tanh',
+  'sqrt','cbrt','abs','exp','ln','log','log2','pow','floor','ceil','round','sign',
+  'min','max','mod','gcd','lcm','factorial','hypot','random','deg','rad','clamp',
+  'dot','cross','norm','transpose','det','inv','identity','zeros','ones',
+  'union','intersect','difference','size','sum','product','derivative','integral',
+  'limit','roots','tangent','ncr','npr','compose'
+];
+
+/* ==========================================================================
+ * 11. EVALUATOR
+ * ========================================================================== */
+class Evaluator {
+  constructor(workspace){ this.ws = workspace; this.depth = 0; }
+
+  lookup(name, scope){
+    if (scope && scope.has(name)) return { found: true, value: scope.get(name) };
+    const obj = this.ws.objects.get(name);
+    if (obj){
+      if (obj.error) fail(`"${name}" has an error: ${obj.error}`);
+      return { found: true, value: obj.value };
+    }
+    if (name in CONSTANTS) return { found: true, value: CONSTANTS[name] };
+    if (name === 't') return { found: true, value: this.ws.simTime };
+    return { found: false, value: undefined };
+  }
+
+  eval(node, scope){
+    if (!node) fail('Empty expression.');
+    switch (node.type){
+      case 'num': return node.value;
+      case 'sym': {
+        const r = this.lookup(node.name, scope);
+        if (!r.found) fail(`Unknown variable: ${node.name}`);
+        return r.value;
+      }
+      case 'un': {
+        const v = this.eval(node.arg, scope);
+        if (typeof v === 'number') return -v;
+        if (v instanceof Vec) return new Vec(v.data.map(x => -x));
+        if (v instanceof Mat) return new Mat(v.rows.map(r => r.map(x => -x)));
+        fail('Unary minus requires a number, vector or matrix.');
+      }
+      case 'bin': return this.evalBinary(node, scope);
+      case 'call': return this.evalCall(node, scope);
+      case 'vec': return new Vec(node.items.map(x => asNum(this.eval(x, scope))));
+      case 'mat': return new Mat(node.rows.map(r => r.map(x => asNum(this.eval(x, scope)))));
+      case 'set': return this.makeSet(node.items.map(x => this.eval(x, scope)));
+      case 'cmp': return this.compare(this.eval(node.left, scope), node.op, this.eval(node.right, scope));
+      case 'logic': {
+        const l = this.eval(node.left, scope);
+        if (node.op === 'and') return !!l && !!this.eval(node.right, scope);
+        return !!l || !!this.eval(node.right, scope);
+      }
+      case 'if': {
+        const c = this.eval(node.cond, scope);
+        return this.eval(c ? node.then : node.else, scope);
+      }
+      default: fail('Unsupported expression.');
+    }
+  }
+
+  makeSet(values){
+    const seen = new Set();
+    const out = [];
+    for (const v of values){
+      const k = formatValue(v);
+      if (!seen.has(k)){ seen.add(k); out.push(v); }
+    }
+    return new SetVal(out);
+  }
+
+  compare(a, op, b){
+    const bothNum = typeof a === 'number' && typeof b === 'number';
+    if (!bothNum){
+      if (op === '=') return formatValue(a) === formatValue(b);
+      if (op === '!=') return formatValue(a) !== formatValue(b);
+      fail('Ordering comparisons require numbers.');
+    }
+    switch (op){
+      case '=': return a === b;
+      case '!=': return a !== b;
+      case '<': return a < b;
+      case '>': return a > b;
+      case '<=': return a <= b;
+      case '>=': return a >= b;
+    }
+    fail(`Unknown comparison operator "${op}".`);
+  }
+
+  evalBinary(node, scope){
+    const op = node.op;
+    const a = this.eval(node.left, scope);
+    const b = this.eval(node.right, scope);
+
+    if (typeof a === 'number' && typeof b === 'number'){
+      switch (op){
+        case '+': return a + b;
+        case '-': return a - b;
+        case '*': return a * b;
+        case '/':
+          if (b === 0) fail('Division by zero.');
+          return a / b;
+        case '%':
+          if (b === 0) fail('Modulo by zero.');
+          return a % b;
+        case '^': return Math.pow(a, b);
+      }
+    }
+
+    if (op === '∪' || op === '∩' || op === '\\'){
+      if (a instanceof SetVal && b instanceof SetVal){
+        if (op === '∪') return this.makeSet([...a.items, ...b.items]);
+        if (op === '∩') return this.makeSet(a.items.filter(x => b.items.some(y => formatValue(y) === formatValue(x))));
+        return this.makeSet(a.items.filter(x => !b.items.some(y => formatValue(y) === formatValue(x))));
+      }
+      fail('Set operations require two sets.');
+    }
+
+    if (op === '+' || op === '-'){
+      if (a instanceof Vec && b instanceof Vec){
+        if (a.data.length !== b.data.length) fail('Vector addition requires vectors of the same length.');
+        return new Vec(a.data.map((x, i) => op === '+' ? x + b.data[i] : x - b.data[i]));
+      }
+      if (a instanceof Mat && b instanceof Mat){
+        if (a.rows.length !== b.rows.length || a.rows[0].length !== b.rows[0].length) fail('Matrix addition requires matrices of the same shape.');
+        return new Mat(a.rows.map((r, i) => r.map((x, j) => op === '+' ? x + b.rows[i][j] : x - b.rows[i][j])));
+      }
+      fail(`Cannot apply "${op}" to ${formatValue(a)} and ${formatValue(b)}.`);
+    }
+
+    if (op === '*'){
+      if (a instanceof Vec && typeof b === 'number') return new Vec(a.data.map(x => x * b));
+      if (typeof a === 'number' && b instanceof Vec) return new Vec(b.data.map(x => x * a));
+      if (a instanceof Mat && typeof b === 'number') return new Mat(a.rows.map(r => r.map(x => x * b)));
+      if (typeof a === 'number' && b instanceof Mat) return new Mat(b.rows.map(r => r.map(x => x * a)));
+      if (a instanceof Mat && b instanceof Mat) return matMul(a, b);
+      if (a instanceof Mat && b instanceof Vec) return matMul(a, new Mat(b.data.map(x => [x])));
+      if (a instanceof Vec && b instanceof Vec) fail('Cannot multiply two vectors with "*". Use dot(a, b) or cross(a, b).');
+      fail(`Cannot multiply ${formatValue(a)} by ${formatValue(b)}.`);
+    }
+
+    if (op === '/'){
+      if (a instanceof Vec && typeof b === 'number'){
+        if (b === 0) fail('Division by zero.');
+        return new Vec(a.data.map(x => x / b));
+      }
+      if (a instanceof Mat && typeof b === 'number'){
+        if (b === 0) fail('Division by zero.');
+        return new Mat(a.rows.map(r => r.map(x => x / b)));
+      }
+      fail(`Cannot divide ${formatValue(a)} by ${formatValue(b)}.`);
+    }
+
+    if (op === '^'){
+      if (a instanceof Mat && typeof b === 'number' && Number.isInteger(b) && b > 0){
+        let r = a;
+        for (let i = 1; i < b; i++) r = matMul(r, a);
+        return r;
+      }
+      fail(`Cannot raise ${formatValue(a)} to a power.`);
+    }
+
+    fail(`Operator "${op}" is not defined for ${formatValue(a)} and ${formatValue(b)}.`);
+  }
+
+  evalCall(node, scope){
+    const name = node.name;
+    switch (name){
+      case 'derivative': return this.sfDerivative(node, scope);
+      case 'integral':   return this.sfIntegral(node, scope);
+      case 'tangent':    return this.sfTangent(node, scope);
+      case 'sum':        return this.sfSum(node, scope, false);
+      case 'product':    return this.sfSum(node, scope, true);
+      case 'limit':      return this.sfLimit(node, scope);
+      case 'roots':      return this.sfRoots(node, scope);
+      case 'compose':    return this.sfCompose(node, scope);
+    }
+    const r = this.lookup(name, scope);
+    if (r.found){
+      if (r.value instanceof FnVal){
+        const args = node.args.map(a => this.eval(a, scope));
+        return this.callFnValue(r.value, args, name);
+      }
+      fail(`"${name}" is not a function — it currently holds ${formatValue(r.value)}.`);
+    }
+    if (BUILTIN_NAMES.includes(name)){
+      const args = node.args.map(a => this.eval(a, scope));
+      return this.callBuiltin(name, args);
+    }
+    fail(`Unknown function: ${name}`);
+  }
+
+  callFnValue(fn, args, name){
+    if (args.length !== fn.params.length && fn.params.length > 0){
+      fail(`Function ${name || ''} expects ${fn.params.length} argument${fn.params.length === 1 ? '' : 's'} but received ${args.length}.`);
+    }
+    return fn.call(args);
+  }
+
+  resolveFunctionArg(argNode, scope){
+    if (argNode && argNode.type === 'sym'){
+      const obj = this.ws.objects.get(argNode.name);
+      if (obj && obj.kind === 'function') return { obj, fnVal: obj.value };
+    }
+    const v = this.eval(argNode, scope);
+    if (v instanceof FnVal) return { obj: null, fnVal: v };
+    fail('This operation requires a function as its first argument.');
+  }
+
+  sfCompose(node, scope){
+    if (node.args.length < 2) fail('compose(f, g, ...) requires at least 2 functions.');
+    const fns = node.args.map(a => {
+      const v = this.eval(a, scope);
+      if (!(v instanceof FnVal)) fail('compose() requires function arguments.');
+      return v;
+    });
+    const param = fns[fns.length - 1].params[0] || 'x';
+    return new FnVal([param], (args) => {
+      let v = args[0];
+      for (let i = fns.length - 1; i >= 0; i--) v = fns[i].call([v]);
+      return v;
+    });
+  }
+
+  sfDerivative(node, scope){
+    const { obj, fnVal } = this.resolveFunctionArg(node.args[0], scope);
+    const order = node.args[1] ? Math.round(asNum(this.eval(node.args[1], scope))) : 1;
+    if (order < 1 || order > 6) fail('Derivative order must be between 1 and 6.');
+
+    if (obj && obj.rules.length === 1 && obj.rules[0].patterns.length === 1 && obj.rules[0].patterns[0].kind === 'sym'){
+      const param = obj.rules[0].patterns[0].name;
+      let body = obj.rules[0].body;
+      for (let i = 0; i < order; i++){
+        body = simplify(diffAST(body, param, (n) => {
+          const o = this.ws.objects.get(n);
+          if (o && o.kind === 'function' && o.rules.length === 1 &&
+              o.rules[0].patterns.length === 1 && o.rules[0].patterns[0].kind === 'sym'){
+            return { body: o.rules[0].body, params: [o.rules[0].patterns[0].name] };
+          }
+          return null;
+        }));
+      }
+      const self = this;
+      const fv = new FnVal([param], (args) => {
+        const sc = new Map(); sc.set(param, args[0]);
+        return self.eval(body, sc);
+      }, body);
+      fv.symbolic = body; fv.param = param;
+      return fv;
+    }
+
+    const f = fnVal;
+    const param = f.params[0] || 'x';
+    const h = 1e-5;
+    return new FnVal([param], (args) => {
+      const x = args[0];
+      if (order === 1) return (f.call([x + h]) - f.call([x - h])) / (2 * h);
+      if (order === 2) return (f.call([x + h]) - 2 * f.call([x]) + f.call([x - h])) / (h * h);
+      return (f.call([x + h]) - f.call([x - h])) / (2 * h);
+    });
+  }
+
+  sfIntegral(node, scope){
+    const { obj, fnVal } = this.resolveFunctionArg(node.args[0], scope);
+    if (node.args.length >= 3){
+      const a = asNum(this.eval(node.args[1], scope));
+      const b = asNum(this.eval(node.args[2], scope));
+      return this.simpson(fnVal, a, b, 1000);
+    }
+    if (obj && obj.rules.length === 1 && obj.rules[0].patterns.length === 1 && obj.rules[0].patterns[0].kind === 'sym'){
+      const param = obj.rules[0].patterns[0].name;
+      const anti = integrateAST(obj.rules[0].body, param);
+      if (anti){
+        const s = simplify(anti);
+        const self = this;
+        const fv = new FnVal([param], (args) => {
+          const sc = new Map(); sc.set(param, args[0]);
+          return self.eval(s, sc);
+        }, s);
+        fv.symbolic = s;
+        return fv;
+      }
+    }
+    const self = this;
+    const param = fnVal.params[0] || 'x';
+    return new FnVal([param], (args) => self.simpson(fnVal, 0, args[0], 400));
+  }
+
+  simpson(f, a, b, n){
+    if (n % 2) n++;
+    const h = (b - a) / n;
+    let s = f.call([a]) + f.call([b]);
+    for (let i = 1; i < n; i++){
+      const y = f.call([a + i * h]);
+      if (!isFinite(y)) return NaN;
+      s += y * (i % 2 ? 4 : 2);
+    }
+    return (s * h) / 3;
+  }
+
+  sfTangent(node, scope){
+    const { fnVal } = this.resolveFunctionArg(node.args[0], scope);
+    const a = asNum(this.eval(node.args[1], scope));
+    const h = 1e-6;
+    const slope = (fnVal.call([a + h]) - fnVal.call([a - h])) / (2 * h);
+    const y0 = fnVal.call([a]);
+    const param = fnVal.params[0] || 'x';
+    const self = this;
+    const body = {
+      type: 'bin', op: '+',
+      left: { type: 'bin', op: '*', left: { type: 'num', value: slope },
+              right: { type: 'bin', op: '-', left: { type: 'sym', name: param }, right: { type: 'num', value: a } } },
+      right: { type: 'num', value: y0 }
+    };
+    return new FnVal([param], (args) => {
+      const sc = new Map(); sc.set(param, args[0]);
+      return self.eval(body, sc);
+    }, body);
+  }
+
+  sfSum(node, scope, isProduct){
+    if (node.args.length !== 4) fail(`${isProduct ? 'product' : 'sum'}(expr, variable, from, to) requires 4 arguments.`);
+    const varNode = node.args[1];
+    if (varNode.type !== 'sym') fail(`${isProduct ? 'product' : 'sum'}() requires a variable name as its second argument.`);
+    const from = this.eval(node.args[2], scope);
+    const to = this.eval(node.args[3], scope);
+    if (!Number.isInteger(from) || !Number.isInteger(to)) fail('Summation bounds must be integers.');
+    if (to - from > 200000) fail('Summation range is too large (max 200000 terms).');
+    const name = varNode.name;
+    const sc = new Map(scope);
+    let acc = isProduct ? 1 : 0;
+    for (let k = from; k <= to; k++){
+      sc.set(name, k);
+      const v = asNum(this.eval(node.args[0], sc));
+      acc = isProduct ? acc * v : acc + v;
+    }
+    return acc;
+  }
+
+  sfLimit(node, scope){
+    const { fnVal } = this.resolveFunctionArg(node.args[0], scope);
+    const a = asNum(this.eval(node.args[1], scope));
+    const h = 1e-6;
+    const left = fnVal.call([a - h]);
+    const right = fnVal.call([a + h]);
+    const direct = (() => { try { return fnVal.call([a]); } catch (e){ return NaN; } })();
+    const l = isFinite(left) ? left : NaN;
+    const r = isFinite(right) ? right : NaN;
+    if (isFinite(l) && isFinite(r) && Math.abs(l - r) < 1e-3 * Math.max(1, Math.abs(l))) return (l + r) / 2;
+    if (isFinite(direct)) return direct;
+    if (!isFinite(l) && !isFinite(r)) fail(`Limit at x = ${fmt(a)} does not exist (unbounded).`);
+    fail(`Limit at x = ${fmt(a)} does not exist (left and right limits differ).`);
+  }
+
+  sfRoots(node, scope){
+    const { fnVal } = this.resolveFunctionArg(node.args[0], scope);
+    let a = -10, b = 10, n = 2000;
+    if (node.args.length >= 3){
+      a = asNum(this.eval(node.args[1], scope));
+      b = asNum(this.eval(node.args[2], scope));
+    }
+    if (node.args.length >= 4) n = Math.min(20000, Math.round(asNum(this.eval(node.args[3], scope))));
+    const f = (x) => { try { const v = fnVal.call([x]); return typeof v === 'number' ? v : NaN; } catch (e){ return NaN; } };
+    const roots = [];
+    const step = (b - a) / n;
+    let prevX = a, prevY = f(a);
+    for (let i = 1; i <= n; i++){
+      const x = a + i * step;
+      const y = f(x);
+      if (isFinite(prevY) && isFinite(y)){
+        if (prevY === 0) roots.push(prevX);
+        else if (prevY * y < 0){
+          let lo = prevX, hi = x, flo = prevY;
+          for (let k = 0; k < 60; k++){
+            const mid = (lo + hi) / 2, fm = f(mid);
+            if (!isFinite(fm)) break;
+            if (flo * fm <= 0) hi = mid; else { lo = mid; flo = fm; }
+          }
+          roots.push((lo + hi) / 2);
+        }
+      }
+      prevX = x; prevY = y;
+    }
+    const uniq = [];
+    for (const r of roots) if (!uniq.some(u => Math.abs(u - r) < 1e-6)) uniq.push(r);
+    return new Vec(uniq.map(r => Number(r.toPrecision(10))));
+  }
+
+  callBuiltin(name, args){
+    const n = (i) => asNum(args[i], name + '()');
+    switch (name){
+      case 'sin': return Math.sin(n(0));
+      case 'cos': return Math.cos(n(0));
+      case 'tan': return Math.tan(n(0));
+      case 'asin': return Math.asin(n(0));
+      case 'acos': return Math.acos(n(0));
+      case 'atan': return Math.atan(n(0));
+      case 'atan2': return Math.atan2(n(0), n(1));
+      case 'sinh': return Math.sinh(n(0));
+      case 'cosh': return Math.cosh(n(0));
+      case 'tanh': return Math.tanh(n(0));
+      case 'sqrt': { const v = n(0); if (v < 0) fail('sqrt() of a negative number is not real.'); return Math.sqrt(v); }
+      case 'cbrt': return Math.cbrt(n(0));
+      case 'abs': return Math.abs(n(0));
+      case 'exp': return Math.exp(n(0));
+      case 'ln': { const v = n(0); if (v <= 0) fail('ln() is only defined for positive numbers.'); return Math.log(v); }
+      case 'log': {
+        if (args.length === 2){ const b = n(1); if (b <= 0 || b === 1) fail('log(): base must be positive and not 1.'); return Math.log(n(0)) / Math.log(b); }
+        const v = n(0); if (v <= 0) fail('log() is only defined for positive numbers.'); return Math.log10(v);
+      }
+      case 'log2': return Math.log2(n(0));
+      case 'pow': return Math.pow(n(0), n(1));
+      case 'floor': return Math.floor(n(0));
+      case 'ceil': return Math.ceil(n(0));
+      case 'round': return Math.round(n(0));
+      case 'sign': return Math.sign(n(0));
+      case 'min': return Math.min(...args.map((_, i) => n(i)));
+      case 'max': return Math.max(...args.map((_, i) => n(i)));
+      case 'mod': { const b = n(1); if (b === 0) fail('Modulo by zero.'); return ((n(0) % b) + b) % b; }
+      case 'gcd': { let a = Math.abs(Math.round(n(0))), b = Math.abs(Math.round(n(1))); while (b){ [a, b] = [b, a % b]; } return a; }
+      case 'lcm': {
+        let a = Math.abs(Math.round(n(0))), b = Math.abs(Math.round(n(1)));
+        if (!a || !b) return 0;
+        let x = a, y = b;
+        while (y){ [x, y] = [y, x % y]; }
+        return (a / x) * b;
+      }
+      case 'factorial': {
+        const v = n(0);
+        if (v < 0 || !Number.isInteger(v)) fail('factorial() requires a non-negative integer.');
+        if (v > 170) return Infinity;
+        let r = 1; for (let i = 2; i <= v; i++) r *= i; return r;
+      }
+      case 'ncr': { const nn = Math.round(n(0)), rr = Math.round(n(1)); if (rr < 0 || rr > nn) return 0; let r = 1; for (let i = 1; i <= rr; i++) r = (r * (nn - rr + i)) / i; return Math.round(r); }
+      case 'npr': { const nn = Math.round(n(0)), rr = Math.round(n(1)); let r = 1; for (let i = 0; i < rr; i++) r *= (nn - i); return r; }
+      case 'hypot': return Math.hypot(...args.map((_, i) => n(i)));
+      case 'clamp': return Math.min(Math.max(n(0), n(1)), n(2));
+      case 'deg': return (n(0) * 180) / Math.PI;
+      case 'rad': return (n(0) * Math.PI) / 180;
+      case 'random': {
+        if (args.length === 0) return RNG();
+        if (args.length === 1) return RNG() * n(0);
+        return n(0) + RNG() * (n(1) - n(0));
+      }
+      case 'dot': return vecDot(asVec(args[0], 'dot'), asVec(args[1], 'dot'));
+      case 'cross': return vecCross(asVec(args[0], 'cross'), asVec(args[1], 'cross'));
+      case 'norm': return Math.hypot(...asVec(args[0], 'norm').data);
+      case 'transpose': { const M = asMat(args[0], 'transpose'); return new Mat(M.rows[0].map((_, j) => M.rows.map(r => r[j]))); }
+      case 'det': return matDet(asMat(args[0], 'det'));
+      case 'inv': return matInv(asMat(args[0], 'inv'));
+      case 'identity': { const k = Math.round(n(0)); return new Mat(Array.from({ length: k }, (_, i) => Array.from({ length: k }, (_, j) => (i === j ? 1 : 0)))); }
+      case 'zeros': { const r = Math.round(n(0)), c = args.length > 1 ? Math.round(n(1)) : r; return new Mat(Array.from({ length: r }, () => new Array(c).fill(0))); }
+      case 'ones':  { const r = Math.round(n(0)), c = args.length > 1 ? Math.round(n(1)) : r; return new Mat(Array.from({ length: r }, () => new Array(c).fill(1))); }
+      case 'union': {
+        const A = args[0], B = args[1];
+        if (A instanceof SetVal && B instanceof SetVal) return this.makeSet([...A.items, ...B.items]);
+        fail('union() requires two sets.');
+      }
+      case 'intersect': {
+        const A = args[0], B = args[1];
+        if (A instanceof SetVal && B instanceof SetVal)
+          return this.makeSet(A.items.filter(x => B.items.some(y => formatValue(y) === formatValue(x))));
+        fail('intersect() requires two sets.');
+      }
+      case 'difference': {
+        const A = args[0], B = args[1];
+        if (A instanceof SetVal && B instanceof SetVal)
+          return this.makeSet(A.items.filter(x => !B.items.some(y => formatValue(y) === formatValue(x))));
+        fail('difference() requires two sets.');
+      }
+      case 'size': {
+        const v = args[0];
+        if (v instanceof Vec) return v.data.length;
+        if (v instanceof Mat) return v.rows.length * v.rows[0].length;
+        if (v instanceof SetVal) return v.items.length;
+        fail('size() requires a vector, matrix or set.');
+      }
+    }
+    fail(`Unknown function: ${name}`);
+  }
+}
+
+/* ==========================================================================
+ * 12. SEEDED RANDOM
+ * ========================================================================== */
+let rngState = 12345;
+let rngSeed = 12345;
+function mulberry32(a){
+  return function(){
+    a |= 0; a = (a + 0x6D2B79F5) | 0;
+    let t = Math.imul(a ^ (a >>> 15), 1 | a);
+    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+}
+let RNG = mulberry32(rngState);
+function resetRNG(){ rngState = rngSeed; RNG = mulberry32(rngState); }
+
+/* ==========================================================================
+ * 13. WORKSPACE + DEPENDENCY MANAGER
+ * ========================================================================== */
+const PALETTE = ['#4cc2ff', '#ff8f6b', '#7ee787', '#d2a8ff', '#ffd866', '#67e8f9', '#f78fb3', '#a3e635'];
+
+class Workspace {
+  constructor(){
+    this.objects = new Map();
+    this.order = [];
+    this.ui = new Map();
+    this.simTime = 0;
+    this.evaluator = new Evaluator(this);
+    this.listeners = [];
+  }
+  on(evt, fn){ this.listeners.push(fn); }
+  emit(evt, payload){ this.listeners.forEach(f => f(evt, payload)); }
+
+  colorFor(name){
+    const saved = this.ui.get(name);
+    if (saved && saved.color) return saved.color;
+    let h = 0;
+    for (let i = 0; i < name.length; i++) h = (h * 31 + name.charCodeAt(i)) >>> 0;
+    return PALETTE[h % PALETTE.length];
+  }
+
+  build(statements){
+    const previous = this.objects;
+    const next = new Map();
+
+    for (const st of statements){
+      if (st.kind === 'funcdef'){
+        /* Extract parameter names for each pattern position.  A symbolic pattern
+           contributes its name directly; an expression pattern like `n+1`
+           contributes its single free variable. */
+        const paramNames = [];
+        for (const p of st.params){
+          if (p.kind === 'sym') paramNames.push(p.name);
+          else if (p.kind === 'expr'){
+            const free = new Set();
+            walkAST(p.ast, nn => { if (nn.type === 'sym') free.add(nn.name); });
+            const arr = [...free];
+            paramNames.push(arr.length === 1 ? arr[0] : null);
+          } else paramNames.push(null);
+        }
+
+        let obj = next.get(st.name);
+        if (!obj || obj.kind !== 'function'){
+          obj = {
+            id: uid(), name: st.name, kind: 'function',
+            params: [],
+            rules: [], deps: new Set(),
+            value: null, error: null, visible: true,
+            lines: [], plotMode: 'auto', color: null, slider: null,
+            source: st.source || '',
+            selfRecursive: false
+          };
+          next.set(st.name, obj);
+        }
+        for (const pn of paramNames){
+          if (pn !== null && !obj.params.includes(pn)) obj.params.push(pn);
+        }
+        obj.rules.push({
+          patterns: st.params,
+          body: st.body,
+          line: st.line,
+          prefix: st.prefix || (st.name + '(' + st.params.map(p =>
+            p.kind === 'lit' ? fmt(p.value) :
+            p.kind === 'sym' ? p.name :
+            astToString(p.ast)).join(', ') + ')')
+        });
+        obj.lines.push(st.line);
+        continue;
+      }
+
+      if (st.kind === 'vardef' || st.kind === 'expr'){
+        const name = st.kind === 'vardef' ? st.name : this.autoName(next);
+        const body = st.body;
+        const obj = {
+          id: uid(), name, kind: 'value', params: [], rules: [],
+          ast: body, deps: new Set(), value: null, error: null,
+          visible: true, lines: [st.line], source: st.source || astToString(body),
+          plotMode: 'auto', color: null, slider: null,
+          isExpr: st.kind === 'expr',
+          selfRecursive: false,
+          prefix: st.prefix || (st.kind === 'vardef' ? st.name : null)
+        };
+        if (body.type === 'cmp' || body.type === 'logic'){
+          const free = collectSymbols(body, new Set(), new Set());
+          const unknown = [...free].filter(s => !next.has(s) && !(s in CONSTANTS) &&
+            !BUILTIN_NAMES.includes(s) && s !== 'and' && s !== 'or');
+          if (unknown.length === 1) obj.relationVar = unknown[0];
+        }
+        next.set(name, obj);
+      }
+    }
+
+    for (const [name, obj] of next){
+      const saved = this.ui.get(name);
+      if (saved){
+        if (saved.visible !== undefined) obj.visible = saved.visible;
+        if (saved.plotMode) obj.plotMode = saved.plotMode;
+        if (saved.color) obj.color = saved.color;
+      }
+      if (!obj.color) obj.color = this.colorFor(name);
+      const old = previous.get(name);
+      if (old && old.slider && !obj.slider){
+        obj.slider = { ...old.slider };
+        if (obj.kind === 'value') obj.value = obj.slider.value;
+      }
+    }
+
+    this.objects = next;
+    this.computeDependencies();
+    this.topologicalSort();
+    this.evaluateAll();
+    this.emit('change');
+  }
+
+  autoName(map){
+    let i = 1;
+    while (map.has('_' + i) || this.objects.has('_' + i)) i++;
+    return '_' + i;
+  }
+
+  computeDependencies(){
+    for (const [name, obj] of this.objects){
+      const deps = new Set();
+      obj.selfRecursive = false;
+      if (obj.kind === 'function'){
+        const bound = new Set(obj.params);
+        /* FIX: functions may legitimately reference themselves (recursion /
+           iteration).  Add the function's own name to `bound` so it is NOT
+           recorded as a dependency, which was causing a false "circular
+           dependency" error for x(n+1) = ... style definitions. */
+        bound.add(name);
+        for (const rule of obj.rules){
+          for (const p of rule.patterns){
+            if (p.kind === 'sym') bound.add(p.name);
+            else if (p.kind === 'expr') walkAST(p.ast, nn => { if (nn.type === 'sym') bound.add(nn.name); });
+          }
+          /* Record self-recursion separately (used for memoisation). */
+          walkAST(rule.body, nn => {
+            if (nn.type === 'call' && nn.name === name) obj.selfRecursive = true;
+          });
+          collectSymbols(rule.body, bound, deps);
+        }
+      } else if (obj.ast){
+        collectSymbols(obj.ast, new Set(), deps);
+      }
+      const real = new Set();
+      for (const d of deps) if (this.objects.has(d) || d === 't') real.add(d);
+      obj.deps = real;
+    }
+  }
+
+  topologicalSort(){
+    const names = [...this.objects.keys()];
+    const indeg = new Map(names.map(n => [n, 0]));
+    const edges = new Map(names.map(n => [n, []]));
+    for (const name of names){
+      const obj = this.objects.get(name);
+      for (const d of obj.deps){
+        if (!this.objects.has(d)) continue;
+        const depObj = this.objects.get(d);
+        /* FIX: skip function-to-function edges.  Functions are lazy wrappers
+           whose bodies are not evaluated at definition time, so mutual
+           recursion between functions is fine and creates no ordering
+           requirement. */
+        if (obj.kind === 'function' && depObj && depObj.kind === 'function') continue;
+        edges.get(d).push(name);
+        indeg.set(name, indeg.get(name) + 1);
+      }
+    }
+    const queue = names.filter(n => indeg.get(n) === 0);
+    const out = [];
+    while (queue.length){
+      const n = queue.shift();
+      out.push(n);
+      for (const m of edges.get(n)){
+        indeg.set(m, indeg.get(m) - 1);
+        if (indeg.get(m) === 0) queue.push(m);
+      }
+    }
+    if (out.length !== names.length){
+      const cyclic = names.filter(n => !out.includes(n));
+      for (const n of cyclic){
+        const obj = this.objects.get(n);
+        obj.error = 'Circular dependency detected: ' + cyclic.join(' → ');
+      }
+      out.push(...cyclic);
+    }
+    this.order = out;
+  }
+
+  descendants(names){
+    const result = new Set(names);
+    let changed = true;
+    while (changed){
+      changed = false;
+      for (const [name, obj] of this.objects){
+        if (result.has(name)) continue;
+        for (const d of obj.deps){
+          if (result.has(d)){ result.add(name); changed = true; break; }
+        }
+      }
+    }
+    return result;
+  }
+
+  evaluateAll(){
+    resetRNG();
+    for (const obj of this.objects.values()){
+      if (obj.kind === 'function') obj._memo = obj.selfRecursive ? new Map() : null;
+    }
+    this.order.forEach(name => this.evaluateObject(this.objects.get(name)));
+  }
+
+  evaluateFrom(names){
+    resetRNG();
+    const dirty = this.descendants(names);
+    for (const n of dirty){
+      const o = this.objects.get(n);
+      if (o && o.kind === 'function') o._memo = o.selfRecursive ? new Map() : null;
+    }
+    for (const name of this.order){
+      if (dirty.has(name)) this.evaluateObject(this.objects.get(name));
+    }
+    this.emit('change');
+  }
+
+  evaluateObject(obj){
+    if (!obj) return;
+    if (obj.error && obj.error.startsWith('Circular')) return;
+    obj.error = null;
+
+    if (obj.slider && obj.kind !== 'function'){
+      obj.value = obj.slider.value;
+      obj.kind = 'number';
+      return;
+    }
+
+    try {
+      if (obj.kind === 'function'){
+        obj.value = this.makeFunctionValue(obj);
+      } else if (obj.ast && obj.ast.type === 'call' && this.isFunctionProducing(obj.ast)){
+        const v = this.evaluator.eval(obj.ast, new Map());
+        obj.value = v;
+        obj.kind = kindOfValue(v);
+      } else {
+        const v = this.evaluator.eval(obj.ast, new Map());
+        obj.value = v;
+        obj.kind = kindOfValue(v);
+        if (obj.relationVar) obj.kind = 'relation';
+      }
+    } catch (e){
+      obj.error = (e instanceof MathError) ? e.message : ('Evaluation error: ' + e.message);
+      obj.value = undefined;
+    }
+  }
+
+  isFunctionProducing(ast){
+    if (ast.type !== 'call') return false;
+    if (ast.name === 'derivative' || ast.name === 'tangent' || ast.name === 'compose') return true;
+    if (ast.name === 'integral' && ast.args.length === 1) return true;
+    return false;
+  }
+
+  makeFunctionValue(obj){
+    const self = this;
+    const fn = (args) => self.callUserFunction(obj, args);
+    const paramNames = obj.params.length ? obj.params : ['x'];
+    const fv = new FnVal(paramNames, fn);
+    if (obj.rules.length === 1 && obj.rules[0].patterns[0] && obj.rules[0].patterns[0].kind === 'sym'){
+      fv.ast = obj.rules[0].body;
+      fv.symbolicParam = obj.rules[0].patterns[0].name;
+    }
+    fv.objectName = obj.name;
+    return fv;
+  }
+
+  callUserFunction(obj, args){
+    // 1. exact literal rules
+    for (const r of obj.rules){
+      if (r.patterns.length !== args.length) continue;
+      if (r.patterns.every(p => p.kind === 'lit')){
+        if (r.patterns.every((p, i) => Math.abs(p.value - args[i]) < 1e-12)){
+          return this.evalRule(obj, r, args, null);
+        }
+      }
+    }
+    // 2. all-symbol rules
+    for (const r of obj.rules){
+      if (r.patterns.length !== args.length) continue;
+      if (r.patterns.every(p => p.kind === 'sym')) return this.evalRule(obj, r, args, null);
+    }
+    // 3. expression patterns — solve for the unknown
+    for (const r of obj.rules){
+      if (r.patterns.length !== args.length) continue;
+      if (!r.patterns.some(p => p.kind === 'expr')) continue;
+      const bindings = this.tryMatchExprPatterns(r.patterns, args);
+      if (bindings) return this.evalRule(obj, r, args, bindings);
+    }
+    // 4. any rule with matching arity
+    for (const r of obj.rules){
+      if (r.patterns.length === args.length) return this.evalRule(obj, r, args, null);
+    }
+    const expected = obj.params.length || (obj.rules[0] ? obj.rules[0].patterns.length : 1);
+    fail(`Function ${obj.name} expects ${expected} argument${expected === 1 ? '' : 's'} but received ${args.length}.`);
+  }
+
+  evalRule(obj, rule, args, extraBindings){
+    const key = args.join('|');
+    if (obj._memo && obj._memo.has(key)) return obj._memo.get(key);
+    const scope = new Map();
+    if (extraBindings) for (const [k, v] of extraBindings) scope.set(k, v);
+    rule.patterns.forEach((p, i) => { if (p.kind === 'sym') scope.set(p.name, args[i]); });
+    if (this.evaluator.depth > 900) fail(`Recursion limit reached while evaluating ${obj.name}().`);
+    this.evaluator.depth++;
+    try {
+      const v = this.evaluator.eval(rule.body, scope);
+      if (obj._memo) obj._memo.set(key, v);
+      return v;
+    } finally { this.evaluator.depth--; }
+  }
+
+  tryMatchExprPatterns(patterns, args){
+    const bindings = new Map();
+    for (let i = 0; i < patterns.length; i++){
+      const p = patterns[i];
+      if (p.kind === 'sym' || p.kind === 'lit') continue;
+      if (p.kind === 'expr'){
+        const b = this.solvePattern(p.ast, args[i], bindings);
+        if (!b) return null;
+        for (const [k, v] of b) bindings.set(k, v);
+      }
+    }
+    return bindings;
+  }
+
+  solvePattern(ast, target, existingBindings){
+    const free = new Set();
+    collectSymbols(ast, new Set(), free);
+    const unbound = [...free].filter(s =>
+      !existingBindings.has(s) &&
+      !(s in CONSTANTS) &&
+      !BUILTIN_NAMES.includes(s) &&
+      !this.objects.has(s));
+
+    if (unbound.length === 0){
+      try {
+        const v = this.evaluator.eval(ast, new Map(existingBindings));
+        if (Math.abs(v - target) < 1e-9) return new Map();
+      } catch (e){ /* ignore */ }
+      return null;
+    }
+    if (unbound.length > 1) return null;
+    const v = unbound[0];
+
+    if (ast.type === 'bin'){
+      const L = ast.left, R = ast.right;
+      if (ast.op === '+'){
+        if (L.type === 'sym' && L.name === v && R.type === 'num') return new Map([[v, target - R.value]]);
+        if (R.type === 'sym' && R.name === v && L.type === 'num') return new Map([[v, target - L.value]]);
+      }
+      if (ast.op === '-'){
+        if (L.type === 'sym' && L.name === v && R.type === 'num') return new Map([[v, target + R.value]]);
+        if (L.type === 'num' && R.type === 'sym' && R.name === v) return new Map([[v, L.value - target]]);
+      }
+      if (ast.op === '*'){
+        if (L.type === 'sym' && L.name === v && R.type === 'num' && R.value !== 0) return new Map([[v, target / R.value]]);
+        if (R.type === 'sym' && R.name === v && L.type === 'num' && L.value !== 0) return new Map([[v, target / L.value]]);
+      }
+    }
+
+    const RANGE = 300;
+    for (let k = target - RANGE; k <= target + RANGE; k++){
+      const sc = new Map(existingBindings);
+      sc.set(v, k);
+      try {
+        const val = this.evaluator.eval(ast, sc);
+        if (Math.abs(val - target) < 1e-9) return new Map([[v, k]]);
+      } catch (e){ /* skip */ }
+    }
+    return null;
+  }
+
+  safeCall(fv, args){
+    try {
+      const v = fv.call(args);
+      return typeof v === 'number' ? v : NaN;
+    } catch (e){ return NaN; }
+  }
+
+  setSlider(name, patch){
+    const obj = this.objects.get(name);
+    if (!obj) return;
+    obj.slider = { ...(obj.slider || {}), ...patch };
+    this.ui.set(name, { ...(this.ui.get(name) || {}), slider: { ...obj.slider } });
+    if (obj.slider.value !== undefined) obj.value = obj.slider.value;
+    this.evaluateFrom([name]);
+  }
+
+  toggleSlider(name){
+    const obj = this.objects.get(name);
+    if (!obj) return;
+    if (obj.slider){
+      obj.slider = null;
+      const u = this.ui.get(name) || {};
+      delete u.slider;
+      this.ui.set(name, u);
+      this.evaluateAll();
+    } else {
+      const v = typeof obj.value === 'number' ? obj.value : 1;
+      const span = Math.max(1, Math.abs(v) * 2);
+      obj.slider = { min: -span, max: span, step: span / 100 || 0.1, value: v };
+      this.ui.set(name, { ...(this.ui.get(name) || {}), slider: { ...obj.slider } });
+      obj.value = v;
+    }
+    this.emit('change');
+  }
+
+  toggleVisible(name){
+    const obj = this.objects.get(name);
+    if (!obj) return;
+    obj.visible = !obj.visible;
+    this.ui.set(name, { ...(this.ui.get(name) || {}), visible: obj.visible });
+    this.emit('change');
+  }
+
+  setPlotMode(name, mode){
+    const obj = this.objects.get(name);
+    if (!obj) return;
+    obj.plotMode = mode;
+    this.ui.set(name, { ...(this.ui.get(name) || {}), plotMode: mode });
+    this.emit('change');
+  }
+
+  setColor(name, color){
+    const obj = this.objects.get(name);
+    if (!obj) return;
+    obj.color = color;
+    this.ui.set(name, { ...(this.ui.get(name) || {}), color });
+    this.emit('change');
+  }
+}
+
+/* ==========================================================================
+ * 14. GRAPH VIEW
+ * ========================================================================== */
+class GraphView {
+  constructor(canvas, ws){
+    this.canvas = canvas;
+    this.ctx = canvas.getContext('2d');
+    this.ws = ws;
+    this.xMin = -10; this.xMax = 10;
+    this.yMin = -6;  this.yMax = 6;
+    this.dpr = window.devicePixelRatio || 1;
+    this.colors = {};
+    this.pending = false;
+    this.hover = null;
+    this._bindEvents();
+    this.resize();
+  }
+  refreshTheme(){
+    const cs = getComputedStyle(document.documentElement);
+    const g = (k) => cs.getPropertyValue(k).trim();
+    this.colors = {
+      grid: g('--grid'), grid2: g('--grid2'), axis: g('--axis'),
+      text: g('--text'), muted: g('--muted'), dim: g('--dim'),
+      panel: g('--panel2'), accent: g('--accent'), err: g('--err')
+    };
+    this.scheduleDraw();
+  }
+  _bindEvents(){
+    const c = this.canvas;
+    let dragging = false, lastX = 0, lastY = 0;
+    c.addEventListener('mousedown', (e) => { dragging = true; lastX = e.clientX; lastY = e.clientY; c.style.cursor = 'grabbing'; });
+    window.addEventListener('mouseup', () => { dragging = false; c.style.cursor = 'crosshair'; });
+    window.addEventListener('mousemove', (e) => {
+      if (!dragging) return;
+      const rect = c.getBoundingClientRect();
+      const dx = (e.clientX - lastX) / rect.width  * (this.xMax - this.xMin);
+      const dy = (e.clientY - lastY) / rect.height * (this.yMax - this.yMin);
+      this.xMin -= dx; this.xMax -= dx;
+      this.yMin += dy; this.yMax += dy;
+      lastX = e.clientX; lastY = e.clientY;
+      this.scheduleDraw();
+    });
+    c.addEventListener('wheel', (e) => {
+      e.preventDefault();
+      const rect = c.getBoundingClientRect();
+      const mx = (e.clientX - rect.left) / rect.width;
+      const my = (e.clientY - rect.top) / rect.height;
+      const wx = this.xMin + mx * (this.xMax - this.xMin);
+      const wy = this.yMax - my * (this.yMax - this.yMin);
+      const f = Math.exp(e.deltaY * 0.0012);
+      this.xMin = wx + (this.xMin - wx) * f; this.xMax = wx + (this.xMax - wx) * f;
+      this.yMin = wy + (this.yMin - wy) * f; this.yMax = wy + (this.yMax - wy) * f;
+      this.scheduleDraw();
+    }, { passive: false });
+    c.addEventListener('mousemove', (e) => {
+      if (dragging) return;
+      const rect = c.getBoundingClientRect();
+      const mx = (e.clientX - rect.left) / rect.width;
+      const my = (e.clientY - rect.top) / rect.height;
+      const wx = this.xMin + mx * (this.xMax - this.xMin);
+      const wy = this.yMax - my * (this.yMax - this.yMin);
+      this.hover = { x: wx, y: wy };
+      const ro = $('#readout');
+      if (ro) ro.textContent = `x = ${fmt(Number(wx.toPrecision(6)))}   y = ${fmt(Number(wy.toPrecision(6)))}`;
+      this.scheduleDraw();
+    });
+    c.addEventListener('mouseleave', () => { this.hover = null; this.scheduleDraw(); });
+  }
+  resize(){
+    const rect = this.canvas.getBoundingClientRect();
+    const dpr = window.devicePixelRatio || 1;
+    const w = Math.max(1, Math.floor(rect.width * dpr));
+    const h = Math.max(1, Math.floor(rect.height * dpr));
+    if (this.canvas.width !== w || this.canvas.height !== h){
+      this.canvas.width = w; this.canvas.height = h;
+    }
+    this.dpr = dpr;
+    this.scheduleDraw();
+  }
+  scheduleDraw(){
+    if (this.pending) return;
+    this.pending = true;
+    requestAnimationFrame(() => { this.pending = false; this.draw(); });
+  }
+  sx(x){ return (x - this.xMin) / (this.xMax - this.xMin) * this.canvas.width; }
+  sy(y){ return this.canvas.height - (y - this.yMin) / (this.yMax - this.yMin) * this.canvas.height; }
+  zoom(factor){
+    const cx = (this.xMin + this.xMax) / 2;
+    const cy = (this.yMin + this.yMax) / 2;
+    this.xMin = cx + (this.xMin - cx) * factor;
+    this.xMax = cx + (this.xMax - cx) * factor;
+    this.yMin = cy + (this.yMin - cy) * factor;
+    this.yMax = cy + (this.yMax - cy) * factor;
+    this.scheduleDraw();
+  }
+  reset(){
+    this.xMin = -10; this.xMax = 10;
+    const aspect = this.canvas.height / Math.max(1, this.canvas.width);
+    const halfH = 10 * aspect;
+    this.yMin = -halfH; this.yMax = halfH;
+    this.scheduleDraw();
+  }
+  niceStep(range, target){
+    const raw = range / target;
+    const mag = Math.pow(10, Math.floor(Math.log10(raw)));
+    const norm = raw / mag;
+    let s;
+    if (norm < 1.5) s = 1; else if (norm < 3) s = 2; else if (norm < 7) s = 5; else s = 10;
+    return s * mag;
+  }
+  draw(){
+    const ctx = this.ctx;
+    const W = this.canvas.width, H = this.canvas.height;
+    ctx.clearRect(0, 0, W, H);
+    if (!this.colors.grid) this.refreshTheme();
+    ctx.fillStyle = this.colors.panel || '#0f151c';
+    ctx.fillRect(0, 0, W, H);
+    this.drawGrid(ctx, W, H);
+    this.drawObjects(ctx, W, H);
+  }
+  drawGrid(ctx, W, H){
+    const c = this.colors;
+    const stepX = this.niceStep(this.xMax - this.xMin, Math.max(4, W / (90 * this.dpr)));
+    const stepY = this.niceStep(this.yMax - this.yMin, Math.max(4, H / (70 * this.dpr)));
+    ctx.lineWidth = 1; ctx.strokeStyle = c.grid;
+    ctx.beginPath();
+    for (let x = Math.ceil(this.xMin / stepX) * stepX; x <= this.xMax; x += stepX){
+      const px = Math.round(this.sx(x)) + 0.5;
+      ctx.moveTo(px, 0); ctx.lineTo(px, H);
+    }
+    for (let y = Math.ceil(this.yMin / stepY) * stepY; y <= this.yMax; y += stepY){
+      const py = Math.round(this.sy(y)) + 0.5;
+      ctx.moveTo(0, py); ctx.lineTo(W, py);
+    }
+    ctx.stroke();
+    ctx.strokeStyle = c.axis; ctx.lineWidth = 1.4;
+    ctx.beginPath();
+    const y0 = Math.round(this.sy(0)) + 0.5;
+    const x0 = Math.round(this.sx(0)) + 0.5;
+    if (y0 > 0 && y0 < H){ ctx.moveTo(0, y0); ctx.lineTo(W, y0); }
+    if (x0 > 0 && x0 < W){ ctx.moveTo(x0, 0); ctx.lineTo(x0, H); }
+    ctx.stroke();
+    ctx.fillStyle = c.muted;
+    ctx.font = `${11 * this.dpr}px ui-monospace, monospace`;
+    ctx.textAlign = 'center'; ctx.textBaseline = 'top';
+    const labelY = Math.min(Math.max(y0 + 4, 4), H - 16);
+    for (let x = Math.ceil(this.xMin / stepX) * stepX; x <= this.xMax; x += stepX){
+      if (Math.abs(x) < stepX * 0.001) continue;
+      const px = this.sx(x);
+      if (px < 18 * this.dpr || px > W - 18 * this.dpr) continue;
+      ctx.fillText(fmt(Number(x.toPrecision(6))), px, labelY);
+    }
+    ctx.textAlign = 'right'; ctx.textBaseline = 'middle';
+    const labelX = Math.min(Math.max(x0 - 6, 34 * this.dpr), W - 4);
+    for (let y = Math.ceil(this.yMin / stepY) * stepY; y <= this.yMax; y += stepY){
+      if (Math.abs(y) < stepY * 0.001) continue;
+      const py = this.sy(y);
+      if (py < 10 * this.dpr || py > H - 10 * this.dpr) continue;
+      ctx.fillText(fmt(Number(y.toPrecision(6))), labelX, py);
+    }
+  }
+  plotModeOf(obj){
+    if (obj.plotMode && obj.plotMode !== 'auto') return obj.plotMode;
+    if (obj.kind === 'relation') return 'none';
+    if (obj.kind === 'function'){
+      const p = obj.params[0] || '';
+      if (p === 'n' || p === 'k' || p === 'i') return 'sequence';
+      return 'cartesian';
+    }
+    if (obj.kind === 'vector' && obj.value instanceof Vec && obj.value.data.length === 2) return 'vector';
+    return 'none';
+  }
+  drawObjects(ctx, W, H){
+    for (const obj of this.ws.objects.values()){
+      if (!obj.visible || obj.error || obj.value === undefined) continue;
+      const mode = this.plotModeOf(obj);
+      try {
+        if (mode === 'cartesian')  this.drawCartesian(ctx, W, H, obj);
+        else if (mode === 'sequence') this.drawSequence(ctx, W, H, obj);
+        else if (mode === 'polar')    this.drawPolar(ctx, W, H, obj);
+        else if (mode === 'parametric') this.drawParametric(ctx, W, H, obj);
+        else if (mode === 'vector')   this.drawVector(ctx, W, H, obj);
+      } catch (e){ /* ignore */ }
+    }
+  }
+  curveColor(obj){ return obj.color || this.colors.accent; }
+  drawCartesian(ctx, W, H, obj){
+    const fv = obj.value;
+    if (!(fv instanceof FnVal)) return;
+    const color = this.curveColor(obj);
+    ctx.strokeStyle = color; ctx.lineWidth = 2 * this.dpr; ctx.lineJoin = 'round';
+    ctx.beginPath();
+    const steps = Math.min(W, 2400);
+    const dx = (this.xMax - this.xMin) / steps;
+    const ySpan = this.yMax - this.yMin;
+    let prevY = null, started = false;
+    for (let i = 0; i <= steps; i++){
+      const x = this.xMin + i * dx;
+      const y = this.ws.safeCall(fv, [x]);
+      if (!isFinite(y) || Math.abs(y) > 1e9){ started = false; prevY = null; continue; }
+      const px = this.sx(x), py = this.sy(y);
+      if (!started){ ctx.moveTo(px, py); started = true; }
+      else {
+        if (prevY !== null && Math.abs(y - prevY) > ySpan * 1.6) ctx.moveTo(px, py);
+        else ctx.lineTo(px, py);
+      }
+      prevY = y;
+    }
+    ctx.stroke();
+    if (this.hover){
+      const y = this.ws.safeCall(fv, [this.hover.x]);
+      if (isFinite(y)){
+        ctx.fillStyle = color;
+        ctx.beginPath(); ctx.arc(this.sx(this.hover.x), this.sy(y), 4 * this.dpr, 0, Math.PI * 2); ctx.fill();
+      }
+    }
+  }
+  drawSequence(ctx, W, H, obj){
+    const fv = obj.value;
+    if (!(fv instanceof FnVal)) return;
+    const color = this.curveColor(obj);
+    const nMin = Math.ceil(this.xMin), nMax = Math.floor(this.xMax);
+    if (nMax - nMin > 900) return;
+    ctx.fillStyle = color; ctx.strokeStyle = color; ctx.lineWidth = 1 * this.dpr;
+    for (let n = nMin; n <= nMax; n++){
+      const y = this.ws.safeCall(fv, [n]);
+      if (!isFinite(y)) continue;
+      const px = this.sx(n), py = this.sy(y);
+      if (px < -20 || px > W + 20) continue;
+      ctx.globalAlpha = 0.35;
+      ctx.beginPath(); ctx.moveTo(px, this.sy(0)); ctx.lineTo(px, py); ctx.stroke();
+      ctx.globalAlpha = 1;
+      ctx.beginPath(); ctx.arc(px, py, 3.2 * this.dpr, 0, Math.PI * 2); ctx.fill();
+    }
+  }
+  drawPolar(ctx, W, H, obj){
+    const fv = obj.value;
+    if (!(fv instanceof FnVal)) return;
+    const tMax = obj.tMax !== undefined ? obj.tMax : Math.PI * 2;
+    const tMin = obj.tMin !== undefined ? obj.tMin : 0;
+    const color = this.curveColor(obj);
+    ctx.strokeStyle = color; ctx.lineWidth = 2 * this.dpr;
+    ctx.beginPath();
+    const steps = 1800;
+    let started = false;
+    for (let i = 0; i <= steps; i++){
+      const th = tMin + (tMax - tMin) * (i / steps);
+      const r = this.ws.safeCall(fv, [th]);
+      if (!isFinite(r)){ started = false; continue; }
+      const px = this.sx(r * Math.cos(th)), py = this.sy(r * Math.sin(th));
+      if (!started){ ctx.moveTo(px, py); started = true; }
+      else ctx.lineTo(px, py);
+    }
+    ctx.stroke();
+  }
+  drawParametric(ctx, W, H, obj){
+    const fv = obj.value;
+    if (!(fv instanceof FnVal)) return;
+    const tMax = obj.tMax !== undefined ? obj.tMax : Math.PI * 2;
+    const tMin = obj.tMin !== undefined ? obj.tMin : 0;
+    const color = this.curveColor(obj);
+    ctx.strokeStyle = color; ctx.lineWidth = 2 * this.dpr;
+    ctx.beginPath();
+    const steps = 1800;
+    let started = false;
+    for (let i = 0; i <= steps; i++){
+      const t = tMin + (tMax - tMin) * (i / steps);
+      let v;
+      try { v = fv.call([t]); } catch (e){ started = false; continue; }
+      if (!(v instanceof Vec) || v.data.length < 2){ started = false; continue; }
+      const px = this.sx(v.data[0]), py = this.sy(v.data[1]);
+      if (!started){ ctx.moveTo(px, py); started = true; }
+      else ctx.lineTo(px, py);
+    }
+    ctx.stroke();
+  }
+  drawVector(ctx, W, H, obj){
+    const v = obj.value;
+    if (!(v instanceof Vec) || v.data.length !== 2) return;
+    const color = this.curveColor(obj);
+    const x0 = this.sx(0), y0 = this.sy(0);
+    const x1 = this.sx(v.data[0]), y1 = this.sy(v.data[1]);
+    ctx.strokeStyle = color; ctx.fillStyle = color;
+    ctx.lineWidth = 2 * this.dpr;
+    ctx.beginPath(); ctx.moveTo(x0, y0); ctx.lineTo(x1, y1); ctx.stroke();
+    const ang = Math.atan2(y1 - y0, x1 - x0);
+    const size = 9 * this.dpr;
+    ctx.beginPath();
+    ctx.moveTo(x1, y1);
+    ctx.lineTo(x1 - size * Math.cos(ang - 0.4), y1 - size * Math.sin(ang - 0.4));
+    ctx.lineTo(x1 - size * Math.cos(ang + 0.4), y1 - size * Math.sin(ang + 0.4));
+    ctx.closePath(); ctx.fill();
+    ctx.beginPath(); ctx.arc(x1, y1, 3 * this.dpr, 0, Math.PI * 2); ctx.fill();
+  }
+}
+
+/* ==========================================================================
+ * 15. NUMBER LINE
+ * ========================================================================== */
+class NumberLine {
+  constructor(canvas, ws, graph){
+    this.canvas = canvas; this.ctx = canvas.getContext('2d');
+    this.ws = ws; this.graph = graph; this.colors = {};
+  }
+  refreshTheme(){
+    const cs = getComputedStyle(document.documentElement);
+    this.colors = {
+      grid: cs.getPropertyValue('--grid').trim(),
+      axis: cs.getPropertyValue('--axis').trim(),
+      text: cs.getPropertyValue('--text').trim(),
+      muted: cs.getPropertyValue('--muted').trim(),
+      panel: cs.getPropertyValue('--panel2').trim(),
+      accent: cs.getPropertyValue('--accent').trim(),
+      accent2: cs.getPropertyValue('--accent2').trim()
+    };
+    this.draw();
+  }
+  resize(){
+    const rect = this.canvas.getBoundingClientRect();
+    const dpr = window.devicePixelRatio || 1;
+    const w = Math.max(1, Math.floor(rect.width * dpr));
+    const h = Math.max(1, Math.floor(rect.height * dpr));
+    if (this.canvas.width !== w || this.canvas.height !== h){
+      this.canvas.width = w; this.canvas.height = h;
+    }
+    this.draw();
+  }
+  draw(){
+    if (this.canvas.style.display === 'none') return;
+    const ctx = this.ctx;
+    const W = this.canvas.width, H = this.canvas.height;
+    if (!this.colors.axis) this.refreshTheme();
+    const c = this.colors;
+    ctx.clearRect(0, 0, W, H);
+    ctx.fillStyle = c.panel || '#0f151c'; ctx.fillRect(0, 0, W, H);
+
+    const xMin = this.graph.xMin, xMax = this.graph.xMax;
+    const sx = (x) => (x - xMin) / (xMax - xMin) * W;
+    const axisY = Math.round(H * 0.62) + 0.5;
+
+    const relations = [...this.ws.objects.values()].filter(o => o.relationVar && o.visible);
+    for (const rel of relations){
+      ctx.fillStyle = rel.color || c.accent;
+      ctx.globalAlpha = 0.18;
+      let runStart = null;
+      for (let px = 0; px <= W; px++){
+        const x = xMin + (px / W) * (xMax - xMin);
+        let ok = false;
+        try {
+          const sc = new Map([[rel.relationVar, x]]);
+          ok = !!this.ws.evaluator.eval(rel.ast, sc);
+        } catch (e){ ok = false; }
+        if (ok && runStart === null) runStart = px;
+        if ((!ok || px === W) && runStart !== null){
+          ctx.fillRect(runStart, axisY - H * 0.30, px - runStart, H * 0.30);
+          runStart = null;
+        }
+      }
+      ctx.globalAlpha = 1;
+    }
+
+    ctx.strokeStyle = c.axis; ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.moveTo(0, axisY); ctx.lineTo(W, axisY); ctx.stroke();
+
+    const step = this.niceStep(xMax - xMin, Math.max(4, W / (90 * (window.devicePixelRatio || 1))));
+    ctx.fillStyle = c.muted;
+    ctx.font = `${11 * (window.devicePixelRatio || 1)}px ui-monospace, monospace`;
+    ctx.textAlign = 'center'; ctx.textBaseline = 'top';
+    for (let x = Math.ceil(xMin / step) * step; x <= xMax; x += step){
+      const px = sx(x);
+      ctx.beginPath(); ctx.moveTo(px, axisY - 5); ctx.lineTo(px, axisY + 5);
+      ctx.strokeStyle = c.axis; ctx.lineWidth = 1; ctx.stroke();
+      ctx.fillText(fmt(Number(x.toPrecision(6))), px, axisY + 8);
+    }
+
+    const seen = new Set();
+    const drawMarker = (x, label, color, yOff) => {
+      const px = sx(x);
+      if (px < -50 || px > W + 50) return;
+      ctx.fillStyle = color;
+      ctx.beginPath(); ctx.arc(px, axisY, 5, 0, Math.PI * 2); ctx.fill();
+      ctx.strokeStyle = color; ctx.lineWidth = 1.5;
+      ctx.beginPath(); ctx.moveTo(px, axisY - 5); ctx.lineTo(px, axisY - 16 + yOff); ctx.stroke();
+      ctx.fillStyle = c.text;
+      ctx.font = `${10.5 * (window.devicePixelRatio || 1)}px ui-monospace, monospace`;
+      ctx.textAlign = 'center'; ctx.textBaseline = 'bottom';
+      ctx.fillText(label, px, axisY - 18 + yOff);
+    };
+    for (const obj of this.ws.objects.values()){
+      if (!obj.visible) continue;
+      if (obj.slider && typeof obj.slider.value === 'number'){
+        drawMarker(obj.slider.value, obj.name, obj.color || c.accent2, 0);
+      } else if (typeof obj.value === 'number' && obj.kind === 'number'){
+        if (!seen.has(obj.name)){ seen.add(obj.name); drawMarker(obj.value, obj.name, obj.color || c.accent, 0); }
+      } else if (obj.value instanceof Vec && obj.value.data.length <= 12 && obj.kind === 'vector'){
+        obj.value.data.forEach((v, i) => drawMarker(v, obj.name + '[' + i + ']', obj.color || c.accent, -14));
+      }
+    }
+  }
+  niceStep(range, target){
+    const raw = range / target;
+    const mag = Math.pow(10, Math.floor(Math.log10(raw)));
+    const norm = raw / mag;
+    let s;
+    if (norm < 1.5) s = 1; else if (norm < 3) s = 2; else if (norm < 7) s = 5; else s = 10;
+    return s * mag;
+  }
+}
+
+/* ==========================================================================
+ * 16. EXPRESSION TREE HELPERS
+ * ========================================================================== */
+function treeChildren(n){
+  switch (n.type){
+    case 'un': return [n.arg];
+    case 'bin': return [n.left, n.right];
+    case 'cmp': return [n.left, n.right];
+    case 'logic': return [n.left, n.right];
+    case 'if': return [n.cond, n.then, n.else];
+    case 'call': return n.args;
+    case 'vec': return n.items;
+    case 'set': return n.items;
+    case 'mat': return n.rows.flat();
+    default: return [];
+  }
+}
+function treeLabel(n){
+  switch (n.type){
+    case 'num': return fmt(n.value);
+    case 'sym': return n.name;
+    case 'un': return n.op;
+    case 'bin': return n.op;
+    case 'cmp': return n.op;
+    case 'logic': return n.op.toUpperCase();
+    case 'if': return 'if ?:';
+    case 'call': return n.name + '()';
+    case 'vec': return 'vector';
+    case 'mat': return 'matrix';
+    case 'set': return 'set';
+    default: return '?';
+  }
+}
+function treeColor(t){
+  return ({
+    bin: 'var(--accent)', un: 'var(--accent)', call: 'var(--accent2)',
+    num: 'var(--warn)', sym: 'var(--text)', vec: 'var(--accent3)',
+    mat: 'var(--accent3)', set: 'var(--accent3)', cmp: 'var(--err)',
+    logic: 'var(--err)', if: 'var(--err)'
+  })[t] || 'var(--text)';
+}
+
+/* ==========================================================================
+ * 17. APP UI
+ * ========================================================================== */
+const ws = new Workspace();
+let graphView = null;
+let numberLine = null;
+let selectedName = null;
+let inspectorTab = 'value';
+let currentView = 'system';
+let tableSettings = { start: 0, end: 5, step: 1 };
+let lastParseErrors = [];
+
+const EXAMPLES = {
+  basics: `# Values build on each other.
+a = 2
+b = 3
+f(x) = a*x^2 + b*x
+g(x) = f(x) / (x^2 + 1)
+P = (2, f(2))`,
+
+  transform: `# Transformations of a base function.
+a = 1
+h = 0
+k = 0
+base(x) = x^2
+shifted(x) = a * base(x - h) + k`,
+
+  calculus: `# A dependency chain through calculus.
+a = 1
+f(x) = a*x^3 - 3*x
+df = derivative(f)
+tl = tangent(f, 1)
+r = roots(f, -3, 3)`,
+
+  fib: `# Recursion: simple rules, exponential growth.
+fib(0) = 0
+fib(1) = 1
+fib(n) = fib(n-1) + fib(n-2)`,
+
+  logistic: `# Iteration: the logistic map.  Change r to explore.
+r = 3.7
+x(0) = 0.5
+x(n+1) = r*x(n)*(1-x(n))`,
+
+  projectile: `# Stateful simulation built from equations.
+g = 9.8
+dt = 0.1
+vx(0) = 10
+vy(0) = 15
+x(0) = 0
+y(0) = 0
+vx(n+1) = vx(n)
+vy(n+1) = vy(n) - g*dt
+x(n+1) = x(n) + vx(n)*dt
+y(n+1) = y(n) + vy(n)*dt
+traj(t) = (x(round(t/dt)), y(round(t/dt)))`,
+
+  mandel: `# Mandelbrot iteration (real slice).
+c = -0.8
+z(0) = 0
+z(n+1) = z(n)^2 + c`,
+
+  conditional: `# Conditional mathematics — piecewise rules.
+a = 1
+f(x) = x > 0 ? x^2 : -x
+g(x) = x >= -1 and x <= 1 ? 1 : 0`,
+
+  compose: `# Functions as reusable objects, composed.
+f(x) = x^2
+g(x) = sin(x)
+h(x) = g(f(x))
+k = compose(g, f)`,
+
+  polar: `# Parametric and polar curves.
+circle(t) = (cos(t), sin(t))
+rose(t) = (cos(3*t)*cos(t), cos(3*t)*sin(t))
+r(theta) = 1 + sin(3*theta)`,
+
+  linalg: `# Vectors and matrices.
+v = [3, 2]
+w = [-1, 4]
+sv = v + w
+M = [[2, 1], [0, 3]]
+det_M = det(M)
+inv_M = inv(M)
+scaled = M * 2`,
+
+  sets: `# Sets and relations.
+A = {1, 2, 3, 4}
+B = {3, 4, 5, 6}
+both = A ∩ B
+either = A ∪ B
+onlyA = A \\ B
+x > 2 and x < 5`,
+
+  sim: `# Simulation over time using t.
+A = 1
+w = 2
+wave(x) = A * sin(x - w*t)
+trace(t) = (cos(t), sin(t))`
+};
+
+function stripComment(line){
+  let inBracket = 0;
+  for (let i = 0; i < line.length; i++){
+    const c = line[i];
+    if (c === '(' || c === '[' || c === '{') inBracket++;
+    else if (c === ')' || c === ']' || c === '}') inBracket--;
+    else if ((c === '#' || (c === '/' && line[i + 1] === '/')) && inBracket >= 0){
+      return line.slice(0, i);
+    }
+  }
+  return line;
+}
+function splitStatements(line){
+  const parts = [];
+  let depth = 0, cur = '';
+  for (const ch of line){
+    if (ch === '(' || ch === '[' || ch === '{') depth++;
+    if (ch === ')' || ch === ']' || ch === '}') depth--;
+    if (ch === ';' && depth === 0){ parts.push(cur); cur = ''; continue; }
+    cur += ch;
+  }
+  parts.push(cur);
+  return parts;
+}
+const HL_RE = /(\/\/[^\n]*|#[^\n]*)|(\b\d+(?:\.\d+)?(?:[eE][+-]?\d+)?\b)|([A-Za-z_\u0370-\u03FF][A-Za-z0-9_\u0370-\u03FF]*)(?=\s*\()|([A-Za-z_\u0370-\u03FF][A-Za-z0-9_\u0370-\u03FF]*)|([+\-*/^%=<>!∪∩\\?:]+)|([(){}\[\],;])/g;
+
+function highlightCode(src){
+  let out = '';
+  let last = 0;
+  let m;
+  HL_RE.lastIndex = 0;
+  while ((m = HL_RE.exec(src)) !== null){
+    if (m.index > last) out += esc(src.slice(last, m.index));
+    last = HL_RE.lastIndex;
+    const [full, comment, num, fn, ident, op, punc] = m;
+    if (comment) out += `<span class="tk-com">${esc(full)}</span>`;
+    else if (num) out += `<span class="tk-num">${esc(full)}</span>`;
+    else if (fn) out += `<span class="tk-fn">${esc(full)}</span>`;
+    else if (ident){
+      let cls = '';
+      if (ident in CONSTANTS) cls = 'tk-const';
+      else if (ws.objects.has(ident)) cls = 'tk-obj';
+      else if (BUILTIN_NAMES.includes(ident)) cls = 'tk-fn';
+      else if (['and', 'or'].includes(ident.toLowerCase())) cls = 'tk-op';
+      out += cls ? `<span class="${cls}">${esc(ident)}</span>` : esc(ident);
+    }
+    else if (op) out += `<span class="tk-op">${esc(full)}</span>`;
+    else if (punc) out += `<span class="tk-punc">${esc(full)}</span>`;
+    else out += esc(full);
+  }
+  out += esc(src.slice(last));
+  return out + '\n';
+}
+function updateHighlight(){
+  const codeEl = $('#code');
+  const hl = $('#highlight');
+  hl.innerHTML = highlightCode(codeEl.value);
+  hl.scrollTop = codeEl.scrollTop;
+  hl.scrollLeft = codeEl.scrollLeft;
+}
+
+function runProgram(){
+  const codeEl = $('#code');
+  const text = codeEl.value;
+  const lines = text.split('\n');
+  const statements = [];
+  const errors = [];
+
+  lines.forEach((rawLine, idx) => {
+    const clean = stripComment(rawLine);
+    if (!clean.trim()) return;
+    for (const part of splitStatements(clean)){
+      const src = part.trim();
+      if (!src) continue;
+      try {
+        const st = parseStatementString(src);
+        st.line = idx;
+        st.source = src;
+        const eqIdx = src.indexOf('=');
+        if (eqIdx >= 0 && !/[<>!]$/.test(src[eqIdx - 1] || '')) {
+          st.prefix = src.slice(0, eqIdx).trim();
+        }
+        statements.push(st);
+      } catch (e){
+        errors.push({ line: idx + 1, msg: e instanceof MathError ? e.message : String(e.message) });
+      }
+    }
+  });
+
+  lastParseErrors = errors;
+  renderParseErrors(errors);
+
+  try {
+    ws.build(statements);
+  } catch (e){
+    errors.push({ line: 0, msg: e instanceof MathError ? e.message : ('Internal error: ' + e.message) });
+    lastParseErrors = errors;
+    renderParseErrors(errors);
+  }
+
+  updateHighlight();
+  renderObjects();
+  renderParameters();
+  renderInspector();
+  renderCurrentView();
+  updateStatus();
+}
+function renderParseErrors(errors){
+  const box = $('#editorErrors');
+  box.innerHTML = '';
+  for (const e of errors){
+    const d = el('div', 'err-item');
+    d.appendChild(el('span', 'ln', e.line ? 'L' + e.line : '—'));
+    d.appendChild(el('span', null, e.msg));
+    box.appendChild(d);
+  }
+}
+function updateStatus(){
+  const objs = [...ws.objects.values()];
+  const errs = objs.filter(o => o.error).length;
+  const msg = $('#statusMsg');
+  if (lastParseErrors.length){
+    msg.textContent = `${lastParseErrors.length} syntax error${lastParseErrors.length === 1 ? '' : 's'}`;
+    msg.className = 'bad';
+  } else if (errs){
+    msg.textContent = `${errs} object${errs === 1 ? '' : 's'} with evaluation errors`;
+    msg.className = 'bad';
+  } else {
+    msg.textContent = 'OK';
+    msg.className = 'ok';
+  }
+  $('#statusInfo').textContent = `${objs.length} objects · seed ${rngSeed}`;
+  $('#objCount').textContent = String(objs.length);
+}
+
+function renderObjects(){
+  const list = $('#objectList');
+  const filter = ($('#search').value || '').toLowerCase();
+  list.innerHTML = '';
+
+  const objs = [...ws.objects.values()];
+  if (!objs.length){
+    list.appendChild(el('div', 'empty-note', 'No objects yet.\nWrite something like  f(x) = x^2  and press Run.'));
+    return;
+  }
+
+  for (const obj of objs){
+    if (filter && !obj.name.toLowerCase().includes(filter) && !(obj.source || '').toLowerCase().includes(filter)) continue;
+
+    const row = el('div', 'obj' + (obj.name === selectedName ? ' selected' : '') + (obj.visible ? '' : ' hidden-obj'));
+    row.dataset.name = obj.name;
+
+    const eye = el('button', 'obj-eye', obj.visible ? '◉' : '○');
+    eye.title = 'Show / hide in plots';
+    eye.addEventListener('click', (e) => { e.stopPropagation(); ws.toggleVisible(obj.name); renderObjects(); renderCurrentView(); });
+    row.appendChild(eye);
+
+    const main = el('div', 'obj-main');
+    const head = el('div', 'obj-head');
+    const nameEl = el('span', 'obj-name', obj.name);
+    nameEl.style.color = obj.color || 'var(--text)';
+    head.appendChild(nameEl);
+    head.appendChild(el('span', 'obj-kind', obj.kind));
+    if (obj.slider) head.appendChild(el('span', 'obj-kind', 'param'));
+    main.appendChild(head);
+
+    let src = obj.source || '';
+    if (obj.kind === 'function'){
+      const lines2 = obj.rules.map(r => {
+        const params = r.patterns.map(p => p.kind === 'lit' ? fmt(p.value) : p.kind === 'sym' ? p.name : astToString(p.ast)).join(', ');
+        return `${obj.name}(${params}) = ${astToString(r.body)}`;
+      });
+      src = lines2.join('   ·   ');
+    }
+    main.appendChild(el('div', 'obj-src', src));
+
+    const valEl = el('div', 'obj-val');
+    if (obj.error){
+      valEl.className = 'obj-val err';
+      valEl.textContent = obj.error;
+    } else if (obj.value !== undefined){
+      valEl.textContent = '= ' + formatValue(obj.value);
+    }
+    main.appendChild(valEl);
+    row.appendChild(main);
+
+    const actions = el('div', 'obj-actions');
+    const gear = el('button', 'mini' + (obj.slider ? ' on' : ''), '⚙');
+    gear.title = 'Toggle parameter slider';
+    gear.addEventListener('click', (e) => {
+      e.stopPropagation();
+      ws.toggleSlider(obj.name);
+      renderObjects(); renderParameters(); renderInspector(); renderCurrentView();
+    });
+    actions.appendChild(gear);
+
+    const del = el('button', 'mini danger', '✕');
+    del.title = 'Remove from program';
+    del.addEventListener('click', (e) => { e.stopPropagation(); deleteObject(obj.name); });
+    actions.appendChild(del);
+
+    row.appendChild(actions);
+    row.addEventListener('click', () => {
+      selectedName = obj.name;
+      renderObjects();
+      renderInspector();
+      renderCurrentView();
+    });
+    list.appendChild(row);
+  }
+}
+function deleteObject(name){
+  const obj = ws.objects.get(name);
+  if (!obj) return;
+  const codeEl = $('#code');
+  const lines = codeEl.value.split('\n');
+  const remove = new Set(obj.lines);
+  const kept = lines.filter((_, i) => !remove.has(i));
+  codeEl.value = kept.join('\n');
+  if (selectedName === name) selectedName = null;
+  runProgram();
+}
+
+function renderParameters(){
+  const box = $('#paramList');
+  box.innerHTML = '';
+  const params = [...ws.objects.values()].filter(o => o.slider);
+  if (!params.length){
+    box.appendChild(el('div', 'empty-note', 'Click ⚙ on a numeric object to turn it into a slider parameter.'));
+    return;
+  }
+  for (const obj of params){
+    const wrap = el('div', 'param');
+    const head = el('div', 'param-head');
+    head.appendChild(el('span', 'nm', obj.name));
+    const valSpan = el('span', 'val', fmt(obj.slider.value));
+    head.appendChild(valSpan);
+    wrap.appendChild(head);
+
+    const range = document.createElement('input');
+    range.type = 'range';
+    range.min = obj.slider.min; range.max = obj.slider.max; range.step = obj.slider.step;
+    range.value = obj.slider.value;
+    range.addEventListener('input', () => {
+      const v = parseFloat(range.value);
+      obj.slider.value = v;
+      valSpan.textContent = fmt(v);
+      ws.setSlider(obj.name, { value: v });
+      renderObjects();
+      renderCurrentView();
+      if (selectedName === obj.name) renderInspector();
+    });
+    wrap.appendChild(range);
+
+    const cfg = el('div', 'param-cfg');
+    const mk = (key, label) => {
+      const inp = document.createElement('input');
+      inp.type = 'number'; inp.value = obj.slider[key]; inp.step = 'any'; inp.title = label;
+      inp.addEventListener('change', () => {
+        const v = parseFloat(inp.value);
+        if (!isFinite(v)) return;
+        obj.slider[key] = v;
+        ws.setSlider(obj.name, { [key]: v });
+        renderParameters();
+        renderCurrentView();
+      });
+      return inp;
+    };
+    cfg.appendChild(mk('min', 'minimum'));
+    cfg.appendChild(mk('max', 'maximum'));
+    cfg.appendChild(mk('step', 'step'));
+    wrap.appendChild(cfg);
+    box.appendChild(wrap);
+  }
+}
+
+function renderInspector(){
+  const box = $('#inspector');
+  box.innerHTML = '';
+  const obj = selectedName ? ws.objects.get(selectedName) : null;
+  if (!obj){
+    box.appendChild(el('div', 'empty-note', 'Select an object to inspect its value, table, expression tree, dependencies and plot settings.'));
+    return;
+  }
+  box.appendChild(el('div', 'insp-title', obj.name));
+  box.appendChild(el('div', 'insp-sub', obj.kind + (obj.slider ? ' · parameter' : '')));
+
+  switch (inspectorTab){
+    case 'value': renderValueTab(box, obj); break;
+    case 'table': renderTableTab(box, obj); break;
+    case 'tree':  renderTreeTab(box, obj); break;
+    case 'steps': renderStepsTab(box, obj); break;
+    case 'deps':  renderDepsTab(box, obj); break;
+    case 'plot':  renderPlotTab(box, obj); break;
+  }
+}
+function field(label, node){
+  const f = el('div', 'field');
+  f.appendChild(el('label', null, label));
+  f.appendChild(node);
+  return f;
+}
+function renderValueTab(box, obj){
+  const v = el('div', 'valbox' + (obj.error ? ' err' : ''));
+  v.textContent = obj.error ? obj.error : formatValue(obj.value);
+  box.appendChild(v);
+
+  if (obj.kind === 'function'){
+    const info = el('div', 'note');
+    info.innerHTML = `${obj.rules.length} definition${obj.rules.length === 1 ? '' : 's'} · parameter <code>${esc(obj.params[0] || 'x')}</code>`;
+    box.appendChild(info);
+
+    const samples = el('div', 'btnrow');
+    [-2, -1, 0, 1, 2, 3].forEach(x => {
+      samples.appendChild(el('span', 'chip', `${obj.name}(${x}) = ${fmt(ws.safeCall(obj.value, [x]))}`));
+    });
+    box.appendChild(samples);
+
+    const actions = el('div', 'btnrow');
+    const mkBtn = (label, fn) => {
+      const b = el('button', 'tbtn', label);
+      b.style.padding = '4px 10px'; b.style.fontSize = '12px';
+      b.addEventListener('click', fn);
+      return b;
+    };
+    actions.appendChild(mkBtn('Create derivative', () => appendLine(`${uniqueName('d_' + obj.name)} = derivative(${obj.name})`)));
+    actions.appendChild(mkBtn('Create integral', () => appendLine(`${uniqueName('I_' + obj.name)} = integral(${obj.name})`)));
+    actions.appendChild(mkBtn('Find roots (-10,10)', () => appendLine(`${uniqueName('roots_' + obj.name)} = roots(${obj.name}, -10, 10)`)));
+    actions.appendChild(mkBtn('Compose with…', () => {
+      const other = prompt('Compose with which function?', 'sin');
+      if (other) appendLine(`${uniqueName('c_' + obj.name)} = compose(${other.trim()}, ${obj.name})`);
+    }));
+    box.appendChild(actions);
+  }
+
+  if (obj.relationVar){
+    box.appendChild(el('div', 'note', `This is a relation in the variable "${obj.relationVar}". See the Number line view.`));
+  }
+  if (obj.slider){
+    box.appendChild(el('div', 'note', 'This object is a parameter. Its value is driven by the slider in the Parameters panel.'));
+  }
+}
+function uniqueName(base){
+  if (!ws.objects.has(base)) return base;
+  let i = 2; while (ws.objects.has(base + i)) i++;
+  return base + i;
+}
+function appendLine(text){
+  const codeEl = $('#code');
+  codeEl.value = codeEl.value.replace(/\s*$/, '') + '\n' + text + '\n';
+  runProgram();
+}
+function renderTableTab(box, obj){
+  if (obj.kind !== 'function'){
+    box.appendChild(el('div', 'empty-note', 'Tables are available for functions and sequences.'));
+    return;
+  }
+  const row = el('div', 'row3');
+  const mk = (label, key) => {
+    const inp = document.createElement('input');
+    inp.type = 'number'; inp.step = 'any'; inp.value = tableSettings[key];
+    inp.addEventListener('change', () => {
+      const v = parseFloat(inp.value);
+      if (isFinite(v)){ tableSettings[key] = v; renderInspector(); }
+    });
+    return field(label, inp);
+  };
+  row.appendChild(mk('Start', 'start'));
+  row.appendChild(mk('End', 'end'));
+  row.appendChild(mk('Step', 'step'));
+  box.appendChild(row);
+
+  const { start, end, step } = tableSettings;
+  if (step === 0){ box.appendChild(el('div', 'note', 'Step cannot be 0.')); return; }
+  const count = Math.floor(Math.abs((end - start) / step)) + 1;
+  if (count > 2000){ box.appendChild(el('div', 'note', 'Too many rows (max 2000). Increase the step.')); return; }
+
+  const wrap = el('div', 'tbl-scroll');
+  const table = el('table', 'data');
+  const param = obj.params[0] || 'x';
+  const thead = el('thead');
+  const hr = el('tr');
+  hr.appendChild(el('th', null, param));
+  hr.appendChild(el('th', null, obj.name + '(' + param + ')'));
+  thead.appendChild(hr); table.appendChild(thead);
+  const tbody = el('tbody');
+  const rows = [];
+  for (let i = 0; i < count; i++){
+    const x = start + i * step;
+    const y = ws.safeCall(obj.value, [x]);
+    const tr = el('tr');
+    tr.appendChild(el('td', null, fmt(Number(x.toPrecision(10)))));
+    tr.appendChild(el('td', null, isFinite(y) ? fmt(Number(y.toPrecision(10))) : '—'));
+    tbody.appendChild(tr);
+    rows.push([x, y]);
+  }
+  table.appendChild(tbody); wrap.appendChild(table); box.appendChild(wrap);
+
+  const actions = el('div', 'btnrow');
+  const copyBtn = el('button', 'tbtn', 'Copy CSV');
+  copyBtn.style.padding = '4px 10px'; copyBtn.style.fontSize = '12px';
+  copyBtn.addEventListener('click', async () => {
+    const csv = [param + ',' + obj.name].concat(rows.map(r => r[0] + ',' + (isFinite(r[1]) ? r[1] : ''))).join('\n');
+    try {
+      await navigator.clipboard.writeText(csv);
+      copyBtn.textContent = 'Copied ✓';
+      setTimeout(() => { copyBtn.textContent = 'Copy CSV'; }, 1200);
+    } catch (e){ copyBtn.textContent = 'Copy failed'; setTimeout(() => { copyBtn.textContent = 'Copy CSV'; }, 1200); }
+  });
+  actions.appendChild(copyBtn);
+  box.appendChild(actions);
+}
+function renderTreeTab(box, obj){
+  let ast = null;
+  if (obj.kind === 'function'){
+    const rule = obj.rules.find(r => r.patterns.every(p => p.kind === 'sym')) || obj.rules[0];
+    if (rule) ast = rule.body;
+  } else ast = obj.ast;
+  if (!ast){ box.appendChild(el('div', 'empty-note', 'No expression tree available for this object.')); return; }
+  const treeBox = el('div', 'treebox');
+  box.appendChild(treeBox);
+  renderExpressionTreeSVG(ast, treeBox, null);
+  box.appendChild(el('div', 'note', 'The exact structure the parser built. Open the Build view to edit it interactively.'));
+}
+function renderStepsTab(box, obj){
+  let ast = null;
+  if (obj.kind === 'function'){
+    const rule = obj.rules.find(r => r.patterns.every(p => p.kind === 'sym')) || obj.rules[0];
+    if (rule) ast = rule.body;
+  } else ast = obj.ast;
+  if (!ast){ box.appendChild(el('div', 'empty-note', 'No expression available.')); return; }
+  const steps = simplifyTrace(ast);
+  const wrap = el('div', 'steps');
+  steps.forEach((s, i) => {
+    wrap.appendChild(el('div', 'stp' + (i === 0 ? ' first' : ''), s));
+    if (i < steps.length - 1) wrap.appendChild(el('div', 'arrow', '↓'));
+  });
+  box.appendChild(wrap);
+  if (steps.length === 1){
+    box.appendChild(el('div', 'note', 'This expression is already in its simplest form under constant folding and identity rules.'));
+  } else {
+    box.appendChild(el('div', 'note', 'Simplification steps: constant folding and algebraic identities such as x+0, x·1, x^1.'));
+  }
+}
+function renderDepsTab(box, obj){
+  const uses = el('div');
+  uses.appendChild(el('label', null, 'DEPENDS ON'));
+  const ul = el('ul', 'dep-list');
+  if (!obj.deps.size) ul.appendChild(el('li', null, '(nothing)'));
+  else for (const d of obj.deps){
+    const li = el('li', null, d);
+    li.addEventListener('click', () => { selectedName = d; renderObjects(); renderInspector(); renderCurrentView(); });
+    ul.appendChild(li);
+  }
+  uses.appendChild(ul); box.appendChild(uses);
+
+  const usedBy = el('div'); usedBy.style.marginTop = '14px';
+  usedBy.appendChild(el('label', null, 'USED BY'));
+  const ul2 = el('ul', 'dep-list');
+  const dependents = [...ws.objects.values()].filter(o => o.deps.has(obj.name));
+  if (!dependents.length) ul2.appendChild(el('li', null, '(nothing)'));
+  else for (const d of dependents){
+    const li = el('li', null, d.name);
+    li.addEventListener('click', () => { selectedName = d.name; renderObjects(); renderInspector(); renderCurrentView(); });
+    ul2.appendChild(li);
+  }
+  usedBy.appendChild(ul2); box.appendChild(usedBy);
+  box.appendChild(el('div', 'note', 'Changing this object automatically re-evaluates everything under "Used by".'));
+}
+function renderPlotTab(box, obj){
+  const sel = document.createElement('select');
+  const modes = [
+    ['auto', 'Auto'],
+    ['cartesian', 'Cartesian y = f(x)'],
+    ['sequence', 'Sequence (discrete points)'],
+    ['polar', 'Polar r(θ)'],
+    ['parametric', 'Parametric (vector-valued)'],
+    ['vector', 'Vector arrow'],
+    ['none', 'Not plotted']
+  ];
+  for (const [val, label] of modes){
+    const o = document.createElement('option');
+    o.value = val; o.textContent = label;
+    if ((obj.plotMode || 'auto') === val) o.selected = true;
+    sel.appendChild(o);
+  }
+  sel.addEventListener('change', () => { ws.setPlotMode(obj.name, sel.value); renderCurrentView(); });
+  box.appendChild(field('Plot mode', sel));
+
+  if (obj.plotMode === 'polar' || obj.plotMode === 'parametric'){
+    const row = el('div', 'row2');
+    const mk = (label, key, def) => {
+      const inp = document.createElement('input');
+      inp.type = 'number'; inp.step = 'any';
+      inp.value = obj[key] !== undefined ? obj[key] : def;
+      inp.addEventListener('change', () => {
+        const v = parseFloat(inp.value);
+        if (isFinite(v)){ obj[key] = v; renderCurrentView(); }
+      });
+      return field(label, inp);
+    };
+    row.appendChild(mk('t min', 'tMin', 0));
+    row.appendChild(mk('t max', 'tMax', Math.PI * 2));
+    box.appendChild(row);
+  }
+  const colorInput = document.createElement('input');
+  colorInput.type = 'color'; colorInput.value = obj.color || '#4cc2ff';
+  colorInput.style.width = '100%'; colorInput.style.height = '32px';
+  colorInput.style.background = 'var(--panel2)'; colorInput.style.border = '1px solid var(--border)'; colorInput.style.borderRadius = '6px';
+  colorInput.addEventListener('input', () => { ws.setColor(obj.name, colorInput.value); renderObjects(); renderCurrentView(); });
+  box.appendChild(field('Colour', colorInput));
+
+  const vis = el('button', 'tbtn', obj.visible ? 'Hide in plots' : 'Show in plots');
+  vis.style.width = '100%'; vis.style.marginTop = '4px';
+  vis.addEventListener('click', () => { ws.toggleVisible(obj.name); renderObjects(); renderInspector(); renderCurrentView(); });
+  box.appendChild(vis);
+}
+
+function renderExpressionTreeSVG(ast, container, onNodeClick){
+  const NODE_W = 58, NODE_H = 26, H_GAP = 14, V_GAP = 48;
+
+  function build(n){
+    const kids = treeChildren(n).map(build);
+    const w = kids.length
+      ? Math.max(NODE_W, kids.reduce((s, k) => s + k.w, 0) + H_GAP * (kids.length - 1))
+      : NODE_W;
+    return { ast: n, label: treeLabel(n), type: n.type, kids, w };
+  }
+  const root = build(ast);
+  const depth = (function d(n){ return n.kids.length ? 1 + Math.max(...n.kids.map(d)) : 0; })(root);
+  const totalH = (depth + 1) * V_GAP + NODE_H + 24;
+
+  function assign(n, x, y){
+    n.x = x + n.w / 2;
+    n.y = y;
+    let cx = x;
+    for (const k of n.kids){ assign(k, cx, y + V_GAP); cx += k.w + H_GAP; }
+  }
+  assign(root, 10, 12);
+  const totalW = root.w + 20;
+
+  let svg = `<svg class="diagram" width="${totalW}" height="${totalH}" viewBox="0 0 ${totalW} ${totalH}">`;
+  (function edges(n){
+    for (const k of n.kids){
+      svg += `<line class="edge" x1="${n.x}" y1="${n.y + NODE_H}" x2="${k.x}" y2="${k.y}" stroke="var(--border2)"/>`;
+      edges(k);
+    }
+  })(root);
+
+  let id = 0;
+  const nodes = [];
+  (function boxes(n){
+    const w = Math.max(NODE_W, n.label.length * 7.2 + 16);
+    const nid = 'n' + (id++);
+    n.id = nid;
+    nodes.push(n);
+    svg += `<g class="node" data-id="${nid}">`;
+    svg += `<rect x="${n.x - w / 2}" y="${n.y}" width="${w}" height="${NODE_H}" rx="6"
+              fill="var(--panel3)" stroke="${treeColor(n.type)}" stroke-width="1.2"/>`;
+    svg += `<text x="${n.x}" y="${n.y + NODE_H / 2 + 4.5}" text-anchor="middle"
+              font-family="ui-monospace, monospace" font-size="12"
+              fill="${treeColor(n.type)}">${esc(n.label)}</text>`;
+    svg += `</g>`;
+    n.kids.forEach(boxes);
+  })(root);
+  svg += '</svg>';
+
+  container.innerHTML = svg;
+
+  if (onNodeClick){
+    const map = new Map(nodes.map(n => [n.id, n]));
+    container.querySelectorAll('.node').forEach(g => {
+      g.addEventListener('click', () => {
+        const n = map.get(g.dataset.id);
+        if (n) onNodeClick(n.ast);
+      });
+    });
+  }
+  return nodes;
+}
+
+const acState = { open: false, items: [], index: 0, start: 0 };
+function buildSuggestions(){
+  const names = [];
+  for (const n of BUILTIN_NAMES) names.push({ name: n, kind: 'builtin' });
+  for (const c of Object.keys(CONSTANTS)) names.push({ name: c, kind: 'constant' });
+  for (const o of ws.objects.values()) names.push({ name: o.name, kind: o.kind });
+  return names;
+}
+function updateAutocomplete(){
+  const codeEl = $('#code');
+  const box = $('#autocomplete');
+  const pos = codeEl.selectionStart;
+  const before = codeEl.value.slice(0, pos);
+  const m = before.match(/[A-Za-z_\u0370-\u03FF][A-Za-z0-9_\u0370-\u03FF]*$/);
+  if (!m || m[0].length < 1){ closeAutocomplete(); return; }
+  const word = m[0].toLowerCase();
+  const all = buildSuggestions();
+  const matches = all.filter(s => s.name.toLowerCase().startsWith(word) && s.name.toLowerCase() !== word);
+  const uniq = []; const seen = new Set();
+  for (const s of matches){
+    if (seen.has(s.name)) continue;
+    seen.add(s.name); uniq.push(s);
+    if (uniq.length >= 8) break;
+  }
+  if (!uniq.length){ closeAutocomplete(); return; }
+
+  acState.items = uniq; acState.index = 0;
+  acState.start = pos - m[0].length; acState.open = true;
+  box.innerHTML = '';
+  uniq.forEach((s, i) => {
+    const item = el('div', 'ac-item' + (i === 0 ? ' active' : ''));
+    item.appendChild(el('span', null, s.name));
+    item.appendChild(el('span', 'kind', s.kind));
+    item.addEventListener('mousedown', (e) => { e.preventDefault(); acceptAutocomplete(i); });
+    box.appendChild(item);
+  });
+  box.classList.add('open');
+}
+function closeAutocomplete(){ acState.open = false; $('#autocomplete').classList.remove('open'); }
+function acceptAutocomplete(i){
+  const codeEl = $('#code');
+  const item = acState.items[i];
+  if (!item) return;
+  const pos = codeEl.selectionStart;
+  const value = codeEl.value;
+  const head = value.slice(0, acState.start);
+  const tail = value.slice(pos);
+  const isFn = BUILTIN_NAMES.includes(item.name);
+  const insert = item.name + (isFn ? '(' : '');
+  codeEl.value = head + insert + tail;
+  const newPos = acState.start + insert.length;
+  codeEl.setSelectionRange(newPos, newPos);
+  closeAutocomplete();
+  updateHighlight();
+}
+
+const sim = { t: 0, dt: 0.1, speed: 1, playing: false, lastFrame: 0 };
+function simStep(dt){
+  sim.t += dt;
+  ws.simTime = sim.t;
+  const dirty = ws.descendants(['t']);
+  ws.evaluateFrom(dirty);
+  $('#simT').textContent = fmt(Number(sim.t.toPrecision(8)));
+  renderCurrentView();
+  renderObjects();
+}
+function simLoop(ts){
+  if (!sim.playing) return;
+  if (!sim.lastFrame) sim.lastFrame = ts;
+  const elapsed = (ts - sim.lastFrame) / 1000;
+  sim.lastFrame = ts;
+  if (elapsed > 0 && elapsed < 0.5){
+    const steps = Math.min(4, Math.max(1, Math.round(elapsed * 30)));
+    for (let i = 0; i < steps; i++) simStep(sim.dt * sim.speed);
+  }
+  requestAnimationFrame(simLoop);
+}
+function togglePlay(){
+  sim.playing = !sim.playing;
+  $('#simPlay').textContent = sim.playing ? '❚❚' : '▶';
+  if (sim.playing){ sim.lastFrame = 0; requestAnimationFrame(simLoop); }
+}
+function resetSim(){
+  sim.t = 0; ws.simTime = 0;
+  $('#simT').textContent = '0';
+  ws.evaluateAll();
+  renderCurrentView();
+  renderObjects();
+}
+
+let buildSelection = null;
+function renderBuildView(){
+  const container = $('#buildCanvas');
+  container.innerHTML = '';
+  const obj = selectedName ? ws.objects.get(selectedName) : null;
+  $('#buildTarget').textContent = obj ? obj.name : '—';
+  $('#buildType').textContent = obj ? '(' + obj.kind + ')' : '';
+
+  if (!obj){
+    container.innerHTML = '<div class="empty-note">Select an object to see how it is built.<br>You can click any block in the diagram to edit it.</div>';
+    buildSelection = null;
+    return;
+  }
+
+  let ast = null, ruleIdx = -1;
+  if (obj.kind === 'function'){
+    for (let i = 0; i < obj.rules.length; i++){
+      const r = obj.rules[i];
+      if (r.patterns.every(p => p.kind === 'sym')){ ast = r.body; ruleIdx = i; break; }
+    }
+    if (!ast && obj.rules.length){ ast = obj.rules[0].body; ruleIdx = 0; }
+  } else {
+    ast = obj.ast;
+  }
+  if (!ast){
+    container.innerHTML = '<div class="empty-note">This object has no expression to build.</div>';
+    buildSelection = null;
+    return;
+  }
+  buildSelection = { obj, ruleIdx, ast };
+
+  renderExpressionTreeSVG(ast, container, (node) => editBuildNode(node));
+}
+function editBuildNode(node){
+  if (!buildSelection) return;
+  const { obj, ruleIdx, ast } = buildSelection;
+  let newText = null;
+
+  if (node.type === 'num') newText = prompt('Numeric value:', fmt(node.value));
+  else if (node.type === 'sym') newText = prompt('Symbol name:', node.name);
+  else if (node.type === 'bin' || node.type === 'un'){
+    newText = prompt('Operator (+, -, *, /, ^, %):', node.op);
+  }
+  else if (node.type === 'cmp'){
+    newText = prompt('Comparison operator (<, >, <=, >=, =, !=):', node.op);
+  }
+  else if (node.type === 'logic'){
+    newText = prompt('Logical operator (and, or):', node.op);
+  }
+  else if (node.type === 'call'){
+    newText = prompt('Function name:', node.name);
+  }
+  else if (node.type === 'if'){
+    alert('Conditional expressions are edited through their child blocks.');
+    return;
+  }
+  else return;
+
+  if (newText == null) return;
+  newText = newText.trim();
+  if (!newText) return;
+
+  if (node.type === 'num'){
+    const v = parseFloat(newText);
+    if (!isFinite(v)) return;
+    node.value = v;
+  } else if (node.type === 'sym'){
+    if (!/^[A-Za-z_\u0370-\u03FF][A-Za-z0-9_\u0370-\u03FF]*$/.test(newText)) return;
+    node.name = newText;
+  } else if (node.type === 'bin' || node.type === 'un'){
+    if (!['+', '-', '*', '/', '^', '%'].includes(newText)) return;
+    if (node.type === 'un' && newText !== '-') return;
+    node.op = newText;
+  } else if (node.type === 'cmp'){
+    if (!['<', '>', '<=', '>=', '=', '!='].includes(newText)) return;
+    node.op = newText;
+  } else if (node.type === 'logic'){
+    if (!['and', 'or'].includes(newText.toLowerCase())) return;
+    node.op = newText.toLowerCase();
+  } else if (node.type === 'call'){
+    if (!/^[A-Za-z_\u0370-\u03FF][A-Za-z0-9_\u0370-\u03FF]*$/.test(newText)) return;
+    node.name = newText;
+  }
+
+  updateDefinitionBody(obj, ruleIdx, ast);
+}
+
+function updateDefinitionBody(obj, ruleIdx, newBody){
+  const codeEl = $('#code');
+  const lines = codeEl.value.split('\n');
+  if (obj.kind === 'function'){
+    const rule = obj.rules[ruleIdx];
+    if (!rule) return;
+    const line = lines[rule.line] || '';
+    const indent = line.match(/^\s*/)[0];
+    lines[rule.line] = indent + rule.prefix + ' = ' + astToString(newBody);
+  } else {
+    if (!obj.prefix){
+      alert('This object was written as a bare expression and cannot be edited from the Build view. Give it a name first.');
+      return;
+    }
+    const li = obj.lines[0];
+    const line = lines[li] || '';
+    const indent = line.match(/^\s*/)[0];
+    lines[li] = indent + obj.prefix + ' = ' + astToString(newBody);
+  }
+  codeEl.value = lines.join('\n');
+  runProgram();
+}
+
+function kindColor(kind){
+  return ({
+    function: 'var(--accent2)',
+    number:   'var(--accent)',
+    vector:   'var(--accent3)',
+    matrix:   'var(--accent3)',
+    set:      'var(--accent3)',
+    relation: 'var(--warn)',
+    logic:    'var(--warn)',
+    unknown:  'var(--dim)'
+  })[kind] || 'var(--accent)';
+}
+function renderSystemView(){
+  const container = $('#systemCanvas');
+  container.innerHTML = '';
+
+  const objs = [...ws.objects.values()];
+  if (!objs.length){
+    container.innerHTML = '<div class="empty-note">No objects yet. Write a program on the left.</div>';
+    return;
+  }
+
+  const depth = new Map();
+  const calc = (name, seen) => {
+    if (depth.has(name)) return depth.get(name);
+    if (seen.has(name)) return 0;
+    seen.add(name);
+    const obj = ws.objects.get(name);
+    if (!obj) return 0;
+    let d = 0;
+    for (const dep of obj.deps){
+      if (ws.objects.has(dep)) d = Math.max(d, calc(dep, seen) + 1);
+    }
+    depth.set(name, d);
+    return d;
+  };
+  for (const o of objs) calc(o.name, new Set());
+
+  const maxDepth = Math.max(0, ...depth.values());
+  const levels = Array.from({ length: maxDepth + 1 }, () => []);
+  for (const o of objs) levels[depth.get(o.name)].push(o);
+  for (const lvl of levels) lvl.sort((a, b) => a.name.localeCompare(b.name));
+
+  const NODE_W = 120, NODE_H = 36, H_GAP = 22, V_GAP = 84, PAD = 20;
+  const positions = new Map();
+  let maxW = 0;
+  levels.forEach((lvl) => {
+    const rowW = lvl.length * NODE_W + Math.max(0, lvl.length - 1) * H_GAP;
+    maxW = Math.max(maxW, rowW);
+  });
+  levels.forEach((lvl, li) => {
+    const rowW = lvl.length * NODE_W + Math.max(0, lvl.length - 1) * H_GAP;
+    const startX = PAD + (maxW - rowW) / 2;
+    lvl.forEach((o, i) => {
+      positions.set(o.name, {
+        x: startX + i * (NODE_W + H_GAP),
+        y: PAD + li * V_GAP
+      });
+    });
+  });
+
+  const totalW = maxW + PAD * 2;
+  const totalH = (maxDepth + 1) * V_GAP + PAD * 2;
+
+  let svg = `<svg class="diagram" width="${totalW}" height="${totalH}" viewBox="0 0 ${totalW} ${totalH}">`;
+  svg += `<defs><marker id="arr" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+    <path d="M 0 0 L 10 5 L 0 10 z" fill="var(--border2)"/></marker></defs>`;
+  for (const obj of objs){
+    const to = positions.get(obj.name);
+    if (!to) continue;
+    for (const dep of obj.deps){
+      const from = positions.get(dep);
+      if (!from) continue;
+      const x1 = from.x + NODE_W / 2, y1 = from.y + NODE_H;
+      const x2 = to.x + NODE_W / 2, y2 = to.y;
+      const midY = (y1 + y2) / 2;
+      svg += `<path class="edge" d="M${x1},${y1} C ${x1},${midY} ${x2},${midY} ${x2},${y2}"
+                stroke="var(--border2)" marker-end="url(#arr)"/>`;
+    }
+  }
+  for (const obj of objs){
+    const p = positions.get(obj.name);
+    if (!p) continue;
+    const selected = obj.name === selectedName ? ' selected' : '';
+    const color = obj.error ? 'var(--err)' : kindColor(obj.kind);
+    svg += `<g class="node${selected}" data-name="${esc(obj.name)}">`;
+    svg += `<rect x="${p.x}" y="${p.y}" width="${NODE_W}" height="${NODE_H}" rx="8"
+              fill="var(--panel3)" stroke="${color}" stroke-width="1.6"/>`;
+    svg += `<text x="${p.x + 10}" y="${p.y + 15}" font-family="ui-monospace, monospace" font-size="12.5"
+              fill="var(--text)" font-weight="600">${esc(obj.name)}</text>`;
+    svg += `<text x="${p.x + 10}" y="${p.y + 29}" font-family="ui-monospace, monospace" font-size="9.5"
+              fill="var(--dim)">${esc(obj.kind)}</text>`;
+    svg += `</g>`;
+  }
+  svg += '</svg>';
+  container.innerHTML = svg;
+
+  container.querySelectorAll('.node').forEach(g => {
+    g.addEventListener('click', () => {
+      selectedName = g.dataset.name;
+      renderObjects();
+      renderInspector();
+      renderSystemView();
+    });
+  });
+}
+
+function renderCurrentView(){
+  const buildWrap = $('#buildWrap');
+  const systemWrap = $('#systemWrap');
+  const gc = $('#graphCanvas');
+  const lc = $('#lineCanvas');
+
+  buildWrap.style.display = 'none';
+  systemWrap.style.display = 'none';
+  gc.style.display = 'none';
+  lc.style.display = 'none';
+
+  if (currentView === 'build'){
+    buildWrap.style.display = 'block';
+    renderBuildView();
+  } else if (currentView === 'system'){
+    systemWrap.style.display = 'block';
+    renderSystemView();
+  } else if (currentView === 'graph'){
+    gc.style.display = 'block';
+    graphView.resize();
+  } else if (currentView === 'numberline'){
+    lc.style.display = 'block';
+    numberLine.resize();
+  }
+}
+
+function exportProject(){
+  const data = {
+    format: 'mathlab-project', version: 2,
+    code: $('#code').value,
+    ui: {}, view: {
+      xMin: graphView.xMin, xMax: graphView.xMax,
+      yMin: graphView.yMin, yMax: graphView.yMax
+    },
+    sim: { t: sim.t, dt: sim.dt, speed: sim.speed },
+    seed: rngSeed,
+    theme: document.documentElement.getAttribute('data-theme'),
+    center: currentView
+  };
+  for (const [name, s] of ws.ui.entries()) data.ui[name] = s;
+  const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = 'mathlab-project.json'; a.click();
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+}
+function importProject(file){
+  const reader = new FileReader();
+  reader.onload = () => {
+    try {
+      const data = JSON.parse(reader.result);
+      if (data.format !== 'mathlab-project') throw new Error('This file is not a MathLab project.');
+      $('#code').value = data.code || '';
+      ws.ui.clear();
+      if (data.ui) for (const k in data.ui) ws.ui.set(k, data.ui[k]);
+      if (data.view){
+        graphView.xMin = data.view.xMin; graphView.xMax = data.view.xMax;
+        graphView.yMin = data.view.yMin; graphView.yMax = data.view.yMax;
+      }
+      if (data.sim){
+        sim.t = data.sim.t || 0; ws.simTime = sim.t;
+        sim.dt = data.sim.dt || 0.1; sim.speed = data.sim.speed || 1;
+        $('#simDt').value = sim.dt; $('#simSpeed').value = sim.speed;
+        $('#simSpeedVal').textContent = sim.speed.toFixed(1) + '×';
+        $('#simT').textContent = fmt(sim.t);
+      }
+      if (typeof data.seed === 'number'){
+        rngSeed = data.seed; $('#simSeed').value = rngSeed; resetRNG();
+      }
+      if (data.theme) document.documentElement.setAttribute('data-theme', data.theme);
+      if (data.center) currentView = data.center;
+      $$('.vtab').forEach(b => b.classList.toggle('active', b.dataset.view === currentView));
+      selectedName = null;
+      runProgram();
+      graphView.scheduleDraw();
+      numberLine.refreshTheme();
+    } catch (e){ alert('Could not import this file: ' + e.message); }
+  };
+  reader.readAsText(file);
+}
+
+function init(){
+  const codeEl = $('#code');
+  codeEl.value = EXAMPLES.logistic;
+
+  graphView = new GraphView($('#graphCanvas'), ws);
+  graphView.refreshTheme();
+  graphView.reset();
+
+  numberLine = new NumberLine($('#lineCanvas'), ws, graphView);
+  numberLine.refreshTheme();
+
+  ws.on('change', () => { renderCurrentView(); });
+
+  let runTimer = null;
+  codeEl.addEventListener('input', () => {
+    updateHighlight();
+    updateAutocomplete();
+    clearTimeout(runTimer);
+    runTimer = setTimeout(() => { if (!acState.open) runProgram(); }, 900);
+  });
+  codeEl.addEventListener('scroll', () => {
+    const hl = $('#highlight');
+    hl.scrollTop = codeEl.scrollTop;
+    hl.scrollLeft = codeEl.scrollLeft;
+  });
+  codeEl.addEventListener('keydown', (e) => {
+    if (e.key === 'Tab' && acState.open){ e.preventDefault(); acceptAutocomplete(acState.index); return; }
+    if (acState.open && (e.key === 'ArrowDown' || e.key === 'ArrowUp')){
+      e.preventDefault();
+      acState.index = (acState.index + (e.key === 'ArrowDown' ? 1 : -1) + acState.items.length) % acState.items.length;
+      $$('#autocomplete .ac-item').forEach((n, i) => n.classList.toggle('active', i === acState.index));
+      return;
+    }
+    if (e.key === 'Escape'){ closeAutocomplete(); return; }
+    if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)){
+      e.preventDefault(); closeAutocomplete(); runProgram(); return;
+    }
+    if (e.key === 'Enter') setTimeout(closeAutocomplete, 0);
+  });
+  codeEl.addEventListener('blur', () => setTimeout(closeAutocomplete, 150));
+
+  $('#btnRun').addEventListener('click', () => { closeAutocomplete(); runProgram(); });
+  $('#search').addEventListener('input', renderObjects);
+
+  $$('#inspectorTabs .itab').forEach(btn => {
+    btn.addEventListener('click', () => {
+      $$('#inspectorTabs .itab').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      inspectorTab = btn.dataset.tab;
+      renderInspector();
+    });
+  });
+
+  $$('.vtab').forEach(btn => {
+    btn.addEventListener('click', () => {
+      $$('.vtab').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      currentView = btn.dataset.view;
+      renderCurrentView();
+    });
+  });
+
+  $('#zoomIn').addEventListener('click', () => { if (currentView === 'graph') graphView.zoom(0.8); });
+  $('#zoomOut').addEventListener('click', () => { if (currentView === 'graph') graphView.zoom(1.25); });
+  $('#fitView').addEventListener('click', () => { graphView.reset(); numberLine.draw(); });
+
+  $('#simPlay').addEventListener('click', togglePlay);
+  $('#simStep').addEventListener('click', () => simStep(sim.dt * sim.speed));
+  $('#simReset').addEventListener('click', resetSim);
+  $('#simDt').addEventListener('change', (e) => { const v = parseFloat(e.target.value); if (isFinite(v) && v !== 0) sim.dt = v; });
+  $('#simSpeed').addEventListener('input', (e) => { sim.speed = parseFloat(e.target.value); $('#simSpeedVal').textContent = sim.speed.toFixed(1) + '×'; });
+  $('#simSeed').addEventListener('change', (e) => {
+    const v = parseInt(e.target.value, 10);
+    if (isFinite(v)){ rngSeed = v; resetRNG(); ws.evaluateAll(); renderCurrentView(); renderObjects(); updateStatus(); }
+  });
+  $('#reroll').addEventListener('click', () => {
+    rngSeed = Math.floor(Math.random() * 100000);
+    $('#simSeed').value = rngSeed;
+    resetRNG();
+    ws.evaluateAll();
+    renderCurrentView(); renderObjects(); updateStatus();
+  });
+
+  $('#btnTheme').addEventListener('click', () => {
+    const cur = document.documentElement.getAttribute('data-theme');
+    document.documentElement.setAttribute('data-theme', cur === 'dark' ? 'light' : 'dark');
+    graphView.refreshTheme(); numberLine.refreshTheme(); updateHighlight(); renderCurrentView();
+  });
+
+  $('#btnHelp').addEventListener('click', () => $('#modalBg').classList.add('open'));
+  $('#modalClose').addEventListener('click', () => $('#modalBg').classList.remove('open'));
+  $('#modalBg').addEventListener('click', (e) => { if (e.target.id === 'modalBg') e.currentTarget.classList.remove('open'); });
+
+  $('#btnExport').addEventListener('click', exportProject);
+  $('#btnImport').addEventListener('click', () => $('#fileInput').click());
+  $('#fileInput').addEventListener('change', (e) => {
+    if (e.target.files && e.target.files[0]) importProject(e.target.files[0]);
+    e.target.value = '';
+  });
+
+  $('#examples').addEventListener('change', (e) => {
+    const key = e.target.value;
+    if (!key) return;
+    codeEl.value = EXAMPLES[key] || '';
+    e.target.value = '';
+    selectedName = null;
+    currentView = 'system';
+    $$('.vtab').forEach(b => b.classList.toggle('active', b.dataset.view === 'system'));
+    runProgram();
+    graphView.reset();
+  });
+
+  const ro = new ResizeObserver(() => {
+    if (currentView === 'graph') graphView.resize();
+    if (currentView === 'numberline') numberLine.resize();
+  });
+  ro.observe($('.canvas-wrap'));
+  window.addEventListener('resize', () => {
+    if (currentView === 'graph') graphView.resize();
+    if (currentView === 'numberline') numberLine.resize();
+  });
+
+  runProgram();
+  updateHighlight();
+  graphView.reset();
+}
+
+document.addEventListener('DOMContentLoaded', init);
+
+})();
+</script>
+</body>
+</html>
