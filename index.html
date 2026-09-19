@@ -433,14 +433,16 @@
      MODAL CONTROLLER
      ========================================== */
   function openGameModal(modalId) {
-    document.getElementById(modalId).style.display = 'flex';
+  document.getElementById(modalId).style.display = 'flex';
 
-    // Lazy-load iframe
-    const iframe = document.getElementById(modalId.replace('-modal', '-iframe'));
-    if (iframe && !iframe.src && iframe.dataset.src) {
-      iframe.src = iframe.dataset.src;
-    }
+  // Lazy-load iframe with automatic cache-busting
+  const iframe = document.getElementById(modalId.replace('-modal', '-iframe'));
+  if (iframe && !iframe.src && iframe.dataset.src) {
+    const base = iframe.dataset.src;
+    const sep = base.includes('?') ? '&' : '?';
+    iframe.src = base + sep + 'v=' + Date.now();
   }
+}
 
   function closeGameModal(modalId) {
     document.getElementById(modalId).style.display = 'none';
