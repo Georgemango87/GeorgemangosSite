@@ -106,77 +106,6 @@
         text-align: center;
       }
 
-      /* Favorite star */
-.app-icon .favorite-btn {
-  position: absolute;
-  top: -6px;
-  left: -6px;
-  width: 20px;
-  height: 20px;
-  background: rgba(0, 0, 0, 0.65);
-  color: #6b7280;
-  border: 1px solid rgba(255, 255, 255, 0.15);
-  border-radius: 50%;
-  font-size: 12px;
-  line-height: 1;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  transition: all 0.15s;
-  padding: 0;
-  z-index: 2;
-  user-select: none;
-}
-.app-icon .favorite-btn:hover {
-  background: rgba(0, 0, 0, 0.9);
-  color: #fbbf24;
-  transform: scale(1.15);
-}
-.app-icon.favorited .favorite-btn {
-  color: #fbbf24;
-  background: rgba(251, 191, 36, 0.2);
-  border-color: rgba(251, 191, 36, 0.6);
-}
-.app-icon.favorited .icon-graphic {
-  box-shadow: 0 0 14px rgba(251, 191, 36, 0.4), 0 4px 10px rgba(0, 0, 0, 0.3);
-}
-
-/* Usage counter */
-.app-icon .usage-count {
-  position: absolute;
-  top: -6px;
-  right: -6px;
-  min-width: 18px;
-  height: 18px;
-  background: rgba(59, 130, 246, 0.9);
-  color: white;
-  border-radius: 9px;
-  font-size: 10px;
-  font-weight: 700;
-  display: none;
-  align-items: center;
-  justify-content: center;
-  padding: 0 4px;
-  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.5);
-  z-index: 2;
-  pointer-events: none;
-}
-.app-icon .usage-count.visible {
-  display: flex;
-}
-
-/* Make app icons clickable divs behave like buttons */
-.app-icon {
-  user-select: none;
-  -webkit-user-select: none;
-  outline: none;
-}
-.app-icon:focus-visible .icon-graphic {
-  outline: 2px solid #3b82f6;
-  outline-offset: 2px;
-}
-
       /* ==========================================
          GAME MODAL STYLES
          ========================================== */
@@ -353,64 +282,42 @@
       <h1>Georgemango's Arcade</h1>
     </header>
 
-    <main class="app-grid" id="appGrid">
-  <div class="app-icon" data-app="color-contexto" onclick="openGameModal('game1-modal')">
-    <div class="icon-graphic" style="background: linear-gradient(135deg, #ff7675, #74b9ff);">🎨</div>
-    <span class="app-name">Color Contexto</span>
-    <span class="favorite-btn" onclick="event.stopPropagation(); toggleFavorite('color-contexto')" title="Favorite">☆</span>
-    <span class="usage-count"></span>
-  </div>
+    <main class="app-grid">
+      <button class="app-icon" onclick="openGameModal('game1-modal')">
+        <div class="icon-graphic" style="background: linear-gradient(135deg, #ff7675, #74b9ff);">🎨</div>
+        <span class="app-name">Color Contexto</span>
+      </button>
 
-  <div class="app-icon" data-app="atom-forge" onclick="openGameModal('game2-modal')">
-    <div class="icon-graphic" style="background: linear-gradient(135deg, #10b981, #047857);">⚛</div>
-    <span class="app-name">Atom Forge</span>
-    <span class="favorite-btn" onclick="event.stopPropagation(); toggleFavorite('atom-forge')" title="Favorite">☆</span>
-    <span class="usage-count"></span>
-  </div>
+      <button class="app-icon" onclick="openGameModal('game2-modal')">
+        <div class="icon-graphic" style="background: linear-gradient(135deg, #10b981, #047857);">⚛</div>
+        <span class="app-name">Atom Forge</span>
+      </button>
 
-  <div class="app-icon" data-app="sparktalk" onclick="openGameModal('game3-modal')">
-    <div class="icon-graphic" style="background: linear-gradient(135deg, #ec4899, #7c3aed);">💬</div>
-    <span class="app-name">SparkTalk</span>
-    <span class="favorite-btn" onclick="event.stopPropagation(); toggleFavorite('sparktalk')" title="Favorite">☆</span>
-    <span class="usage-count"></span>
-  </div>
+      <button class="app-icon" onclick="openGameModal('game3-modal')">
+        <div class="icon-graphic" style="background: linear-gradient(135deg, #ec4899, #7c3aed);">💬</div>
+        <span class="app-name">SparkTalk</span>
+      </button>
 
-  <div class="app-icon" data-app="webcraft" onclick="openGameModal('game4-modal')">
-    <div class="icon-graphic" style="background: linear-gradient(135deg, #0ea5e9, #6366f1);">◆</div>
-    <span class="app-name">WebCraft</span>
-    <span class="favorite-btn" onclick="event.stopPropagation(); toggleFavorite('webcraft')" title="Favorite">☆</span>
-    <span class="usage-count"></span>
-  </div>
+      <button class="app-icon" onclick="openGameModal('game4-modal')">
+        <div class="icon-graphic" style="background: linear-gradient(135deg, #0ea5e9, #6366f1);">◆</div>
+        <span class="app-name">WebCraft</span>
+      </button>
 
-  <div class="app-icon" data-app="neural-net" onclick="openGameModal('game5-modal')">
-    <div class="icon-graphic" style="background: linear-gradient(135deg, #f59e0b, #dc2626);">🧠</div>
-    <span class="app-name">Neural Net</span>
-    <span class="favorite-btn" onclick="event.stopPropagation(); toggleFavorite('neural-net')" title="Favorite">☆</span>
-    <span class="usage-count"></span>
-  </div>
+      <button class="app-icon" onclick="openGameModal('game5-modal')">
+        <div class="icon-graphic" style="background: linear-gradient(135deg, #f59e0b, #dc2626);">🧠</div>
+        <span class="app-name">Neural Net</span>
+      </button>
 
-  <div class="app-icon" data-app="mathlab" onclick="openGameModal('game6-modal')">
-    <div class="icon-graphic" style="background: linear-gradient(135deg, #4cc2ff, #7c3aed);">∑</div>
-    <span class="app-name">MathLab</span>
-    <span class="favorite-btn" onclick="event.stopPropagation(); toggleFavorite('mathlab')" title="Favorite">☆</span>
-    <span class="usage-count"></span>
-  </div>
+      <button class="app-icon" onclick="openGameModal('game6-modal')">
+        <div class="icon-graphic" style="background: linear-gradient(135deg, #4cc2ff, #7c3aed);">∑</div>
+        <span class="app-name">MathLab</span>
+      </button>
 
-  <div class="app-icon" data-app="logic-gates" onclick="openGameModal('game7-modal')">
-    <div class="icon-graphic" style="background: linear-gradient(135deg, #16a34a, #0f766e);">⚡</div>
-    <span class="app-name">Logic Gates</span>
-    <span class="favorite-btn" onclick="event.stopPropagation(); toggleFavorite('logic-gates')" title="Favorite">☆</span>
-    <span class="usage-count"></span>
-  </div>
-</main>
-
-<div style="text-align:center; margin-top: 24px; padding-bottom: 40px;">
-  <button onclick="resetArcadeData()"
-          style="background: none; border: 1px solid rgba(255,255,255,0.15); color: #888;
-                 padding: 6px 14px; border-radius: 6px; cursor: pointer; font-size: 11px;">
-    Reset arcade data
-  </button>
-</div>
+      <button class="app-icon" onclick="openGameModal('game7-modal')">
+        <div class="icon-graphic" style="background: linear-gradient(135deg, #16a34a, #0f766e);">⚡</div>
+        <span class="app-name">Logic Gates</span>
+      </button>
+    </main>
 
     <!-- GAME 1 MODAL: COLOR CONTEXTO -->
     <div id="game1-modal" class="game-modal">
@@ -482,172 +389,51 @@
     </div>
 
     <!-- GAME 6 MODAL: MATHLAB -->
-<div id="game6-modal" class="game-modal">
-  <div class="game-modal-content"
-       style="max-width: 98vw; width: 98vw; height: 94vh; padding: 0;
-              background: #0c1016; overflow: hidden; border-radius: 12px;">
-    <button class="close-modal-btn" onclick="closeGameModal('game6-modal')">&times;</button>
-    <iframe id="game6-iframe" data-src="MathLab.html"
-            style="width: 100%; height: 100%; border: 0; display: block;"></iframe>
-  </div>
-</div>
+    <div id="game6-modal" class="game-modal">
+      <div class="game-modal-content"
+           style="max-width: 98vw; width: 98vw; height: 94vh; padding: 0;
+                  background: #0c1016; overflow: hidden; border-radius: 12px;">
+        <button class="close-modal-btn" onclick="closeGameModal('game6-modal')">&times;</button>
+        <iframe id="game6-iframe" data-src="MathLab.html"
+                style="width: 100%; height: 100%; border: 0; display: block;"></iframe>
+      </div>
+    </div>
 
-<!-- GAME 7 MODAL: LOGIC GATE SIMULATOR -->
-<div id="game7-modal" class="game-modal">
-  <div class="game-modal-content"
-       style="max-width: 98vw; width: 98vw; height: 94vh; padding: 0;
-              background: #f0f2f5; overflow: hidden; border-radius: 12px;">
-    <button class="close-modal-btn" onclick="closeGameModal('game7-modal')">&times;</button>
-    <iframe id="game7-iframe" data-src="LogicGates.html"
-            style="width: 100%; height: 100%; border: 0; display: block;"
-            allow="clipboard-write"></iframe>
-  </div>
-</div>
+    <!-- GAME 7 MODAL: LOGIC GATE SIMULATOR -->
+    <div id="game7-modal" class="game-modal">
+      <div class="game-modal-content"
+           style="max-width: 98vw; width: 98vw; height: 94vh; padding: 0;
+                  background: #f0f2f5; overflow: hidden; border-radius: 12px;">
+        <button class="close-modal-btn" onclick="closeGameModal('game7-modal')">&times;</button>
+        <iframe id="game7-iframe" data-src="LogicGates.html"
+                style="width: 100%; height: 100%; border: 0; display: block;"
+                allow="clipboard-write"></iframe>
+      </div>
+    </div>
 
     <script>
-  /* ==========================================
-     ARCADE STATE PERSISTENCE
-     ========================================== */
-  const ARCADE_KEY = 'georgemango_arcade_state_v1';
+      /* ==========================================
+         MODAL CONTROLLER
+         ========================================== */
+      function openGameModal(modalId) {
+        document.getElementById(modalId).style.display = 'flex';
 
-  const APP_IDS = {
-    'game1-modal': 'color-contexto',
-    'game2-modal': 'atom-forge',
-    'game3-modal': 'sparktalk',
-    'game4-modal': 'webcraft',
-    'game5-modal': 'neural-net',
-    'game6-modal': 'mathlab',
-    'game7-modal': 'logic-gates'
-  };
-
-  let arcadeState = {
-    version: 1,
-    favorites: {},   // { appId: true }
-    usage: {}        // { appId: { count, lastOpened } }
-  };
-
-  function loadArcadeState() {
-    try {
-      const saved = localStorage.getItem(ARCADE_KEY);
-      if (saved) {
-        const parsed = JSON.parse(saved);
-        arcadeState.favorites = parsed.favorites || {};
-        arcadeState.usage = parsed.usage || {};
-      }
-    } catch (e) {
-      console.warn('Arcade: could not load saved state', e);
-    }
-  }
-
-  function saveArcadeState() {
-    try {
-      localStorage.setItem(ARCADE_KEY, JSON.stringify(arcadeState));
-    } catch (e) {
-      console.warn('Arcade: could not save state', e);
-    }
-  }
-
-  function trackAppOpen(appId) {
-    if (!appId) return;
-    if (!arcadeState.usage[appId]) arcadeState.usage[appId] = { count: 0 };
-    arcadeState.usage[appId].count++;
-    arcadeState.usage[appId].lastOpened = Date.now();
-    saveArcadeState();
-    updateAppUI();
-  }
-
-  function toggleFavorite(appId) {
-    if (!appId) return;
-    if (arcadeState.favorites[appId]) {
-      delete arcadeState.favorites[appId];
-    } else {
-      arcadeState.favorites[appId] = true;
-    }
-    saveArcadeState();
-    updateAppUI();
-  }
-
-  function isFavorite(appId) {
-    return !!arcadeState.favorites[appId];
-  }
-
-  function updateAppUI() {
-    const grid = document.getElementById('appGrid');
-    if (!grid) return;
-
-    grid.querySelectorAll('.app-icon[data-app]').forEach(el => {
-      const appId = el.dataset.app;
-
-      // Favorite star state
-      const fav = isFavorite(appId);
-      el.classList.toggle('favorited', fav);
-      const star = el.querySelector('.favorite-btn');
-      if (star) star.textContent = fav ? '★' : '☆';
-
-      // Usage counter
-      const counter = el.querySelector('.usage-count');
-      if (counter) {
-        const count = (arcadeState.usage[appId] || {}).count || 0;
-        if (count > 0) {
-          counter.textContent = count > 99 ? '99+' : String(count);
-          counter.classList.add('visible');
-        } else {
-          counter.classList.remove('visible');
+        // Lazy-load iframe
+        const iframe = document.getElementById(modalId.replace('-modal', '-iframe'));
+        if (iframe && !iframe.src && iframe.dataset.src) {
+          iframe.src = iframe.dataset.src;
         }
       }
-    });
 
-    // Re-order: favorites first, then original order
-    const apps = Array.from(grid.querySelectorAll('.app-icon'));
-    const originalIndex = new Map(apps.map((el, i) => [el, i]));
-    apps.sort((a, b) => {
-      const aFav = isFavorite(a.dataset.app) ? 1 : 0;
-      const bFav = isFavorite(b.dataset.app) ? 1 : 0;
-      if (aFav !== bFav) return bFav - aFav;
-      return originalIndex.get(a) - originalIndex.get(b);
-    });
-    apps.forEach(el => grid.appendChild(el));
-  }
+      function closeGameModal(modalId) {
+        document.getElementById(modalId).style.display = 'none';
+      }
 
-  function resetArcadeData() {
-    if (!confirm('Reset all arcade data?\n\nThis clears your favorites and usage stats.\nApp data inside each sub-app is NOT affected.')) return;
-    arcadeState = { version: 1, favorites: {}, usage: {} };
-    saveArcadeState();
-    updateAppUI();
-  }
-
-  /* ==========================================
-     MODAL CONTROLLER
-     ========================================== */
-  function openGameModal(modalId) {
-    document.getElementById(modalId).style.display = 'flex';
-
-    // Lazy-load iframe
-    const iframe = document.getElementById(modalId.replace('-modal', '-iframe'));
-    if (iframe && !iframe.src && iframe.dataset.src) {
-      iframe.src = iframe.dataset.src;
-    }
-
-    // Track usage
-    const appId = APP_IDS[modalId];
-    if (appId) trackAppOpen(appId);
-  }
-
-  function closeGameModal(modalId) {
-    document.getElementById(modalId).style.display = 'none';
-  }
-
-  window.onclick = function(event) {
-    if (event.target.classList.contains('game-modal')) {
-      event.target.style.display = 'none';
-    }
-  };
-
-  /* ==========================================
-     INIT
-     ========================================== */
-  loadArcadeState();
-  updateAppUI();
-</script>
+      window.onclick = function(event) {
+        if (event.target.classList.contains('game-modal')) {
+          event.target.style.display = 'none';
+        }
+      };
+    </script>
   </body>
 </html>
