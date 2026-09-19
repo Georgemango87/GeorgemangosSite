@@ -1,0 +1,582 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <!-- Updated viewport tag to stop mobile zoom/double-tap zoom -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>SparkTalk - Conversation Starters</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <link rel="icon" type="image/png" sizes="512x512" href="/face.png">
+    <style>
+        :root {
+            --bg-color: #0f172a;
+            --card-bg: #1e293b;
+            --text-color: #f8fafc;
+            --accent-color: #6366f1;
+            --accent-hover: #4f46e5;
+            --muted-text: #94a3b8;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Inter', sans-serif; }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            height: 100vh; /* Changed from min-height to lock height */
+            overflow: hidden; /* Removes scroll wheel / scrolling */
+            touch-action: manipulation; /* Prevents double-tap zoom delay */
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: space-between;
+            padding: 2rem;
+        }
+
+        header { text-align: center; margin-bottom: 1.5rem; }
+        header h1 {
+            font-size: 2.5rem;
+            font-weight: 700;
+            background: linear-gradient(to right, #818cf8, #c084fc);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 0.5rem;
+        }
+        header p { color: var(--muted-text); font-size: 1rem; }
+
+        .container {
+            width: 100%;
+            max-width: 650px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 1.5rem;
+        }
+
+        .card {
+            background-color: var(--card-bg);
+            border: 1px solid #334155;
+            border-radius: 16px;
+            padding: 3rem 2rem;
+            width: 100%;
+            min-height: 220px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.3);
+            position: relative;
+        }
+
+        .card-counter {
+            position: absolute;
+            top: 1.2rem;
+            right: 1.5rem;
+            font-size: 0.75rem;
+            color: var(--muted-text);
+        }
+
+        #starter-text { font-size: 1.3rem; line-height: 1.6; font-weight: 500; }
+
+        .controls { display: flex; gap: 1rem; width: 100%; flex-wrap: wrap; }
+        .btn {
+            background-color: var(--card-bg);
+            border: 1px solid #334155;
+            color: var(--text-color);
+            padding: 0.9rem 1.2rem;
+            font-size: 0.95rem;
+            font-weight: 600;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            flex-grow: 1;
+        }
+        .btn:hover { background-color: #334155; }
+        .next-btn {
+            background-color: var(--accent-color);
+            border: none;
+            color: white;
+            flex-grow: 2;
+            box-shadow: 0 4px 12px rgba(99, 102, 241, 0.4);
+        }
+        .next-btn:hover { background-color: var(--accent-hover); }
+        .next-btn:active { transform: scale(0.98); }
+
+        footer { margin-top: 2rem; color: var(--muted-text); font-size: 0.8rem; text-align: center; }
+    </style>
+</head>
+<body>
+
+    <header>
+        <h1>SparkTalk</h1>
+        <p>Endless conversation starters.</p>
+    </header>
+
+    <div class="container">
+        <div class="card">
+            <span class="card-counter" id="card-counter">Random</span>
+            <p id="starter-text">Click any category button below to spark a conversation!</p>
+        </div>
+
+        <div class="controls">
+            <button class="btn next-btn" id="iceBreakersButton">Random Starter 🚀</button>
+            <button class="btn" id="wouldYouRatherButton">Would You Rather</button>
+            <button class="btn" id="ifQuestionsButton">If Questions</button>
+            <button class="btn" id="aboutYouButton">About You</button>
+        </div>
+    </div>
+
+    <footer>
+        <p>&copy; 2026 SparkTalk</p>
+    </footer>
+<script>
+
+    const WouldYouRather = [
+        "Would you rather lose all of your money or all of your pictures?",
+        "Would you rather be an Olympic gold medalist or an astronaut?",
+        "Would you rather have a pet sloth or a pet parrot?",
+        "Would you rather give up your cellphone for a month or bathing for a month?",
+        "Would you rather know everything about the ocean or space?",
+        "Would you rather happy moments become happier or sad moments become less sad?",
+        "Would you rather have no arms or no legs?",
+        "Would you rather be funny or clever?",
+        "Would you rather always be cold or always be hot?",
+        "Would you rather lose your sight or hearing?",
+        "Would you rather be able to run at 100 miles per hour or fly at 10 miles per hour?",
+        "Would you rather travel back in time to meet your ancestors or would you rather go to the future to meet your descendants?",
+        "Would you rather kiss a jellyfish or step on a crab?",
+        "Would you rather never hear music again or lose the ability to read?",
+        "Would you rather always be slightly late or always be an hour early?",
+        "Would you rather have a pet dinosaur or a pet unicorn?",
+        "Would you rather eat pizza every day or never eat pizza again?",
+        "Would you rather have the ability to fly or the ability to become invisible?",
+        "Would you rather always have a song stuck in your head or always have an itch you can't scratch?",
+        "Would you rather live in a treehouse or a giant sandcastle?",
+        "Would you rather be able to speak every language in the world or be the best at every musical instrument?",
+        "Would you rather be able to time travel or teleport?",
+        "Would you rather be able to breathe underwater or talk to animals?",
+        "Would you rather be a famous actor or a famous musician?",
+        "Would you rather have super strength or super speed?",
+        "Would you rather be a wizard or a superhero?",
+        "Would you rather be able to talk to the dead or see the future?",
+        "Would you rather be a mermaid or a centaur?",
+        "Would you rather live without the internet or without air conditioning?",
+        "Would you rather have a pet dragon or a pet phoenix?",
+        "Would you rather be able to speak to plants or control the weather?",
+        "Would you rather be a character in a horror movie or a romantic comedy?",
+        "Would you rather have a personal chef or a personal masseuse?",
+        "Would you rather live in a world with no gravity or no sound?",
+        "Would you rather be able to read minds or see the future?",
+        "Would you rather be able to teleport or have the power of telekinesis?",
+        "Would you rather have a never-ending supply of money or a never-ending supply of tacos?",
+        "Would you rather be a famous chef or a famous author?",
+        "Would you rather be a famous athlete or a famous actor?",
+        "Would you rather be able to control fire or water?",
+        "Would you rather be a vampire or a werewolf?",
+        "Would you rather be a famous singer or a famous dancer?",
+        "Would you rather have a personal assistant or a personal trainer?",
+        "Would you rather be able to talk to animals or speak every language in the world?",
+        "Would you rather be a character in a sci-fi movie or a fantasy movie?",
+        "Would you rather live in a world without technology or without animals?",
+        "Would you rather be able to control your dreams or never have to sleep?",
+        "Would you rather be able to fly or be able to breathe underwater?",
+        "Would you rather live in a world with no coffee or no chocolate?",
+        "Would you rather be a superhero or a supervillain?",
+        "Would you rather have the power to control the elements or the power to control machines?",
+        "Would you rather be able to speak to ghosts or see into the future?",
+        "Would you rather be a famous scientist or a famous artist?",
+        "Would you rather be able to run at superhuman speeds or have incredible strength?",
+        "Would you rather be a famous comedian or a famous actor?",
+        "Would you rather be able to talk to plants or control the weather?",
+        "Would you rather have a personal butler or a personal stylist?",
+        "Would you rather live in a world without music or without movies?",
+        "Would you rather be able to teleport or have the power of telekinesis?",
+        "Would you rather be able to breathe fire or freeze things with a touch?",
+        "Would you rather live in a world with superheroes or a world with wizards and witches?",
+        "Would you rather be able to control the weather or control time?",
+        "Would you rather be able to read minds or have the power of telekinesis?",
+        "Would you rather have a personal chauffeur or a personal assistant?",
+        "Would you rather be able to transform into any animal or have the ability to shapeshift into any human?",
+        "Would you rather be a famous writer or a famous filmmaker?",
+        "Would you rather be able to run at lightning speed or have the power of invisibility?",
+        "Would you rather have the power of flight or the power of telepathy?",
+        "Would you rather be able to create any food you want out of thin air or be able to transform into any animal?",
+        "Would you rather be able to change your appearance at will or be able to time travel?",
+        "Would you rather be able to talk to ghosts or have the power of precognition?",
+        "Would you rather live in a world with dragons or a world with unicorns?",
+        "Would you rather have the power of super strength or the power of regeneration?",
+        "Would you rather be a famous athlete or a famous scientist?",
+        "Would you rather have the power of mind control or the power of flight?",
+        "Would you rather be able to communicate with aliens or be able to explore the deep sea?",
+        "Would you rather be a famous painter or a famous musician?",
+        "Would you rather be able to control plants or control animals?",
+        "Would you rather be a famous stand-up comedian or a famous improv comedian?",
+        "Would you rather be able to breathe underwater or be able to see in the dark?",
+        "Would you rather be able to transform into any mythical creature or have the power of telepathy?",
+        "Would you rather be a famous dancer or a famous singer?",
+        "Would you rather be able to create a perfect clone of yourself or have the power of super speed?",
+        "Would you rather live in a world with superheroes or a world with aliens?",
+        "Would you rather have the power of fire or the power of ice?",
+        "Would you rather be a famous novelist or a famous playwright?",
+        "Would you rather have the power of telekinesis or the power of telepathy?",
+        "Would you rather have the power of telekinesis or the power of telepathy?",
+        "Would you rather be able to fly or have the ability to breathe underwater?",
+        "Would you rather live in a world with zombies or a world with vampires?"
+    ];
+
+    const ifQuestions = [
+        "If extraterrestrials landed on earth, who would you recommend as their first point of contact and why?",
+        "If you had a million dollars, what would be the first thing you bought?",
+        "If a turtle doesn’t have a shell, is it homeless or naked?",
+        "If an everyday office task turned into an Olympics sport, would you fail it miserably?",
+        "If aliens landed on earth tomorrow and offered to take you home with them, would you go?",
+        "If you could live in any state, which state would you pick?",
+        "If you could learn any skill, what would it be?",
+        "If you were in the Olympics, what sport would you play?",
+        "If you could be guaranteed one thing in life (besides money), what would it be?",
+        "If I visited your hometown, what local spots would you suggest I see?",
+        "If you had the chance to go back and start again, what age would you choose?",
+        "If you were independently wealthy and didn’t have to work, what would you do?",
+        "If you came home and found a penguin in your freezer, what would you do?",
+        "If you had to lose all your memories, which one would want to lose last?",
+        "If you had a time machine, would you go back in time or into the future?",
+        "If you had a robot to assist you in school or work but it could only do one thing, what would it be?",
+        "If you had to eat one meal everyday for the rest of your life what would it be?",
+        "If you were famous, what would you be famous for?",
+        "If you could remove one food so that no one would eat it ever again, what would you actually pick to destroy?",
+        "If the police unexpectedly break into your home in the day, what would you be found doing?",
+        "If you could only eat one dessert for the rest of your life, what would it be?",
+        "If you could only meet one person from history, who would it be?",
+        "If you could commit any crime and get away with it, what would you choose and why?",
+        "If you could change your name, what name would you choose?",
+        "If you could bring back a fashion trend, what would it be, and why?",
+        "If you had an extra hour in the day, what would you do?",
+        "If you could pick any sport, what sport would you compete in?",
+        "If you could have an unlimited supply of one thing for the rest of your life, what would it be and why?",
+        "If you could only eat one item of food for the rest of your life, what would you eat?",
+        "If you could have a personal assistant follow you around all the time, what would you have them do?",
+        "If you had to lose one of your senses, which would you choose to lose?",
+        "If you were stranded on a desert island, what three items would you want to have with you?",
+        "If you could go to Mars, would you? Why or why not?",
+        "If you could only listen to one album for the rest of your life, what would it be?",
+        "If you knew you could not fail, what would you do?",
+        "If you could have an endless supply of food, what would it be?",
+        "If you can cook, what’s your favorite dish to prepare?",
+        "If you could give a piece of advice to your younger self, what would it be?",
+        "If you could be in the Guinness book of world records, what record-breaking feat would you attempt?",
+        "If you could speak another language, what would it be?",
+        "If you had all the money in the world, what would you do?",
+        "If you were a vegetable, what vegetable would you be and why?",
+        "If you could live in any historical time period, which one would you choose and why?",
+        "If you could have any superpower, what would it be and why?",
+        "If you could switch lives with any fictional character, who would it be and why?",
+        "If you could only listen to one song for the rest of your life, what would it be?",
+        "If you could live in any fictional world, which one would it be and why?",
+        "If you could only watch one TV show for the rest of your life, what would it be?",
+        "If you could be any animal, what would it be and why?",
+        "If you were stranded on a deserted island and could only bring three things, what would they be?",
+        "If you could have any job in the world, what would it be and why?",
+        "If you could be any Disney character, who would you be and why?",
+        "If you could only wear one color for the rest of your life, what color would it be?",
+        "If you could time travel to any era, where would you go and why?",
+        "If you could only eat one type of candy for the rest of your life, what would it be?",
+        "If you could have any celebrity as your best friend, who would it be and why?",
+        "If you could be any character from a movie, who would you be and why?",
+        "If you could have any animal as a pet, what would it be and why?",
+        "If you could be any cartoon character, who would you be and why?",
+        "If you could have any car, what would it be and why?",
+        "If you could have any superpower except for flying or invisibility, what would it be and why?",
+        "If you could live in any country in the world, where would it be and why?",
+        "If you could only watch one movie for the rest of your life, what would it be?",
+        "If you could be any mythological creature, what would it be and why?",
+        "If you could be any character from a TV show, who would you be and why?",
+        "If you could have any animal talk to you, which one would it be and why?",
+        "If you could have any job in the entertainment industry, what would it be and why?",
+        "If you could only read one book for the rest of your life, what would it be?",
+        "If you could have any type of sandwich for the rest of your life, what would it be?",
+        "If you could have any food delivered to you right now, what would it be?",
+        "If you could be any character from a video game, who would you be and why?",
+        "If you could have any type of ice cream for the rest of your life, what would it be?",
+        "If you could have any famous musician as your mentor, who would it be and why?",
+        "If you could be any character from a play, who would you be and why?",
+        "If you could have any type of pizza for the rest of your life, what would it be?",
+        "If you could have any type of pet, mythical or real, what would it be and why?",
+        "If you could trade places with any person for a day, who would it be and why?",
+        "If you could only wear one outfit for the rest of your life, what would it be?",
+        "If you could have any actor play you in a movie, who would it be and why?",
+        "If you could be any character from a musical, who would you be and why?",
+        "If you could have any creature as a sidekick, what would it be and why?",
+        "If you could have any object in the world, what would it be and why?",
+        "If you could have any fictional weapon, what would it be and why?",
+        "If you could be any character from a book series, who would you be and why?",
+        "If you could be any historical figure, who would you be and why?",
+        "If you could only listen to one music genre for the rest of your life, what would it be?",
+        "If you could only watch one genre of movies for the rest of your life, what would it be?",
+        "If you could be any character from a comic book, who would you be and why?",
+        "If you could have any fictional vehicle, what would it be and why?",
+        "If you could have any accent, what would it be and why?",
+        "If you could only eat one cuisine for the rest of your life, what would it be?",
+        "If you could be any character from a children's book, who would you be and why?",
+        "If you could be any character from a classic novel, who would you be and why?"
+    ]
+
+    const aboutYou = [
+        "What is your favorite breakfast? Lunch? Dinner?",
+        "What is your favorite book you read in school?",
+        "What is your favorite musical instrument to hear being played solo?",
+        "Who was your favorite teacher in school and how did he or she impact you?",
+        "What’s your favorite car that you’ve owned?",
+        "What does your favorite shirt look like?",
+        "What is your favorite grocery store portion, and why?",
+        "What’s your favorite international food?",
+        "What school subject is your favorite?",
+        "What was your favorite book growing up?",
+        "Who is your favorite comedian?",
+        "What is your favorite restaurant?",
+        "What is your favorite color and why?",
+        "What was your least favorite food as a child? Why did you dislike it?",
+        "Which talk show host is your absolute favorite?",
+        "What is your favorite animal?",
+        "What’s your favorite food combination?",
+        "What’s your favorite childhood board game?",
+        "When you were little, who was your favorite superhero and why?",
+        "Got any favorite quotes?",
+        "Name one of your favorite things about someone in your family.",
+        "What is your favorite thing to do locally?",
+        "In particular, which team-building activity is your favorite?",
+        "How has your favorite high school teacher impacted your life?",
+        "Altogether, what is your favorite thing about your team?",
+        "What was your favorite cartoon show growing up?",
+        "What’s your favorite dessert?",
+        "Who is your favorite actor or actress?",
+        "What’s your favorite song right now?",
+        "What’s your favorite type of weather?",
+        "What’s your least favorite food?",
+        "What’s your favorite thing to eat for breakfast?",
+        "What’s your favorite cartoon character and why?",
+        "What’s your favorite season?",
+        "What was your favorite subject in school?",
+        "Do you have any hidden talents? What can you do?",
+        "Do you fold your pizza?",
+        "Do you prefer breakfast, lunch, or dinner?",
+        "Do you prefer hot chocolate or hot coffee?",
+        "What would it take to give up your smartphone for a month?",
+        "How well do you know your neighbors?",
+        "What do you consider to be the most important invention in our lifetime, and why?",
+        "Given the chance to live the life of another person, who would you choose?",
+        "What are the five things that are the most important to you except friends and family?",
+        "What was the worst injury you ever had?",
+        "What three hashtags would you use to characterize your online persona?",
+        "What did you think would be easy before you gave it a try?",
+        "What makes you feel excited to be alive right now?",
+        "When you were six years old, what did you wish to be when you grew up?",
+        "What word can’t you stand the sound of?",
+        "What are your top 3 most hated foods?",
+        "Where do you prefer to live - city or countryside?",
+        "Show us your cell phone wallpaper. Is there a story behind it?",
+        "Are you a morning person or a night owl?",
+        "Are you a traveler or a homebody?",
+        "Are you a good dancer?",
+        "What are you nostalgic about recently?",
+        "You are stranded on a remote desert island. Are you alone or with your worst enemy?",
+        "What are you most grateful for right now?",
+        "What's the best gift someone has ever given you?",
+        "What ice cream flavor best describes your current personality?",
+        "What’s your best scar story?",
+        "What’s the best cake you’ve ever eaten?",
+        "What's the best thing you've ever eaten?",
+        "What's your best sport or fitness activity?",
+        "What color best describes your personality today?",
+        "What’s the best piece of advice you’ve ever received?",
+        "In one word, name something that drives your success?",
+        "What is your #1 recommendation in this city?",
+        "What is the first gift you remember receiving?",
+        "What is the most amazing story about your family?",
+        "What is your happiest memory to date?",
+        "What is one interesting fact about your high school or college?",
+        "What is your goal by the end of the decade?",
+        "What is the reason you get up in the morning?",
+        "What’s the weirdest thing you’ve ever eaten?",
+        "What's your most irrational fear?",
+        "What is the scariest ride you’ve ever been on?",
+        "What is the most useful thing you own?",
+        "What’s the last thing you got in “trouble” for?",
+        "What is the craziest thing you've ever done?",
+        "What is the worst haircut you ever had?",
+        "What is something you are craving right now?",
+        "What is the most embarrassing thing you’ve ever accidentally texted someone?",
+        "What is one thing that brings you energy and joy?",
+        "What is normal where you live, but might seem weird to the rest of the world?",
+        "What is the most spontaneous thing you've ever done?",
+        "What is the most unique shop or restaurant you’ve been in?",
+        "What is the most embarrassing thing you've ever done?",
+        "What is the last thing you completed that you’re proud of?",
+        "What is the weirdest Wikipedia rabbit hole you've stumbled down?",
+        "What is your earliest memory?",
+        "What is the noblest endeavor a person can dedicate their life to?",
+        "What is a social cause you care about?",
+        "What is your hidden talent?",
+        "What is one fact that most people don’t know about you?",
+        "What is one subject you think should be taught in school that isn’t?",
+        "What is the last show you binge-watched?",
+        "What is one skill that you think everyone should possess and why?",
+        "What is the last book you read?",
+        "What is a talent you’d most like to grow and develop?",
+        "Who’s someone you really admire?",
+        "What would you like to do when you retire?",
+        "What do you value most in a friendship?",
+        "Who has been your most interesting/confusing/annoying neighbor?",
+        "What would your dream house be like?",
+        "What do you hope to be doing 10 years from now?",
+        "What are the useless facts you’ve ever known?",
+        "What would you do with your 15 minutes of fame?",
+        "What talent would you most like to develop?",
+        "What was your dream job as a child?",
+        "Who is the most competitive person you know?",
+        "When you die, what would you like to be remembered for?",
+        "What was the first concert you attended?",
+        "Who is the most underrated celebrity?",
+        "Who is the most interesting person you’ve met and talked with?",
+        "What kind of jokes do you take seriously?",
+        "What would the title of your autobiography be?",
+        "What sparked your curiosity in whatever you’re most curious about now?",
+        "What would be the last meal you would ever eat?",
+        "What do you miss about kindergarten?",
+        "Tell me about a memory from childhood that inspires your life.",
+        "What fruit or vegetable would you most want to be?",
+        "Have you seen anything lately that made you smile?",
+        "What animal would you be and why?",
+        "What would you consider your most embarrassing quirk to be?",
+        "What are you doing when you feel most alive?",
+        "Describe an experience in your life that changed your values?",
+        "For what in your life do you feel most grateful?",
+        "What was the last thing you did that gave you child-like joy?",
+        "What culture would you like to learn more about?",
+        "What style trend did you follow that you deeply regret?",
+        "When was the last time you did something for the first time?",
+        "Who influenced you the most when you were growing up?",
+        "Complete the sentence “I wish everyone could…”",
+        "What got your attention today, and why?",
+        "What two things do you consider yourself to be very good at?",
+        "What sport do you wish you knew more about?",
+        "If you had to describe how you are feeling right now as a weather pattern, what is your forecast?",
+        "What is something you are looking forward to, and why?",
+        "What is something you are worried about?",
+        "What is something new or interesting you have learned recently?",
+        "What animal best represents you today, and why?",
+        "What is the weirdest thing in your fridge right now?",
+        "What was your favorite recent meal, and why?",
+        "What are you grateful for today, and why?",
+        "What would you do if you had an extra day off tomorrow?",
+        "If you could invite anyone to dinner tonight, who would it be and what would you eat?",
+        "What was the last song you listened to, and where?",
+        "What is your favorite recent accomplishment, and why?",
+        "If you could get advice from anyone in the world today, whom would you ask, and what would you ask them?",
+        "If you had an expert personal assistant today, what would you have them do?",
+        "What emoji best represents you today, and why?",
+        "What is the most important thing to remember daily that you have not been able to?",
+        "What help could you most use that you have not asked for?",
+        "What color best describes your personality today?",
+        "Have you been pleasantly surprised by anything recently?",
+        "If you did not have to sleep, how would you spend the extra 8 hours?",
+        "What thing from nature, excluding animals, best describes you today?",
+        "What question do you wish people would ask you?",
+        "If you could be one other person, who would that person be and why?",
+        "If you had to describe how you are feeling right now as an amusement park ride, what ride are you on?",
+        "If you could safely eat any inedible object, what would it be?",
+        "What are you reading right now?",
+        "If you could pick up a new skill in an instant what would it be?",
+        "Is there any topic lately that you would like to be mentored on?",
+        "When you are feeling stressed, how do you deal with it?",
+        "What are you excited about this week? What worries you?",
+        "What is one rule your parents or guardians enforced when you were a kid?",
+        "Do you have any routines you use to improve your energy and focus?",
+        "Who has made a positive difference in your life recently?",
+        "If buying groceries were a game, what would be one of the loading screen tips?",
+        "What is one of your recent pet peeves?",
+        "How would your best friend describe you?",
+        "Congratulations! You have been chosen to represent your country in a global competition. What sport or activity are you doing?",
+        "What is one of your favorite recent memories?",
+        "What is one thing that brings you energy and joy?",
+        "What are you looking forward to?",
+        "What fictional world or place would you like to visit?",
+        "If you could have an animal sidekick, what animal would it be? Why?",
+        "What current fact about your life would most impress your five-year-old self?",
+        "What fruit or vegetable represents your mood today?",
+        "What is something you are craving right now?",
+        "What is something you would change if you ran the world?",
+        "What was your favorite breakfast as a kid?",
+        "What is something you rebelled against as a kid?",
+        "What were some of your favorite activities as a kid?",
+        "What is a food, smell, or sound that you associate with where you grew up?",
+        "Which do you prefer, oceans or mountains? Why?",
+        "If you had to sing karaoke right now, which song would you pick?",
+        "You have been teleported to the middle ages. How do you make a living there?",
+        "What is one thing you wish you had been taught in school?",
+        "You have been granted a one-way ticket to another country of your choice. Where are you going?",
+        "What does it feel like to be you right now?",
+        "What is a food that reminds you of childhood?",
+        "What is something you have drawn inspiration from recently?",
+        "What is something you like to do whenever you travel to a new country?",
+        "If your home was packed full of golf balls how would you remove them?",
+        "Name a healthy food you enjoy and an unhealthy food that you find hard to resist.",
+        "What is an adventurous thing you have done recently?",
+        "Where did you grow up and what was it like?",
+        "If you could rid the world of one thing, what would it be?",
+        "What were you most passionate about as a kid?",
+        "If you were a takeaway food, what would sum up your day and why?",
+        "What is something from your childhood that you still love today?",
+        "What healthy food tastes just as good to you as unhealthy food?",
+        "You have died but instead of entering the afterlife, you have entered Earth 2.0. What is something that make Earth 2.0 better?",
+        "What is a small act of kindness you were once shown that you will never forget?",
+        "What is something that you have never learned to do?",
+        "Where do you feel most at home?",
+        "What small thing would improve your day today?",
+        "If you could go back in time 10,000 years ago and make a cave painting to confuse everyone in the future, what would you draw?",
+        "What do you enjoy most about what you spend your time on?",
+        "What is one thing you want to do in life, but do not know where to start",
+        "What is your favorite thing about the place you live?",
+        "What is something that puts you in a state of flow?",
+        "If you could go back in time and make little changes to your childhood, what is one thing you would learn so you could be an expert at it today?",
+        "A genie appears and grants you a wish for someone else in the world. Who and what do you make a wish for?",
+        "If you could instantly know any other language, which would it be and why?",
+        "What is the best phrase or piece of slang people in your hometown use?",
+        "If you were going to be frozen tomorrow for a one-way 1000-year interstellar voyage, what would you most want to communicate (and to whom) before you leave?"
+    ]
+
+
+    const iceBreakersButton = document.getElementById('iceBreakersButton');
+        const wouldYouRatherButton = document.getElementById('wouldYouRatherButton');
+        const ifQuestionsButton = document.getElementById('ifQuestionsButton');
+        const aboutYouButton = document.getElementById('aboutYouButton');
+        const starterText = document.getElementById('starter-text');
+        const cardCounter = document.getElementById('card-counter');
+        
+        const iceBreakers = [...WouldYouRather, ...ifQuestions, ...aboutYou];
+
+        iceBreakersButton.addEventListener('click', () => {
+            const randomIndex = Math.floor(Math.random() * iceBreakers.length);
+            starterText.textContent = iceBreakers[randomIndex];
+            cardCounter.textContent = "Random Starter";
+        });
+
+        wouldYouRatherButton.addEventListener('click', () => {
+            const randomIndex = Math.floor(Math.random() * WouldYouRather.length);
+            starterText.textContent = WouldYouRather[randomIndex];
+            cardCounter.textContent = "Would You Rather";
+        });
+
+        ifQuestionsButton.addEventListener('click', () => {
+            const randomIndex = Math.floor(Math.random() * ifQuestions.length);
+            starterText.textContent = ifQuestions[randomIndex];
+            cardCounter.textContent = "If Questions";
+        });
+
+        aboutYouButton.addEventListener('click', () => {
+            const randomIndex = Math.floor(Math.random() * aboutYou.length);
+            starterText.textContent = aboutYou[randomIndex];
+            cardCounter.textContent = "About You";
+        });
+    </script>
+</body>
+</html>
