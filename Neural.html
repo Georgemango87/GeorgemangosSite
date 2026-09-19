@@ -1,0 +1,2407 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <meta name="theme-color" content="#0b0f19">
+    <title>Neural Network Grid Studio - Interactive Training Studio</title>
+    <link rel="icon" type="image/png" sizes="512x512" href="/face.png">
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        darkBg: '#0b0f19',
+                        panelBg: '#131b2e',
+                        cardBg: '#1e293b',
+                        borderCol: '#2a3649'
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body {
+            background-color: #0b0f19;
+            color: #f8fafc;
+            font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            user-select: none;
+            -webkit-user-select: none;
+            -webkit-tap-highlight-color: transparent;
+            overscroll-behavior: none;
+        }
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: #131b2e; }
+        ::-webkit-scrollbar-thumb { background: #334155; border-radius: 3px; }
+        ::-webkit-scrollbar-thumb:hover { background: #475569; }
+        canvas { touch-action: none; }
+        input, select, button { font-family: inherit; }
+
+        /* ===================== MOBILE DRAWER SYSTEM ===================== */
+        .mobile-only { display: none !important; }
+        .drawer-close { display: none; }
+
+        #backdrop {
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.55);
+            backdrop-filter: blur(2px);
+            -webkit-backdrop-filter: blur(2px);
+            z-index: 40;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.25s ease;
+        }
+        #backdrop.show {
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        @media (max-width: 1023px) {
+            .mobile-only { display: inline-flex !important; }
+            .drawer-close { display: inline-flex; }
+
+            #sidebar-left, #sidebar-right {
+                position: fixed;
+                top: 52px;
+                bottom: 0;
+                z-index: 45;
+                width: min(380px, 92vw);
+                max-width: 92vw;
+                transition: transform 0.28s cubic-bezier(.2,.7,.2,1);
+                box-shadow: 0 0 40px rgba(0,0,0,0.7);
+                border-top: 1px solid #2a3649;
+            }
+            #sidebar-left {
+                left: 0;
+                transform: translateX(-105%);
+                border-right: 1px solid #2a3649;
+            }
+            #sidebar-left.open { transform: translateX(0); }
+            #sidebar-right {
+                right: 0;
+                transform: translateX(105%);
+                border-left: 1px solid #2a3649;
+            }
+            #sidebar-right.open { transform: translateX(0); }
+
+            /* Header compact on mobile */
+            #main-header { padding-left: 10px; padding-right: 10px; }
+            #header-logo-title { display: none; }
+            #btn-fit span, #btn-load-preset span, #btn-clear span { display: none; }
+            #btn-fit, #btn-load-preset, #btn-clear {
+                padding: 6px !important;
+                min-width: 32px;
+                justify-content: center;
+            }
+        }
+
+        @media (max-width: 640px) {
+            #inspector-modal > div, #quickbuild-modal > div {
+                width: min(340px, 94vw) !important;
+                max-height: 90vh;
+                overflow-y: auto;
+            }
+            #zoom-badge { display: none; }
+            #main-header { gap: 6px; }
+            #header-actions { gap: 6px; }
+        }
+
+        /* Larger touch targets for the header buttons on mobile */
+        @media (hover: none) {
+            button, .spawner-item, .tab { cursor: pointer; }
+        }
+    </style>
+</head>
+<body class="h-screen w-screen overflow-hidden flex flex-col">
+
+    <!-- Top Navigation Bar -->
+    <header id="main-header" class="h-13 bg-panelBg border-b border-borderCol px-4 sm:px-6 flex items-center justify-between shrink-0 shadow-lg z-50 relative" style="height:52px">
+        <div class="flex items-center space-x-2 min-w-0">
+            <!-- Mobile: open left panel -->
+            <button id="btn-toggle-left" class="mobile-only items-center justify-center w-9 h-9 rounded-lg bg-cardBg border border-borderCol text-slate-300 hover:text-white transition-all" title="Open controls">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path></svg>
+            </button>
+
+            <div class="w-8 h-8 rounded-lg bg-gradient-to-tr from-blue-500 via-emerald-500 to-amber-500 flex items-center justify-center shadow-lg shadow-blue-500/20 shrink-0">
+                <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z"></path>
+                </svg>
+            </div>
+            <h1 id="header-logo-title" class="font-bold text-base tracking-wide bg-gradient-to-r from-blue-400 via-emerald-400 to-amber-400 bg-clip-text text-transparent whitespace-nowrap">Neural Network Grid Studio</h1>
+        </div>
+
+        <div id="header-actions" class="flex items-center space-x-2 shrink-0">
+            <!-- Zoom controls -->
+            <div class="flex items-center gap-1 bg-cardBg border border-borderCol rounded-lg px-1.5 py-1">
+                <button id="btn-zoom-out" title="Zoom out" class="w-6 h-6 flex items-center justify-center text-slate-400 hover:text-white rounded transition-all text-base leading-none">−</button>
+                <span id="zoom-badge" class="text-[11px] font-mono text-slate-300 w-11 text-center">100%</span>
+                <button id="btn-zoom-in" title="Zoom in" class="w-6 h-6 flex items-center justify-center text-slate-400 hover:text-white rounded transition-all text-base leading-none">+</button>
+            </div>
+            <button id="btn-fit" class="bg-cardBg hover:bg-slate-700 text-slate-300 hover:text-white px-3 py-1.5 rounded-lg border border-borderCol text-xs font-medium transition-all flex items-center gap-1.5" title="Fit View">
+                <svg class="w-3.5 h-3.5 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4"></path></svg>
+                <span>Fit View</span>
+            </button>
+            <button id="btn-load-preset" class="bg-cardBg hover:bg-slate-700 text-slate-300 hover:text-white px-3 py-1.5 rounded-lg border border-borderCol text-xs font-medium transition-all flex items-center gap-1.5" title="Load Sample Net">
+                <svg class="w-3.5 h-3.5 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path></svg>
+                <span>Load Sample Net</span>
+            </button>
+            <button id="btn-clear" class="bg-cardBg hover:bg-rose-500/20 text-slate-300 hover:text-rose-300 px-3 py-1.5 rounded-lg border border-borderCol hover:border-rose-500/40 text-xs font-medium transition-all flex items-center gap-1.5" title="Clear Canvas">
+                <svg class="w-3.5 h-3.5 text-rose-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                <span>Clear Canvas</span>
+            </button>
+
+            <!-- Mobile: open right panel -->
+            <button id="btn-toggle-right" class="mobile-only items-center justify-center w-9 h-9 rounded-lg bg-cardBg border border-borderCol text-slate-300 hover:text-white transition-all" title="Open calculations">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path></svg>
+            </button>
+        </div>
+    </header>
+
+    <!-- Main Workspace -->
+    <main class="flex-1 flex overflow-hidden relative">
+
+        <!-- Backdrop for mobile drawers -->
+        <div id="backdrop"></div>
+
+        <!-- Left Toolbox & Educational Panel -->
+        <aside id="sidebar-left" class="w-96 bg-panelBg border-r border-borderCol flex flex-col shrink-0 z-10 shadow-2xl overflow-hidden">
+            <div class="p-4 border-b border-borderCol flex items-center justify-between">
+                <h2 class="font-semibold text-xs uppercase tracking-wider text-slate-400">Control &amp; Learning Studio</h2>
+                <div class="flex items-center gap-2">
+                    <span id="node-count-badge" class="text-xs px-2 py-0.5 rounded-full bg-blue-500/10 text-blue-300 border border-blue-500/20 font-mono">0 Neurons</span>
+                    <button class="drawer-close items-center justify-center w-7 h-7 rounded-md bg-cardBg border border-borderCol text-slate-400 hover:text-white" data-close-drawer="left" title="Close">
+                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                    </button>
+                </div>
+            </div>
+
+            <div class="flex-1 overflow-y-auto p-4 space-y-5">
+
+                <!-- 1. Input Data Management Panel -->
+                <div class="bg-cardBg/60 border border-borderCol rounded-xl p-3.5 space-y-3">
+                    <div class="flex items-center justify-between">
+                        <span class="font-semibold text-xs text-slate-200 flex items-center gap-1.5">
+                            <svg class="w-4 h-4 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
+                            Input Data Panel
+                        </span>
+                        <span class="text-[10px] text-slate-400">Live Feed</span>
+                    </div>
+                    <div id="sidebar-inputs-container" class="space-y-2 max-h-48 overflow-y-auto pr-1">
+                        <div class="text-xs text-slate-500 italic">No input neurons on canvas yet.</div>
+                    </div>
+                </div>
+
+                <!-- 2. Simulation & Forward Pass -->
+                <div class="space-y-2">
+                    <button id="btn-simulate" class="w-full bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white font-medium py-2.5 px-4 rounded-xl shadow-lg shadow-blue-500/25 transition-all flex items-center justify-center gap-2 text-xs">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                        Run Forward Pass
+                    </button>
+                </div>
+
+                <!-- 3. Component Spawner -->
+                <div class="space-y-2 pt-2 border-t border-borderCol">
+                    <label class="block text-[11px] font-medium uppercase tracking-wider text-slate-400">Drag to Place Neurons</label>
+                    <p class="text-[10px] text-slate-500 leading-snug">Shift + click a card to auto-build a whole network, wire every layer, and zoom to fit. On touch, just tap a card.</p>
+                    <div class="grid grid-cols-3 gap-2">
+                        <div draggable="true" data-type="input" title="Drag to place — Shift+Click for quick build" class="spawner-item cursor-grab active:cursor-grabbing bg-blue-600/10 hover:bg-blue-600/20 text-blue-300 border border-blue-500/30 p-2 rounded-xl text-center text-xs font-medium transition-all">
+                            <div class="w-2.5 h-2.5 rounded-full bg-blue-500 mx-auto mb-1"></div>
+                            Input
+                        </div>
+                        <div draggable="true" data-type="hidden" title="Drag to place — Shift+Click for quick build" class="spawner-item cursor-grab active:cursor-grabbing bg-emerald-600/10 hover:bg-emerald-600/20 text-emerald-300 border border-emerald-500/30 p-2 rounded-xl text-center text-xs font-medium transition-all">
+                            <div class="w-2.5 h-2.5 rounded-full bg-emerald-500 mx-auto mb-1"></div>
+                            Hidden
+                        </div>
+                        <div draggable="true" data-type="output" title="Drag to place — Shift+Click for quick build" class="spawner-item cursor-grab active:cursor-grabbing bg-amber-600/10 hover:bg-amber-600/20 text-amber-300 border border-amber-500/30 p-2 rounded-xl text-center text-xs font-medium transition-all">
+                            <div class="w-2.5 h-2.5 rounded-full bg-amber-500 mx-auto mb-1"></div>
+                            Output
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 4. Global Settings -->
+                <div class="space-y-2 pt-2 border-t border-borderCol">
+                    <label class="block text-[11px] font-medium uppercase tracking-wider text-slate-400">Hidden Activation</label>
+                    <select id="activation-select" class="w-full bg-cardBg border border-borderCol rounded-xl px-3 py-2 text-xs text-slate-100 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        <option value="relu">ReLU (Max(0, x))</option>
+                        <option value="leakyRelu">Leaky ReLU</option>
+                        <option value="sigmoid">Sigmoid (1 / (1 + e^-x))</option>
+                        <option value="tanh" selected>Tanh (Hyperbolic)</option>
+                    </select>
+
+                    <label class="block text-[11px] font-medium uppercase tracking-wider text-slate-400 pt-1">Output Activation</label>
+                    <select id="output-activation-select" class="w-full bg-cardBg border border-borderCol rounded-xl px-3 py-2 text-xs text-slate-100 focus:outline-none focus:ring-2 focus:ring-amber-500">
+                        <option value="linear" selected>Linear / Identity (predict any number)</option>
+                        <option value="sigmoid">Sigmoid (0 → 1 probabilities)</option>
+                        <option value="tanh">Tanh (-1 → 1)</option>
+                        <option value="relu">ReLU (&gt;= 0)</option>
+                    </select>
+
+                    <label class="block text-[11px] font-medium uppercase tracking-wider text-slate-400 pt-1">Optimizer</label>
+                    <select id="optimizer-select" class="w-full bg-cardBg border border-borderCol rounded-xl px-3 py-2 text-xs text-slate-100 focus:outline-none focus:ring-2 focus:ring-emerald-500">
+                        <option value="adam" selected>Adam (adaptive — most reliable)</option>
+                        <option value="sgd">SGD (plain gradient descent)</option>
+                    </select>
+                </div>
+
+                <!-- 5. Network Information Panel -->
+                <div class="bg-cardBg/60 border border-borderCol rounded-xl p-3.5 space-y-2">
+                    <div class="font-semibold text-xs text-slate-200">Network Information</div>
+                    <div id="network-info-body" class="grid grid-cols-2 gap-2 text-xs text-slate-400 font-mono">
+                        <div>Inputs: <span id="info-inputs" class="text-blue-400">0</span></div>
+                        <div>Hidden: <span id="info-hidden" class="text-emerald-400">0</span></div>
+                        <div>Outputs: <span id="info-outputs" class="text-amber-400">0</span></div>
+                        <div>Weights: <span id="info-weights" class="text-slate-200">0</span></div>
+                    </div>
+                    <div id="visible-info" class="text-[10px] text-slate-500 font-mono pt-1"></div>
+                </div>
+
+                <!-- 6. Interactive Training Studio Editor -->
+                <div class="bg-cardBg/60 border border-borderCol rounded-xl p-3.5 space-y-3">
+                    <div class="flex items-center justify-between">
+                        <span class="font-semibold text-xs text-slate-200 flex items-center gap-1.5">
+                            <svg class="w-4 h-4 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z"></path></svg>
+                            Training Studio (Backprop Editor)
+                        </span>
+                    </div>
+
+                    <p class="text-[11px] text-slate-400 leading-relaxed">
+                        Training examples tell the network what answer it should produce for a given set of inputs. During training, the network adjusts its weights and biases to reduce the difference between its prediction and the expected output.
+                    </p>
+
+                    <!-- Dataset Preset Controls -->
+                    <div class="space-y-1.5 pt-1">
+                        <label class="text-[10px] text-slate-400 block font-medium uppercase tracking-wider">Load Dataset Preset:</label>
+                        <div class="grid grid-cols-3 gap-1.5">
+                            <button id="btn-preset-double" class="bg-darkBg hover:bg-slate-700 text-slate-300 border border-borderCol rounded px-2 py-1.5 text-[10px] transition-all">Double (1 In)</button>
+                            <button id="btn-preset-add" class="bg-darkBg hover:bg-slate-700 text-slate-300 border border-borderCol rounded px-2 py-1.5 text-[10px] transition-all">Addition (2 In)</button>
+                            <button id="btn-preset-xor" class="bg-darkBg hover:bg-slate-700 text-slate-300 border border-borderCol rounded px-2 py-1.5 text-[10px] transition-all">XOR (2 In)</button>
+                        </div>
+                    </div>
+
+                    <!-- Editable Dataset Table Container -->
+                    <div class="overflow-x-auto border border-borderCol rounded-lg max-h-48">
+                        <table id="dataset-table" class="w-full text-left border-collapse text-xs">
+                            <thead id="dataset-thead" class="bg-darkBg text-slate-400 font-medium border-b border-borderCol"></thead>
+                            <tbody id="dataset-tbody" class="divide-y divide-borderCol/50"></tbody>
+                        </table>
+                    </div>
+
+                    <!-- Table Action Buttons -->
+                    <div class="flex items-center gap-2">
+                        <button id="btn-add-row" class="flex-1 bg-cardBg hover:bg-slate-700 text-slate-200 border border-borderCol py-1.5 px-2 rounded-lg text-xs font-medium transition-all flex items-center justify-center gap-1">
+                            <svg class="w-3.5 h-3.5 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
+                            + Add Example
+                        </button>
+                        <button id="btn-clear-dataset" class="bg-cardBg hover:bg-rose-500/20 text-slate-300 hover:text-rose-300 border border-borderCol py-1.5 px-3 rounded-lg text-xs font-medium transition-all">
+                            Clear Dataset
+                        </button>
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-2 pt-1 border-t border-borderCol">
+                        <div>
+                            <label class="text-[10px] text-slate-400 block">Learning Rate (&eta;)</label>
+                            <input id="train-lr" type="number" step="0.001" value="0.01" class="w-full bg-darkBg border border-borderCol rounded px-2 py-1.5 text-slate-200 text-xs">
+                        </div>
+                        <div>
+                            <label class="text-[10px] text-slate-400 block">Epochs</label>
+                            <input id="train-epochs" type="number" value="500" class="w-full bg-darkBg border border-borderCol rounded px-2 py-1.5 text-slate-200 text-xs">
+                        </div>
+                    </div>
+
+                    <div class="flex items-center gap-2 pt-1">
+                        <button id="btn-train" class="flex-1 bg-emerald-600 hover:bg-emerald-500 text-white font-medium py-2 px-3 rounded-lg text-xs transition-all">Start Training</button>
+                        <button id="btn-reset-train" class="bg-cardBg hover:bg-slate-700 text-slate-300 px-3 py-2 rounded-lg text-xs border border-borderCol">Reset Weights</button>
+                    </div>
+
+                    <div id="training-stats" class="text-[11px] text-slate-400 font-mono pt-1">Epoch: 0 | Loss: --</div>
+
+                    <!-- Loss Graph Canvas -->
+                    <div class="pt-1">
+                        <canvas id="loss-canvas" class="w-full h-20 bg-darkBg border border-borderCol rounded-lg"></canvas>
+                    </div>
+                </div>
+
+                <!-- 7. Beginner Explanation Guide -->
+                <div class="bg-cardBg/60 border border-borderCol rounded-xl p-3.5 space-y-2 text-xs text-slate-300">
+                    <div class="font-semibold text-slate-200 flex items-center gap-1.5">
+                        <svg class="w-4 h-4 text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path></svg>
+                        How This Works
+                    </div>
+                    <p class="text-slate-400 leading-relaxed">
+                        • <strong>Neuron:</strong> Multiplies incoming signals by weights, adds bias, and passes through an activation function.<br>
+                        • <strong>Forward Pass:</strong> Propagates data from inputs to outputs.<br>
+                        • <strong>Backprop:</strong> Adjusts weights to minimize prediction error.<br>
+                        • <strong>Large layers:</strong> Layers with more than 24 neurons are simulated in full, but only 24 are drawn per layer to keep the canvas readable.<br>
+                        • <strong>Fast training:</strong> The training loop caches the graph topology and uses typed arrays for the math. Each frame trains for ~20ms, then yields to keep the UI responsive.<br>
+                        • <strong>Shortcuts:</strong> Shift+Click a spawner card to quick-build · Mouse wheel zooms · Press F to fit. On touch: tap a spawner card, pinch to zoom, drag to pan.
+                    </p>
+                </div>
+
+            </div>
+        </aside>
+
+        <!-- Interactive Canvas Workspace -->
+        <section class="flex-1 bg-darkBg relative overflow-hidden flex flex-col" id="canvas-container">
+            <div id="canvas-status" class="absolute top-3 left-3 right-3 sm:right-auto sm:top-4 sm:left-4 z-10 bg-panelBg/90 backdrop-blur border border-borderCol px-3 py-2 rounded-xl shadow-xl text-[11px] sm:text-xs flex items-center gap-2.5 pointer-events-none max-w-[calc(100%-1.5rem)] sm:max-w-sm">
+                <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse shrink-0"></span>
+                <span id="status-text" class="text-slate-300 font-medium truncate">Ready. Drag items from sidebar or right-click to edit.</span>
+            </div>
+
+            <canvas id="sim-canvas" class="w-full h-full"></canvas>
+        </section>
+
+        <!-- Right Calculation Details Panel -->
+        <aside id="sidebar-right" class="w-80 bg-panelBg border-l border-borderCol flex flex-col shrink-0 z-10 shadow-2xl overflow-hidden">
+            <div class="p-4 border-b border-borderCol flex items-center justify-between">
+                <h2 class="font-semibold text-xs uppercase tracking-wider text-slate-400">Calculation Breakdown</h2>
+                <div class="flex items-center gap-2">
+                    <span class="text-[10px] bg-blue-500/10 text-blue-300 border border-blue-500/20 px-2 py-0.5 rounded font-mono hidden sm:inline">Step-by-Step</span>
+                    <button class="drawer-close items-center justify-center w-7 h-7 rounded-md bg-cardBg border border-borderCol text-slate-400 hover:text-white" data-close-drawer="right" title="Close">
+                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                    </button>
+                </div>
+            </div>
+            <div id="calc-breakdown-body" class="flex-1 overflow-y-auto p-4 space-y-3 text-xs text-slate-300">
+                <div class="text-slate-500 italic">Run a forward pass to inspect exact math calculations for every neuron.</div>
+            </div>
+        </aside>
+    </main>
+
+    <!-- Inspector Modal -->
+    <div id="inspector-modal" class="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center hidden p-4">
+        <div class="bg-panelBg border border-borderCol rounded-2xl w-80 p-5 shadow-2xl space-y-4">
+            <h3 id="modal-title" class="font-semibold text-sm text-slate-200">Configure Element</h3>
+            <div id="modal-body" class="space-y-3"></div>
+            <div class="flex items-center gap-2 pt-2">
+                <button id="modal-delete" class="flex-1 bg-rose-500/10 hover:bg-rose-500/20 text-rose-300 border border-rose-500/30 py-2 rounded-xl text-xs font-medium transition-all">Delete</button>
+                <button id="modal-close" class="flex-1 bg-cardBg hover:bg-slate-700 text-slate-200 py-2 rounded-xl text-xs font-medium transition-all">Done</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Quick Build Modal (Shift + Click a spawner card) -->
+    <div id="quickbuild-modal" class="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center hidden p-4">
+        <div class="bg-panelBg border border-borderCol rounded-2xl w-80 p-5 shadow-2xl space-y-4">
+            <div>
+                <h3 class="font-semibold text-sm text-slate-200">Quick Build Network</h3>
+                <p class="text-[11px] text-slate-400 mt-1 leading-relaxed">Creates the neurons, wires every layer together, and zooms out so the whole network fits on screen.</p>
+            </div>
+
+            <div class="space-y-3 text-xs">
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="text-slate-400 block mb-1">Input neurons</label>
+                        <input id="qb-inputs" type="number" min="0" max="256" value="2" class="w-full bg-cardBg border border-borderCol rounded-lg px-3 py-2 text-slate-200 font-mono focus:outline-none focus:ring-1 focus:ring-blue-500">
+                    </div>
+                    <div>
+                        <label class="text-slate-400 block mb-1">Output neurons</label>
+                        <input id="qb-outputs" type="number" min="0" max="256" value="1" class="w-full bg-cardBg border border-borderCol rounded-lg px-3 py-2 text-slate-200 font-mono focus:outline-none focus:ring-1 focus:ring-amber-500">
+                    </div>
+                    <div>
+                        <label class="text-slate-400 block mb-1">Hidden layers</label>
+                        <input id="qb-hidden-layers" type="number" min="0" max="8" value="1" class="w-full bg-cardBg border border-borderCol rounded-lg px-3 py-2 text-slate-200 font-mono focus:outline-none focus:ring-1 focus:ring-emerald-500">
+                    </div>
+                    <div>
+                        <label class="text-slate-400 block mb-1">Neurons / layer</label>
+                        <input id="qb-hidden-per" type="number" min="0" max="256" value="3" class="w-full bg-cardBg border border-borderCol rounded-lg px-3 py-2 text-slate-200 font-mono focus:outline-none focus:ring-1 focus:ring-emerald-500">
+                    </div>
+                </div>
+
+                <p class="text-[10px] text-slate-500 leading-snug">Layers above 24 neurons are fully simulated but only 24 are drawn per layer to keep the canvas readable.</p>
+                <div id="qb-estimate" class="text-[10px] text-slate-400 font-mono bg-darkBg border border-borderCol rounded-lg px-2.5 py-1.5"></div>
+
+                <label class="flex items-center gap-2 text-slate-300">
+                    <input id="qb-replace" type="checkbox" class="accent-blue-500">
+                    Replace everything on the canvas
+                </label>
+                <label class="flex items-center gap-2 text-slate-300">
+                    <input id="qb-arrange" type="checkbox" checked class="accent-blue-500">
+                    Auto-arrange neurons into tidy layers
+                </label>
+            </div>
+
+            <div class="flex items-center gap-2 pt-1">
+                <button id="qb-cancel" class="flex-1 bg-cardBg hover:bg-slate-700 text-slate-200 py-2 rounded-xl text-xs font-medium transition-all">Cancel</button>
+                <button id="qb-build" class="flex-1 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white py-2 rounded-xl text-xs font-medium transition-all">Build &amp; Connect</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Application Script -->
+    <script>
+        document.addEventListener('contextmenu', (e) => e.preventDefault());
+
+        document.addEventListener('DOMContentLoaded', () => {
+
+            /* ============================================================
+               STATE
+               ============================================================ */
+            let nodes = [];
+            let connections = [];
+            let selectedNodeIds = new Set();
+            let nextId = 1;
+            const gridSize = 32;
+
+            const VISIBLE_LIMIT = 24;
+            const MAX_LAYER_SIZE = 256;
+
+            const ACTIVATIONS = {
+                linear:    { label: 'Linear',     f: (x) => x,                          df: () => 1 },
+                relu:      { label: 'ReLU',       f: (x) => Math.max(0, x),             df: (y, x) => (x > 0 ? 1 : 0) },
+                leakyRelu: { label: 'Leaky ReLU', f: (x) => (x > 0 ? x : 0.01 * x),     df: (y, x) => (x > 0 ? 1 : 0.01) },
+                sigmoid:   { label: 'Sigmoid',    f: (x) => 1 / (1 + Math.exp(-x)),     df: (y) => y * (1 - y) },
+                tanh:      { label: 'Tanh',       f: (x) => Math.tanh(x),               df: (y) => 1 - y * y }
+            };
+
+            let hiddenActivation = 'tanh';
+            let outputActivation = 'linear';
+            let optimizerType    = 'adam';
+
+            const BETA1 = 0.9, BETA2 = 0.999, ADAM_EPS = 1e-8, GRAD_CLIP = 5.0;
+            let adamT = 0;
+
+            /* ------------------------------------------------------------
+               VIEW / INTERACTION STATE
+               ------------------------------------------------------------ */
+            let panning = false;
+            let panX = 0, panY = 0;
+            let zoom = 1;
+            const MIN_ZOOM = 0.05, MAX_ZOOM = 2.5;
+            let startX = 0, startY = 0;
+
+            let draggingNode = null;
+            let dragOffsets = new Map();
+
+            let selectionBox = null;
+            let wiring = null;
+            let activeModalTarget = null;
+            let draggedNodeType = null;
+            let ghostPos = null;
+            let suppressSpawnerClick = false;
+
+            let animatingPass = false;
+            let animProgress = 0;
+            let animFrameId = null;
+
+            let trainingDataset = [
+                { inputs: [0, 0], targets: [0] },
+                { inputs: [0, 1], targets: [1] },
+                { inputs: [1, 0], targets: [1] },
+                { inputs: [1, 1], targets: [0] }
+            ];
+            let trainingActive = false;
+            let lossHistory = [];
+
+            const canvas = document.getElementById('sim-canvas');
+            const ctx = canvas.getContext('2d');
+            const container = document.getElementById('canvas-container');
+
+            const nodeCountBadge = document.getElementById('node-count-badge');
+            const statusText = document.getElementById('status-text');
+            const sidebarInputsContainer = document.getElementById('sidebar-inputs-container');
+            const calcBreakdownBody = document.getElementById('calc-breakdown-body');
+            const zoomBadge = document.getElementById('zoom-badge');
+            const btnTrain = document.getElementById('btn-train');
+
+            const lossCanvas = document.getElementById('loss-canvas');
+            const lossCtx = lossCanvas.getContext('2d');
+
+            /* ============================================================
+               MOBILE DRAWER CONTROLS
+               ============================================================ */
+            const sidebarLeft = document.getElementById('sidebar-left');
+            const sidebarRight = document.getElementById('sidebar-right');
+            const backdrop = document.getElementById('backdrop');
+
+            function openDrawer(which) {
+                closeDrawers();
+                if (which === 'left') sidebarLeft.classList.add('open');
+                else if (which === 'right') sidebarRight.classList.add('open');
+                backdrop.classList.add('show');
+            }
+            function closeDrawers() {
+                sidebarLeft.classList.remove('open');
+                sidebarRight.classList.remove('open');
+                backdrop.classList.remove('show');
+            }
+            document.getElementById('btn-toggle-left').addEventListener('click', (e) => {
+                e.stopPropagation();
+                if (sidebarLeft.classList.contains('open')) closeDrawers();
+                else openDrawer('left');
+            });
+            document.getElementById('btn-toggle-right').addEventListener('click', (e) => {
+                e.stopPropagation();
+                if (sidebarRight.classList.contains('open')) closeDrawers();
+                else openDrawer('right');
+            });
+            backdrop.addEventListener('click', closeDrawers);
+            document.querySelectorAll('.drawer-close').forEach(btn => {
+                btn.addEventListener('click', closeDrawers);
+            });
+
+            /* ============================================================
+               SMALL HELPERS
+               ============================================================ */
+            function escapeHtml(str) {
+                return String(str).replace(/[&<>"']/g, (c) => ({
+                    '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+                })[c]);
+            }
+
+            function fmt(x, digits = 4) {
+                return (Number.isFinite(x) ? x : 0).toFixed(digits);
+            }
+
+            function finiteOr(v, fallback = 0) {
+                const n = Number(v);
+                return Number.isFinite(n) ? n : fallback;
+            }
+
+            function clampInt(v, lo, hi) {
+                const n = parseInt(v, 10);
+                if (!Number.isFinite(n)) return lo;
+                return Math.max(lo, Math.min(hi, n));
+            }
+
+            function isVisible(node) { return node.visible !== false; }
+
+            function getAct(node) {
+                const name = (node.type === 'output') ? outputActivation : hiddenActivation;
+                return ACTIVATIONS[name] || ACTIVATIONS.linear;
+            }
+
+            function getOutputPinPos(node) { return { x: node.x + node.radius, y: node.y }; }
+            function getInputPinPos(node)  { return { x: node.x - node.radius, y: node.y }; }
+
+            function distToSegment(p, v, w) {
+                const l2 = (w.x - v.x) ** 2 + (w.y - v.y) ** 2;
+                if (l2 === 0) return Math.hypot(p.x - v.x, p.y - v.y);
+                let t = ((p.x - v.x) * (w.x - v.x) + (p.y - v.y) * (w.y - v.y)) / l2;
+                t = Math.max(0, Math.min(1, t));
+                return Math.hypot(p.x - (v.x + t * (w.x - v.x)), p.y - (v.y + t * (w.y - v.y)));
+            }
+
+            /* ============================================================
+               ZOOM / PAN
+               ============================================================ */
+            function screenToWorld(clientX, clientY) {
+                const rect = canvas.getBoundingClientRect();
+                return {
+                    x: ((clientX - rect.left) - panX) / zoom,
+                    y: ((clientY - rect.top) - panY) / zoom
+                };
+            }
+
+            function updateZoomBadge() {
+                zoomBadge.textContent = Math.round(zoom * 100) + '%';
+            }
+
+            function zoomAt(factor, screenX, screenY) {
+                const rect = canvas.getBoundingClientRect();
+                const mx = (screenX !== undefined) ? screenX : rect.width / 2;
+                const my = (screenY !== undefined) ? screenY : rect.height / 2;
+
+                const worldX = (mx - panX) / zoom;
+                const worldY = (my - panY) / zoom;
+
+                const newZoom = Math.max(MIN_ZOOM, Math.min(MAX_ZOOM, zoom * factor));
+                if (newZoom === zoom) return;
+
+                zoom = newZoom;
+                panX = mx - worldX * zoom;
+                panY = my - worldY * zoom;
+
+                updateZoomBadge();
+                draw();
+            }
+
+            function fitToView() {
+                const w = container.clientWidth;
+                const h = container.clientHeight;
+                const visibleNodes = nodes.filter(isVisible);
+
+                if (visibleNodes.length === 0) {
+                    zoom = 1; panX = 0; panY = 0;
+                    updateZoomBadge(); draw();
+                    return;
+                }
+
+                let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+                visibleNodes.forEach(n => {
+                    const pad = n.radius + 28;
+                    minX = Math.min(minX, n.x - pad);
+                    maxX = Math.max(maxX, n.x + pad);
+                    minY = Math.min(minY, n.y - pad);
+                    maxY = Math.max(maxY, n.y + pad);
+                });
+
+                const margin = 60;
+                const bw = Math.max(1, maxX - minX);
+                const bh = Math.max(1, maxY - minY);
+                const availW = Math.max(60, w - margin * 2);
+                const availH = Math.max(60, h - margin * 2);
+
+                const fitZoom = Math.min(availW / bw, availH / bh);
+                zoom = Math.max(MIN_ZOOM, Math.min(1, fitZoom));
+
+                panX = w / 2 - ((minX + maxX) / 2) * zoom;
+                panY = h / 2 - ((minY + maxY) / 2) * zoom;
+
+                updateZoomBadge();
+                draw();
+            }
+
+            /* ============================================================
+               CANVAS SIZING
+               ============================================================ */
+            function resizeCanvas() {
+                const rect = container.getBoundingClientRect();
+                canvas.width = Math.max(1, rect.width * window.devicePixelRatio);
+                canvas.height = Math.max(1, rect.height * window.devicePixelRatio);
+                ctx.setTransform(window.devicePixelRatio, 0, 0, window.devicePixelRatio, 0, 0);
+
+                lossCanvas.width = Math.max(1, lossCanvas.clientWidth * window.devicePixelRatio);
+                lossCanvas.height = Math.max(1, lossCanvas.clientHeight * window.devicePixelRatio);
+                lossCtx.setTransform(window.devicePixelRatio, 0, 0, window.devicePixelRatio, 0, 0);
+
+                draw();
+                drawLossGraph();
+            }
+            window.addEventListener('resize', resizeCanvas);
+            window.addEventListener('orientationchange', () => setTimeout(resizeCanvas, 150));
+
+            /* ============================================================
+               GRAPH ORDERING  (head-pointer queue → no O(n²) shift)
+               ============================================================ */
+            function getGraphOrder() {
+                const nodeById = new Map(nodes.map(n => [n.id, n]));
+                const inDegree = new Map();
+                const adj = new Map();
+
+                nodes.forEach(n => { inDegree.set(n.id, 0); adj.set(n.id, []); });
+
+                connections.forEach(c => {
+                    const from = nodeById.get(c.fromNodeId);
+                    const to   = nodeById.get(c.toNodeId);
+                    if (!from || !to) return;
+                    if (from.id === to.id) return;
+                    if (to.type === 'input') return;
+                    adj.get(from.id).push(to.id);
+                    inDegree.set(to.id, inDegree.get(to.id) + 1);
+                });
+
+                const queue = [];
+                nodes.forEach(n => { if (inDegree.get(n.id) === 0) queue.push(n.id); });
+
+                const orderedIds = [];
+                const seen = new Set();
+                let head = 0;
+
+                while (head < queue.length) {
+                    const u = queue[head++];
+                    if (seen.has(u)) continue;
+                    seen.add(u);
+                    orderedIds.push(u);
+                    for (const v of adj.get(u)) {
+                        inDegree.set(v, inDegree.get(v) - 1);
+                        if (inDegree.get(v) <= 0 && !seen.has(v)) queue.push(v);
+                    }
+                }
+
+                const leftovers = nodes.filter(n => !seen.has(n.id)).map(n => n.id);
+                const order = orderedIds.concat(leftovers)
+                    .map(id => nodeById.get(id))
+                    .filter(Boolean);
+
+                return { order, hasCycle: leftovers.length > 0 };
+            }
+
+            function buildIncomingMap() {
+                const map = new Map();
+                nodes.forEach(n => map.set(n.id, []));
+                connections.forEach(c => {
+                    const arr = map.get(c.toNodeId);
+                    if (arr) arr.push(c);
+                });
+                return map;
+            }
+
+            /* ============================================================
+               FORWARD PASS
+               ============================================================ */
+            function runForwardPass() {
+                if (nodes.length === 0) {
+                    calcBreakdownBody.innerHTML = `<div class="text-slate-500 italic">Add neurons and connections first.</div>`;
+                    return;
+                }
+
+                const { order, hasCycle } = getGraphOrder();
+                const incoming = buildIncomingMap();
+
+                const zs = new Map();
+                const outs = new Map();
+
+                order.forEach(node => {
+                    if (node.type === 'input') {
+                        const v = finiteOr(node.value, 0);
+                        zs.set(node.id, v);
+                        outs.set(node.id, v);
+                        return;
+                    }
+                    let z = finiteOr(node.bias, 0);
+                    for (const conn of incoming.get(node.id)) {
+                        const src = outs.get(conn.fromNodeId);
+                        z += (Number.isFinite(src) ? src : 0) * finiteOr(conn.weight, 0);
+                    }
+                    const raw = getAct(node).f(z);
+                    zs.set(node.id, Number.isFinite(z) ? z : 0);
+                    outs.set(node.id, Number.isFinite(raw) ? raw : 0);
+                });
+
+                const logs = [];
+                order.forEach(node => {
+                    if (node.type === 'input') {
+                        logs.push({ node, type: 'input', sum: outs.get(node.id), output: outs.get(node.id) });
+                        return;
+                    }
+                    node.value = outs.get(node.id);
+                    const terms = [];
+                    for (const conn of incoming.get(node.id)) {
+                        const sourceNode = nodes.find(n => n.id === conn.fromNodeId);
+                        const val = outs.get(conn.fromNodeId) ?? 0;
+                        terms.push({
+                            fromName: sourceNode ? sourceNode.name : '?',
+                            val,
+                            weight: conn.weight,
+                            product: val * conn.weight
+                        });
+                    }
+                    logs.push({
+                        node, type: node.type, terms,
+                        bias: finiteOr(node.bias, 0),
+                        sum: zs.get(node.id),
+                        output: outs.get(node.id),
+                        activationName: getAct(node).label
+                    });
+                });
+
+                renderCalculationBreakdown(logs);
+                updateSidebarInputs();
+
+                statusText.textContent = hasCycle
+                    ? "Forward pass executed (warning: the graph contains a cycle)."
+                    : "Forward pass executed successfully.";
+            }
+
+            function renderCalculationBreakdown(logs) {
+                calcBreakdownBody.innerHTML = '';
+                const visibleLogs = logs.filter(l => isVisible(l.node));
+                const hiddenCount = logs.length - visibleLogs.length;
+
+                if (hiddenCount > 0) {
+                    const note = document.createElement('div');
+                    note.className = 'bg-blue-500/10 border border-blue-500/20 text-blue-200 rounded-xl p-2.5 text-[11px] leading-relaxed';
+                    note.textContent = `+${hiddenCount} simulated neuron(s) hidden for clarity. Their math is still computed in every pass.`;
+                    calcBreakdownBody.appendChild(note);
+                }
+
+                visibleLogs.forEach(log => {
+                    const card = document.createElement('div');
+                    card.className = 'bg-cardBg border border-borderCol rounded-xl p-3 space-y-2';
+
+                    if (log.type === 'input') {
+                        card.innerHTML = `
+                            <div class="font-semibold text-blue-400">${escapeHtml(log.node.name)} (Input)</div>
+                            <div class="text-[11px] text-slate-400">Value = <span class="font-mono text-slate-200">${fmt(log.output)}</span></div>
+                        `;
+                    } else {
+                        const termsHtml = log.terms.map(t => `
+                            <div class="text-[11px] text-slate-400 font-mono">
+                                ${escapeHtml(t.fromName)} (${fmt(t.val, 2)}) × ${fmt(t.weight, 3)} = <span class="text-slate-200">${fmt(t.product)}</span>
+                            </div>
+                        `).join('');
+                        const isOut = log.type === 'output';
+                        card.innerHTML = `
+                            <div class="font-semibold ${isOut ? 'text-amber-400' : 'text-emerald-400'}">${escapeHtml(log.node.name)} (${log.type})</div>
+                            <div class="space-y-1">
+                                <div class="text-[10px] text-slate-400 uppercase tracking-wider">Incoming Signals:</div>
+                                ${termsHtml || '<div class="text-[11px] text-slate-500 italic">No incoming weights</div>'}
+                                <div class="text-[11px] text-slate-400 font-mono pt-1">Bias: <span class="text-slate-200">${fmt(log.bias)}</span></div>
+                                <div class="text-[11px] text-slate-400 font-mono">Weighted Sum (z): <span class="text-slate-200">${fmt(log.sum)}</span></div>
+                                <div class="text-[11px] text-slate-400 font-mono">Activation (${log.activationName}): <span class="${isOut ? 'text-amber-300' : 'text-emerald-300'} font-semibold">${fmt(log.output)}</span></div>
+                            </div>
+                        `;
+                    }
+                    calcBreakdownBody.appendChild(card);
+                });
+            }
+
+            /* ============================================================
+               OPTIMIZER HELPERS
+               ============================================================ */
+            function resetOptimizerState() {
+                adamT = 0;
+                connections.forEach(c => { c._mw = 0; c._vw = 0; });
+                nodes.forEach(n => { n._mb = 0; n._vb = 0; });
+            }
+
+            /* ============================================================
+               FAST TRAINING PATH
+               ============================================================ */
+            function buildTrainingCache() {
+                const { order } = getGraphOrder();
+                const nCount = order.length;
+
+                const nodeIndex = new Map();
+                order.forEach((n, i) => nodeIndex.set(n.id, i));
+
+                connections.forEach(c => { c.weight = finiteOr(c.weight, 0); });
+                nodes.forEach(n => { if (n.type !== 'input') n.bias = finiteOr(n.bias, 0); });
+
+                const connSrc = [];
+                const connTgt = [];
+                const connRefs = [];
+                const incomingIdx = new Array(nCount);
+                for (let i = 0; i < nCount; i++) incomingIdx[i] = [];
+
+                for (const c of connections) {
+                    const si = nodeIndex.get(c.fromNodeId);
+                    const ti = nodeIndex.get(c.toNodeId);
+                    if (si === undefined || ti === undefined) continue;
+                    if (order[ti].type === 'input') continue;
+                    const ci = connRefs.length;
+                    connSrc.push(si);
+                    connTgt.push(ti);
+                    connRefs.push(c);
+                    incomingIdx[ti].push(ci);
+                }
+                const nConn = connRefs.length;
+
+                const nodeAct = new Array(nCount);
+                const nodeIsInput = new Uint8Array(nCount);
+                const nodeIsOutput = new Uint8Array(nCount);
+                const outputCol = new Int32Array(nCount).fill(-1);
+                const inputIdx = [];
+                let outCount = 0;
+
+                for (let i = 0; i < nCount; i++) {
+                    const node = order[i];
+                    nodeIsInput[i] = node.type === 'input' ? 1 : 0;
+                    nodeIsOutput[i] = node.type === 'output' ? 1 : 0;
+                    nodeAct[i] = getAct(node);
+                    if (node.type === 'input') inputIdx.push(i);
+                    if (node.type === 'output') outputCol[i] = outCount++;
+                }
+
+                return {
+                    order, nCount,
+                    connSrc, connTgt, connRefs, nConn,
+                    incomingIdx, nodeAct, nodeIsInput, nodeIsOutput,
+                    inputIdx, outputCol, outCount
+                };
+            }
+
+            function runTrainingEpochFast(lr, cache) {
+                const {
+                    order, nCount, connSrc, connTgt, connRefs, nConn,
+                    incomingIdx, nodeAct, nodeIsInput, outputCol, outCount, inputIdx
+                } = cache;
+
+                if (inputIdx.length === 0 || outCount === 0 || trainingDataset.length === 0) return 0;
+
+                const useAdam = optimizerType === 'adam';
+                const nSamples = trainingDataset.length;
+
+                const zs = new Float64Array(nCount);
+                const outs = new Float64Array(nCount);
+                const deltas = new Float64Array(nCount);
+
+                let totalLoss = 0;
+
+                for (let s = 0; s < nSamples; s++) {
+                    const sample = trainingDataset[s];
+
+                    let invBc1 = 1, invBc2 = 1;
+                    if (useAdam) {
+                        adamT++;
+                        invBc1 = 1 / (1 - Math.pow(BETA1, adamT));
+                        invBc2 = 1 / (1 - Math.pow(BETA2, adamT));
+                    }
+
+                    // ---- Forward ----
+                    for (let k = 0; k < inputIdx.length; k++) {
+                        const idx = inputIdx[k];
+                        const v = finiteOr(sample.inputs[k], 0);
+                        zs[idx] = v;
+                        outs[idx] = v;
+                    }
+
+                    for (let i = 0; i < nCount; i++) {
+                        if (nodeIsInput[i]) continue;
+                        const node = order[i];
+                        let z = node.bias;
+                        const inc = incomingIdx[i];
+                        for (let k = 0; k < inc.length; k++) {
+                            const ci = inc[k];
+                            z += outs[connSrc[ci]] * connRefs[ci].weight;
+                        }
+                        const act = nodeAct[i];
+                        const zc = Number.isFinite(z) ? z : 0;
+                        zs[i] = zc;
+                        const raw = act.f(zc);
+                        outs[i] = Number.isFinite(raw) ? raw : 0;
+                    }
+
+                    // ---- Backward ----
+                    deltas.fill(0);
+                    for (let i = nCount - 1; i >= 0; i--) {
+                        if (nodeIsInput[i]) continue;
+                        let downstream = deltas[i];
+                        const ocol = outputCol[i];
+                        if (ocol >= 0) {
+                            const pred = outs[i];
+                            const target = finiteOr(sample.targets ? sample.targets[ocol] : 0, 0);
+                            const err = pred - target;
+                            totalLoss += err * err;
+                            downstream += err;
+                        }
+                        const act = nodeAct[i];
+                        const deriv = act.df(outs[i], zs[i]);
+                        const delta = downstream * (Number.isFinite(deriv) ? deriv : 0);
+                        deltas[i] = delta;
+                        const inc = incomingIdx[i];
+                        for (let k = 0; k < inc.length; k++) {
+                            const ci = inc[k];
+                            deltas[connSrc[ci]] += delta * connRefs[ci].weight;
+                        }
+                    }
+
+                    // ---- Weight updates ----
+                    if (useAdam) {
+                        for (let ci = 0; ci < nConn; ci++) {
+                            const conn = connRefs[ci];
+                            let grad = deltas[connTgt[ci]] * outs[connSrc[ci]];
+                            if (!Number.isFinite(grad)) grad = 0;
+                            else if (grad > GRAD_CLIP) grad = GRAD_CLIP;
+                            else if (grad < -GRAD_CLIP) grad = -GRAD_CLIP;
+
+                            conn._mw = BETA1 * (conn._mw || 0) + (1 - BETA1) * grad;
+                            conn._vw = BETA2 * (conn._vw || 0) + (1 - BETA2) * grad * grad;
+
+                            const mHat = conn._mw * invBc1;
+                            const vHat = conn._vw * invBc2;
+                            const w = conn.weight;
+                            const next = w - lr * mHat / (Math.sqrt(vHat) + ADAM_EPS);
+                            conn.weight = Number.isFinite(next) ? next : w;
+                        }
+                    } else {
+                        for (let ci = 0; ci < nConn; ci++) {
+                            const conn = connRefs[ci];
+                            let grad = deltas[connTgt[ci]] * outs[connSrc[ci]];
+                            if (!Number.isFinite(grad)) grad = 0;
+                            else if (grad > GRAD_CLIP) grad = GRAD_CLIP;
+                            else if (grad < -GRAD_CLIP) grad = -GRAD_CLIP;
+                            const w = conn.weight;
+                            const next = w - lr * grad;
+                            conn.weight = Number.isFinite(next) ? next : w;
+                        }
+                    }
+
+                    // ---- Bias updates ----
+                    if (useAdam) {
+                        for (let i = 0; i < nCount; i++) {
+                            if (nodeIsInput[i]) continue;
+                            const node = order[i];
+                            let grad = deltas[i];
+                            if (!Number.isFinite(grad)) grad = 0;
+                            else if (grad > GRAD_CLIP) grad = GRAD_CLIP;
+                            else if (grad < -GRAD_CLIP) grad = -GRAD_CLIP;
+
+                            node._mb = BETA1 * (node._mb || 0) + (1 - BETA1) * grad;
+                            node._vb = BETA2 * (node._vb || 0) + (1 - BETA2) * grad * grad;
+
+                            const mHat = node._mb * invBc1;
+                            const vHat = node._vb * invBc2;
+                            const b = node.bias;
+                            const next = b - lr * mHat / (Math.sqrt(vHat) + ADAM_EPS);
+                            node.bias = Number.isFinite(next) ? next : b;
+                        }
+                    } else {
+                        for (let i = 0; i < nCount; i++) {
+                            if (nodeIsInput[i]) continue;
+                            const node = order[i];
+                            let grad = deltas[i];
+                            if (!Number.isFinite(grad)) grad = 0;
+                            else if (grad > GRAD_CLIP) grad = GRAD_CLIP;
+                            else if (grad < -GRAD_CLIP) grad = -GRAD_CLIP;
+                            const b = node.bias;
+                            const next = b - lr * grad;
+                            node.bias = Number.isFinite(next) ? next : b;
+                        }
+                    }
+                }
+
+                for (let i = 0; i < nCount; i++) {
+                    if (nodeIsInput[i]) continue;
+                    order[i].value = outs[i];
+                }
+
+                return totalLoss / (nSamples * outCount);
+            }
+
+            /* ============================================================
+               PARAMETER SNAPSHOT (for divergence rollback)
+               ============================================================ */
+            function captureParameters() {
+                return {
+                    weights: new Map(connections.map(c => [c.id, c.weight])),
+                    biases:  new Map(nodes.filter(n => n.type !== 'input').map(n => [n.id, n.bias]))
+                };
+            }
+
+            function restoreParameters(snap) {
+                connections.forEach(c => {
+                    if (snap.weights.has(c.id)) c.weight = snap.weights.get(c.id);
+                });
+                nodes.forEach(n => {
+                    if (snap.biases.has(n.id)) n.bias = snap.biases.get(n.id);
+                });
+            }
+
+            /* ============================================================
+               SIDEBAR INPUTS
+               ============================================================ */
+            function updateSidebarInputs() {
+                const inputNodes = nodes.filter(n => n.type === 'input');
+
+                if (inputNodes.length === 0) {
+                    sidebarInputsContainer.innerHTML = `<div class="text-xs text-slate-500 italic">No input neurons on canvas yet.</div>`;
+                    return;
+                }
+
+                sidebarInputsContainer.innerHTML = '';
+                inputNodes.forEach(node => {
+                    const div = document.createElement('div');
+                    div.className = 'flex items-center justify-between bg-darkBg px-2.5 py-1.5 rounded-lg border border-borderCol text-xs';
+                    if (!isVisible(node)) {
+                        div.classList.add('opacity-60');
+                        div.title = 'Simulated but not drawn';
+                    }
+                    div.innerHTML = `
+                        <span class="text-slate-300 font-medium truncate w-24">${escapeHtml(node.name)}</span>
+                        <input type="number" step="0.1" value="${node.value}" data-id="${node.id}" class="sidebar-input-val w-20 bg-cardBg border border-borderCol rounded px-2 py-1 text-slate-100 text-right font-mono focus:outline-none focus:ring-1 focus:ring-blue-500">
+                    `;
+                    sidebarInputsContainer.appendChild(div);
+                });
+
+                document.querySelectorAll('.sidebar-input-val').forEach(input => {
+                    input.addEventListener('input', (e) => {
+                        const id = parseInt(e.target.getAttribute('data-id'));
+                        const val = parseFloat(e.target.value);
+                        const node = nodes.find(n => n.id === id);
+                        if (node) {
+                            node.value = Number.isFinite(val) ? val : 0;
+                            draw();
+                        }
+                    });
+                });
+            }
+
+            /* ============================================================
+               DATASET TABLE
+               ============================================================ */
+            function normalizeRow(row, inputCount, outputCount) {
+                if (!Array.isArray(row.inputs)) row.inputs = [];
+                if (!Array.isArray(row.targets)) {
+                    row.targets = [Number(row.target) || 0];
+                    delete row.target;
+                }
+                while (row.inputs.length < inputCount) row.inputs.push(0);
+                if (row.inputs.length > inputCount) row.inputs.length = inputCount;
+                while (row.targets.length < outputCount) row.targets.push(0);
+                if (row.targets.length > outputCount) row.targets.length = outputCount;
+                return row;
+            }
+
+            function renderDatasetTable() {
+                const thead = document.getElementById('dataset-thead');
+                const tbody = document.getElementById('dataset-tbody');
+                const inputCount  = Math.max(1, nodes.filter(n => n.type === 'input').length);
+                const outputCount = Math.max(1, nodes.filter(n => n.type === 'output').length);
+
+                let headerHtml = '<tr>';
+                for (let i = 1; i <= inputCount; i++) {
+                    headerHtml += `<th class="p-2 text-[10px] font-mono whitespace-nowrap">In ${i}</th>`;
+                }
+                for (let k = 1; k <= outputCount; k++) {
+                    headerHtml += `<th class="p-2 text-[10px] font-mono text-emerald-400 whitespace-nowrap">${outputCount > 1 ? 'Target ' + k : 'Target'}</th>`;
+                }
+                headerHtml += '<th class="p-2 w-8"></th></tr>';
+                thead.innerHTML = headerHtml;
+
+                tbody.innerHTML = '';
+                if (trainingDataset.length === 0) {
+                    tbody.innerHTML = `<tr><td colspan="${inputCount + outputCount + 1}" class="p-3 text-center text-slate-500 italic text-[11px]">No training examples. Click "+ Add Example".</td></tr>`;
+                    return;
+                }
+
+                trainingDataset.forEach((row, rowIndex) => {
+                    normalizeRow(row, inputCount, outputCount);
+                    const tr = document.createElement('tr');
+                    let rowHtml = '';
+
+                    for (let i = 0; i < inputCount; i++) {
+                        rowHtml += `
+                            <td class="p-1.5">
+                                <input type="number" step="any" value="${row.inputs[i]}" data-row="${rowIndex}" data-col="${i}" class="dataset-input-cell w-full min-w-[60px] bg-darkBg border border-borderCol rounded px-1.5 py-1 text-slate-200 text-xs font-mono text-center focus:outline-none focus:ring-1 focus:ring-blue-500">
+                            </td>`;
+                    }
+                    for (let k = 0; k < outputCount; k++) {
+                        rowHtml += `
+                            <td class="p-1.5">
+                                <input type="number" step="any" value="${row.targets[k]}" data-row="${rowIndex}" data-col="${k}" class="dataset-target-cell w-full min-w-[60px] bg-darkBg border border-borderCol rounded px-1.5 py-1 text-emerald-300 text-xs font-mono text-center focus:outline-none focus:ring-1 focus:ring-emerald-500">
+                            </td>`;
+                    }
+                    rowHtml += `
+                        <td class="p-1.5 text-center">
+                            <button data-row="${rowIndex}" class="btn-delete-row text-slate-500 hover:text-rose-400 p-1 rounded transition-all" title="Remove Example">
+                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                            </button>
+                        </td>`;
+                    tr.innerHTML = rowHtml;
+                    tbody.appendChild(tr);
+                });
+
+                document.querySelectorAll('.dataset-input-cell').forEach(input => {
+                    input.addEventListener('input', (e) => {
+                        const r = parseInt(e.target.getAttribute('data-row'));
+                        const c = parseInt(e.target.getAttribute('data-col'));
+                        const val = parseFloat(e.target.value);
+                        if (trainingDataset[r]) trainingDataset[r].inputs[c] = Number.isFinite(val) ? val : 0;
+                    });
+                });
+                document.querySelectorAll('.dataset-target-cell').forEach(input => {
+                    input.addEventListener('input', (e) => {
+                        const r = parseInt(e.target.getAttribute('data-row'));
+                        const c = parseInt(e.target.getAttribute('data-col'));
+                        const val = parseFloat(e.target.value);
+                        if (trainingDataset[r]) trainingDataset[r].targets[c] = Number.isFinite(val) ? val : 0;
+                    });
+                });
+                document.querySelectorAll('.btn-delete-row').forEach(btn => {
+                    btn.addEventListener('click', (e) => {
+                        const r = parseInt(e.currentTarget.getAttribute('data-row'));
+                        trainingDataset.splice(r, 1);
+                        renderDatasetTable();
+                    });
+                });
+            }
+
+            document.getElementById('btn-add-row').addEventListener('click', () => {
+                const inputCount  = Math.max(1, nodes.filter(n => n.type === 'input').length);
+                const outputCount = Math.max(1, nodes.filter(n => n.type === 'output').length);
+                trainingDataset.push({
+                    inputs: new Array(inputCount).fill(0),
+                    targets: new Array(outputCount).fill(0)
+                });
+                renderDatasetTable();
+            });
+
+            document.getElementById('btn-clear-dataset').addEventListener('click', () => {
+                trainingDataset = [];
+                renderDatasetTable();
+                statusText.textContent = "Training dataset cleared.";
+            });
+
+            document.getElementById('btn-preset-double').addEventListener('click', () => {
+                trainingDataset = [
+                    { inputs: [1], targets: [2] },
+                    { inputs: [2], targets: [4] },
+                    { inputs: [3], targets: [6] },
+                    { inputs: [4], targets: [8] },
+                    { inputs: [5], targets: [10] }
+                ];
+                renderDatasetTable();
+                statusText.textContent = "Loaded preset: Double the number (1 input, linear output).";
+            });
+
+            document.getElementById('btn-preset-add').addEventListener('click', () => {
+                trainingDataset = [
+                    { inputs: [1, 1], targets: [2] },
+                    { inputs: [1, 2], targets: [3] },
+                    { inputs: [2, 3], targets: [5] },
+                    { inputs: [3, 4], targets: [7] }
+                ];
+                renderDatasetTable();
+                statusText.textContent = "Loaded preset: Addition (2 inputs, linear output).";
+            });
+
+            document.getElementById('btn-preset-xor').addEventListener('click', () => {
+                trainingDataset = [
+                    { inputs: [0, 0], targets: [0] },
+                    { inputs: [0, 1], targets: [1] },
+                    { inputs: [1, 0], targets: [1] },
+                    { inputs: [1, 1], targets: [0] }
+                ];
+                renderDatasetTable();
+                statusText.textContent = "Loaded preset: XOR logic gate (2 inputs).";
+            });
+
+            /* ============================================================
+               NETWORK INFO / STATS
+               ============================================================ */
+            function updateNetworkInfo() {
+                document.getElementById('info-inputs').textContent  = nodes.filter(n => n.type === 'input').length;
+                document.getElementById('info-hidden').textContent  = nodes.filter(n => n.type === 'hidden').length;
+                document.getElementById('info-outputs').textContent = nodes.filter(n => n.type === 'output').length;
+                document.getElementById('info-weights').textContent = connections.length;
+
+                const visibleCount = nodes.filter(isVisible).length;
+                const hiddenByLimit = nodes.length - visibleCount;
+                const infoEl = document.getElementById('visible-info');
+                infoEl.textContent = hiddenByLimit > 0
+                    ? `${visibleCount} drawn · ${hiddenByLimit} simulated only`
+                    : '';
+
+                renderDatasetTable();
+            }
+
+            function updateStats() {
+                nodeCountBadge.textContent = `${nodes.length} Neurons`;
+                updateSidebarInputs();
+                updateNetworkInfo();
+            }
+
+            /* ============================================================
+               NODE CREATION
+               ============================================================ */
+            function randomBias() {
+                return Number(((Math.random() * 2 - 1) * 0.2).toFixed(4));
+            }
+
+            function randomWeightFor(toNodeId) {
+                const fanIn = Math.max(1, connections.filter(c => c.toNodeId === toNodeId).length);
+                const limit = Math.sqrt(6 / (fanIn + 1));
+                return Number(((Math.random() * 2 - 1) * limit).toFixed(4));
+            }
+
+            function makeNode(type, x, y) {
+                const id = nextId++;
+                const node = {
+                    id, type,
+                    name: `${type.charAt(0).toUpperCase() + type.slice(1)} ${id}`,
+                    x: Math.round(x / gridSize) * gridSize,
+                    y: Math.round(y / gridSize) * gridSize,
+                    value: type === 'input' ? 0.5 : 0.0,
+                    bias: type === 'input' ? 0 : randomBias(),
+                    radius: 26,
+                    visible: true
+                };
+                nodes.push(node);
+                return node;
+            }
+
+            function addNode(type, x, y) {
+                const rect = container.getBoundingClientRect();
+                const rawX = (x !== undefined) ? x : ((rect.width / 2 - panX) / zoom);
+                const rawY = (y !== undefined) ? y : ((rect.height / 2 - panY) / zoom);
+                makeNode(type, rawX, rawY);
+                updateStats();
+                draw();
+            }
+
+            /* ============================================================
+               LAYER DETECTION / AUTO-LAYOUT / AUTO-WIRING
+               ============================================================ */
+            const LAYOUT_COL = 192;
+            const LAYOUT_ROW = 96;
+
+            function computeLayers() {
+                const inputs  = nodes.filter(n => n.type === 'input').sort((a, b) => a.y - b.y);
+                const hidden  = nodes.filter(n => n.type === 'hidden');
+                const outputs = nodes.filter(n => n.type === 'output').sort((a, b) => a.y - b.y);
+
+                const columns = [];
+                hidden.slice().sort((a, b) => a.x - b.x).forEach(n => {
+                    let col = columns.find(c => Math.abs(c.x - n.x) <= 80);
+                    if (!col) { col = { x: n.x, nodes: [] }; columns.push(col); }
+                    col.nodes.push(n);
+                });
+                columns.sort((a, b) => a.x - b.x);
+                columns.forEach(c => c.nodes.sort((a, b) => a.y - b.y));
+
+                const layers = [];
+                if (inputs.length) layers.push(inputs);
+                columns.forEach(c => layers.push(c.nodes));
+                if (outputs.length) layers.push(outputs);
+                return layers;
+            }
+
+            function layoutNetwork() {
+                const layers = computeLayers();
+                if (layers.length === 0) return;
+                layers.forEach((layer, li) => {
+                    const x = Math.round((li * LAYOUT_COL) / gridSize) * gridSize;
+                    const visible = layer.filter(isVisible);
+                    const offset = -((visible.length - 1) * LAYOUT_ROW) / 2;
+                    let vi = 0;
+                    layer.forEach(n => {
+                        n.x = x;
+                        if (isVisible(n)) {
+                            n.y = Math.round((offset + vi * LAYOUT_ROW) / gridSize) * gridSize;
+                            vi++;
+                        } else {
+                            n.y = 0;
+                        }
+                    });
+                });
+            }
+
+            function autoWireNetwork() {
+                const layers = computeLayers();
+                connections = [];
+                for (let i = 0; i < layers.length - 1; i++) {
+                    const from = layers[i];
+                    const to   = layers[i + 1];
+                    const limit = Math.sqrt(6 / Math.max(2, from.length + to.length));
+                    from.forEach(f => {
+                        to.forEach(t => {
+                            connections.push({
+                                id: nextId++,
+                                fromNodeId: f.id,
+                                toNodeId: t.id,
+                                weight: Number(((Math.random() * 2 - 1) * limit).toFixed(4))
+                            });
+                        });
+                    });
+                }
+            }
+
+            /* ============================================================
+               QUICK BUILD
+               ============================================================ */
+            const qbModal = document.getElementById('quickbuild-modal');
+
+            function readQbConfig() {
+                return {
+                    inputs:         clampInt(document.getElementById('qb-inputs').value, 0, MAX_LAYER_SIZE),
+                    hiddenLayers:   clampInt(document.getElementById('qb-hidden-layers').value, 0, 8),
+                    hiddenPerLayer: clampInt(document.getElementById('qb-hidden-per').value, 0, MAX_LAYER_SIZE),
+                    outputs:        clampInt(document.getElementById('qb-outputs').value, 0, MAX_LAYER_SIZE),
+                    replace:        document.getElementById('qb-replace').checked,
+                    arrange:        document.getElementById('qb-arrange').checked
+                };
+            }
+
+            function updateQbEstimate() {
+                const cfg = readQbConfig();
+                let conn = 0;
+                if (cfg.hiddenLayers > 0) {
+                    conn += cfg.inputs * cfg.hiddenPerLayer;
+                    conn += Math.max(0, cfg.hiddenLayers - 1) * cfg.hiddenPerLayer * cfg.hiddenPerLayer;
+                    conn += cfg.hiddenPerLayer * cfg.outputs;
+                } else {
+                    conn += cfg.inputs * cfg.outputs;
+                }
+                const totalNeurons = cfg.inputs + cfg.hiddenLayers * cfg.hiddenPerLayer + cfg.outputs;
+                const estimate = document.getElementById('qb-estimate');
+                estimate.textContent = `≈ ${totalNeurons} neurons · ${conn.toLocaleString()} weights`;
+                estimate.style.color = conn > 100000 ? '#fca5a5' : (conn > 20000 ? '#fcd34d' : '#94a3b8');
+            }
+
+            ['qb-inputs', 'qb-outputs', 'qb-hidden-layers', 'qb-hidden-per'].forEach(id => {
+                document.getElementById(id).addEventListener('input', updateQbEstimate);
+            });
+
+            function openQuickBuild(type) {
+                const fieldMap = { input: 'qb-inputs', hidden: 'qb-hidden-layers', output: 'qb-outputs' };
+                document.getElementById('qb-replace').checked = (nodes.length === 0);
+                updateQbEstimate();
+                qbModal.classList.remove('hidden');
+                const field = document.getElementById(fieldMap[type] || 'qb-inputs');
+                field.focus();
+                try { field.select(); } catch (e) {}
+            }
+
+            function createLayer(type, count, baseX, baseY) {
+                for (let i = 0; i < count; i++) {
+                    const n = makeNode(type, baseX, baseY + LAYOUT_ROW * (i + 1));
+                    n.visible = (i < VISIBLE_LIMIT);
+                }
+            }
+
+            function quickBuildNetwork(cfg) {
+                trainingActive = false;
+                btnTrain.textContent = 'Start Training';
+
+                if (cfg.replace) {
+                    nodes = [];
+                    connections = [];
+                    selectedNodeIds.clear();
+                    lossHistory = [];
+                    document.getElementById('training-stats').textContent = 'Epoch: 0 | Loss: --';
+                    drawLossGraph();
+                }
+
+                const minX = nodes.length ? Math.min(...nodes.map(n => n.x)) : 0;
+                const maxX = nodes.length ? Math.max(...nodes.map(n => n.x)) : 0;
+                const existingHidden  = nodes.filter(n => n.type === 'hidden');
+                const existingInputs  = nodes.filter(n => n.type === 'input');
+                const existingOutputs = nodes.filter(n => n.type === 'output');
+                const hiddenBaseX = existingHidden.length ? Math.max(...existingHidden.map(n => n.x)) : 0;
+                const inputBaseY  = existingInputs.length ? Math.max(...existingInputs.map(n => n.y)) : -LAYOUT_ROW;
+                const outputBaseY = existingOutputs.length ? Math.max(...existingOutputs.map(n => n.y)) : -LAYOUT_ROW;
+
+                const addedByType = { input: 0, hidden: 0, output: 0 };
+
+                createLayer('input', cfg.inputs, minX - LAYOUT_COL, inputBaseY);
+                addedByType.input += cfg.inputs;
+
+                for (let l = 0; l < cfg.hiddenLayers; l++) {
+                    const offset = -((cfg.hiddenPerLayer - 1) * LAYOUT_ROW) / 2;
+                    createLayer('hidden', cfg.hiddenPerLayer, hiddenBaseX + LAYOUT_COL * (l + 1), offset);
+                    addedByType.hidden += cfg.hiddenPerLayer;
+                }
+
+                createLayer('output', cfg.outputs, maxX + LAYOUT_COL, outputBaseY);
+                addedByType.output += cfg.outputs;
+
+                if (cfg.arrange) layoutNetwork();
+                autoWireNetwork();
+
+                resetOptimizerState();
+                updateStats();
+                fitToView();
+
+                const parts = [];
+                if (addedByType.input)  parts.push(`${addedByType.input} input`);
+                if (addedByType.hidden) parts.push(`${addedByType.hidden} hidden`);
+                if (addedByType.output) parts.push(`${addedByType.output} output`);
+
+                const hiddenByLimit = nodes.length - nodes.filter(isVisible).length;
+                const limitNote = hiddenByLimit > 0 ? ` (${hiddenByLimit} simulated but not drawn)` : '';
+
+                statusText.textContent = parts.length
+                    ? `Quick build: added ${parts.join(' + ')} neuron(s), wired ${connections.length} connections${limitNote}.`
+                    : `Quick build: network re-wired (${connections.length} connections).`;
+            }
+
+            document.getElementById('qb-cancel').addEventListener('click', () => {
+                qbModal.classList.add('hidden');
+            });
+
+            document.getElementById('qb-build').addEventListener('click', () => {
+                const cfg = readQbConfig();
+                if (cfg.inputs + (cfg.hiddenLayers * cfg.hiddenPerLayer) + cfg.outputs === 0) {
+                    qbModal.classList.add('hidden');
+                    statusText.textContent = "Quick build cancelled — no neurons requested.";
+                    return;
+                }
+                qbModal.classList.add('hidden');
+                quickBuildNetwork(cfg);
+            });
+
+            /* ============================================================
+               DRAG & DROP SPAWNING  (+ Shift+Click / tap quick build)
+               ============================================================ */
+            const isTouchDevice = window.matchMedia('(hover: none)').matches;
+
+            document.querySelectorAll('.spawner-item').forEach(item => {
+                item.addEventListener('dragstart', (e) => {
+                    draggedNodeType = e.currentTarget.getAttribute('data-type');
+                    suppressSpawnerClick = false;
+                    e.dataTransfer.setData('text/plain', draggedNodeType);
+                    const blankImg = new Image();
+                    blankImg.src = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7';
+                    e.dataTransfer.setDragImage(blankImg, 0, 0);
+                });
+                item.addEventListener('dragend', () => {
+                    draggedNodeType = null;
+                    ghostPos = null;
+                    suppressSpawnerClick = true;
+                    setTimeout(() => { suppressSpawnerClick = false; }, 0);
+                    draw();
+                });
+                item.addEventListener('click', (e) => {
+                    const shouldOpenQuick = e.shiftKey || isTouchDevice;
+                    if (!shouldOpenQuick) return;
+                    if (suppressSpawnerClick) { suppressSpawnerClick = false; return; }
+                    e.preventDefault();
+                    e.stopPropagation();
+                    openQuickBuild(e.currentTarget.getAttribute('data-type'));
+                });
+            });
+
+            container.addEventListener('dragover', (e) => {
+                e.preventDefault();
+                if (!draggedNodeType) return;
+                const p = screenToWorld(e.clientX, e.clientY);
+                ghostPos = {
+                    type: draggedNodeType,
+                    x: Math.round(p.x / gridSize) * gridSize,
+                    y: Math.round(p.y / gridSize) * gridSize
+                };
+                draw();
+            });
+
+            container.addEventListener('dragleave', (e) => {
+                if (!container.contains(e.relatedTarget)) { ghostPos = null; draw(); }
+            });
+
+            container.addEventListener('drop', (e) => {
+                e.preventDefault();
+                if (!draggedNodeType) return;
+                const p = screenToWorld(e.clientX, e.clientY);
+                addNode(draggedNodeType, p.x, p.y);
+                draggedNodeType = null;
+                ghostPos = null;
+            });
+
+            /* ============================================================
+               SETTINGS LISTENERS
+               ============================================================ */
+            document.getElementById('activation-select').addEventListener('change', (e) => {
+                hiddenActivation = e.target.value;
+                resetOptimizerState();
+                statusText.textContent = `Hidden activation set to ${ACTIVATIONS[hiddenActivation].label}.`;
+            });
+
+            document.getElementById('output-activation-select').addEventListener('change', (e) => {
+                outputActivation = e.target.value;
+                resetOptimizerState();
+                statusText.textContent = `Output activation set to ${ACTIVATIONS[outputActivation].label}.`;
+            });
+
+            document.getElementById('optimizer-select').addEventListener('change', (e) => {
+                optimizerType = e.target.value;
+                const lrInput = document.getElementById('train-lr');
+                lrInput.value = (optimizerType === 'adam') ? '0.01' : '0.5';
+                resetOptimizerState();
+                statusText.textContent = `Optimizer set to ${optimizerType === 'adam' ? 'Adam' : 'SGD'}.`;
+            });
+
+            /* ============================================================
+               ZOOM CONTROLS
+               ============================================================ */
+            document.getElementById('btn-zoom-in').addEventListener('click', () => zoomAt(1.2));
+            document.getElementById('btn-zoom-out').addEventListener('click', () => zoomAt(1 / 1.2));
+            document.getElementById('btn-fit').addEventListener('click', () => fitToView());
+
+            canvas.addEventListener('wheel', (e) => {
+                e.preventDefault();
+                const rect = canvas.getBoundingClientRect();
+                const factor = Math.exp(-e.deltaY * 0.0015);
+                zoomAt(factor, e.clientX - rect.left, e.clientY - rect.top);
+            }, { passive: false });
+
+            /* ============================================================
+               PRESET / CLEAR
+               ============================================================ */
+            document.getElementById('btn-load-preset').addEventListener('click', () => {
+                trainingActive = false;
+                btnTrain.textContent = 'Start Training';
+                nodes = []; connections = []; selectedNodeIds.clear(); nextId = 1;
+
+                const cx = Math.round((container.clientWidth / 2) / gridSize) * gridSize;
+                const cy = Math.round((container.clientHeight / 2) / gridSize) * gridSize;
+
+                const i1 = { id: nextId++, type: 'input',  name: 'Input 1',  x: cx - 160, y: cy - 64, value: 0.0, bias: 0, radius: 26, visible: true };
+                const i2 = { id: nextId++, type: 'input',  name: 'Input 2',  x: cx - 160, y: cy + 64, value: 1.0, bias: 0, radius: 26, visible: true };
+                const h1 = { id: nextId++, type: 'hidden', name: 'Hidden 1', x: cx,       y: cy - 64, value: 0,   bias: randomBias(), radius: 26, visible: true };
+                const h2 = { id: nextId++, type: 'hidden', name: 'Hidden 2', x: cx,       y: cy + 64, value: 0,   bias: randomBias(), radius: 26, visible: true };
+                const o1 = { id: nextId++, type: 'output', name: 'Output 1', x: cx + 160, y: cy,      value: 0,   bias: randomBias(), radius: 26, visible: true };
+
+                nodes.push(i1, i2, h1, h2, o1);
+                connections.push(
+                    { id: nextId++, fromNodeId: i1.id, toNodeId: h1.id, weight: 0.8 },
+                    { id: nextId++, fromNodeId: i1.id, toNodeId: h2.id, weight: -0.5 },
+                    { id: nextId++, fromNodeId: i2.id, toNodeId: h1.id, weight: 0.6 },
+                    { id: nextId++, fromNodeId: i2.id, toNodeId: h2.id, weight: 0.9 },
+                    { id: nextId++, fromNodeId: h1.id, toNodeId: o1.id, weight: 1.1 },
+                    { id: nextId++, fromNodeId: h2.id, toNodeId: o1.id, weight: -0.7 }
+                );
+
+                trainingDataset = [
+                    { inputs: [0, 0], targets: [0] },
+                    { inputs: [0, 1], targets: [1] },
+                    { inputs: [1, 0], targets: [1] },
+                    { inputs: [1, 1], targets: [0] }
+                ];
+
+                lossHistory = [];
+                drawLossGraph();
+                resetOptimizerState();
+                updateStats();
+                fitToView();
+                closeDrawers();
+                statusText.textContent = "Sample neural network and XOR dataset loaded.";
+            });
+
+            document.getElementById('btn-clear').addEventListener('click', () => {
+                trainingActive = false;
+                btnTrain.textContent = 'Start Training';
+                nodes = []; connections = []; selectedNodeIds.clear(); wiring = null;
+                trainingDataset = [];
+                lossHistory = [];
+                resetOptimizerState();
+                document.getElementById('training-stats').textContent = `Epoch: 0 | Loss: --`;
+                drawLossGraph();
+                updateStats();
+                zoom = 1; panX = 0; panY = 0;
+                updateZoomBadge();
+                draw();
+                calcBreakdownBody.innerHTML = `<div class="text-slate-500 italic">Canvas cleared.</div>`;
+                statusText.textContent = "Canvas cleared.";
+            });
+
+            /* ============================================================
+               CANVAS POINTER INTERACTION  (mouse + touch + stylus)
+               ============================================================ */
+            const activePointers = new Map();
+            let pinchStartDist = 0;
+            let pinchStartZoom = 1;
+            let pinchCenterX = 0, pinchCenterY = 0;
+            let pinchActive = false;
+
+            canvas.addEventListener('pointerdown', (e) => {
+                // Track all active pointers for pinch detection
+                activePointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
+
+                if (activePointers.size === 2) {
+                    // Start pinch zoom
+                    const pts = [...activePointers.values()];
+                    pinchStartDist = Math.hypot(pts[0].x - pts[1].x, pts[0].y - pts[1].y);
+                    pinchStartZoom = zoom;
+                    const rect = canvas.getBoundingClientRect();
+                    pinchCenterX = (pts[0].x + pts[1].x) / 2 - rect.left;
+                    pinchCenterY = (pts[0].y + pts[1].y) / 2 - rect.top;
+                    pinchActive = true;
+                    // Cancel any current interaction
+                    draggingNode = null;
+                    panning = false;
+                    wiring = null;
+                    selectionBox = null;
+                    return;
+                }
+
+                if (pinchActive) return;
+
+                const isRight = (e.pointerType === 'mouse' && e.button === 2);
+                const isLeft  = (e.pointerType !== 'mouse') || (e.button === 0);
+
+                try { canvas.setPointerCapture(e.pointerId); } catch (err) {}
+
+                const p = screenToWorld(e.clientX, e.clientY);
+                const mouseX = p.x, mouseY = p.y;
+
+                if (isRight) {
+                    e.preventDefault();
+                    const clickedNode = nodes.find(n => isVisible(n) && Math.hypot(n.x - mouseX, n.y - mouseY) <= n.radius);
+                    if (clickedNode) { openInspector('node', clickedNode); return; }
+                    const clickedWeight = connections.find(conn => {
+                        const fromN = nodes.find(n => n.id === conn.fromNodeId);
+                        const toN = nodes.find(n => n.id === conn.toNodeId);
+                        if (!fromN || !toN) return false;
+                        if (!isVisible(fromN) || !isVisible(toN)) return false;
+                        return distToSegment({ x: mouseX, y: mouseY }, getOutputPinPos(fromN), getInputPinPos(toN)) < 10;
+                    });
+                    if (clickedWeight) { openInspector('weight', clickedWeight); return; }
+                    return;
+                }
+
+                if (!isLeft) return;
+
+                if (e.shiftKey && e.pointerType === 'mouse') {
+                    selectionBox = { startX: mouseX, startY: mouseY, currentX: mouseX, currentY: mouseY };
+                    draw();
+                    return;
+                }
+
+                const clickedPin = nodes.find(n => isVisible(n) && Math.hypot(getOutputPinPos(n).x - mouseX, getOutputPinPos(n).y - mouseY) <= 10);
+                if (clickedPin) { wiring = { fromNodeId: clickedPin.id, mouseX, mouseY }; return; }
+
+                const clickedNode = nodes.slice().reverse().find(n => isVisible(n) && Math.hypot(n.x - mouseX, n.y - mouseY) <= n.radius);
+                if (clickedNode) {
+                    if (!selectedNodeIds.has(clickedNode.id)) {
+                        selectedNodeIds.clear();
+                        selectedNodeIds.add(clickedNode.id);
+                    }
+                    draggingNode = clickedNode;
+                    dragOffsets.clear();
+                    selectedNodeIds.forEach(id => {
+                        const n = nodes.find(node => node.id === id);
+                        if (n) dragOffsets.set(id, { x: mouseX - n.x, y: mouseY - n.y });
+                    });
+                    draw();
+                    return;
+                }
+
+                selectedNodeIds.clear();
+                panning = true;
+                startX = e.clientX - panX;
+                startY = e.clientY - panY;
+                draw();
+            });
+
+            canvas.addEventListener('pointermove', (e) => {
+                if (activePointers.has(e.pointerId)) {
+                    activePointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
+                }
+
+                if (pinchActive && activePointers.size >= 2) {
+                    const pts = [...activePointers.values()];
+                    const dist = Math.hypot(pts[0].x - pts[1].x, pts[0].y - pts[1].y);
+                    if (pinchStartDist > 0) {
+                        const factor = dist / pinchStartDist;
+                        const targetZoom = Math.max(MIN_ZOOM, Math.min(MAX_ZOOM, pinchStartZoom * factor));
+                        const rect = canvas.getBoundingClientRect();
+                        const cx = (pts[0].x + pts[1].x) / 2 - rect.left;
+                        const cy = (pts[0].y + pts[1].y) / 2 - rect.top;
+                        const worldX = (pinchCenterX - panX) / zoom;
+                        const worldY = (pinchCenterY - panY) / zoom;
+                        zoom = targetZoom;
+                        panX = cx - worldX * zoom;
+                        panY = cy - worldY * zoom;
+                        updateZoomBadge();
+                        draw();
+                    }
+                    return;
+                }
+
+                const p = screenToWorld(e.clientX, e.clientY);
+                const mouseX = p.x, mouseY = p.y;
+
+                if (selectionBox) { selectionBox.currentX = mouseX; selectionBox.currentY = mouseY; draw(); return; }
+                if (wiring) { wiring.mouseX = mouseX; wiring.mouseY = mouseY; draw(); return; }
+
+                if (draggingNode) {
+                    dragOffsets.forEach((offset, id) => {
+                        const n = nodes.find(node => node.id === id);
+                        if (n) {
+                            n.x = Math.round((mouseX - offset.x) / gridSize) * gridSize;
+                            n.y = Math.round((mouseY - offset.y) / gridSize) * gridSize;
+                        }
+                    });
+                    draw();
+                    return;
+                }
+
+                if (panning) { panX = e.clientX - startX; panY = e.clientY - startY; draw(); return; }
+            });
+
+            function handlePointerEnd(e) {
+                const wasPinching = pinchActive;
+                activePointers.delete(e.pointerId);
+
+                if (activePointers.size < 2) {
+                    pinchStartDist = 0;
+                    pinchActive = false;
+                }
+
+                if (wasPinching) {
+                    // Don't process additional end-of-gesture logic while unwinding pinch
+                    return;
+                }
+
+                if (e.pointerType === 'mouse' && e.button !== 0 && e.button !== undefined && e.button !== -1) {
+                    // For non-primary mouse buttons, nothing else to do
+                }
+
+                const p = screenToWorld(e.clientX, e.clientY);
+                const mouseX = p.x, mouseY = p.y;
+
+                if (selectionBox) {
+                    const minX = Math.min(selectionBox.startX, selectionBox.currentX);
+                    const maxX = Math.max(selectionBox.startX, selectionBox.currentX);
+                    const minY = Math.min(selectionBox.startY, selectionBox.currentY);
+                    const maxY = Math.max(selectionBox.startY, selectionBox.currentY);
+                    selectedNodeIds.clear();
+                    nodes.forEach(n => {
+                        if (!isVisible(n)) return;
+                        if (n.x >= minX && n.x <= maxX && n.y >= minY && n.y <= maxY) selectedNodeIds.add(n.id);
+                    });
+                    selectionBox = null;
+                    draw();
+                    return;
+                }
+
+                if (wiring) {
+                    const targetNode = nodes.find(n => isVisible(n) && Math.hypot(getInputPinPos(n).x - mouseX, getInputPinPos(n).y - mouseY) <= 14);
+                    if (targetNode && targetNode.id !== wiring.fromNodeId && targetNode.type !== 'input') {
+                        const exists = connections.some(c => c.fromNodeId === wiring.fromNodeId && c.toNodeId === targetNode.id);
+                        if (!exists) {
+                            connections.push({
+                                id: nextId++,
+                                fromNodeId: wiring.fromNodeId,
+                                toNodeId: targetNode.id,
+                                weight: randomWeightFor(targetNode.id)
+                            });
+                            resetOptimizerState();
+                            updateNetworkInfo();
+                        }
+                    }
+                    wiring = null;
+                    draw();
+                }
+
+                draggingNode = null;
+                panning = false;
+            }
+
+            canvas.addEventListener('pointerup', handlePointerEnd);
+            canvas.addEventListener('pointercancel', handlePointerEnd);
+
+            window.addEventListener('keydown', (e) => {
+                if (['INPUT', 'SELECT', 'TEXTAREA'].includes(document.activeElement.tagName)) return;
+
+                if (e.key === 'Backspace' || e.key === 'Delete') {
+                    if (selectedNodeIds.size > 0) {
+                        const count = selectedNodeIds.size;
+                        nodes = nodes.filter(n => !selectedNodeIds.has(n.id));
+                        connections = connections.filter(c => !selectedNodeIds.has(c.fromNodeId) && !selectedNodeIds.has(c.toNodeId));
+                        selectedNodeIds.clear();
+                        resetOptimizerState();
+                        updateStats();
+                        draw();
+                        statusText.textContent = `Deleted ${count} selected neuron(s).`;
+                    }
+                    return;
+                }
+
+                if (e.key === 'f' || e.key === 'F') fitToView();
+                if (e.key === 'Escape') closeDrawers();
+            });
+
+            /* ============================================================
+               LOSS GRAPH
+               ============================================================ */
+            function drawLossGraph() {
+                const w = lossCanvas.clientWidth;
+                const h = lossCanvas.clientHeight;
+                lossCtx.clearRect(0, 0, w, h);
+
+                if (lossHistory.length < 2) {
+                    lossCtx.fillStyle = 'rgba(148,163,184,0.5)';
+                    lossCtx.font = '10px ui-monospace, monospace';
+                    lossCtx.textAlign = 'center';
+                    lossCtx.textBaseline = 'middle';
+                    lossCtx.fillText('Loss curve appears here', w / 2, h / 2);
+                    return;
+                }
+
+                const maxLoss = Math.max(...lossHistory, 1e-6);
+                const minLoss = Math.min(...lossHistory, 0);
+
+                const toY = (loss) => {
+                    const norm = (loss - minLoss) / Math.max(1e-9, maxLoss - minLoss);
+                    return h - 5 - norm * (h - 10);
+                };
+
+                lossCtx.beginPath();
+                lossCtx.moveTo(0, h);
+                lossHistory.forEach((loss, i) => {
+                    const x = (i / (lossHistory.length - 1)) * w;
+                    lossCtx.lineTo(x, toY(loss));
+                });
+                lossCtx.lineTo(w, h);
+                lossCtx.closePath();
+                lossCtx.fillStyle = 'rgba(16, 185, 129, 0.12)';
+                lossCtx.fill();
+
+                lossCtx.beginPath();
+                lossCtx.strokeStyle = '#10b981';
+                lossCtx.lineWidth = 2;
+                lossCtx.lineJoin = 'round';
+                lossHistory.forEach((loss, i) => {
+                    const x = (i / (lossHistory.length - 1)) * w;
+                    const y = toY(loss);
+                    if (i === 0) lossCtx.moveTo(x, y);
+                    else lossCtx.lineTo(x, y);
+                });
+                lossCtx.stroke();
+
+                const last = lossHistory[lossHistory.length - 1];
+                lossCtx.fillStyle = '#6ee7b7';
+                lossCtx.font = '9px ui-monospace, monospace';
+                lossCtx.textAlign = 'right';
+                lossCtx.textBaseline = 'top';
+                lossCtx.fillText(fmt(last, 5), w - 5, 4);
+            }
+
+            /* ============================================================
+               SIMULATE (animated forward pass)
+               ============================================================ */
+            document.getElementById('btn-simulate').addEventListener('click', () => {
+                if (nodes.length === 0) return;
+                runForwardPass();
+
+                animatingPass = true;
+                animProgress = 0;
+                if (animFrameId) cancelAnimationFrame(animFrameId);
+
+                function animateStep() {
+                    animProgress += 0.05;
+                    draw();
+                    if (animProgress < 1.0) {
+                        animFrameId = requestAnimationFrame(animateStep);
+                    } else {
+                        animatingPass = false;
+                        draw();
+                    }
+                }
+                animateStep();
+
+                // On mobile, close the left drawer so the user sees the animation
+                if (isTouchDevice) closeDrawers();
+            });
+
+            /* ============================================================
+               TRAINING DRIVER  (cached + time-sliced)
+               ============================================================ */
+            const FRAME_BUDGET_MS = 20;
+
+            btnTrain.addEventListener('click', () => {
+                // --- STOP ---
+                if (trainingActive) {
+                    trainingActive = false;
+                    btnTrain.textContent = 'Start Training';
+                    statusText.textContent = "Training stopped by user.";
+                    return;
+                }
+
+                // --- VALIDATION ---
+                const inputNodes  = nodes.filter(n => n.type === 'input');
+                const outputNodes = nodes.filter(n => n.type === 'output');
+                const inputCount  = inputNodes.length;
+                const outputCount = outputNodes.length;
+
+                if (inputCount === 0 || outputCount === 0) {
+                    alert("Training Error: The network must have at least 1 input neuron and 1 output neuron.");
+                    return;
+                }
+                if (trainingDataset.length === 0) {
+                    alert("Training Error: The training dataset is empty. Please add examples or load a preset.");
+                    return;
+                }
+
+                for (let i = 0; i < trainingDataset.length; i++) {
+                    const row = normalizeRow(trainingDataset[i], inputCount, outputCount);
+                    for (let j = 0; j < row.inputs.length; j++) {
+                        if (!Number.isFinite(row.inputs[j])) {
+                            alert(`Training Error: Row ${i + 1}, Input ${j + 1} is not a valid number.`);
+                            return;
+                        }
+                    }
+                    for (let k = 0; k < row.targets.length; k++) {
+                        if (!Number.isFinite(row.targets[k])) {
+                            alert(`Training Error: Row ${i + 1}, Target ${k + 1} is not a valid number.`);
+                            return;
+                        }
+                    }
+                }
+
+                const { hasCycle } = getGraphOrder();
+                if (hasCycle) {
+                    statusText.textContent = "Warning: the network contains a cycle — results may be unstable.";
+                }
+
+                const lr = parseFloat(document.getElementById('train-lr').value) || (optimizerType === 'adam' ? 0.01 : 0.5);
+                const maxEpochs = Math.max(1, parseInt(document.getElementById('train-epochs').value) || 500);
+
+                // --- BUILD THE TRAINING CACHE (one time) ---
+                const cache = buildTrainingCache();
+                if (cache.inputIdx.length === 0 || cache.outCount === 0) {
+                    alert("Training Error: The network has no usable input/output path.");
+                    return;
+                }
+
+                resetOptimizerState();
+                lossHistory = [];
+                trainingActive = true;
+                btnTrain.textContent = 'Stop Training';
+
+                const snapshot = captureParameters();
+                const statsDiv = document.getElementById('training-stats');
+
+                const lossStride = Math.max(1, Math.ceil(maxEpochs / 400));
+
+                let epoch = 0;
+                let currentLoss = 0;
+
+                function stepTraining() {
+                    if (!trainingActive) return;
+
+                    const frameStart = performance.now();
+                    let epochsThisFrame = 0;
+
+                    while (epoch < maxEpochs) {
+                        epoch++;
+                        currentLoss = runTrainingEpochFast(lr, cache);
+
+                        if (!Number.isFinite(currentLoss)) {
+                            restoreParameters(snapshot);
+                            trainingActive = false;
+                            btnTrain.textContent = 'Start Training';
+                            statsDiv.textContent = `Epoch: ${epoch} | Diverged — parameters restored. Try a smaller learning rate.`;
+                            statusText.textContent = "Training diverged. Lower the learning rate and try again.";
+                            draw();
+                            return;
+                        }
+
+                        if (epoch % lossStride === 0 || epoch === maxEpochs) {
+                            lossHistory.push(currentLoss);
+                        }
+
+                        epochsThisFrame++;
+
+                        if ((epochsThisFrame & 15) === 0) {
+                            if (performance.now() - frameStart > FRAME_BUDGET_MS) break;
+                        }
+                    }
+
+                    statsDiv.textContent = `Epoch: ${epoch}/${maxEpochs} | Loss: ${fmt(currentLoss, 6)}`;
+                    drawLossGraph();
+                    draw();
+
+                    if (epoch < maxEpochs && trainingActive) {
+                        requestAnimationFrame(stepTraining);
+                    } else {
+                        trainingActive = false;
+                        btnTrain.textContent = 'Start Training';
+                        runForwardPass();
+                        statusText.textContent = `Training complete — final loss ${fmt(currentLoss, 6)}.`;
+                    }
+                }
+
+                statusText.textContent = `Training started... (${cache.nConn} weights, ${cache.nCount} neurons)`;
+                stepTraining();
+            });
+
+            document.getElementById('btn-reset-train').addEventListener('click', () => {
+                trainingActive = false;
+                btnTrain.textContent = 'Start Training';
+                nodes.forEach(n => { if (n.type !== 'input') n.bias = randomBias(); });
+                connections.forEach(c => { c.weight = randomWeightFor(c.toNodeId); });
+                resetOptimizerState();
+                lossHistory = [];
+                drawLossGraph();
+                document.getElementById('training-stats').textContent = `Epoch: 0 | Loss: --`;
+                statusText.textContent = "Weights and biases re-initialised. Ready to train.";
+                draw();
+            });
+
+            /* ============================================================
+               CANVAS DRAWING
+               ============================================================ */
+            function draw() {
+                const width = container.clientWidth;
+                const height = container.clientHeight;
+                ctx.clearRect(0, 0, width, height);
+
+                ctx.save();
+                ctx.translate(panX, panY);
+                ctx.scale(zoom, zoom);
+
+                drawGrid(width, height);
+
+                const nodeById = new Map(nodes.map(n => [n.id, n]));
+
+                connections.forEach(conn => {
+                    const fromN = nodeById.get(conn.fromNodeId);
+                    const toN = nodeById.get(conn.toNodeId);
+                    if (!fromN || !toN) return;
+                    if (!isVisible(fromN) || !isVisible(toN)) return;
+
+                    const p1 = getOutputPinPos(fromN);
+                    const p2 = getInputPinPos(toN);
+
+                    ctx.beginPath();
+                    ctx.moveTo(p1.x, p1.y);
+                    const dx = Math.abs(p2.x - p1.x) * 0.5;
+                    ctx.bezierCurveTo(p1.x + dx, p1.y, p2.x - dx, p2.y, p2.x, p2.y);
+
+                    const w = Number.isFinite(conn.weight) ? conn.weight : 0;
+                    const alpha = Math.min(0.9, Math.max(0.25, Math.abs(w) * 0.5));
+                    ctx.strokeStyle = w >= 0
+                        ? `rgba(16, 185, 129, ${alpha})`
+                        : `rgba(239, 68, 68, ${alpha})`;
+                    ctx.lineWidth = 2 + Math.min(2.5, Math.abs(w));
+                    ctx.stroke();
+
+                    if (animatingPass) {
+                        const t = animProgress;
+                        const pulseX = p1.x * (1 - t) + p2.x * t;
+                        const pulseY = p1.y * (1 - t) + p2.y * t;
+                        ctx.beginPath();
+                        ctx.arc(pulseX, pulseY, 5, 0, Math.PI * 2);
+                        ctx.fillStyle = '#60a5fa';
+                        ctx.fill();
+                    }
+
+                    const midX = (p1.x + p2.x) / 2;
+                    const midY = (p1.y + p2.y) / 2;
+                    ctx.beginPath();
+                    ctx.arc(midX, midY, 13, 0, Math.PI * 2);
+                    ctx.fillStyle = '#1e293b';
+                    ctx.fill();
+                    ctx.lineWidth = 1;
+                    ctx.strokeStyle = w >= 0 ? '#10b981' : '#ef4444';
+                    ctx.stroke();
+
+                    ctx.fillStyle = '#ffffff';
+                    ctx.font = '8px ui-monospace, monospace';
+                    ctx.textAlign = 'center';
+                    ctx.textBaseline = 'middle';
+                    ctx.fillText(fmt(w, 2), midX, midY);
+                });
+
+                if (wiring) {
+                    const fromN = nodeById.get(wiring.fromNodeId);
+                    if (fromN && isVisible(fromN)) {
+                        const p1 = getOutputPinPos(fromN);
+                        ctx.beginPath();
+                        ctx.moveTo(p1.x, p1.y);
+                        ctx.lineTo(wiring.mouseX, wiring.mouseY);
+                        ctx.strokeStyle = '#60a5fa';
+                        ctx.lineWidth = 2.5;
+                        ctx.setLineDash([4, 4]);
+                        ctx.stroke();
+                        ctx.setLineDash([]);
+                    }
+                }
+
+                nodes.forEach(node => {
+                    if (!isVisible(node)) return;
+
+                    const r = node.radius;
+                    const isSelected = selectedNodeIds.has(node.id);
+
+                    if (isSelected) {
+                        ctx.beginPath();
+                        ctx.arc(node.x, node.y, r + 5, 0, Math.PI * 2);
+                        ctx.fillStyle = 'rgba(59, 130, 246, 0.2)';
+                        ctx.fill();
+                        ctx.lineWidth = 1.5;
+                        ctx.strokeStyle = '#3b82f6';
+                        ctx.stroke();
+                    }
+
+                    ctx.beginPath();
+                    ctx.arc(node.x, node.y, r, 0, Math.PI * 2);
+                    ctx.fillStyle = '#131b2e';
+                    ctx.fill();
+
+                    let color = '#10b981';
+                    if (node.type === 'input') color = '#3b82f6';
+                    if (node.type === 'output') color = '#f59e0b';
+
+                    ctx.lineWidth = 2.5;
+                    ctx.strokeStyle = color;
+                    ctx.stroke();
+
+                    const val = Number.isFinite(node.value) ? node.value : 0;
+                    const fillRatio = Math.max(0.15, Math.min(1.0, Math.abs(val)));
+                    ctx.beginPath();
+                    ctx.arc(node.x, node.y, r - 4, 0, Math.PI * 2);
+                    ctx.fillStyle = color;
+                    ctx.globalAlpha = fillRatio * 0.7;
+                    ctx.fill();
+                    ctx.globalAlpha = 1.0;
+
+                    ctx.fillStyle = '#ffffff';
+                    ctx.font = '600 11px ui-monospace, monospace';
+                    ctx.textAlign = 'center';
+                    ctx.textBaseline = 'middle';
+                    ctx.fillText(fmt(val, 2), node.x, node.y);
+
+                    ctx.fillStyle = '#94a3b8';
+                    ctx.font = '11px ui-sans-serif, system-ui, sans-serif';
+                    ctx.fillText(node.name, node.x, node.y - r - 12);
+
+                    if (node.type !== 'input') {
+                        const inPos = getInputPinPos(node);
+                        ctx.beginPath();
+                        ctx.arc(inPos.x, inPos.y, 5, 0, Math.PI * 2);
+                        ctx.fillStyle = '#34d399';
+                        ctx.fill();
+                        ctx.lineWidth = 1.5;
+                        ctx.strokeStyle = '#0f172a';
+                        ctx.stroke();
+                    }
+
+                    const outPos = getOutputPinPos(node);
+                    ctx.beginPath();
+                    ctx.arc(outPos.x, outPos.y, 5, 0, Math.PI * 2);
+                    ctx.fillStyle = '#60a5fa';
+                    ctx.fill();
+                    ctx.lineWidth = 1.5;
+                    ctx.strokeStyle = '#0f172a';
+                    ctx.stroke();
+                });
+
+                if (selectionBox) {
+                    const x = Math.min(selectionBox.startX, selectionBox.currentX);
+                    const y = Math.min(selectionBox.startY, selectionBox.currentY);
+                    const w = Math.abs(selectionBox.currentX - selectionBox.startX);
+                    const h = Math.abs(selectionBox.currentY - selectionBox.startY);
+                    ctx.fillStyle = 'rgba(16, 185, 129, 0.1)';
+                    ctx.fillRect(x, y, w, h);
+                    ctx.lineWidth = 1.5;
+                    ctx.strokeStyle = '#10b981';
+                    ctx.setLineDash([4, 4]);
+                    ctx.stroke();
+                    ctx.setLineDash([]);
+                }
+
+                if (ghostPos) {
+                    ctx.save();
+                    ctx.globalAlpha = 0.5;
+                    const r = 26;
+                    ctx.beginPath();
+                    ctx.arc(ghostPos.x, ghostPos.y, r, 0, Math.PI * 2);
+                    ctx.fillStyle = '#131b2e';
+                    ctx.fill();
+                    let color = '#10b981';
+                    if (ghostPos.type === 'input') color = '#3b82f6';
+                    if (ghostPos.type === 'output') color = '#f59e0b';
+                    ctx.lineWidth = 2;
+                    ctx.strokeStyle = color;
+                    ctx.setLineDash([4, 4]);
+                    ctx.stroke();
+                    ctx.setLineDash([]);
+                    ctx.restore();
+                }
+
+                ctx.restore();
+            }
+
+            function drawGrid(w, h) {
+                const worldLeft   = -panX / zoom;
+                const worldTop    = -panY / zoom;
+                const worldRight  = (w - panX) / zoom;
+                const worldBottom = (h - panY) / zoom;
+
+                ctx.strokeStyle = 'rgba(255, 255, 255, 0.03)';
+                ctx.lineWidth = 1 / zoom;
+                ctx.beginPath();
+
+                const startX = Math.floor(worldLeft / gridSize) * gridSize;
+                const startY = Math.floor(worldTop / gridSize) * gridSize;
+
+                for (let x = startX; x < worldRight; x += gridSize) {
+                    ctx.moveTo(x, worldTop);
+                    ctx.lineTo(x, worldBottom);
+                }
+                for (let y = startY; y < worldBottom; y += gridSize) {
+                    ctx.moveTo(worldLeft, y);
+                    ctx.lineTo(worldRight, y);
+                }
+                ctx.stroke();
+            }
+
+            /* ============================================================
+               INSPECTOR MODAL
+               ============================================================ */
+            const modal = document.getElementById('inspector-modal');
+            const modalTitle = document.getElementById('modal-title');
+            const modalBody = document.getElementById('modal-body');
+            const modalDelete = document.getElementById('modal-delete');
+            const modalClose = document.getElementById('modal-close');
+
+            function openInspector(type, data) {
+                activeModalTarget = { type, data };
+                modal.classList.remove('hidden');
+                modalBody.innerHTML = '';
+
+                if (type === 'node') {
+                    modalTitle.textContent = `Configure Neuron: ${data.name}`;
+                    modalBody.innerHTML = `
+                        <div class="space-y-3 text-xs">
+                            <div>
+                                <label class="text-slate-400 block mb-1">Neuron Label</label>
+                                <input id="edit-name" type="text" value="${escapeHtml(data.name)}" class="w-full bg-cardBg border border-borderCol rounded-lg px-3 py-2 text-slate-200">
+                            </div>
+                            <div>
+                                <label class="text-slate-400 block mb-1">Value</label>
+                                <input id="edit-value" type="number" step="0.1" value="${data.value}" class="w-full bg-cardBg border border-borderCol rounded-lg px-3 py-2 text-slate-200">
+                            </div>
+                            ${data.type !== 'input' ? `
+                            <div>
+                                <label class="text-slate-400 block mb-1">Bias (shifts weighted sum before activation)</label>
+                                <input id="edit-bias" type="number" step="0.01" value="${data.bias}" class="w-full bg-cardBg border border-borderCol rounded-lg px-3 py-2 text-slate-200">
+                            </div>` : ''}
+                        </div>
+                    `;
+                } else if (type === 'weight') {
+                    const fromN = nodes.find(n => n.id === data.fromNodeId);
+                    const toN = nodes.find(n => n.id === data.toNodeId);
+                    modalTitle.textContent = `Configure Synaptic Weight`;
+                    modalBody.innerHTML = `
+                        <div class="space-y-3 text-xs">
+                            <div class="text-slate-400">Connection: <span class="text-slate-200 font-semibold">${escapeHtml(fromN?.name || 'Node')} → ${escapeHtml(toN?.name || 'Node')}</span></div>
+                            <div>
+                                <label class="text-slate-400 block mb-1">Weight Value</label>
+                                <input id="edit-weight" type="number" step="0.01" value="${data.weight}" class="w-full bg-cardBg border border-borderCol rounded-lg px-3 py-2 text-slate-200">
+                            </div>
+                        </div>
+                    `;
+                }
+            }
+
+            modalClose.addEventListener('click', () => {
+                if (activeModalTarget) {
+                    if (activeModalTarget.type === 'node') {
+                        const nameInput = document.getElementById('edit-name');
+                        const valInput = document.getElementById('edit-value');
+                        const biasInput = document.getElementById('edit-bias');
+                        if (nameInput) activeModalTarget.data.name = nameInput.value;
+                        if (valInput) activeModalTarget.data.value = finiteOr(parseFloat(valInput.value), 0);
+                        if (biasInput) activeModalTarget.data.bias = finiteOr(parseFloat(biasInput.value), 0);
+                    } else if (activeModalTarget.type === 'weight') {
+                        const wInput = document.getElementById('edit-weight');
+                        if (wInput) activeModalTarget.data.weight = finiteOr(parseFloat(wInput.value), 0);
+                    }
+                }
+                modal.classList.add('hidden');
+                resetOptimizerState();
+                updateStats();
+                draw();
+            });
+
+            modalDelete.addEventListener('click', () => {
+                if (activeModalTarget) {
+                    if (activeModalTarget.type === 'node') {
+                        nodes = nodes.filter(n => n.id !== activeModalTarget.data.id);
+                        connections = connections.filter(c => c.fromNodeId !== activeModalTarget.data.id && c.toNodeId !== activeModalTarget.data.id);
+                        selectedNodeIds.delete(activeModalTarget.data.id);
+                    } else if (activeModalTarget.type === 'weight') {
+                        connections = connections.filter(c => c.id !== activeModalTarget.data.id);
+                    }
+                    resetOptimizerState();
+                    updateStats();
+                }
+                modal.classList.add('hidden');
+                draw();
+            });
+
+            /* ============================================================
+               BOOT
+               ============================================================ */
+            document.getElementById('activation-select').value = hiddenActivation;
+            document.getElementById('output-activation-select').value = outputActivation;
+            document.getElementById('optimizer-select').value = optimizerType;
+
+            resizeCanvas();
+            updateStats();
+            updateZoomBadge();
+            drawLossGraph();
+            statusText.textContent = "Ready. Drag items from sidebar or right-click to edit.";
+        });
+    </script>
+</body>
+</html>
