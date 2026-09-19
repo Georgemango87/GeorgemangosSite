@@ -1270,6 +1270,7 @@ function setQty(n) {
   addQty = Math.max(1, Math.min(QTY_MAX, Math.round(Number(n)) || 1));
   qtyInput.value = addQty;
   document.querySelectorAll(".qpreset").forEach(b => b.classList.toggle("sel", +b.dataset.q === addQty));
+  scheduleSave();
 }
 document.getElementById("qtyMinus").onclick = () => setQty(addQty - 1);
 document.getElementById("qtyPlus").onclick = () => setQty(addQty + 1);
@@ -1277,6 +1278,7 @@ qtyInput.addEventListener("input", () => {
   const v = parseInt(qtyInput.value, 10);
   if (!isNaN(v)) addQty = Math.max(1, Math.min(QTY_MAX, v));
   document.querySelectorAll(".qpreset").forEach(b => b.classList.toggle("sel", +b.dataset.q === addQty));
+  scheduleSave();
 });
 qtyInput.addEventListener("blur", () => setQty(addQty));
 qtyInput.addEventListener("keydown", e => { if (e.key === "Enter") { setQty(addQty); qtyInput.blur(); } });
@@ -1289,6 +1291,7 @@ chipModeBtn.addEventListener("click", () => {
   chipRemoveMode = !chipRemoveMode;
   chipModeBtn.textContent = chipRemoveMode ? "－ Remove" : "＋ Add";
   chipModeBtn.classList.toggle("on-remove", chipRemoveMode);
+  scheduleSave();
 });
 
 function plural(n, s) { return n === 1 ? s : s + "s"; }
@@ -1321,6 +1324,7 @@ function addParticle(type, count) {
     showHint(`−${actual} ${plural(actual, name)}`);
   }
   refreshAtom();
+  scheduleSave();
 }
 document.querySelectorAll(".chip").forEach(chip => {
   chip.addEventListener("click", e => {
@@ -1337,9 +1341,11 @@ document.getElementById("undoBtn").onclick = () => {
     showHint(`−1 ${t === "p" ? "Proton" : "Neutron"}`);
   } else if (atom.e > 0) { atom.e--; showHint("−1 Electron"); } else return;
   refreshAtom();
+  scheduleSave();
 };
 document.getElementById("clearBtn").onclick = () => {
   atom.p = atom.n = atom.e = 0; atom.nucleons = []; refreshAtom();
+  scheduleSave();
 };
 
 const powders = [];
@@ -1428,6 +1434,7 @@ document.getElementById("forgeBtn").onclick = () => {
   renderPalette();
   syncCompoundLab();
   switchTab("sandbox");
+  scheduleSave();
 };
 
 const KNOWN_COMPOUNDS = {
@@ -1773,8 +1780,9 @@ function setPart(z, count) {
   p.c = Math.max(0, Math.min(99, count));
   if (p.c === 0) compoundParts.splice(compoundParts.indexOf(p), 1);
   refreshCompound();
+  scheduleSave();
 }
-function clearFormula() { compoundParts.length = 0; refreshCompound(); }
+function clearFormula() { compoundParts.length = 0; refreshCompound(); scheduleSave(); }
 
 function refreshCompound() {
   const fv = document.getElementById("formulaValue");
@@ -1855,6 +1863,7 @@ function renderRecipes() {
       compoundParts.length = 0;
       r.parts.forEach(p => compoundParts.push({ Z: p.Z, c: p.c }));
       refreshCompound();
+      scheduleSave();
     };
   });
 }
@@ -1879,6 +1888,7 @@ document.getElementById("cmForgeBtn").onclick = () => {
   }
   renderPalette();
   switchTab("sandbox");
+  scheduleSave();
 };
 document.getElementById("cmSearch").addEventListener("input", () => {
   if (currentCompoundProps) renderPropertyList(currentCompoundProps,
@@ -1911,6 +1921,7 @@ function setSandboxTool(m) {
   sandboxTool = m;
   toolPlaceBtn.classList.toggle("active", m === "place");
   toolEraseBtn.classList.toggle("active", m === "erase");
+  scheduleSave();
 }
 toolPlaceBtn.addEventListener("click", () => setSandboxTool("place"));
 toolEraseBtn.addEventListener("click", () => setSandboxTool("erase"));
@@ -2193,6 +2204,7 @@ function deletePowder(idx) {
   else if (selectedPowder > idx) selectedPowder--;
   renderPalette(); syncCompoundLab();
   toast(`Deleted ${removedName}`, true);
+  scheduleSave();
 }
 function renderPalette() {
   if (powders.length === 0) {
@@ -2214,7 +2226,7 @@ function renderPalette() {
   });
   paletteEl.innerHTML = html;
   paletteEl.querySelectorAll(".pitem").forEach(node => {
-    node.onclick = () => { selectedPowder = +node.dataset.idx; renderPalette(); };
+    node.onclick = () => { selectedPowder = +node.dataset.idx; renderPalette(); scheduleSave(); };
   });
   paletteEl.querySelectorAll(".pdel").forEach(btn => {
     btn.onclick = e => { e.stopPropagation(); deletePowder(+btn.dataset.del); };
@@ -2229,8 +2241,8 @@ const speedEl = document.getElementById("speed");
 const speedValEl = document.getElementById("speedVal");
 const playBtn = document.getElementById("playBtn");
 
-brushEl.oninput = () => { brushSize = +brushEl.value; brushValEl.textContent = brushSize; };
-reactEl.oninput = () => { reactRate = +reactEl.value / 10; reactValEl.textContent = reactRate.toFixed(1) + "×"; };
+brushEl.oninput = () => { brushSize = +brushEl.value; brushValEl.textContent = brushSize; scheduleSave(); };
+reactEl.oninput = () => { reactRate = +reactEl.value / 10; reactValEl.textContent = reactRate.toFixed(1) + "×"; scheduleSave(); };
 function updateSpeedDisplay() {
   const s = SPEEDS[speedIndex]; let txt;
   if (s < 1) txt = s.toFixed(2) + "×";
@@ -2238,12 +2250,13 @@ function updateSpeedDisplay() {
   else txt = s.toFixed(0) + "×";
   speedValEl.textContent = txt;
 }
-speedEl.oninput = () => { speedIndex = +speedEl.value; updateSpeedDisplay(); };
+speedEl.oninput = () => { speedIndex = +speedEl.value; updateSpeedDisplay(); scheduleSave(); };
 updateSpeedDisplay();
 function setPaused(p) {
   paused = p; playBtn.textContent = paused ? "▶" : "⏸";
   playBtn.classList.toggle("paused", paused);
   playBtn.title = paused ? "Resume (Space)" : "Pause (Space)";
+  scheduleSave();
 }
 playBtn.onclick = () => setPaused(!paused);
 document.addEventListener("keydown", e => {
@@ -2253,13 +2266,14 @@ document.addEventListener("keydown", e => {
     e.preventDefault(); setPaused(!paused);
   }
 });
-document.getElementById("clearAllBtn").onclick = () => { mat.fill(0); heat.fill(0); life.fill(0); buildFloor(); toast("Canvas cleared"); };
+document.getElementById("clearAllBtn").onclick = () => { mat.fill(0); heat.fill(0); life.fill(0); buildFloor(); toast("Canvas cleared"); scheduleSave(); };
 document.getElementById("clearPowdersBtn").onclick = () => {
   if (powders.length === 0) { toast("No powders to delete", true); return; }
   const count = powders.length; powders.length = 0; selectedPowder = 0;
   for (let i = 0; i < N; i++) if (mat[i] >= PB) mat[i] = EMPTY;
   renderPalette(); syncCompoundLab();
   toast(`Deleted ${count} powder${count === 1 ? "" : "s"}`, true);
+  scheduleSave();
 };
 
 let paintMode = null, paintX = 0, paintY = 0;
@@ -2307,7 +2321,10 @@ simCanvas.addEventListener("pointerdown", e => {
 simCanvas.addEventListener("pointermove", e => {
   if (!paintMode) return; const [x, y] = canvasPos(e); paintX = x; paintY = y;
 });
-const endPaint = () => { paintMode = null; };
+const endPaint = () => {
+  if (paintMode) scheduleSave();
+  paintMode = null;
+};
 simCanvas.addEventListener("pointerup", endPaint);
 simCanvas.addEventListener("pointercancel", endPaint);
 simCanvas.addEventListener("pointerleave", e => { if (e.buttons === 0) endPaint(); });
@@ -2317,6 +2334,7 @@ simCanvas.addEventListener("wheel", e => {
   const dir = e.deltaY > 0 ? -1 : 1;
   brushSize = clamp(brushSize + dir, 1, 16);
   brushEl.value = brushSize; brushValEl.textContent = brushSize;
+  scheduleSave();
 }, { passive: false });
 
 function fitCanvas(canvas, aspectW, aspectH) {
@@ -2343,6 +2361,7 @@ function switchTab(name) {
   document.querySelectorAll(".screen").forEach(s => s.classList.toggle("active", s.id === name));
   if (name === "compound") { renderRecipes(); refreshCompound(); }
   requestAnimationFrame(fitAllCanvases);
+  scheduleSave();
 }
 document.querySelectorAll(".tab").forEach(t => { t.onclick = () => switchTab(t.dataset.tab); });
 
@@ -2370,8 +2389,168 @@ function loop(ts) {
   }
 }
 
-refreshAtom();
-syncCompoundLab();
+/* ============================================================
+   PERSISTENCE — auto-save / auto-restore to localStorage
+============================================================ */
+const SAVE_KEY = 'atomforge_state_v1';
+const SAVE_DEBOUNCE_MS = 500;
+let _saveTimer = null;
+let _isRestoring = false;
+
+function _bytesToB64(bytes) {
+  let s = '';
+  const chunk = 8192;
+  for (let i = 0; i < bytes.length; i += chunk) {
+    s += String.fromCharCode.apply(null, bytes.subarray(i, Math.min(i + chunk, bytes.length)));
+  }
+  return btoa(s);
+}
+function _b64ToBytes(b64) {
+  const bin = atob(b64);
+  const bytes = new Uint8Array(bin.length);
+  for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+  return bytes;
+}
+
+function serializeState() {
+  let gridB64 = null;
+  try {
+    gridB64 = _bytesToB64(new Uint8Array(mat.buffer));
+  } catch (e) { gridB64 = null; }
+
+  return {
+    version: 1,
+    atom: { p: atom.p, n: atom.n, e: atom.e, nucleons: atom.nucleons.slice() },
+    addQty,
+    chipRemoveMode,
+    activeTab,
+    brushSize,
+    reactRate,
+    speedIndex,
+    paused,
+    selectedPowder,
+    compoundParts: compoundParts.map(p => ({ Z: p.Z, c: p.c })),
+    powders: JSON.parse(JSON.stringify(powders)),
+    grid: gridB64
+  };
+}
+
+function saveState() {
+  if (_isRestoring) return;
+  try {
+    localStorage.setItem(SAVE_KEY, JSON.stringify(serializeState()));
+  } catch (e) {
+    console.warn('Atom Forge: save failed', e);
+  }
+}
+
+function scheduleSave() {
+  if (_isRestoring) return;
+  if (_saveTimer) clearTimeout(_saveTimer);
+  _saveTimer = setTimeout(() => { _saveTimer = null; saveState(); }, SAVE_DEBOUNCE_MS);
+}
+
+function loadState() {
+  let raw;
+  try { raw = localStorage.getItem(SAVE_KEY); } catch (e) { return false; }
+  if (!raw) return false;
+  let data;
+  try { data = JSON.parse(raw); } catch (e) { return false; }
+  if (!data || data.version !== 1) return false;
+
+  _isRestoring = true;
+  try {
+    if (data.atom) {
+      atom.p = Math.max(0, data.atom.p | 0);
+      atom.n = Math.max(0, data.atom.n | 0);
+      atom.e = Math.max(0, data.atom.e | 0);
+      atom.nucleons = Array.isArray(data.atom.nucleons) ? data.atom.nucleons.slice() : [];
+    }
+    if (typeof data.addQty === 'number') setQty(data.addQty);
+    if (typeof data.chipRemoveMode === 'boolean') {
+      chipRemoveMode = data.chipRemoveMode;
+      chipModeBtn.textContent = chipRemoveMode ? '－ Remove' : '＋ Add';
+      chipModeBtn.classList.toggle('on-remove', chipRemoveMode);
+    }
+    if (typeof data.brushSize === 'number') {
+      brushSize = Math.max(1, Math.min(16, data.brushSize));
+      brushEl.value = brushSize;
+      brushValEl.textContent = brushSize;
+    }
+    if (typeof data.reactRate === 'number') {
+      reactRate = Math.max(0, Math.min(3, data.reactRate));
+      reactEl.value = Math.round(reactRate * 10);
+      reactValEl.textContent = reactRate.toFixed(1) + '×';
+    }
+    if (typeof data.speedIndex === 'number') {
+      speedIndex = Math.max(0, Math.min(SPEEDS.length - 1, data.speedIndex | 0));
+      speedEl.value = speedIndex;
+      updateSpeedDisplay();
+    }
+    if (typeof data.paused === 'boolean') setPaused(data.paused);
+
+    if (Array.isArray(data.powders)) {
+      powders.length = 0;
+      data.powders.forEach(p => { if (p && typeof p === 'object') powders.push(p); });
+    }
+    if (typeof data.selectedPowder === 'number') {
+      selectedPowder = Math.max(0, Math.min(powders.length - 1, data.selectedPowder | 0));
+    }
+
+    compoundParts.length = 0;
+    if (Array.isArray(data.compoundParts)) {
+      data.compoundParts.forEach(p => {
+        if (p && typeof p.Z === 'number' && typeof p.c === 'number' && p.c > 0) {
+          compoundParts.push({ Z: p.Z | 0, c: Math.max(0, Math.min(99, p.c | 0)) });
+        }
+      });
+    }
+
+    if (data.grid) {
+      try {
+        const bytes = _b64ToBytes(data.grid);
+        if (bytes.length === mat.byteLength) {
+          new Uint8Array(mat.buffer).set(bytes);
+        }
+      } catch (e) { /* leave grid empty */ }
+    }
+
+    rebuildForgedElements();
+    refreshAtom();
+    renderPalette();
+    syncCompoundLab();
+
+    if (typeof data.activeTab === 'string' &&
+        ['atom','compound','sandbox'].includes(data.activeTab)) {
+      switchTab(data.activeTab);
+    }
+  } finally {
+    _isRestoring = false;
+  }
+  return true;
+}
+
+// Save whenever the tab is hidden or closed
+window.addEventListener('beforeunload', () => {
+  if (_saveTimer) { clearTimeout(_saveTimer); _saveTimer = null; }
+  saveState();
+});
+document.addEventListener('visibilitychange', () => {
+  if (document.visibilityState === 'hidden') {
+    if (_saveTimer) { clearTimeout(_saveTimer); _saveTimer = null; }
+    saveState();
+  }
+});
+// Backup autosave every 20 seconds
+setInterval(saveState, 20000);
+
+/* ============================================================
+   BOOT — restore previous session, or start fresh
+============================================================ */
+if (!loadState()) {
+  refreshAtom();
+  syncCompoundLab();
+}
 requestAnimationFrame(loop);
 requestAnimationFrame(fitAllCanvases);
 setTimeout(fitAllCanvases, 0);
