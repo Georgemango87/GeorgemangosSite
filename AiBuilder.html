@@ -74,8 +74,8 @@ code{background:var(--accent-soft);color:var(--accent);padding:.1em .4em;border-
 .btn.primary:hover{background:var(--accent-2);}
 .btn.ghost{background:transparent;border-color:var(--border);}
 .btn.ghost:hover{background:var(--bg-soft);}
-.btn.danger{color:var(--bad);}
-.btn.danger.ghost{border-color:var(--border);}
+.btn.danger{color:#fff;background:var(--bad);}
+.btn.danger.ghost{color:var(--bad);background:transparent;border-color:var(--border);}
 .btn.danger.ghost:hover{background:rgba(220,38,38,.08);}
 .btn.big{font-size:1.1rem;padding:.85em 2.2em;border-radius:16px;}
 .btn.small{font-size:.85rem;padding:.45em .85em;}
@@ -263,6 +263,28 @@ svg .link.cross{stroke-dasharray:4 4;opacity:.6;}
 .progress-note{font-size:.85rem;color:var(--muted);margin-top:.5em;}
 
 /* ============================================================
+   MODAL
+   ============================================================ */
+.modal-backdrop{
+  position:fixed;inset:0;background:rgba(10,12,20,.55);
+  display:flex;align-items:center;justify-content:center;padding:20px;
+  z-index:300;opacity:0;pointer-events:none;transition:opacity .18s ease;
+  -webkit-backdrop-filter:blur(3px);backdrop-filter:blur(3px);
+}
+.modal-backdrop.show{opacity:1;pointer-events:auto;}
+.modal{
+  background:var(--card);border:1px solid var(--border);border-radius:var(--radius);
+  box-shadow:var(--shadow);padding:24px;max-width:440px;width:100%;
+  transform:translateY(12px) scale(.97);transition:transform .18s ease;
+  max-height:90vh;overflow-y:auto;
+}
+.modal-backdrop.show .modal{transform:translateY(0) scale(1);}
+.modal h3{margin:0 0 .55em;font-size:1.15rem;letter-spacing:-.01em;}
+.modal p{margin:0;color:var(--muted);font-size:.92rem;white-space:pre-wrap;}
+.modal .modal-input{margin-top:14px;}
+.modal-actions{display:flex;gap:8px;justify-content:flex-end;margin-top:20px;flex-wrap:wrap;}
+
+/* ============================================================
    RESPONSIVE
    ============================================================ */
 @media (max-width:820px){
@@ -278,6 +300,21 @@ svg .link.cross{stroke-dasharray:4 4;opacity:.6;}
 <body>
 
 <div id="toast" class="toast"></div>
+
+<!-- ============================================================
+     MODAL
+     ============================================================ -->
+<div id="modalBackdrop" class="modal-backdrop" aria-hidden="true">
+  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+    <h3 id="modalTitle"></h3>
+    <p id="modalMessage"></p>
+    <input id="modalInput" class="modal-input hidden" />
+    <div class="modal-actions">
+      <button class="btn ghost" id="modalCancel">Cancel</button>
+      <button class="btn primary" id="modalOk">OK</button>
+    </div>
+  </div>
+</div>
 
 <!-- ============================================================
      HOME
@@ -874,7 +911,6 @@ svg .link.cross{stroke-dasharray:4 4;opacity:.6;}
     var above = !!(top && top.score >= (D.threshold || 0.35));
     var ctx = { n: n, top: top, above: above };
 
-    /* rules first — but memory questions are handled by rules only if the user made one */
     var activeTop = above ? top : null;
     for (var i = 0; i < rules.length; i++){
       var r = rules[i];
@@ -897,11 +933,9 @@ svg .link.cross{stroke-dasharray:4 4;opacity:.6;}
       }
     }
 
-    /* automatic memory questions */
     var mem = memoryAnswer(n);
     if (mem) return { text: mem, kind:'memory', top: top };
 
-    /* concept match */
     if (above){
       var c = top.concept;
       var list2 = c.responses.length ? c.responses : DEFAULT_RESPONSES;
@@ -1078,6 +1112,138 @@ function download(filename, text, mime){
   a.click();
   document.body.removeChild(a);
   setTimeout(() => URL.revokeObjectURL(url), 1500);
+}
+
+/* ============================================================
+   SECTION 1b — IN-SITE MODALS
+   Replaces all native alert() / confirm() / prompt() calls.
+   ============================================================ */
+
+/**
+ * Show a modal dialog.
+ *
+ * Options:
+ *   title        {string}  heading text (empty to hide)
+ *   message      {string}  body text
+ *   input        {boolean} show a text input
+ *   placeholder  {string}  input placeholder
+ *   defaultValue {string}  input default value
+ *   okText       {string}  confirm button label
+ *   cancelText   {string|false}  cancel button label, or false to hide
+ *   danger       {boolean} style confirm button as dangerous
+ *
+ * Resolves:
+ *   - with the input's string value (input mode, confirmed)
+ *   - with `null` when a prompt is cancelled
+ *   - with `true` / `false` for confirm/alert style dialogs
+ */
+function showModal(options){
+  const opts = options || {};
+  return new Promise(resolve => {
+    const backdrop = $('#modalBackdrop');
+    const titleEl  = $('#modalTitle');
+    const msgEl    = $('#modalMessage');
+    const inputEl  = $('#modalInput');
+    const okBtn    = $('#modalOk');
+    const cancelBtn= $('#modalCancel');
+
+    const isInput = !!opts.input;
+    const showCancel = opts.cancelText !== false && opts.cancelText !== null;
+
+    titleEl.textContent = opts.title || '';
+    titleEl.classList.toggle('hidden', !opts.title);
+
+    msgEl.textContent = opts.message || '';
+    msgEl.classList.toggle('hidden', !opts.message);
+
+    if (isInput){
+      inputEl.classList.remove('hidden');
+      inputEl.placeholder = opts.placeholder || '';
+      inputEl.value = opts.defaultValue == null ? '' : String(opts.defaultValue);
+    } else {
+      inputEl.classList.add('hidden');
+      inputEl.value = '';
+    }
+
+    okBtn.textContent = opts.okText || 'OK';
+    okBtn.className = 'btn ' + (opts.danger ? 'danger' : 'primary');
+
+    cancelBtn.textContent = opts.cancelText || 'Cancel';
+    cancelBtn.classList.toggle('hidden', !showCancel);
+
+    backdrop.classList.add('show');
+    backdrop.setAttribute('aria-hidden', 'false');
+
+    let settled = false;
+    function cleanup(result){
+      if (settled) return;
+      settled = true;
+      backdrop.classList.remove('show');
+      backdrop.setAttribute('aria-hidden', 'true');
+      okBtn.onclick = null;
+      cancelBtn.onclick = null;
+      inputEl.onkeydown = null;
+      inputEl.oninput = null;
+      backdrop.onclick = null;
+      document.removeEventListener('keydown', onKey);
+      resolve(result);
+    }
+
+    function cancelValue(){
+      return isInput ? null : false;
+    }
+
+    function onKey(e){
+      if (e.key === 'Escape'){ e.preventDefault(); cleanup(cancelValue()); }
+    }
+
+    okBtn.onclick = () => cleanup(isInput ? inputEl.value : true);
+    cancelBtn.onclick = () => cleanup(cancelValue());
+    backdrop.onclick = (e) => { if (e.target === backdrop) cleanup(cancelValue()); };
+    inputEl.onkeydown = (e) => {
+      if (e.key === 'Enter'){ e.preventDefault(); okBtn.click(); }
+    };
+    document.addEventListener('keydown', onKey);
+
+    setTimeout(() => {
+      if (isInput){ inputEl.focus(); inputEl.select(); }
+      else okBtn.focus();
+    }, 40);
+  });
+}
+
+/** Replaces alert(). Resolves when dismissed. */
+function uiAlert(message, title){
+  return showModal({
+    title: title || 'Heads up',
+    message,
+    okText: 'Got it',
+    cancelText: false
+  });
+}
+
+/** Replaces confirm(). Resolves true / false. */
+function uiConfirm(message, title, okText, danger){
+  return showModal({
+    title: title || 'Are you sure?',
+    message,
+    okText: okText || 'Confirm',
+    cancelText: 'Cancel',
+    danger: !!danger
+  });
+}
+
+/** Replaces prompt(). Resolves the string, or null on cancel. */
+function uiPrompt(message, defaultValue, title, placeholder, okText){
+  return showModal({
+    title: title || 'Enter a value',
+    message,
+    input: true,
+    defaultValue,
+    placeholder,
+    okText: okText || 'Save',
+    cancelText: 'Cancel'
+  });
 }
 
 /* ============================================================
@@ -2075,8 +2241,15 @@ function renderConceptEditor(){
     updateProfile();
   };
 
-  $('#btnDeleteConcept').onclick = () => {
-    if (!confirm('Delete the concept \u201c' + c.name + '\u201d? Its examples and responses will be lost.')) return;
+  $('#btnDeleteConcept').onclick = async () => {
+    const ok = await uiConfirm(
+      'Delete the concept \u201c' + c.name + '\u201d? Its examples and responses will be lost.',
+      'Delete concept',
+      'Delete',
+      true
+    );
+    if (!ok) return;
+
     state.concepts = state.concepts.filter(x => x.id !== c.id);
     state.relationships = state.relationships.filter(r => r.from !== c.id && r.to !== c.id);
     selectedConceptId = state.concepts.length ? state.concepts[0].id : null;
@@ -2212,9 +2385,16 @@ function renderRelList(c){
   });
 }
 
-function addConceptPrompt(){
-  const name = prompt('What should the new concept be called?', '');
+async function addConceptPrompt(){
+  const name = await uiPrompt(
+    'Give your new concept a short, clear name. It should describe a topic your AI can recognise.',
+    '',
+    'New concept',
+    'e.g. Pizza, Minecraft, Programming',
+    'Create concept'
+  );
   if (name === null) return;
+
   const clean = name.trim();
   if (!clean){ toast('A concept needs a name', 'error'); return; }
 
@@ -2266,10 +2446,16 @@ function renderMemory(){
   });
 
   $$('[data-edit]', host).forEach(btn => {
-    btn.onclick = () => {
+    btn.onclick = async () => {
       const m = byId(state.memories, btn.dataset.edit);
       if (!m) return;
-      const v = prompt('Value for \u201c' + Memory.pretty(m.key) + '\u201d:', m.value);
+      const v = await uiPrompt(
+        'What should \u201c' + Memory.pretty(m.key) + '\u201d be?',
+        m.value,
+        'Edit memory',
+        'New value',
+        'Save'
+      );
       if (v === null) return;
       m.value = v.trim().slice(0, 200);
       Store.save();
@@ -2867,8 +3053,6 @@ function importJSON(text){
 
 /* --- standalone chatbot export --- */
 
-const STANDALONE_CSS = ''; /* the runtime injects its own styles */
-
 function exportStandalone(){
   const runtime = document.getElementById('standaloneRuntime').textContent;
   const data = JSON.stringify(buildExportData()).replace(/</g, '\\u003c');
@@ -3057,8 +3241,14 @@ function wireGlobalUI(){
   $('#btnImport').onclick = () => fileInput.click();
   $('#btnExportChatbot').onclick = exportStandalone;
 
-  $('#btnReset').onclick = () => {
-    if (!confirm('This deletes your AI and everything it has learned from this browser. Continue?')) return;
+  $('#btnReset').onclick = async () => {
+    const ok = await uiConfirm(
+      'This deletes your AI and everything it has learned from this browser. This cannot be undone.',
+      'Start over?',
+      'Delete everything',
+      true
+    );
+    if (!ok) return;
     localStorage.removeItem(STORAGE_KEY);
     state = defaultState();
     applyTheme();
