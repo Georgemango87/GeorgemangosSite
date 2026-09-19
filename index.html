@@ -412,28 +412,171 @@
     </div>
 
     <script>
-      /* ==========================================
-         MODAL CONTROLLER
-         ========================================== */
-      function openGameModal(modalId) {
-        document.getElementById(modalId).style.display = 'flex';
+  /* ==========================================
+     MODAL CONTROLLER
+     ========================================== */
+  function openGameModal(modalId) {
+    document.getElementById(modalId).style.display = 'flex';
 
-        // Lazy-load iframe
-        const iframe = document.getElementById(modalId.replace('-modal', '-iframe'));
-        if (iframe && !iframe.src && iframe.dataset.src) {
-          iframe.src = iframe.dataset.src;
-        }
-      }
+    // Lazy-load iframe
+    const iframe = document.getElementById(modalId.replace('-modal', '-iframe'));
+    if (iframe && !iframe.src && iframe.dataset.src) {
+      iframe.src = iframe.dataset.src;
+    }
+  }
 
-      function closeGameModal(modalId) {
-        document.getElementById(modalId).style.display = 'none';
-      }
+  function closeGameModal(modalId) {
+    document.getElementById(modalId).style.display = 'none';
+  }
 
-      window.onclick = function(event) {
-        if (event.target.classList.contains('game-modal')) {
-          event.target.style.display = 'none';
-        }
-      };
-    </script>
+  window.onclick = function(event) {
+    if (event.target.classList.contains('game-modal')) {
+      event.target.style.display = 'none';
+    }
+  };
+
+  /* ==========================================
+     GAME 1: COLOR CONTEXTO
+     ========================================== */
+  let game1_secretColor, game1_guesses, game1_gameOver;
+
+  const game1_colorPicker = document.getElementById('game1-colorPicker');
+  const game1_colorInput = document.getElementById('game1-colorInput');
+  const game1_guessBtn = document.getElementById('game1-guessBtn');
+  const game1_giveUpBtn = document.getElementById('game1-giveUpBtn');
+  const game1_newGameBtn = document.getElementById('game1-newGameBtn');
+  const game1_messageDiv = document.getElementById('game1-message');
+  const game1_guessesContainer = document.getElementById('game1-guessesContainer');
+
+  function game1_initGame() {
+    game1_secretColor = game1_generateRandomColor();
+    game1_guesses = [];
+    game1_gameOver = false;
+    game1_colorPicker.disabled = false;
+    game1_colorPicker.value = '#000000';
+    game1_colorInput.disabled = false;
+    game1_colorInput.value = '';
+    game1_guessBtn.disabled = false;
+    game1_giveUpBtn.disabled = false;
+    game1_newGameBtn.style.display = 'none';
+    game1_messageDiv.textContent = '';
+    game1_renderGuesses();
+  }
+
+  game1_colorPicker.addEventListener('input', (e) => {
+    if (game1_gameOver) return;
+    game1_colorInput.value = e.target.value.toUpperCase();
+  });
+
+  game1_colorInput.addEventListener('input', (e) => {
+    if (game1_gameOver) return;
+    const val = e.target.value;
+    if (val.startsWith('#') && (val.length === 4 || val.length === 7)) {
+      game1_colorPicker.value = val;
+    }
+  });
+
+  game1_guessBtn.addEventListener('click', game1_makeGuess);
+  game1_giveUpBtn.addEventListener('click', game1_giveUp);
+  game1_newGameBtn.addEventListener('click', game1_initGame);
+  game1_colorInput.addEventListener('keypress', (e) => {
+    if (e.key === 'Enter' && !game1_gameOver) game1_makeGuess();
+  });
+
+  function game1_generateRandomColor() {
+    const letters = '0123456789ABCDEF';
+    let color = '#';
+    for (let i = 0; i < 6; i++) {
+      color += letters[Math.floor(Math.random() * 16)];
+    }
+    return color;
+  }
+
+  function game1_hexToRgb(hex) {
+    let c = hex.replace('#', '');
+    if (c.length === 3) c = c.split('').map(ch => ch + ch).join('');
+    const num = parseInt(c, 16);
+    return { r: (num >> 16) & 255, g: (num >> 8) & 255, b: num & 255 };
+  }
+
+  function game1_calculateDistance(hex1, hex2) {
+    const rgb1 = game1_hexToRgb(hex1);
+    const rgb2 = game1_hexToRgb(hex2);
+    const rDiff = rgb1.r - rgb2.r;
+    const gDiff = rgb1.g - rgb2.g;
+    const bDiff = rgb1.b - rgb2.b;
+    return Math.round(Math.sqrt(rDiff * rDiff + gDiff * gDiff + bDiff * bDiff) * 100) / 100;
+  }
+
+  function game1_makeGuess() {
+    if (game1_gameOver) return;
+    let guess = game1_colorInput.value.trim().toUpperCase();
+    if (!guess.startsWith('#')) guess = '#' + guess;
+    if (!/^#[0-9A-F]{6}$/i.test(guess)) {
+      game1_messageDiv.style.color = 'red';
+      game1_messageDiv.textContent = 'Please enter a valid 6-digit hex code (e.g., #FF5733).';
+      return;
+    }
+    if (game1_guesses.some(g => g.color === guess)) {
+      game1_messageDiv.style.color = 'orange';
+      game1_messageDiv.textContent = 'You already guessed that color!';
+      return;
+    }
+    const distance = game1_calculateDistance(guess, game1_secretColor);
+    game1_guesses.push({ color: guess, distance });
+    game1_guesses.sort((a, b) => a.distance - b.distance);
+    game1_renderGuesses();
+    if (distance === 0) {
+      game1_endGame(true);
+    } else {
+      game1_messageDiv.style.color = '#333';
+      game1_messageDiv.textContent = `Distance: ${distance}`;
+    }
+  }
+
+  function game1_giveUp() {
+    if (game1_gameOver) return;
+    game1_endGame(false);
+  }
+
+  function game1_endGame(won) {
+    game1_gameOver = true;
+    game1_guessBtn.disabled = true;
+    game1_giveUpBtn.disabled = true;
+    game1_colorInput.disabled = true;
+    game1_colorPicker.disabled = true;
+    game1_newGameBtn.style.display = 'inline-block';
+    if (won) {
+      game1_messageDiv.style.color = 'green';
+      game1_messageDiv.textContent = `🎉 Correct! You found the secret color ${game1_secretColor}!`;
+    } else {
+      game1_messageDiv.style.color = '#e74c3c';
+      game1_messageDiv.innerHTML = `Game Over! The secret color was <span style="background:${game1_secretColor}; padding: 2px 8px; border-radius:4px; color:white; border:1px solid #333;">${game1_secretColor}</span>`;
+    }
+  }
+
+  function game1_renderGuesses() {
+    game1_guessesContainer.innerHTML = '';
+    game1_guesses.forEach((g, index) => {
+      const row = document.createElement('div');
+      row.className = 'guess-row';
+      const swatch = document.createElement('div');
+      swatch.className = 'swatch';
+      swatch.style.backgroundColor = g.color;
+      const text = document.createElement('span');
+      text.textContent = `#${index + 1}: ${g.color}`;
+      const dist = document.createElement('span');
+      dist.textContent = `Distance: ${g.distance}`;
+      dist.style.fontWeight = 'bold';
+      row.appendChild(swatch);
+      row.appendChild(text);
+      row.appendChild(dist);
+      game1_guessesContainer.appendChild(row);
+    });
+  }
+
+  // Kick off the first game
+  game1_initGame();
+</script>
   </body>
 </html>
