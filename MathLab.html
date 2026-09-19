@@ -504,6 +504,11 @@ function proj(x,y,z){
 
 /* ───────────── presets ───────────── */
 const PRESETS={
+  blank:{grp:"Starter",label:"Blank",desc:"Empty canvas — a tiny marker at the origin",
+    mode:"curve",
+    expr:{x:"0",y:"0",z:"0",c:"0.5"},
+    params:{},
+    opts:{samples:128,scale:1,dist:3.6,lw:2.5,pal:"Mono",bg:"#05060a",glow:true}},
   lissajous:{grp:"Curves",label:"Lissajous 3D",desc:"Three sine waves",
     mode:"curve",
     expr:{x:"sin(a*u*tau + t*0.30)",y:"sin(b*u*tau + t*0.45)",z:"sin(c*u*tau + t*0.60)",c:"u"},
@@ -565,7 +570,7 @@ const STARTERS={
 };
 
 const S={
-  key:"lissajous",mode:"curve",label:"Lissajous 3D",dirty:false,
+  key:"blank",mode:"curve",label:"Blank",dirty:false,
   expr:{},fns:{},params:{},P:[],idx:{},
   t:0,playing:true,speed:1,scale:1,samples:2800,res:72,
   lw:1.8,psz:1.5,fade:0.14,glow:true,pal:"Neon",bg:"#05060a",hue:0,
@@ -1377,7 +1382,7 @@ function boot(){
     fmt:v=>(v>0?"+":"")+Math.round(v)+"°",
     onInput:v=>{S.hue=v;S.lutDirty=true;}
   });
-  loadPreset("lissajous");
+  loadPreset("blank");
   resize();
   window.addEventListener("resize",resize);
   requestAnimationFrame(loop);
