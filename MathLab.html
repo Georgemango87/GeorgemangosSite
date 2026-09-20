@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>MathLab 3D</title>
 <style>
 :root{--bg:#07080d;--pnl:#0c0e15;--pnl2:#141822;--line:#1e2434;--line2:#2b3247;
@@ -10,8 +10,9 @@
 *{box-sizing:border-box}
 html,body{height:100%;margin:0}
 body{background:var(--bg);color:var(--fg);overflow:hidden;
+  overscroll-behavior:none;-webkit-tap-highlight-color:transparent;
   font:13px/1.45 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
-#app{display:flex;flex-direction:column;height:100vh}
+#app{display:flex;flex-direction:column;height:100vh;height:100dvh}
 
 header{display:flex;align-items:center;gap:8px;height:54px;padding:0 14px;
   background:#0b0e15;border-bottom:1px solid var(--line);flex:0 0 54px}
@@ -120,11 +121,147 @@ canvas.drag{cursor:grabbing}
   opacity:0;transition:opacity .2s}
 .toast.on{opacity:1}
 .toast.bad{background:rgba(255,107,129,.15);border-color:rgba(255,107,129,.4);color:#ffb3be}
+
+/* ═══════════ MOBILE ═══════════ */
+.menu-btn{display:none}
+.sidebar-backdrop{display:none}
+
+@media (max-width: 768px){
+  header{height:48px;flex:0 0 48px;padding:0 6px;gap:4px}
+  .brand{font-size:12.5px;gap:6px}
+  .logo{width:22px;height:22px;border-radius:5px;font-size:11px}
+  .menu-btn{
+    display:inline-flex;align-items:center;justify-content:center;
+    width:36px;height:36px;padding:0;font-size:18px;
+    background:transparent;border:none;color:var(--fg);
+  }
+  .menu-btn:hover{background:var(--pnl2)}
+
+  #presetSel{
+    min-width:0 !important;
+    max-width:112px;
+    font-size:11px;
+    padding:5px 22px 5px 7px;
+    background-position:calc(100% - 12px) 50%,calc(100% - 8px) 50%;
+  }
+
+  #playBtn,#rotBtn,#resetBtn{
+    padding:0;
+    width:36px;height:36px;
+    display:inline-flex;align-items:center;justify-content:center;
+    font-size:15px;
+  }
+
+  .chip{display:none}
+  .chip#modeChip{
+    display:inline-block;
+    font-size:9.5px;padding:3px 6px;letter-spacing:.02em;
+  }
+
+  aside{
+    position:fixed;
+    top:0;left:0;bottom:0;
+    width:min(340px,88vw);
+    z-index:100;
+    transform:translateX(-100%);
+    transition:transform .22s ease;
+    box-shadow:6px 0 24px rgba(0,0,0,.55);
+    border-right:none;
+  }
+  aside.open{transform:translateX(0)}
+
+  .sidebar-backdrop{
+    display:block;
+    position:fixed;inset:0;
+    background:rgba(0,0,0,.55);
+    z-index:99;
+    opacity:0;pointer-events:none;
+    transition:opacity .22s;
+    -webkit-backdrop-filter:blur(2px);
+    backdrop-filter:blur(2px);
+  }
+  .sidebar-backdrop.on{opacity:1;pointer-events:auto}
+
+  .body{position:relative}
+  .stage{width:100%;height:100%}
+
+  .tabs button{padding:13px 18px;font-size:12.5px}
+  section{padding:14px 15px;margin-bottom:14px}
+  section h2{font-size:11px;margin-bottom:10px}
+
+  button,select,input[type=text],input[type=number],textarea{
+    min-height:38px;
+    font-size:13px;
+    padding:7px 10px;
+  }
+  textarea{min-height:58px;line-height:1.5;font-size:13px}
+
+  input[type=range]{height:32px}
+  input[type=range]::-webkit-slider-runnable-track{height:6px;border-radius:3px}
+  input[type=range]::-webkit-slider-thumb{
+    width:22px;height:22px;margin-top:-8px;
+  }
+  input[type=range]::-moz-range-track{height:6px;border-radius:3px}
+  input[type=range]::-moz-range-thumb{width:22px;height:22px}
+
+  input[type=color]{height:40px}
+  input[type=checkbox]{width:20px;height:20px}
+
+  .sld{margin-bottom:13px}
+  .sld-top{font-size:12.5px;margin-bottom:4px}
+  .sld-val{font-size:12px}
+
+  .pform{grid-template-columns:1fr 1fr;gap:6px}
+  .pform input{min-height:36px;font-size:12.5px;padding:6px 8px}
+  .pform button{min-height:42px;font-size:13px}
+
+  .card-grid{grid-template-columns:1fr 1fr;gap:9px}
+  .card{padding:11px;min-height:76px}
+  .card-n{font-size:13px}
+  .card-d{font-size:11px;min-height:30px}
+  .card-m{font-size:10px}
+  .card-del{
+    width:32px;height:32px;top:2px;right:2px;
+    display:flex;align-items:center;justify-content:center;
+    font-size:20px;padding:0;
+  }
+
+  .param-row{padding:6px 10px;font-size:12px;min-height:34px}
+  .param-row button{
+    width:32px;height:32px;
+    display:flex;align-items:center;justify-content:center;
+    font-size:18px;
+  }
+
+  .row label{font-size:12px;margin-bottom:5px}
+
+  .docs{padding:16px 15px;font-size:13px}
+  .docs h3{font-size:12px;margin:14px 0 6px}
+  .docs pre{font-size:11px;padding:10px;line-height:1.5}
+  .docs table{font-size:12px}
+  .docs th,.docs td{padding:6px 4px}
+
+  .hint{
+    font-size:10px;left:8px;bottom:8px;
+    padding:3px 7px;
+    background:rgba(0,0,0,.45);
+    border-radius:5px;
+  }
+
+  .toast{
+    font-size:12px;
+    padding:9px 14px;
+    max-width:none;
+    left:5vw;right:5vw;
+    transform:none;
+  }
+}
 </style>
 </head>
 <body>
 <div id="app">
   <header>
+    <button id="menuBtn" class="menu-btn ghost" aria-label="Menu">☰</button>
     <div class="brand"><span class="logo">∿</span> MathLab 3D</div>
     <select id="presetSel" style="min-width:170px"></select>
     <button id="playBtn" class="ghost">⏸ Pause</button>
@@ -134,6 +271,8 @@ canvas.drag{cursor:grabbing}
     <div class="chip" id="modeChip">curve</div>
     <div class="chip"><b id="fpsVal">–</b> fps</div>
   </header>
+
+  <div class="sidebar-backdrop" id="backdrop"></div>
 
   <div class="body">
     <aside>
@@ -166,10 +305,10 @@ canvas.drag{cursor:grabbing}
             <div id="plist"></div>
             <div class="pform">
               <input class="full" id="pN" placeholder="name (e.g. speed)" style="grid-column:1/-1">
-              <input id="pLo" type="number" placeholder="min">
-              <input id="pHo" type="number" placeholder="max">
-              <input id="pDv" type="number" placeholder="default">
-              <input id="pSt" type="number" placeholder="step" value="0.1">
+              <input id="pLo" type="number" inputmode="decimal" placeholder="min">
+              <input id="pHo" type="number" inputmode="decimal" placeholder="max">
+              <input id="pDv" type="number" inputmode="decimal" placeholder="default">
+              <input id="pSt" type="number" inputmode="decimal" placeholder="step" value="0.1">
               <input class="full" id="pLb" placeholder="label (optional)" style="grid-column:1/-1">
               <button id="pAdd">+ Add parameter</button>
             </div>
@@ -442,6 +581,7 @@ const PALS={
   Viridis:[[68,1,84],[72,40,120],[62,74,137],[49,104,142],[38,130,142],[31,158,137],[53,183,121],[109,205,89],[180,222,44],[253,231,37]],
   Plasma:[[13,8,135],[84,2,163],[139,10,165],[185,50,137],[219,92,104],[244,136,73],[254,188,43],[240,249,33]],
   Sunset:[[20,10,40],[90,20,90],[180,50,90],[240,110,70],[255,190,90],[255,245,200]],
+  Mono:[[8,8,10],[60,62,70],[130,134,150],[200,205,220],[255,255,255]],
   Candy:[[30,10,60],[120,30,160],[230,60,140],[255,140,150],[255,220,200]]
 };
 function hueRot(r,g,b,deg){
@@ -506,7 +646,7 @@ function proj(x,y,z){
 const PRESETS={
   blank:{grp:"Starter",label:"Blank",desc:"Empty canvas — a tiny marker at the origin",
     mode:"curve",
-    expr:{x:"0",y:"0",z:"0",c:"0.5"},
+    expr:{x:"0.03*cos(u*tau)",y:"0.03*sin(u*tau)",z:"0",c:"0.5"},
     params:{},
     opts:{samples:128,scale:1,dist:3.6,lw:2.5,pal:"Mono",bg:"#05060a",glow:true}},
   lissajous:{grp:"Curves",label:"Lissajous 3D",desc:"Three sine waves",
@@ -606,6 +746,35 @@ $("tabs").addEventListener("click",function(e){
     panes[i].classList.toggle("on",panes[i].getAttribute("data-p")===tab);
   }
 });
+
+/* ── mobile: sidebar drawer ── */
+const menuBtn=$("menuBtn");
+const backdrop=$("backdrop");
+function openSidebar(){
+  document.querySelector("aside").classList.add("open");
+  backdrop.classList.add("on");
+}
+function closeSidebar(){
+  document.querySelector("aside").classList.remove("open");
+  backdrop.classList.remove("on");
+}
+menuBtn.addEventListener("click",openSidebar);
+backdrop.addEventListener("click",closeSidebar);
+
+function updatePlayLabel(){
+  const m=window.innerWidth<=768;
+  $("playBtn").textContent=S.playing?(m?"⏸":"⏸ Pause"):(m?"▶":"▶ Play");
+}
+function applyResponsive(){
+  const m=window.innerWidth<=768;
+  updatePlayLabel();
+  $("rotBtn").textContent=m?"⟳":"Auto-rotate";
+  $("resetBtn").textContent=m?"⟲":"Reset view";
+  document.querySelector(".hint").textContent=m
+    ?"drag to orbit · pinch to zoom"
+    :"drag to orbit · scroll to zoom · space to pause";
+}
+window.addEventListener("resize",applyResponsive);
 
 /* ───────────── storage ───────────── */
 const LS="mathlab3d.v5";
@@ -786,7 +955,10 @@ function makeCard(name,desc,mode,key,kind){
   const d=document.createElement("div");d.className="card-d";d.textContent=desc;
   const m=document.createElement("div");m.className="card-m";m.textContent=mode;
   b.append(n,d,m);
-  b.onclick=()=>{ if(kind==="c")loadCustom(key); else loadPreset(key); };
+  b.onclick=()=>{
+    if(kind==="c")loadCustom(key); else loadPreset(key);
+    if(window.innerWidth<=768) closeSidebar();
+  };
   return b;
 }
 
@@ -933,7 +1105,6 @@ function zTri(ax,ay,az, bx,by,bz, cx,cy,cz, r,g,b){
 function renderCurve(t){
   const fx=S.fns.x,fy=S.fns.y,fz=S.fns.z,fc=S.fns.c;
   if(!fx||!fy||!fz)return;
-  // Clear every frame — no ghost trails
   ctx.globalCompositeOperation="source-over";ctx.globalAlpha=1;
   ctx.fillStyle=S.bg;ctx.fillRect(0,0,W,H);
   S.needsClear=false;
@@ -1003,9 +1174,8 @@ function renderSurface(t){
   const ix=S.idx,P=S.P;
   P[ix.t]=t;P[ix.n]=N*N;
   const sc=S.scale;
-  const HAS_USER_R = ("r" in S.params);
+  const HAS_USER_R=("r" in S.params);
 
-  // Pre-project all vertices
   const px=new Float32Array(N*N);
   const py=new Float32Array(N*N);
   const pz=new Float32Array(N*N);
@@ -1043,13 +1213,11 @@ function renderSurface(t){
     }
   }
 
-  // Clear z-buffer with background colour
   const bg=hex2rgb(S.bg);
   zInit();
   zClear(bg[0],bg[1],bg[2]);
   S.needsClear=false;
 
-  // Lighting
   const Lx=0.45,Ly=0.8,Lz=0.4;
   const Ll=Math.hypot(Lx,Ly,Lz);
   const lx=Lx/Ll,ly=Ly/Ll,lz=Lz/Ll;
@@ -1089,7 +1257,7 @@ function renderSurface(t){
 function renderAttractor(t){
   const fx=S.fns.x,fy=S.fns.y,fz=S.fns.z,fc=S.fns.c;
   if(!fx||!fy||!fz)return;
-  const HAS_USER_R = ("r" in S.params);
+  const HAS_USER_R=("r" in S.params);
   if(S.needsClear){
     ctx.globalCompositeOperation="source-over";ctx.globalAlpha=1;
     ctx.fillStyle=S.bg;ctx.fillRect(0,0,W,H);
@@ -1235,30 +1403,69 @@ function delCustom(id){
 }
 
 /* ───────────── interaction ───────────── */
-let drag=false,mx=0,my=0;
+const activePointers=new Map();
+let drag=false,mx=0,my=0,pinchDist=0;
+
+function pDist(){
+  const pts=Array.from(activePointers.values());
+  if(pts.length<2)return 0;
+  return Math.hypot(pts[0].x-pts[1].x,pts[0].y-pts[1].y);
+}
+function zoomBy(f){
+  cam.dist=Math.max(1.4,Math.min(10,cam.dist*f));
+  const first=renderSliders.querySelector('input[type="range"]');
+  if(first){
+    first.value=cam.dist;
+    const vv=first.parentElement.querySelector(".v");
+    if(vv)vv.textContent=cam.dist.toFixed(2);
+  }
+}
+
 cv.addEventListener("pointerdown",e=>{
-  drag=true;mx=e.clientX;my=e.clientY;cv.classList.add("drag");
+  activePointers.set(e.pointerId,{x:e.clientX,y:e.clientY});
   try{cv.setPointerCapture(e.pointerId);}catch(_){}
+  if(activePointers.size===1){
+    drag=true;mx=e.clientX;my=e.clientY;cv.classList.add("drag");
+  }else if(activePointers.size===2){
+    drag=false;pinchDist=pDist();
+  }
 });
+
 cv.addEventListener("pointermove",e=>{
-  if(!drag)return;
-  const dx=e.clientX-mx,dy=e.clientY-my;
-  mx=e.clientX;my=e.clientY;
-  cam.theta-=dx*0.007;
-  cam.phi+=dy*0.007;
-  const lim=Math.PI/2-0.02;
-  if(cam.phi>lim)cam.phi=lim;
-  if(cam.phi<-lim)cam.phi=-lim;
+  if(!activePointers.has(e.pointerId))return;
+  activePointers.set(e.pointerId,{x:e.clientX,y:e.clientY});
+
+  if(activePointers.size===1 && drag){
+    const dx=e.clientX-mx,dy=e.clientY-my;
+    mx=e.clientX;my=e.clientY;
+    cam.theta-=dx*0.007;
+    cam.phi+=dy*0.007;
+    const lim=Math.PI/2-0.02;
+    if(cam.phi>lim)cam.phi=lim;
+    if(cam.phi<-lim)cam.phi=-lim;
+  }else if(activePointers.size===2){
+    const d=pDist();
+    if(pinchDist>0 && d>0) zoomBy(pinchDist/d);
+    pinchDist=d;
+  }
 });
-cv.addEventListener("pointerup",e=>{
-  drag=false;cv.classList.remove("drag");
+
+function endPointer(e){
+  activePointers.delete(e.pointerId);
   try{cv.releasePointerCapture(e.pointerId);}catch(_){}
-});
-cv.addEventListener("pointercancel",()=>{drag=false;cv.classList.remove("drag");});
+  if(activePointers.size===0){
+    drag=false;cv.classList.remove("drag");
+  }else if(activePointers.size===1){
+    const p=activePointers.values().next().value;
+    mx=p.x;my=p.y;drag=true;pinchDist=0;
+  }
+}
+cv.addEventListener("pointerup",endPointer);
+cv.addEventListener("pointercancel",endPointer);
+
 cv.addEventListener("wheel",e=>{
   e.preventDefault();
-  const f=Math.exp(e.deltaY*0.0011);
-  cam.dist=Math.max(1.4,Math.min(10,cam.dist*f));
+  zoomBy(Math.exp(e.deltaY*0.0011));
 },{passive:false});
 
 document.addEventListener("keydown",e=>{
@@ -1266,7 +1473,7 @@ document.addEventListener("keydown",e=>{
      !(e.target instanceof HTMLTextAreaElement)){
     e.preventDefault();
     S.playing=!S.playing;
-    $("playBtn").textContent=S.playing?"⏸ Pause":"▶ Play";
+    updatePlayLabel();
   }
 });
 
@@ -1274,10 +1481,11 @@ $("presetSel").addEventListener("change",()=>{
   const v=$("presetSel").value;
   if(v.indexOf("c:")===0)loadCustom(v.slice(2));
   else if(v)loadPreset(v);
+  if(window.innerWidth<=768) closeSidebar();
 });
 $("playBtn").onclick=()=>{
   S.playing=!S.playing;
-  $("playBtn").textContent=S.playing?"⏸ Pause":"▶ Play";
+  updatePlayLabel();
 };
 $("rotBtn").onclick=()=>{
   cam.auto=!cam.auto;
@@ -1287,6 +1495,7 @@ $("resetBtn").onclick=()=>{
   cam.theta=0.75;cam.phi=0.32;
   const o=PRESETS[S.key]?PRESETS[S.key].opts:null;
   cam.dist=(o&&o.dist!==undefined)?o.dist:3.6;
+  if(o&&o.phi!==undefined)cam.phi=o.phi;
   S.needsClear=true;buildRenderControls();
 };
 
@@ -1382,9 +1591,10 @@ function boot(){
     fmt:v=>(v>0?"+":"")+Math.round(v)+"°",
     onInput:v=>{S.hue=v;S.lutDirty=true;}
   });
-  loadPreset("blank");
+  loadPreset(PRESETS.blank?"blank":"lissajous");
   resize();
   window.addEventListener("resize",resize);
+  applyResponsive();
   requestAnimationFrame(loop);
   console.log("[MathLab] ready");
 }
