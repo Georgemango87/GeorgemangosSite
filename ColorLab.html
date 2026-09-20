@@ -701,6 +701,7 @@ function harmonyLabels(type){
    ========================================================================= */
 const CL = {
   current: { r:74, g:114, b:232 },
+  sourceSpace: null,   // e.g. 'sp-oklab' — the space the current color came from
   alpha: 1,
   hue: 222,                       // preserved hue for achromatic colors
   history: [],
@@ -872,6 +873,7 @@ function isActiveTab(id){
 // opts.noHistory → do not schedule a history entry
 function setCurrent(rgb, alpha, opts){
   opts = opts || {};
+  CL.sourceSpace = null;
   CL.current = {
     r: clamp(Math.round(rgb.r),0,255),
     g: clamp(Math.round(rgb.g),0,255),
@@ -1804,7 +1806,7 @@ function showTab(id, sub){
   if(id === 'experiments') renderExperiments();
   if(id === 'favorites')   renderFavorites();
   if(id === 'theory')      updateTheory();
-  if(id === 'spaces')      updateSpaces();
+  if(id === 'spaces')      { CL.sourceSpace = null; updateSpaces(); }
   if(id === 'contrast')    renderContrast();
   if(id === 'mixer')       renderMixer();
   if(id === 'math')        renderMath();
@@ -2410,6 +2412,12 @@ const SPACES = [
     sliders:[['L','L',0,1,0.001],['C','C',0,0.4,0.001],['H','H',0,360,1]] }
 ];
 let spacesUpdating = false;
+// `CL.sourceSpace` is the space the color was last set from. While it is set,
+// updateSpaces() does not write back to that space — the round-trip through
+// 8-bit RGB is lossy and would nudge the value out from under the user.
+// It is cleared by setCurrent(), so changing the color anywhere else
+// (picker, wheel, mixer, quick color, import…) causes a full resync.
+
 function buildSpaces(){
   const grid = $('#spacesGrid'); if(!grid) return;
   let html = '';
@@ -2421,48 +2429,138 @@ function buildSpaces(){
     html += '</div>';
   });
   grid.innerHTML = html;
+
   SPACES.forEach(sp=>{
     sp.sliders.forEach(sl=>{
-      bindSlider(sp.id + '-' + sl[0], ()=>applySpace(sp));
+      const id = sp.id + '-' + sl[0];
+      const rangeEl = document.getElementById(id);
+      const numEl   = document.getElementById(id + 'N');
+      if(!rangeEl || !numEl) return;
+
+      rangeEl.addEventListener('input', ()=>{
+        const v = parseFloat(rangeEl.value);
+        if(!isNaN(v) && document.activeElement !== numEl) numEl.value = round(v, 2);
+        applySpace(sp);
+      });
+
+      const numHandler = ()=>{
+        const v = parseFloat(numEl.value);
+        if(isNaN(v)) return;
+        const min = parseFloat(numEl.min), max = parseFloat(numEl.max);
+        rangeEl.value = clamp(v, min, max);
+        applySpace(sp);
+      };
+      numEl.addEventListener('input',  numHandler);
+      numEl.addEventListener('change', numHandler);
     });
   });
 }
+
 function applySpace(sp){
   if(spacesUpdating) return;
   const get = k => parseFloat(document.getElementById(sp.id + '-' + k).value);
   let rgb;
-  if(sp.id === 'sp-rgb') rgb = { r:get('R'), g:get('G'), b:get('B') };
-  else if(sp.id === 'sp-hsl') rgb = hslToRgb(get('H'), get('S'), get('L'));
-  else if(sp.id === 'sp-hsv') rgb = hsvToRgb(get('H'), get('S'), get('V'));
-  else if(sp.id === 'sp-cmyk') rgb = cmykToRgb(get('C'), get('M'), get('Y'), get('K'));
-  else if(sp.id === 'sp-lab') rgb = labToRgb({ L:get('L'), a:get('a'), b:get('b') });
+  if(sp.id === 'sp-rgb')        rgb = { r:get('R'), g:get('G'), b:get('B') };
+  else if(sp.id === 'sp-hsl')   rgb = hslToRgb(get('H'), get('S'), get('L'));
+  else if(sp.id === 'sp-hsv')   rgb = hsvToRgb(get('H'), get('S'), get('V'));
+  else if(sp.id === 'sp-cmyk')  rgb = cmykToRgb(get('C'), get('M'), get('Y'), get('K'));
+  else if(sp.id === 'sp-lab')   rgb = labToRgb({ L:get('L'), a:get('a'), b:get('b') });
   else if(sp.id === 'sp-oklab') rgb = oklabToRgb({ L:get('L'), a:get('a'), b:get('b') });
   else if(sp.id === 'sp-oklch') rgb = oklabToRgb(oklchToOklab({ L:get('L'), C:get('C'), H:get('H') }));
-  if(!rgb) return;
-  setCurrent(rgb);
-  if(sp.id === 'rgb'){ /* nothing */ }
-  else { P.h = rgbToHsv(rgb).h; }
-  // Picker panel is not visible here — don't rebuild its DOM.
+
+  if(!rgb || !isFinite(rgb.r) || !isFinite(rgb.g) || !isFinite(rgb.b)) return;
+
+  CL.current = {
+    r: clamp(Math.round(rgb.r), 0, 255),
+    g: clamp(Math.round(rgb.g), 0, 255),
+    b: clamp(Math.round(rgb.b), 0, 255)
+  };
+  // Remember where this color came from so updateSpaces() leaves this space alone.
+  CL.sourceSpace = sp.id;
+
+  // Keep the picker's internal hue/sat state in sync so switching to Picker
+  // doesn't show stale slider positions. We don't call updatePickerUI here —
+  // it rebuilds the info grid, which is expensive, and the picker will be
+  // refreshed on tab switch anyway.
+  const hsv = rgbToHsv(CL.current);
+  const hsl = rgbToHsl(CL.current);
+  if(hsv.s > 1 && hsv.v > 1) P.h = hsv.h;
+  P.s = hsv.s; P.v = hsv.v; P.hs = hsl.s; P.l = hsl.l;
+
+  const hex = rgbToHex(CL.current);
+  $('#currentDot').style.background = hex;
+  $('#currentHex').textContent = hex;
+  const qc = $('#quickColor');
+  if(qc && qc.value.toLowerCase() !== hex.toLowerCase()) qc.value = hex;
+  saveStateDebounced();
+
+  const sw = $('#spacesSwatch');
+  if(sw) sw.style.background = hex;
+  const hx = $('#spacesHex');
+  if(hx) hx.textContent = hex.toUpperCase();
+
   updateSpaces();
 }
+
 function updateSpaces(){
-  const c = CL.current;
   spacesUpdating = true;
-  const hsl = rgbToHsl(c), hsv = rgbToHsv(c), cmyk = rgbToCmyk(c);
-  const lab = rgbToLab(c), oklab = rgbToOklab(c), oklch = oklabToOklch(oklab);
-  setSlider('sp-rgb-R', c.r); setSlider('sp-rgb-G', c.g); setSlider('sp-rgb-B', c.b);
-  setSlider('sp-hsl-H', hsl.h); setSlider('sp-hsl-S', hsl.s); setSlider('sp-hsl-L', hsl.l);
-  setSlider('sp-hsv-H', hsv.h); setSlider('sp-hsv-S', hsv.s); setSlider('sp-hsv-V', hsv.v);
-  setSlider('sp-cmyk-C', cmyk.c); setSlider('sp-cmyk-M', cmyk.m); setSlider('sp-cmyk-Y', cmyk.y); setSlider('sp-cmyk-K', cmyk.k);
-  setSlider('sp-lab-L', lab.L); setSlider('sp-lab-a', lab.a); setSlider('sp-lab-b', lab.b);
-  setSlider('sp-oklab-L', oklab.L); setSlider('sp-oklab-a', oklab.a); setSlider('sp-oklab-b', oklab.b);
-  setSlider('sp-oklch-L', oklch.L); setSlider('sp-oklch-C', oklch.C); setSlider('sp-oklch-H', oklch.H);
-  spacesUpdating = false;
-  const sw = $('#spacesSwatch');
-  if(sw) sw.style.background = rgbToHex(c);
-  const hx = $('#spacesHex');
-  if(hx) hx.textContent = rgbToHex(c).toUpperCase();
+  try{
+    const c = CL.current;
+    const hsl   = rgbToHsl(c);
+    const hsv   = rgbToHsv(c);
+    const cmyk  = rgbToCmyk(c);
+    const lab   = rgbToLab(c);
+    const oklab = rgbToOklab(c);
+    const oklch = oklabToOklch(oklab);
+
+    // Never write to the space the color was last set from. This is what
+    // keeps the slider you just dragged exactly where you left it, instead
+    // of snapping to the (slightly different) value that RGB round-trips to.
+    const skip = CL.sourceSpace ? (CL.sourceSpace + '-') : null;
+    const setIf = (id, v) => {
+      if(skip && id.startsWith(skip)) return;
+      setSlider(id, v);
+    };
+
+    // --- RGB ---------------------------------------------------------
+    setIf('sp-rgb-R', c.r); setIf('sp-rgb-G', c.g); setIf('sp-rgb-B', c.b);
+
+    // --- HSL / HSV ---------------------------------------------------
+    // Hue and saturation are undefined for grays, black, white. Writing
+    // them blindly would erase the user's intent every time the color
+    // passed through a neutral value.
+    const hslChromatic = hsl.s >= 0.5 && hsl.l > 0.001 && hsl.l < 0.999;
+    const hsvChromatic = hsv.s >= 0.5 && hsv.v > 0.001;
+    setIf('sp-hsl-L', hsl.l);
+    if(hslChromatic){ setIf('sp-hsl-H', hsl.h); setIf('sp-hsl-S', hsl.s); }
+    setIf('sp-hsv-V', hsv.v);
+    if(hsvChromatic){ setIf('sp-hsv-H', hsv.h); setIf('sp-hsv-S', hsv.s); }
+
+    // --- CMYK --------------------------------------------------------
+    setIf('sp-cmyk-C', cmyk.c); setIf('sp-cmyk-M', cmyk.m);
+    setIf('sp-cmyk-Y', cmyk.y); setIf('sp-cmyk-K', cmyk.k);
+
+    // --- CIELAB ------------------------------------------------------
+    setIf('sp-lab-L', lab.L);
+    if(lab.L > 0.5){ setIf('sp-lab-a', lab.a); setIf('sp-lab-b', lab.b); }
+
+    // --- OKLab / OKLCH -----------------------------------------------
+    setIf('sp-oklab-L', oklab.L);
+    if(oklab.L > 0.002){ setIf('sp-oklab-a', oklab.a); setIf('sp-oklab-b', oklab.b); }
+    setIf('sp-oklch-L', oklch.L);
+    if(oklch.C >= 0.0005 && oklch.L > 0.002 && oklch.L < 0.998){
+      setIf('sp-oklch-C', oklch.C); setIf('sp-oklch-H', oklch.H);
+    }
+
+    const sw = $('#spacesSwatch');
+    if(sw) sw.style.background = rgbToHex(c);
+    const hx = $('#spacesHex');
+    if(hx) hx.textContent = rgbToHex(c).toUpperCase();
+  } finally {
+    spacesUpdating = false;
+  }
 }
+
 function initSpaces(){
   buildSpaces();
   $('#spacesRandom').onclick = ()=>{ pickerApplyHex(rgbToHex(randomRGB())); };
