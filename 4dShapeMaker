@@ -2,33 +2,46 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>4D Shape Maker — Build Your Own</title>
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<meta name="theme-color" content="#05070d">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<title>4D Shape Maker</title>
 <style>
-  *{box-sizing:border-box}
-  html,body{margin:0;height:100%}
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  html,body{margin:0;height:100%;overscroll-behavior:none}
   body{
     font-family:ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
     background:#05070d;color:#c9d4e8;overflow:hidden;
     -webkit-font-smoothing:antialiased;
+    touch-action:manipulation;
   }
-  .app{display:flex;height:100vh}
+  .app{display:flex;height:100vh;height:100dvh;position:relative}
 
   /* ---------- panel ---------- */
   .panel{
     width:352px;flex:0 0 352px;height:100%;overflow-y:auto;
     background:linear-gradient(180deg,#0b0f1a,#080b13);
-    border-right:1px solid #1b2436;padding:16px 16px 60px;
+    border-right:1px solid #1b2436;padding:16px 16px 40px;
     scrollbar-width:thin;scrollbar-color:#26324d transparent;
+    -webkit-overflow-scrolling:touch;
+    padding-bottom:calc(40px + env(safe-area-inset-bottom));
   }
   .panel::-webkit-scrollbar{width:9px}
   .panel::-webkit-scrollbar-thumb{background:#1e283d;border-radius:9px;border:2px solid #080b13}
+  header{position:relative}
   header h1{
     margin:2px 0 2px;font-size:17px;letter-spacing:.3px;font-weight:650;
     background:linear-gradient(90deg,#7aa2ff,#c88bff 60%,#ff8ab8);
     -webkit-background-clip:text;background-clip:text;color:transparent;
   }
   header .sub{margin:0 0 14px;font-size:11.5px;color:#5d6c88;letter-spacing:.4px}
+  .panel-close{
+    display:none;position:absolute;right:-4px;top:-2px;
+    width:32px;height:32px;padding:0;background:#131c2e;
+    border:1px solid #22304a;border-radius:8px;color:#9fb3d4;
+    font-size:16px;line-height:1;cursor:pointer;
+  }
   .group{
     background:#0a0e19;border:1px solid #161f31;border-radius:12px;
     padding:12px;margin-bottom:12px;
@@ -39,21 +52,21 @@
   }
   label.field{display:block;font-size:11.5px;color:#7c8bab;margin:9px 0 5px}
   label.field small{color:#4d5a75}
-  select,textarea,input[type=number]{
+  select,textarea,input[type=number],input[type=text]{
     width:100%;background:#070b13;border:1px solid #1e283d;border-radius:8px;
-    color:#9fb3d4;font-size:12px;padding:8px;font-family:inherit;
+    color:#9fb3d4;font-size:14px;padding:9px 10px;font-family:inherit;
   }
   textarea{
-    font-family:ui-monospace,Menlo,Consolas,monospace;font-size:11px;
-    line-height:1.5;resize:vertical;
+    font-family:ui-monospace,Menlo,Consolas,monospace;font-size:12px;
+    line-height:1.55;resize:vertical;min-height:96px;
   }
   select:focus,textarea:focus{outline:none;border-color:#3f63ff}
   .btnrow{display:flex;gap:6px;margin-top:9px;flex-wrap:wrap}
   button{
     flex:1 1 auto;background:#16203a;color:#c9d4e8;border:1px solid #26324d;
-    padding:7px 9px;border-radius:8px;font-size:12px;cursor:pointer;
+    padding:9px 10px;border-radius:8px;font-size:12.5px;cursor:pointer;
     font-family:inherit;transition:background .15s,border-color .15s,color .15s;
-    white-space:nowrap;
+    white-space:nowrap;min-height:38px;
   }
   button:hover{background:#1e2a48;border-color:#3a4c74}
   button:active{transform:translateY(1px)}
@@ -62,7 +75,7 @@
   button.active{background:#1f3479;border-color:#3f63ff;color:#c3d3ff;box-shadow:0 0 0 1px #3f63ff55 inset}
 
   .tip{
-    font-size:11px;color:#5d6c88;line-height:1.6;margin:9px 0 0;
+    font-size:11.5px;color:#5d6c88;line-height:1.6;margin:9px 0 0;
     padding:8px 10px;background:#070b13;border:1px solid #141d2e;border-radius:8px;
   }
   .tip b{color:#9db0d4;font-weight:600}
@@ -73,58 +86,155 @@
 
   /* rotation rows */
   .rot-row{
-    display:grid;grid-template-columns:26px 1fr 42px 16px;
-    align-items:center;gap:7px;margin-bottom:5px;
+    display:grid;grid-template-columns:26px 1fr 42px 20px;
+    align-items:center;gap:7px;margin-bottom:8px;
   }
   .rot-name{font-size:11px;color:#7c8bab;font-family:ui-monospace,monospace}
   .rot-deg{font-size:10.5px;color:#4d5a75;text-align:right;font-variant-numeric:tabular-nums}
-  .rot-row input[type=range]{width:100%;accent-color:#5b8cff;height:16px}
-  .rot-row input[type=checkbox]{accent-color:#c88bff;cursor:pointer;margin:0}
+  .rot-row input[type=range]{width:100%;accent-color:#5b8cff;height:22px}
+  .rot-row input[type=checkbox]{accent-color:#c88bff;cursor:pointer;margin:0;width:16px;height:16px}
 
-  .check{display:flex;align-items:center;gap:7px;font-size:12px;color:#8fa0bf;margin-top:9px;cursor:pointer}
-  .check input{accent-color:#5b8cff;cursor:pointer;margin:0}
+  .check{display:flex;align-items:center;gap:8px;font-size:12.5px;color:#8fa0bf;margin-top:10px;cursor:pointer}
+  .check input{accent-color:#5b8cff;cursor:pointer;margin:0;width:17px;height:17px}
 
   .slider-row{display:flex;align-items:center;gap:8px;margin-top:4px}
-  .slider-row input[type=range]{flex:1;accent-color:#5b8cff;height:16px}
+  .slider-row input[type=range]{flex:1;accent-color:#5b8cff;height:22px}
   .slider-row .val{font-size:10.5px;color:#4d5a75;min-width:34px;text-align:right;font-variant-numeric:tabular-nums}
 
   /* ---------- stage ---------- */
-  .stage{flex:1;position:relative;min-width:0}
+  .stage{flex:1;position:relative;min-width:0;overflow:hidden}
   canvas{
     display:block;width:100%;height:100%;cursor:grab;
     background:radial-gradient(circle at 50% 45%,#0e1626 0%,#05070d 72%);
     touch-action:none;
   }
   .hint{
-    position:absolute;left:50%;bottom:14px;transform:translateX(-50%);
+    position:absolute;left:50%;bottom:calc(12px + env(safe-area-inset-bottom));
+    transform:translateX(-50%);
     font-size:11px;color:#3d4a63;letter-spacing:.3px;pointer-events:none;
     white-space:nowrap;background:#05070d99;padding:5px 12px;border-radius:20px;
-    border:1px solid #121a2a;
+    border:1px solid #121a2a;max-width:calc(100% - 24px);overflow:hidden;
+    text-overflow:ellipsis;
   }
   .stats{
-    position:absolute;left:14px;top:12px;font-size:11px;color:#3d4a63;
+    position:absolute;left:calc(14px + env(safe-area-inset-left));
+    top:calc(12px + env(safe-area-inset-top));
+    font-size:11px;color:#3d4a63;
     font-variant-numeric:tabular-nums;pointer-events:none;letter-spacing:.4px;
   }
   .badge{
-    position:absolute;right:14px;top:12px;font-size:10.5px;letter-spacing:1px;
+    position:absolute;right:calc(14px + env(safe-area-inset-right));
+    top:calc(12px + env(safe-area-inset-top));
+    font-size:10.5px;letter-spacing:1px;
     text-transform:uppercase;color:#8fb0ff;background:#12203f;border:1px solid #2c4a94;
     padding:4px 10px;border-radius:20px;pointer-events:none;display:none;
   }
   .badge.on{display:block}
-  @media (max-width:760px){
+
+  /* ---------- mobile panel toggle & overlay ---------- */
+  .panel-toggle{
+    display:none;
+    position:fixed;
+    top:calc(10px + env(safe-area-inset-top));
+    left:calc(10px + env(safe-area-inset-left));
+    width:44px;height:44px;padding:0;
+    background:#0d1526e0;border:1px solid #26324d;border-radius:12px;
+    color:#c9d4e8;font-size:19px;line-height:1;cursor:pointer;z-index:60;
+    backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);
+    align-items:center;justify-content:center;
+    box-shadow:0 4px 16px #0008;
+  }
+  .panel-toggle:active{transform:scale(0.94)}
+  .scrim{
+    display:none;position:fixed;inset:0;background:#000a;
+    z-index:90;opacity:0;transition:opacity .2s ease;
+    backdrop-filter:blur(2px);-webkit-backdrop-filter:blur(2px);
+  }
+  .scrim.on{display:block;opacity:1}
+
+  /* ---------- build-mode floating bar (mobile) ---------- */
+  .build-bar{
+    display:none;
+    position:absolute;
+    left:50%;transform:translateX(-50%);
+    bottom:calc(56px + env(safe-area-inset-bottom));
+    gap:6px;padding:6px;background:#0b1220e6;
+    border:1px solid #22304a;border-radius:14px;z-index:40;
+    backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);
+    box-shadow:0 8px 24px #0009;
+  }
+  .build-bar.on{display:flex}
+  .build-bar button{
+    flex:0 0 auto;min-height:40px;padding:8px 12px;font-size:12px;
+    background:#16203a;border:1px solid #26324d;border-radius:10px;
+  }
+  .build-bar button.danger{color:#ffb0b0;border-color:#5a2b2b;background:#2a1414}
+  .build-bar button.danger:hover{background:#3a1a1a}
+  .build-bar button.primary{background:#182a63;border-color:#3f63ff;color:#b6c8ff}
+
+  /* ============================================================
+     MOBILE LAYOUT
+     ============================================================ */
+  @media (max-width: 860px), (pointer: coarse) and (max-width: 1024px){
     .app{flex-direction:column}
-    .panel{width:100%;flex:0 0 auto;max-height:52vh;border-right:none;border-bottom:1px solid #1b2436}
-    .stage{flex:1 1 auto;min-height:48vh}
-    .hint{font-size:10px}
+    .panel{
+      position:fixed;top:0;left:0;bottom:0;
+      width:min(88vw, 380px);max-width:100%;
+      transform:translateX(-102%);
+      transition:transform .26s cubic-bezier(.3,.7,.3,1);
+      z-index:100;
+      padding-top:calc(14px + env(safe-area-inset-top));
+      padding-left:calc(14px + env(safe-area-inset-left));
+      border-right:1px solid #1b2436;
+      box-shadow:8px 0 32px #000a;
+    }
+    .panel.open{transform:translateX(0)}
+    .panel-toggle{display:flex}
+    .panel-close{display:flex;align-items:center;justify-content:center}
+
+    .stage{flex:1 1 auto;min-height:0}
+    .hint{font-size:10px;padding:4px 10px}
+    .stats{font-size:10px}
+
+    /* bigger touch targets */
+    button{min-height:42px;font-size:13px}
+    .rot-row input[type=range]{height:26px}
+    .slider-row input[type=range]{height:26px}
+    input[type=range]{-webkit-appearance:none;appearance:none;background:transparent}
+    input[type=range]::-webkit-slider-runnable-track{
+      height:6px;border-radius:6px;background:#1a2236;
+    }
+    input[type=range]::-webkit-slider-thumb{
+      -webkit-appearance:none;appearance:none;
+      width:22px;height:22px;border-radius:50%;
+      background:#5b8cff;border:2px solid #0b0f1a;margin-top:-8px;
+      box-shadow:0 0 0 3px #5b8cff33;
+    }
+    input[type=range]::-moz-range-track{height:6px;border-radius:6px;background:#1a2236}
+    input[type=range]::-moz-range-thumb{
+      width:20px;height:20px;border-radius:50%;
+      background:#5b8cff;border:2px solid #0b0f1a;
+    }
+  }
+
+  /* landscape phones: give the canvas more room */
+  @media (max-height: 480px) and (orientation: landscape){
+    .panel{width:min(70vw, 340px)}
+    .build-bar{bottom:calc(10px + env(safe-area-inset-bottom))}
+    .hint{display:none}
   }
 </style>
 </head>
 <body>
 <div class="app">
-  <aside class="panel">
+
+  <button class="panel-toggle" id="panelToggle" aria-label="Open controls">☰</button>
+
+  <aside class="panel" id="panel">
     <header>
       <h1>4D Shape Maker</h1>
       <p class="sub">HYPERDIMENSIONAL WIREFRAME STUDIO</p>
+      <button class="panel-close" id="panelClose" aria-label="Close controls">✕</button>
     </header>
 
     <section class="group">
@@ -199,9 +309,9 @@
     <section class="group">
       <h2>Manual editor</h2>
       <label class="field">Vertices <small>— x, y, z, w per line</small></label>
-      <textarea id="vertText" rows="6" spellcheck="false"></textarea>
+      <textarea id="vertText" rows="6" spellcheck="false" autocorrect="off" autocapitalize="off"></textarea>
       <label class="field">Edges <small>— i - j per line</small></label>
-      <textarea id="edgeText" rows="6" spellcheck="false"></textarea>
+      <textarea id="edgeText" rows="6" spellcheck="false" autocorrect="off" autocapitalize="off"></textarea>
       <div class="btnrow">
         <button id="btnApply" class="primary">Apply</button>
         <button id="btnAuto">Auto-connect</button>
@@ -213,11 +323,19 @@
     </section>
   </aside>
 
+  <div class="scrim" id="scrim"></div>
+
   <main class="stage">
     <canvas id="c"></canvas>
     <div class="stats" id="stats"></div>
     <div class="badge" id="badge">Build mode</div>
-    <div class="hint" id="hint">drag = rotate XY &nbsp;·&nbsp; shift+drag = XW / YW &nbsp;·&nbsp; scroll = zoom</div>
+    <div class="build-bar" id="buildBar">
+      <button id="bbDelete" class="danger">Delete</button>
+      <button id="bbUndo">Undo</button>
+      <button id="bbAdd">+ Vertex</button>
+      <button id="bbDone" class="primary">Done</button>
+    </div>
+    <div class="hint" id="hint">drag = rotate · two-finger = twist &amp; zoom</div>
   </main>
 </div>
 
@@ -228,8 +346,8 @@
 /* ============================================================
    Math helpers
    ============================================================ */
-const PLANE_KEYS  = ['xy','xz','xw','yz','yw','zw'];
-const SPIN_SIGN   = { xy: 1, xz:-1, xw: 1, yz: 1, yw:-1, zw: 1 };
+const PLANE_KEYS = ['xy','xz','xw','yz','yw','zw'];
+const SPIN_SIGN  = { xy: 1, xz:-1, xw: 1, yz: 1, yw:-1, zw: 1 };
 
 const clamp = (v,a,b)=> v<a?a:(v>b?b:v);
 
@@ -363,6 +481,8 @@ const PRESETS = {
 /* ============================================================
    State
    ============================================================ */
+const isTouch = matchMedia('(pointer: coarse)').matches;
+
 const state = {
   verts: [],
   edges: [],
@@ -392,9 +512,10 @@ const statsEl = document.getElementById('stats');
 const badgeEl = document.getElementById('badge');
 const hintEl  = document.getElementById('hint');
 const tipEl   = document.getElementById('buildTip');
+const buildBarEl = document.getElementById('buildBar');
 
 let W = 1, H = 1;
-let projected = [];                        // {sx, sy, depth, z, w, k}
+let projected = [];
 const mouse = { x:0, y:0, inside:false };
 
 function resize(){
@@ -408,23 +529,25 @@ function resize(){
 }
 if(window.ResizeObserver) new ResizeObserver(resize).observe(canvas.parentElement);
 else window.addEventListener('resize', resize);
+window.addEventListener('orientationchange', () => setTimeout(resize, 200));
 
 function viewParams(){
+  // On touch devices give the shape a bit less scale so there's room to drag
+  const base = isTouch ? 0.24 : 0.26;
   return {
-    scale: Math.min(W, H) * 0.26 * state.zoom,
+    scale: Math.min(W, H) * base * state.zoom,
     cx: W * 0.5,
     cy: H * 0.5
   };
 }
 
 /* ============================================================
-   Projection helpers  (screen <-> 4D world)
+   Projection helpers
    ============================================================ */
 function screenToWorld4(sx, sy){
   const {scale, cx, cy} = viewParams();
   const p = [(sx - cx) / scale, (cy - sy) / scale, 0, 0];
   unrotate4(p, state.angles);
-  // keep inside a reasonable hypersphere
   const n = Math.hypot(p[0], p[1], p[2], p[3]);
   if(n > 1.7){ const k = 1.7 / n; p[0]*=k; p[1]*=k; p[2]*=k; p[3]*=k; }
   return p;
@@ -495,7 +618,6 @@ function draw(){
 
   const hueOf = w => 265 - 265 * clamp((w - wmin) / wr, 0, 1);
 
-  /* ---- edges, back to front ---- */
   const list = state.edges
     .map(e => ({a:e[0], b:e[1], z:(pts[e[0]] ? pts[e[0]].z : 0) + (pts[e[1]] ? pts[e[1]].z : 0)}))
     .sort((p,q) => p.z - q.z);
@@ -519,7 +641,6 @@ function draw(){
   }
   ctx.globalCompositeOperation = 'source-over';
 
-  /* ---- vertices, back to front ---- */
   if(state.showVerts){
     const order = pts.map((_,i)=>i).sort((a,b)=> pts[a].z - pts[b].z);
     for(const i of order){
@@ -534,9 +655,7 @@ function draw(){
     }
   }
 
-  /* ---- build-mode overlays ---- */
   if(state.buildMode){
-    // ghost line from selected vertex to cursor
     if(state.selected >= 0 && state.selected < pts.length && mouse.inside){
       const S = pts[state.selected];
       ctx.save();
@@ -549,20 +668,18 @@ function draw(){
       ctx.stroke();
       ctx.restore();
     }
-    // hover ring
     if(state.hover >= 0 && state.hover < pts.length){
       const p = pts[state.hover];
       ctx.beginPath();
-      ctx.arc(p.sx, p.sy, 8, 0, Math.PI*2);
+      ctx.arc(p.sx, p.sy, isTouch ? 14 : 8, 0, Math.PI*2);
       ctx.strokeStyle = 'rgba(200,139,255,0.85)';
       ctx.lineWidth = 1.4;
       ctx.stroke();
     }
-    // selection ring
     if(state.selected >= 0 && state.selected < pts.length){
       const p = pts[state.selected];
       ctx.beginPath();
-      ctx.arc(p.sx, p.sy, 11, 0, Math.PI*2);
+      ctx.arc(p.sx, p.sy, isTouch ? 17 : 11, 0, Math.PI*2);
       ctx.strokeStyle = 'rgba(120,170,255,0.95)';
       ctx.lineWidth = 1.8;
       ctx.stroke();
@@ -580,7 +697,9 @@ function draw(){
    Hit testing
    ============================================================ */
 function pickVertex(x, y){
-  let best = -1, bd = 16 * 16;
+  // Larger pick radius on touch screens
+  const R = isTouch ? 26 : 16;
+  let best = -1, bd = R * R;
   for(let i=0;i<projected.length;i++){
     const p = projected[i];
     const dx = p.sx - x, dy = p.sy - y;
@@ -595,7 +714,7 @@ function localPos(e){
 }
 
 /* ============================================================
-   Shape mutation (raw + history-wrapped)
+   Shape mutation
    ============================================================ */
 const vertText = document.getElementById('vertText');
 const edgeText = document.getElementById('edgeText');
@@ -611,7 +730,6 @@ function syncEditor(){
   edgeText.value = edgesToText(state.edges);
   updateTip();
 }
-
 function pushHistory(){
   history.push({
     v: state.verts.map(p => p.slice()),
@@ -619,7 +737,6 @@ function pushHistory(){
   });
   if(history.length > MAX_HISTORY) history.shift();
 }
-
 function addVertexRaw(p){
   state.verts.push(p);
   return state.verts.length - 1;
@@ -637,7 +754,6 @@ function removeVertexRaw(i){
   state.selected = -1;
   state.hover = -1;
 }
-
 function addVertex(p){ pushHistory(); const i = addVertexRaw(p); syncEditor(); return i; }
 function toggleEdge(a,b){ pushHistory(); toggleEdgeRaw(a,b); syncEditor(); }
 function removeVertex(i){
@@ -656,7 +772,6 @@ function undo(){
   syncEditor();
   draw();
 }
-
 function setShape(shape, sync){
   state.verts = shape.v.map(p => p.slice());
   state.edges = shape.e
@@ -672,11 +787,9 @@ function setShape(shape, sync){
    Animation loop
    ============================================================ */
 let lastT = performance.now();
-
 function frame(t){
   const dt = Math.min(0.05, (t - lastT) / 1000);
   lastT = t;
-
   for(const k of PLANE_KEYS){
     if(state.spin[k]){
       let a = state.angles[k] + state.speed * dt * SPIN_SIGN[k];
@@ -685,7 +798,6 @@ function frame(t){
       state.angles[k] = a;
     }
   }
-
   syncSliders();
   draw();
   requestAnimationFrame(frame);
@@ -728,11 +840,9 @@ for(const key of PLANE_KEYS){
 
   row.append(name, slider, deg, spin);
   rotRowsEl.appendChild(row);
-
   rotSliders[key] = slider;
   rotDegs[key] = deg;
 }
-
 function syncSliders(){
   for(const key of PLANE_KEYS){
     const el = rotSliders[key];
@@ -762,7 +872,6 @@ bindSlider('speed','speedVal','speed', v => v.toFixed(2));
 bindSlider('d4','d4Val','d4', v => v.toFixed(2));
 bindSlider('d3','d3Val','d3', v => v.toFixed(2));
 bindSlider('ew','ewVal','edgeWidth', v => v.toFixed(2));
-
 document.getElementById('showVerts').addEventListener('change', e => { state.showVerts = e.target.checked; });
 document.getElementById('glow').addEventListener('change', e => { state.glow = e.target.checked; });
 document.getElementById('btnReset').addEventListener('click', () => {
@@ -772,6 +881,30 @@ document.getElementById('btnReset').addEventListener('click', () => {
 });
 
 /* ============================================================
+   Mobile panel drawer
+   ============================================================ */
+const panelEl = document.getElementById('panel');
+const panelToggle = document.getElementById('panelToggle');
+const panelClose = document.getElementById('panelClose');
+const scrimEl = document.getElementById('scrim');
+
+function openPanel(){
+  panelEl.classList.add('open');
+  scrimEl.classList.add('on');
+}
+function closePanel(){
+  panelEl.classList.remove('open');
+  scrimEl.classList.remove('on');
+}
+function togglePanel(){
+  if(panelEl.classList.contains('open')) closePanel();
+  else openPanel();
+}
+panelToggle.addEventListener('click', togglePanel);
+panelClose.addEventListener('click', closePanel);
+scrimEl.addEventListener('click', closePanel);
+
+/* ============================================================
    Build mode
    ============================================================ */
 const btnBuild = document.getElementById('btnBuild');
@@ -779,26 +912,34 @@ const btnBuild = document.getElementById('btnBuild');
 function updateTip(){
   if(!state.buildMode){
     tipEl.innerHTML = 'Turn on <b>build mode</b> to draw your own 4D shape directly on the canvas.';
-    hintEl.textContent = 'drag = rotate XY · shift+drag = XW / YW · scroll = zoom';
+    hintEl.textContent = isTouch
+      ? 'drag = rotate · two-finger = twist & zoom'
+      : 'drag = rotate XY · shift+drag = XW / YW · scroll = zoom';
     return;
   }
-  hintEl.textContent = 'click = add vertex · click vertex = select · drag vertex = move · right-click = delete';
+  hintEl.textContent = isTouch
+    ? 'tap empty = add vertex · tap vertex = select · drag vertex = move · long-press = delete'
+    : 'click = add vertex · click vertex = select · drag vertex = move · right-click = delete';
 
   let html = '';
   if(state.selected >= 0 && state.selected < state.verts.length){
     const v = state.verts[state.selected];
     html += '<b>Vertex ' + state.selected + '</b> selected &nbsp;(' +
             v.map(x => (Math.abs(x)<1e-4?0:x).toFixed(2)).join(', ') + ')<br>';
-    html += 'Click another vertex to link / unlink.<br>';
-    html += 'Click empty space to add a linked vertex.<br>';
+    html += 'Tap another vertex to link / unlink.<br>';
+    html += 'Tap empty space to add a linked vertex.<br>';
   } else {
     html += '<b>Nothing selected.</b><br>';
-    html += 'Click empty space to drop a vertex.<br>';
-    html += 'Click a vertex to start linking a chain.<br>';
+    html += 'Tap empty space to drop a vertex.<br>';
+    html += 'Tap a vertex to start linking a chain.<br>';
   }
-  html += '<span class="k">Alt</span>+click or right-click a vertex to delete it. ';
-  html += '<span class="k">Del</span> removes the selection, ';
-  html += '<span class="k">Ctrl</span>+<span class="k">Z</span> undoes.';
+  if(isTouch){
+    html += 'Long-press a vertex (or use the <b>Delete</b> button) to remove it.';
+  } else {
+    html += '<span class="k">Alt</span>+click or right-click a vertex to delete. ';
+    html += '<span class="k">Del</span> removes the selection, ';
+    html += '<span class="k">Ctrl</span>+<span class="k">Z</span> undoes.';
+  }
   tipEl.innerHTML = html;
 }
 
@@ -809,22 +950,47 @@ function setBuildMode(on){
   btnBuild.textContent = '✎ Build mode: ' + (on ? 'ON' : 'off');
   btnBuild.classList.toggle('active', on);
   badgeEl.classList.toggle('on', on);
+  buildBarEl.classList.toggle('on', on);
   canvas.style.cursor = on ? 'crosshair' : 'grab';
   updateTip();
 }
 btnBuild.addEventListener('click', () => setBuildMode(!state.buildMode));
-document.getElementById('btnUndo').addEventListener('click', undo);
-document.getElementById('btnDelSel').addEventListener('click', () => {
-  if(state.selected >= 0) removeVertex(state.selected);
+document.getElementById('bbDone').addEventListener('click', () => {
+  setBuildMode(false);
+  if(isTouch) closePanel();
 });
 
-/* ---------- save / load ---------- */
+document.getElementById('btnUndo').addEventListener('click', undo);
+document.getElementById('bbUndo').addEventListener('click', undo);
+
+document.getElementById('btnDelSel').addEventListener('click', () => {
+  if(state.selected >= 0) removeVertex(state.selected);
+  else if(isTouch) alert('Tap a vertex first, then press Delete.');
+});
+document.getElementById('bbDelete').addEventListener('click', () => {
+  if(state.selected >= 0) removeVertex(state.selected);
+  else if(isTouch) hintEl.textContent = 'Tap a vertex first, then press Delete.';
+});
+
+// "Add vertex" button on the mobile build bar: add at the center of the view
+document.getElementById('bbAdd').addEventListener('click', () => {
+  pushHistory();
+  const {cx, cy} = viewParams();
+  const w = screenToWorld4(cx, cy);
+  const idx = addVertexRaw(w);
+  if(state.selected >= 0 && state.selected !== idx){
+    toggleEdgeRaw(state.selected, idx);
+  }
+  state.selected = idx;
+  syncEditor();
+  // auto-open panel briefly so user sees the vertex text update? No — keep canvas clean.
+});
+
+/* ============================================================
+   Save / load
+   ============================================================ */
 document.getElementById('btnSave').addEventListener('click', () => {
-  const data = {
-    verts: state.verts,
-    edges: state.edges,
-    angles: state.angles
-  };
+  const data = { verts: state.verts, edges: state.edges, angles: state.angles };
   const blob = new Blob([JSON.stringify(data, null, 2)], {type:'application/json'});
   const a = document.createElement('a');
   a.href = URL.createObjectURL(blob);
@@ -834,7 +1000,6 @@ document.getElementById('btnSave').addEventListener('click', () => {
   document.body.removeChild(a);
   setTimeout(() => URL.revokeObjectURL(a.href), 1000);
 });
-
 const fileInput = document.getElementById('fileInput');
 document.getElementById('btnLoad').addEventListener('click', () => fileInput.click());
 fileInput.addEventListener('change', e => {
@@ -868,26 +1033,53 @@ fileInput.addEventListener('change', e => {
 });
 
 /* ============================================================
-   Pointer interaction
+   Pointer interaction (mouse + touch)
    ============================================================ */
+const activePointers = new Map();   // id -> {x, y}
+let pinch = null;                    // { dist, cx, cy, zoom, xw, yw }
+
 const ptr = {
   down:false, mode:null, moved:false, historyPushed:false,
-  startX:0, startY:0, lastX:0, lastY:0, idx:-1, button:0
+  startX:0, startY:0, lastX:0, lastY:0, idx:-1, button:0,
+  longPressTimer:null, longPressFired:false
 };
+
+function cancelLongPress(){
+  if(ptr.longPressTimer){
+    clearTimeout(ptr.longPressTimer);
+    ptr.longPressTimer = null;
+  }
+}
 
 canvas.addEventListener('contextmenu', e => e.preventDefault());
 
+/* -------- pointer down -------- */
 canvas.addEventListener('pointerdown', e => {
+  activePointers.set(e.pointerId, {x:e.clientX, y:e.clientY});
+
+  // Second finger → switch to pinch/twist mode
+  if(activePointers.size >= 2){
+    cancelLongPress();
+    if(ptr.down){
+      ptr.down = false;
+      ptr.mode = null;
+      ptr.idx = -1;
+    }
+    startPinch();
+    return;
+  }
+
   const p = localPos(e);
   ptr.down = true;
   ptr.moved = false;
   ptr.historyPushed = false;
+  ptr.longPressFired = false;
   ptr.startX = ptr.lastX = p.x;
   ptr.startY = ptr.lastY = p.y;
   ptr.button = e.button;
   ptr.idx = -1;
 
-  // right-click: delete a vertex under the cursor
+  // Right-click: delete a vertex under the cursor
   if(e.button === 2){
     if(state.buildMode){
       const hit = pickVertex(p.x, p.y);
@@ -900,9 +1092,25 @@ canvas.addEventListener('pointerdown', e => {
   if(state.buildMode && e.button === 0){
     const hit = pickVertex(p.x, p.y);
     if(hit >= 0){
-      if(e.altKey){ removeVertex(hit); ptr.mode = null; return; }
+      if(e.altKey || e.ctrlKey || e.metaKey){
+        removeVertex(hit);
+        ptr.mode = null;
+        return;
+      }
       ptr.mode = 'vertex';
       ptr.idx = hit;
+      // Set up long-press for touch/mouse both
+      if(isTouch){
+        ptr.longPressTimer = setTimeout(() => {
+          if(ptr.mode === 'vertex' && !ptr.moved && ptr.idx >= 0){
+            ptr.longPressFired = true;
+            removeVertex(ptr.idx);
+            ptr.mode = null;
+            ptr.idx = -1;
+            if(navigator.vibrate) navigator.vibrate(20);
+          }
+        }, 520);
+      }
       try{ canvas.setPointerCapture(e.pointerId); }catch(_){}
       return;
     }
@@ -912,7 +1120,47 @@ canvas.addEventListener('pointerdown', e => {
   try{ canvas.setPointerCapture(e.pointerId); }catch(_){}
 });
 
+/* -------- pinch helpers -------- */
+function startPinch(){
+  const pts = [...activePointers.values()];
+  const dx = pts[0].x - pts[1].x;
+  const dy = pts[0].y - pts[1].y;
+  pinch = {
+    dist: Math.max(1, Math.hypot(dx, dy)),
+    cx: (pts[0].x + pts[1].x) / 2,
+    cy: (pts[0].y + pts[1].y) / 2,
+    zoom: state.zoom,
+    xw: state.angles.xw,
+    yw: state.angles.yw
+  };
+}
+function updatePinch(){
+  if(activePointers.size < 2){ pinch = null; return; }
+  const pts = [...activePointers.values()];
+  const dx = pts[0].x - pts[1].x;
+  const dy = pts[0].y - pts[1].y;
+  const dist = Math.max(1, Math.hypot(dx, dy));
+  const cx = (pts[0].x + pts[1].x) / 2;
+  const cy = (pts[0].y + pts[1].y) / 2;
+
+  state.zoom = clamp(pinch.zoom * (dist / pinch.dist), 0.15, 6);
+  state.angles.xw = pinch.xw - (cx - pinch.cx) * 0.0075;
+  state.angles.yw = pinch.yw + (cy - pinch.cy) * 0.0075;
+  syncSliders();
+}
+
+/* -------- pointer move -------- */
 canvas.addEventListener('pointermove', e => {
+  if(activePointers.has(e.pointerId)){
+    activePointers.set(e.pointerId, {x:e.clientX, y:e.clientY});
+  }
+
+  // Multi-touch: pinch / twist
+  if(activePointers.size >= 2 && pinch){
+    updatePinch();
+    return;
+  }
+
   const p = localPos(e);
   mouse.x = p.x; mouse.y = p.y; mouse.inside = true;
 
@@ -925,12 +1173,17 @@ canvas.addEventListener('pointermove', e => {
   const dy = p.y - ptr.lastY;
   ptr.lastX = p.x; ptr.lastY = p.y;
 
-  if(!ptr.moved && (Math.abs(p.x - ptr.startX) + Math.abs(p.y - ptr.startY)) > 4){
-    ptr.moved = true;
+  // Cancel long-press as soon as we move meaningfully
+  if(!ptr.moved){
+    const movedDist = Math.abs(p.x - ptr.startX) + Math.abs(p.y - ptr.startY);
+    if(movedDist > (isTouch ? 8 : 4)){
+      ptr.moved = true;
+      cancelLongPress();
+    }
   }
 
   if(ptr.mode === 'rotate'){
-    const s = 0.0075;
+    const s = isTouch ? 0.006 : 0.0075;
     if(e.shiftKey){
       state.angles.xw -= dx * s;
       state.angles.yw += dy * s;
@@ -946,33 +1199,41 @@ canvas.addEventListener('pointermove', e => {
   }
 });
 
+/* -------- pointer up / cancel -------- */
 function endPointer(e){
+  activePointers.delete(e.pointerId);
+  if(activePointers.size < 2) pinch = null;
+
   const p = localPos(e);
 
-  if(ptr.down && !ptr.moved){
-    if(ptr.mode === 'vertex' && ptr.idx >= 0){
-      const hit = ptr.idx;
-      if(state.selected === -1){
-        state.selected = hit;
-      } else if(state.selected === hit){
-        state.selected = -1;
-      } else {
+  // Single-pointer tap handling (only if this was the only pointer)
+  if(ptr.down && activePointers.size === 0){
+    cancelLongPress();
+    if(!ptr.moved && !ptr.longPressFired){
+      if(ptr.mode === 'vertex' && ptr.idx >= 0){
+        const hit = ptr.idx;
+        if(state.selected === -1){
+          state.selected = hit;
+        } else if(state.selected === hit){
+          state.selected = -1;
+        } else {
+          pushHistory();
+          toggleEdgeRaw(state.selected, hit);
+          syncEditor();
+          state.selected = hit;
+        }
+        updateTip();
+      } else if(ptr.mode === 'rotate' && state.buildMode && e.button === 0){
+        // tap empty space → add a vertex (and link it if something is selected)
         pushHistory();
-        toggleEdgeRaw(state.selected, hit);
+        const w = screenToWorld4(p.x, p.y);
+        const idx = addVertexRaw(w);
+        if(state.selected >= 0 && state.selected !== idx){
+          toggleEdgeRaw(state.selected, idx);
+        }
+        state.selected = idx;
         syncEditor();
-        state.selected = hit;
       }
-      updateTip();
-    } else if(ptr.mode === 'rotate' && state.buildMode && e.button === 0){
-      // click on empty space → add a vertex (and link it if something is selected)
-      pushHistory();
-      const w = screenToWorld4(p.x, p.y);
-      const idx = addVertexRaw(w);
-      if(state.selected >= 0 && state.selected !== idx){
-        toggleEdgeRaw(state.selected, idx);
-      }
-      state.selected = idx;
-      syncEditor();
     }
   }
 
@@ -980,11 +1241,16 @@ function endPointer(e){
   ptr.mode = null;
   ptr.idx = -1;
   ptr.historyPushed = false;
+  ptr.longPressFired = false;
   try{ canvas.releasePointerCapture(e.pointerId); }catch(_){}
 }
 canvas.addEventListener('pointerup', endPointer);
-canvas.addEventListener('pointercancel', () => {
-  ptr.down = false; ptr.mode = null; ptr.idx = -1; ptr.historyPushed = false;
+canvas.addEventListener('pointercancel', e => {
+  activePointers.delete(e.pointerId);
+  if(activePointers.size < 2) pinch = null;
+  cancelLongPress();
+  ptr.down = false; ptr.mode = null; ptr.idx = -1;
+  ptr.historyPushed = false; ptr.longPressFired = false;
 });
 canvas.addEventListener('pointerleave', () => { mouse.inside = false; state.hover = -1; });
 
@@ -1001,25 +1267,19 @@ window.addEventListener('keydown', e => {
   if(tag === 'textarea' || tag === 'input' || tag === 'select') return;
 
   if((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'z'){
-    e.preventDefault();
-    undo();
-    return;
+    e.preventDefault(); undo(); return;
   }
   if(e.key === 'Delete' || e.key === 'Backspace'){
-    if(state.selected >= 0){
-      e.preventDefault();
-      removeVertex(state.selected);
-    }
+    if(state.selected >= 0){ e.preventDefault(); removeVertex(state.selected); }
     return;
   }
   if(e.key === 'Escape'){
     state.selected = -1;
+    if(isTouch && panelEl.classList.contains('open')) closePanel();
     updateTip();
     return;
   }
-  if(e.key.toLowerCase() === 'b'){
-    setBuildMode(!state.buildMode);
-  }
+  if(e.key.toLowerCase() === 'b'){ setBuildMode(!state.buildMode); }
 });
 
 /* ============================================================
@@ -1043,7 +1303,6 @@ function parseEdges(text, n){
   }
   return e;
 }
-
 document.getElementById('btnApply').addEventListener('click', () => {
   const v = parseVerts(vertText.value);
   if(!v.length){ alert('No valid vertices found. Use one "x, y, z, w" per line.'); return; }
@@ -1051,7 +1310,6 @@ document.getElementById('btnApply').addEventListener('click', () => {
   pushHistory();
   setShape({v, e}, true);
 });
-
 document.getElementById('btnAuto').addEventListener('click', () => {
   const v = parseVerts(vertText.value);
   if(v.length < 2){ alert('Add at least two vertices first.'); return; }
@@ -1069,7 +1327,6 @@ document.getElementById('btnAuto').addEventListener('click', () => {
   pushHistory();
   setShape({v, e: [...set].map(s => s.split('-').map(Number))}, true);
 });
-
 document.getElementById('btnAdd').addEventListener('click', () => {
   const p = [gauss(), gauss(), gauss(), gauss()];
   const L = Math.hypot(p[0],p[1],p[2],p[3]) || 1;
@@ -1078,7 +1335,6 @@ document.getElementById('btnAdd').addEventListener('click', () => {
     ? vertText.value.replace(/\s*$/,'') + '\n' + line
     : line;
 });
-
 document.getElementById('btnClear').addEventListener('click', () => {
   pushHistory();
   vertText.value = '';
@@ -1094,10 +1350,12 @@ const presetSelect = document.getElementById('presetSelect');
 presetSelect.addEventListener('change', () => {
   const gen = PRESETS[presetSelect.value];
   if(gen){ pushHistory(); setShape(gen(), true); }
+  if(isTouch) closePanel();
 });
 document.getElementById('btnRandom').addEventListener('click', () => {
   pushHistory();
   setShape(randomCloud(46, 3), true);
+  if(isTouch) closePanel();
 });
 
 /* ============================================================
@@ -1106,6 +1364,12 @@ document.getElementById('btnRandom').addEventListener('click', () => {
 resize();
 setShape(hypercube(), true);
 updateTip();
+if(isTouch){
+  // On phones, start with the panel closed so the shape fills the screen.
+  // (Leave a small hint that it can be opened.)
+} else {
+  panelEl.classList.add('open');
+}
 requestAnimationFrame(frame);
 
 })();
