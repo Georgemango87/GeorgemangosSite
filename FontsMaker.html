@@ -2,7 +2,8 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#16181c">
 <title>Pixel Font Painter</title>
 <style>
   :root{
@@ -16,28 +17,43 @@
     --accent-2:#3d7ff0;
   }
   *{box-sizing:border-box}
-  html,body{height:100%}
+
+  /* PAGE IS LOCKED — only the letters panel and the editor stage scroll */
+  html,body{
+    height:100%;
+    overflow:hidden;
+    overscroll-behavior:none;
+  }
   body{
     margin:0;
     background:radial-gradient(1200px 700px at 20% -10%, #23272e 0%, var(--bg) 55%);
     color:var(--text);
     font:14px/1.45 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
     -webkit-font-smoothing:antialiased;
+    -webkit-tap-highlight-color:transparent;
   }
-  .app{display:flex;flex-direction:column;min-height:100vh}
+  button, canvas, .charbtn, .loadbtn, .check { -webkit-user-select:none; user-select:none; }
+  button { touch-action: manipulation; }
+
+  .app{
+    height:100vh;
+    height:100dvh;
+    display:flex;flex-direction:column;
+    overflow:hidden;
+  }
 
   /* ---------- top bar ---------- */
   .topbar{
     display:flex;align-items:center;gap:18px;flex-wrap:wrap;
     padding:14px 20px;border-bottom:1px solid var(--line);
-    background:rgba(22,24,28,.75);backdrop-filter:blur(10px);
-    position:sticky;top:0;z-index:20;
+    background:rgba(22,24,28,.78);backdrop-filter:blur(10px);
+    flex:0 0 auto;z-index:20;
   }
   .brand{display:flex;align-items:center;gap:12px;margin-right:auto}
   .brand .logo{
     width:38px;height:38px;border-radius:10px;display:grid;place-items:center;
     background:linear-gradient(140deg,#3d7ff0,#8b5cf6);font-size:19px;
-    box-shadow:0 6px 18px rgba(61,127,240,.35);
+    box-shadow:0 6px 18px rgba(61,127,240,.35);flex:none;
   }
   .brand h1{margin:0;font-size:15px;font-weight:650;letter-spacing:.2px}
   .brand p{margin:1px 0 0;font-size:11.5px;color:var(--muted)}
@@ -57,6 +73,7 @@
     cursor:pointer;transition:.15s;white-space:nowrap;
   }
   .btn:hover{background:#30353c;border-color:#444a53}
+  .btn:active{transform:scale(.97)}
   .btn.primary{
     background:linear-gradient(180deg,var(--accent),var(--accent-2));
     border-color:var(--accent-2);color:#fff;
@@ -66,24 +83,35 @@
   .btn.small{padding:6px 10px;font-size:12px}
 
   /* ---------- layout ---------- */
-  .body{display:flex;flex:1;min-height:0}
+  .body{
+    display:flex;
+    flex:1 1 auto;
+    min-height:0;
+    overflow:hidden;
+  }
 
   /* ---------- sidebar ---------- */
   .sidebar{
     width:312px;flex:0 0 312px;border-right:1px solid var(--line);
     display:flex;flex-direction:column;background:rgba(30,33,38,.5);
+    min-height:0;overflow:hidden;
   }
-  .chars{overflow-y:auto;padding:14px 14px 4px;flex:1}
+  .chars{
+    padding:14px 14px 4px;flex:1 1 auto;min-height:0;
+    overflow-y:auto;overflow-x:hidden;
+    overscroll-behavior:contain;
+    -webkit-overflow-scrolling:touch;
+  }
   .chars::-webkit-scrollbar{width:9px}
   .chars::-webkit-scrollbar-thumb{background:#3a3f47;border-radius:9px;border:2px solid transparent;background-clip:content-box}
+
   .group-title{
     font-size:10.5px;text-transform:uppercase;letter-spacing:1px;color:var(--muted);
     margin:14px 0 8px;font-weight:650;
   }
   .group-title:first-child{margin-top:0}
-  .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(46px,1fr));gap:7px}
+  .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(52px,1fr));gap:7px}
 
-  /* tile = thumbnail + Load button */
   .charbtn{
     display:flex;flex-direction:column;
     border:1px solid var(--line);border-radius:8px;background:#fff;
@@ -91,6 +119,21 @@
   }
   .charbtn:hover{border-color:#6b7686;transform:translateY(-1px)}
   .charbtn.active{border-color:var(--accent);box-shadow:0 0 0 3px rgba(110,168,254,.28)}
+
+  .charlabel{
+    display:block;width:100%;text-align:center;
+    background:#262a30;color:#cfd6e0;
+    font:700 11px/1 ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+    letter-spacing:.3px;
+    padding:4px 2px 3px;
+    border-bottom:1px solid #3a3f47;
+    white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+  }
+  .charbtn.active .charlabel{
+    background:linear-gradient(180deg,var(--accent),var(--accent-2));
+    color:#fff;border-bottom-color:var(--accent-2);
+  }
+
   .thumbwrap{position:relative;width:100%;aspect-ratio:64/80;background:#fff}
   .thumbwrap .thumb{width:100%;height:100%;display:block;image-rendering:pixelated}
   .spacelabel{
@@ -109,18 +152,22 @@
 
   .sidebar-foot{
     padding:12px 14px;border-top:1px solid var(--line);
-    display:flex;flex-direction:column;gap:8px;
+    display:flex;flex-direction:column;gap:8px;flex:0 0 auto;
   }
   .check{display:flex;align-items:center;gap:8px;font-size:12.5px;color:#c6ccd5;cursor:pointer;user-select:none}
-  .check input{accent-color:var(--accent);width:15px;height:15px;cursor:pointer}
+  .check input{accent-color:var(--accent);width:15px;height:15px;cursor:pointer;flex:none}
   .hint{font-size:11px;color:var(--muted);line-height:1.45}
 
   /* ---------- editor ---------- */
-  .editor{flex:1;display:flex;flex-direction:column;min-width:0;padding:16px 20px 0}
+  .editor{
+    flex:1 1 auto;display:flex;flex-direction:column;
+    min-width:0;min-height:0;overflow:hidden;
+    padding:16px 20px 0;
+  }
   .toolbar{
     display:flex;align-items:center;gap:10px;flex-wrap:wrap;
     padding:10px 12px;background:var(--panel);border:1px solid var(--line);
-    border-radius:12px;margin-bottom:14px;
+    border-radius:12px;margin-bottom:14px;flex:0 0 auto;
   }
   .tools{display:flex;gap:5px;background:var(--panel-2);padding:4px;border-radius:9px}
   .tool{
@@ -140,24 +187,61 @@
   .size.active i{background:#fff}
   .spacer{flex:1}
 
-  .stage{flex:1;display:flex;align-items:flex-start;justify-content:center;min-height:0;padding-bottom:12px}
+  /* --- NEW: zoom controls --- */
+  .zoomctl{
+    display:flex;align-items:center;gap:2px;
+    background:var(--panel-2);padding:4px;border-radius:9px;
+  }
+  .zbtn{
+    min-width:30px;height:32px;border:0;background:transparent;color:#dfe4ea;
+    border-radius:7px;font:700 16px/1 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+    cursor:pointer;display:grid;place-items:center;padding:0 6px;transition:.13s;
+  }
+  .zbtn:hover{background:#363c44}
+  .zbtn:active{transform:scale(.94)}
+  .zbtn.zfit{
+    font-size:11px;letter-spacing:.3px;padding:0 9px;font-weight:700;
+  }
+  .zval{
+    min-width:46px;text-align:center;
+    font:700 11.5px/1 ui-monospace,SFMono-Regular,Menlo,monospace;
+    color:var(--muted);font-variant-numeric:tabular-nums;user-select:none;
+  }
+
+  /* --- stage: scrollable so you can pan when zoomed in --- */
+  .stage{
+    flex:1 1 auto;min-height:0;
+    display:flex;
+    overflow:auto;
+    padding:12px;
+    overscroll-behavior:contain;
+    -webkit-overflow-scrolling:touch;
+    scrollbar-width:thin;
+  }
+  .stage::-webkit-scrollbar{width:10px;height:10px}
+  .stage::-webkit-scrollbar-thumb{background:#3a3f47;border-radius:10px;border:2px solid transparent;background-clip:content-box}
+  .stage::-webkit-scrollbar-corner{background:transparent}
+
   #board{
-    display:block;width:auto;height:auto;
-    max-width:100%;max-height:70vh;aspect-ratio:512/640;
+    display:block;
+    margin:auto;              /* centers when smaller, scrolls when bigger */
+    flex:0 0 auto;
     border-radius:10px;background:#fff;cursor:crosshair;touch-action:none;
     box-shadow:0 14px 40px rgba(0,0,0,.5), 0 0 0 1px rgba(255,255,255,.06);
+    image-rendering:pixelated;
+    image-rendering: crisp-edges;
   }
   .statusbar{
     padding:9px 12px;border-top:1px solid var(--line);
     font-size:11.5px;color:var(--muted);display:flex;gap:16px;flex-wrap:wrap;
-    font-variant-numeric:tabular-nums;
+    font-variant-numeric:tabular-nums;flex:0 0 auto;
   }
   .statusbar b{color:#cdd4de;font-weight:600}
 
   /* ---------- preview ---------- */
   .preview-bar{
     border-top:1px solid var(--line);background:rgba(30,33,38,.55);
-    padding:14px 20px 20px;
+    padding:14px 20px 20px;flex:0 0 auto;
   }
   .preview-label{
     font-size:10.5px;text-transform:uppercase;letter-spacing:1px;color:var(--muted);
@@ -166,19 +250,149 @@
   .preview-label em{font-style:normal;color:#6f7885;text-transform:none;letter-spacing:0;font-weight:400}
   #previewText{
     background:#fff;color:#111;border-radius:10px;padding:16px 18px;
-    font-size:30px;line-height:1.35;min-height:76px;outline:none;
+    font-size:30px;line-height:1.35;
+    min-height:76px;
+    max-height:26vh;
+    overflow-y:auto;overscroll-behavior:contain;
+    outline:none;
     font-family:ui-monospace,SFMono-Regular,Menlo,monospace;
-    word-break:break-word;
-    text-align:center;              /* ← text always centers */
+    word-break:break-word;text-align:center;
     transition:box-shadow .25s;
   }
   #previewText.flash{box-shadow:0 0 0 4px rgba(110,168,254,.45)}
 
-  @media (max-width:900px){
-    .body{flex-direction:column}
-    .sidebar{width:100%;flex:0 0 auto;border-right:0;border-bottom:1px solid var(--line);max-height:250px}
-    .grid{grid-template-columns:repeat(auto-fill,minmax(44px,1fr))}
+  /* ================= TABLET ================= */
+  @media (max-width: 1000px){
+    .sidebar{width:250px;flex:0 0 250px}
+  }
+
+  /* ================= MOBILE ================= */
+  @media (max-width: 800px){
+    .topbar{padding:8px 12px;gap:8px;flex-wrap:nowrap}
+    .brand{gap:8px;margin-right:0;flex:0 1 auto;min-width:0}
+    .brand .logo{width:32px;height:32px;font-size:15px;border-radius:8px}
+    .brand h1{font-size:13px;white-space:nowrap}
     .brand p{display:none}
+
+    .field{flex:1 1 auto;min-width:0;gap:2px}
+    .field span{font-size:9px;letter-spacing:.5px}
+    .field input{min-width:0;width:100%;font-size:12px;padding:6px 8px}
+
+    .btn{padding:8px 10px;font-size:12px;border-radius:8px}
+    .btn.primary{padding:8px 12px}
+
+    .body{flex-direction:column}
+
+    .sidebar{
+      width:100%;flex:0 0 auto;border-right:0;
+      border-bottom:1px solid var(--line);
+      flex-direction:column;min-height:0;overflow:hidden;
+    }
+
+    .chars{
+      display:flex;flex-direction:row;
+      overflow-x:auto;overflow-y:hidden;
+      padding:8px 10px;gap:8px;flex:0 0 auto;
+      -webkit-overflow-scrolling:touch;
+      overscroll-behavior-x:contain;
+      scrollbar-width:thin;
+      scroll-snap-type:x proximity;
+    }
+    .chars::-webkit-scrollbar{height:4px}
+    .chars::-webkit-scrollbar-thumb{background:#3a3f47;border-radius:4px}
+
+    .group-title{display:none}
+    .grid{display:contents}
+
+    .charbtn{
+      flex:0 0 54px;width:54px;border-radius:7px;
+      scroll-snap-align:start;
+    }
+    .charlabel{font-size:11.5px;padding:4px 2px 3px}
+    .loadbtn{font-size:9px;padding:5px 0 4px;letter-spacing:.5px}
+    .charbtn.active{transform:translateY(-1px)}
+
+    .sidebar-foot{
+      padding:7px 12px;flex-direction:row;align-items:center;
+      gap:12px;flex-wrap:wrap;border-top:0;flex:0 0 auto;
+    }
+    .sidebar-foot .check{font-size:11.5px}
+    .hint{display:none}
+
+    .editor{flex:1 1 auto;min-height:0;padding:10px 10px 0}
+
+    .toolbar{padding:8px;gap:7px;margin-bottom:10px;border-radius:10px;flex-wrap:wrap}
+    .tools{gap:4px;padding:3px}
+    .tool{width:38px;height:36px;font-size:17px;border-radius:7px}
+    .sizes{gap:3px;padding:3px}
+    .size{width:36px;height:36px}
+    .btn.small{padding:8px 10px;font-size:11.5px}
+
+    .zoomctl{padding:3px}
+    .zbtn{height:36px;min-width:34px}
+    .zval{min-width:42px;font-size:11px}
+    .zbtn.zfit{font-size:11px;padding:0 8px}
+
+    .stage{padding:8px;border-radius:8px}
+    #board{border-radius:8px}
+
+    .statusbar{padding:6px 10px;font-size:10.5px;gap:10px;line-height:1.4}
+
+    .preview-bar{padding:10px 12px 14px}
+    .preview-label{font-size:9.5px;margin-bottom:6px;gap:6px}
+    #previewText{
+      font-size:20px;padding:12px 14px;min-height:56px;border-radius:8px;
+      max-height:22vh;
+    }
+  }
+
+  /* ================= SMALL PHONES ================= */
+  @media (max-width: 400px){
+    .brand h1{display:none}
+    .brand .logo{width:30px;height:30px;font-size:14px}
+    .btn.primary{padding:8px 10px;font-size:11.5px}
+
+    .charbtn{flex:0 0 50px;width:50px}
+    .charlabel{font-size:11px;padding:3px 2px 2px}
+    .loadbtn{font-size:8.5px;padding:4px 0 3px}
+
+    .tool{width:36px;height:34px;font-size:16px}
+    .size{width:34px;height:34px}
+    .zbtn{height:34px;min-width:32px;font-size:15px}
+    .zval{min-width:38px;font-size:10.5px}
+    .zbtn.zfit{font-size:10px;padding:0 7px}
+
+    #previewText{font-size:18px;padding:10px 12px;max-height:20vh}
+  }
+
+  /* ================= LANDSCAPE MOBILE ================= */
+  @media (max-width: 900px) and (orientation: landscape){
+    .topbar{padding:6px 12px}
+    .brand .logo{width:28px;height:28px;font-size:13px}
+    .brand h1{font-size:12px}
+    .field span{display:none}
+    .field input{padding:5px 8px}
+
+    .chars{padding:6px 10px}
+    .charbtn{flex:0 0 46px;width:46px}
+    .charlabel{font-size:10.5px;padding:3px 2px 2px}
+    .loadbtn{font-size:8px;padding:3px 0 2px}
+
+    .sidebar-foot{padding:4px 12px}
+
+    .editor{padding:6px 10px 0}
+    .toolbar{padding:6px;gap:6px;margin-bottom:8px}
+    .tool{width:34px;height:32px}
+    .size{width:32px;height:32px}
+    .zbtn{height:32px;min-width:30px;font-size:15px}
+    .zval{min-width:40px;font-size:10.5px}
+    .zbtn.zfit{font-size:10px;padding:0 7px}
+
+    .stage{padding:6px}
+
+    .statusbar{padding:4px 10px;font-size:10px}
+    .preview-bar{padding:8px 12px 10px}
+    #previewText{font-size:18px;padding:8px 12px;min-height:44px;max-height:18vh}
   }
 </style>
 </head>
@@ -212,13 +426,22 @@
     <main class="editor">
       <div class="toolbar">
         <div class="tools">
-          <button class="tool active" data-tool="brush" title="Brush (B)">✏️</button>
-          <button class="tool" data-tool="eraser" title="Eraser (E)">🧽</button>
+          <button class="tool active" data-tool="brush" title="Brush (B)" aria-label="Brush">✏️</button>
+          <button class="tool" data-tool="eraser" title="Eraser (E)" aria-label="Eraser">🧽</button>
         </div>
         <div class="sizes" id="sizes"></div>
+
+        <!-- zoom controls -->
+        <div class="zoomctl" role="group" aria-label="Zoom">
+          <button class="zbtn" id="zoomOut" type="button" title="Zoom out (Ctrl −)" aria-label="Zoom out">−</button>
+          <span class="zval" id="zoomVal">100%</span>
+          <button class="zbtn" id="zoomIn" type="button" title="Zoom in (Ctrl +)" aria-label="Zoom in">+</button>
+          <button class="zbtn zfit" id="zoomFit" type="button" title="Fit to view" aria-label="Fit to view">Fit</button>
+        </div>
+
         <div class="spacer"></div>
         <button class="btn small" id="btnUndo">Undo</button>
-        <button class="btn small" id="btnClear">Clear glyph</button>
+        <button class="btn small" id="btnClear">Clear</button>
         <label class="check"><input type="checkbox" id="showGuides" checked> Guides</label>
       </div>
 
@@ -239,22 +462,17 @@
 <script>
 /* =====================================================================
    GEOMETRY CONSTANTS
-   ---------------------------------------------------------------------
-   The drawing board is 64 x 80 paint pixels.
-   Each paint pixel = 16 font units.
-   Em square = 1280 units, ascender 1024, descender -256.
-   Baseline sits 64 rows down from the top of the board.
    ===================================================================== */
-const GW = 64, GH = 80;         // grid size in paint pixels
-const PXU = 16;                 // font units per paint pixel
-const UPM = 1280;               // units per em
-const BASELINE = 64;            // baseline row (from top)
-const ASC = 1024, DESC = -256;  // ascender / descender in font units
-const ADV = 1024;               // advance width for every glyph (64px * 16)
-const CELL = 8;                 // screen pixels per paint pixel
+const GW = 64, GH = 80;
+const PXU = 16;
+const UPM = 1280;
+const BASELINE = 64;
+const ASC = 1024, DESC = -256;
+const ADV = 1024;
+const CELL = 8;
 
-const CAP_ROW = (ASC - 896) / PXU;   // 8  -> cap height guide
-const XHT_ROW = (ASC - 640) / PXU;   // 24 -> x-height guide
+const CAP_ROW = (ASC - 896) / PXU;
+const XHT_ROW = (ASC - 640) / PXU;
 
 /* =====================================================================
    CHARACTER SET
@@ -268,12 +486,17 @@ const GROUPS = [
 ];
 const ALL_CHARS = GROUPS.flatMap(g => [...g[1]]);
 
+function charLabel(ch) {
+  if (ch === ' ') return 'SP';
+  return ch;
+}
+
 /* =====================================================================
    STATE
    ===================================================================== */
-const glyphs    = new Map();   // char -> Uint8Array(GW*GH)
-const undoStacks= new Map();   // char -> [Uint8Array]
-const thumbs    = new Map();   // char -> {btn, cv}
+const glyphs    = new Map();
+const undoStacks= new Map();
+const thumbs    = new Map();
 let   currentChar = 'A';
 let   tool = 'brush';
 let   brushSize = 1;
@@ -285,7 +508,6 @@ const ctx   = board.getContext('2d');
 board.width  = GW * CELL;
 board.height = GH * CELL;
 
-/* offscreen 1:1 bitmap used for fast blitting */
 const off    = document.createElement('canvas');
 off.width = GW; off.height = GH;
 const offCtx = off.getContext('2d');
@@ -321,7 +543,6 @@ function inkBounds(bmp) {
 function render() {
   const bmp = glyphs.get(currentChar) || EMPTY;
 
-  // -- blit bitmap into offscreen image data
   const d = offImg.data;
   for (let i = 0, n = GW * GH; i < n; i++) {
     const v = bmp[i] ? 22 : 255;
@@ -335,7 +556,6 @@ function render() {
   ctx.imageSmoothingEnabled = false;
   ctx.drawImage(off, 0, 0, GW, GH, 0, 0, board.width, board.height);
 
-  // -- subtle pixel grid
   ctx.strokeStyle = 'rgba(0,0,0,0.07)';
   ctx.lineWidth = 1;
   ctx.beginPath();
@@ -357,13 +577,12 @@ function drawGuides(bmp) {
     ctx.restore();
   };
 
-  hline(0,          'rgba(90,140,255,.40)', [4, 4]);   // ascender
-  hline(CAP_ROW,    'rgba(55,190,130,.55)', [6, 4]);   // cap height
-  hline(XHT_ROW,    'rgba(55,190,130,.55)', [6, 4]);   // x-height
-  hline(BASELINE,   'rgba(255,80,80,.75)',  []);       // baseline
-  hline(GH,         'rgba(90,140,255,.30)', [4, 4]);   // descender
+  hline(0,          'rgba(90,140,255,.40)', [4, 4]);
+  hline(CAP_ROW,    'rgba(55,190,130,.55)', [6, 4]);
+  hline(XHT_ROW,    'rgba(55,190,130,.55)', [6, 4]);
+  hline(BASELINE,   'rgba(255,80,80,.75)',  []);
+  hline(GH,         'rgba(90,140,255,.30)', [4, 4]);
 
-  // advance box centre
   const cx = (GW * CELL) / 2 + 0.5;
   ctx.save();
   ctx.strokeStyle = 'rgba(80,140,255,.55)';
@@ -371,7 +590,6 @@ function drawGuides(bmp) {
   ctx.beginPath(); ctx.moveTo(cx, 0); ctx.lineTo(cx, GH * CELL); ctx.stroke();
   ctx.restore();
 
-  // live ink centre (what auto-center will line up)
   if (autoCenter) {
     const bb = inkBounds(bmp);
     if (bb) {
@@ -385,6 +603,74 @@ function drawGuides(bmp) {
     }
   }
 }
+
+/* =====================================================================
+   ZOOM  (view-only — doesn't change the font data)
+   ===================================================================== */
+let zoom = 1;
+const ZOOM_MIN = 0.5;
+const ZOOM_MAX = 8;
+const ZOOM_STEP = 1.25;
+
+const stageEl   = document.querySelector('.stage');
+const zoomValEl = document.getElementById('zoomVal');
+
+function computeBaseSize() {
+  const cs = getComputedStyle(stageEl);
+  const padX = (parseFloat(cs.paddingLeft) || 0) + (parseFloat(cs.paddingRight) || 0);
+  const padY = (parseFloat(cs.paddingTop)  || 0) + (parseFloat(cs.paddingBottom) || 0);
+  const cw = Math.max(40, stageEl.clientWidth  - padX);
+  const ch = Math.max(50, stageEl.clientHeight - padY);
+  const aspect = board.width / board.height;    // 512 / 640
+  let w, h;
+  if (cw / aspect > ch) { h = ch; w = h * aspect; }
+  else                  { w = cw; h = w / aspect; }
+  return { w, h };
+}
+
+function applyZoom() {
+  const base = computeBaseSize();
+  board.style.width  = (base.w * zoom) + 'px';
+  board.style.height = (base.h * zoom) + 'px';
+  zoomValEl.textContent = Math.round(zoom * 100) + '%';
+}
+
+function setZoom(z) {
+  zoom = Math.max(ZOOM_MIN, Math.min(ZOOM_MAX, z));
+  applyZoom();
+}
+
+document.getElementById('zoomIn').addEventListener('click',  () => setZoom(zoom * ZOOM_STEP));
+document.getElementById('zoomOut').addEventListener('click', () => setZoom(zoom / ZOOM_STEP));
+document.getElementById('zoomFit').addEventListener('click', () => setZoom(1));
+
+/* Ctrl / Cmd + wheel over the editor zooms in / out */
+stageEl.addEventListener('wheel', e => {
+  if (!(e.ctrlKey || e.metaKey)) return;
+  e.preventDefault();
+  const factor = e.deltaY < 0 ? 1.15 : 1 / 1.15;
+  setZoom(zoom * factor);
+}, { passive: false });
+
+/* Keyboard: Ctrl/Cmd + '+' / '-' / '0' */
+window.addEventListener('keydown', e => {
+  const tag = (e.target.tagName || '').toLowerCase();
+  if (tag === 'input' || e.target.isContentEditable) return;
+  if (!(e.ctrlKey || e.metaKey)) return;
+  const k = e.key;
+  if (k === '=' || k === '+') { e.preventDefault(); setZoom(zoom * ZOOM_STEP); }
+  else if (k === '-' || k === '_') { e.preventDefault(); setZoom(zoom / ZOOM_STEP); }
+  else if (k === '0') { e.preventDefault(); setZoom(1); }
+});
+
+let resizeTimer;
+window.addEventListener('resize', () => {
+  clearTimeout(resizeTimer);
+  resizeTimer = setTimeout(applyZoom, 90);
+});
+window.addEventListener('orientationchange', () => {
+  setTimeout(applyZoom, 220);
+});
 
 /* =====================================================================
    PAINTING
@@ -459,6 +745,7 @@ function endStroke() {
 }
 window.addEventListener('pointerup', endStroke);
 window.addEventListener('pointercancel', endStroke);
+window.addEventListener('blur', endStroke);
 
 /* ---------- undo / clear ---------- */
 function pushUndo(ch) {
@@ -481,7 +768,7 @@ function clearGlyph() {
 }
 
 /* =====================================================================
-   CHARACTER GRID  (thumbnail + per-letter Load button)
+   CHARACTER GRID
    ===================================================================== */
 function buildCharGrid() {
   const container = document.getElementById('chars');
@@ -499,9 +786,13 @@ function buildCharGrid() {
       const tile = document.createElement('div');
       tile.className = 'charbtn';
       tile.dataset.char = ch;
-      tile.title = (ch === ' ' ? 'space' : ch) + ' — click to edit';
+      tile.title = (ch === ' ' ? 'space' : ch) + ' — tap to edit';
 
-      // thumbnail
+      const label = document.createElement('span');
+      label.className = 'charlabel';
+      label.textContent = charLabel(ch);
+      tile.appendChild(label);
+
       const wrap = document.createElement('div');
       wrap.className = 'thumbwrap';
 
@@ -518,7 +809,6 @@ function buildCharGrid() {
       }
       tile.appendChild(wrap);
 
-      // per-letter Load button
       const loadBtn = document.createElement('button');
       loadBtn.type = 'button';
       loadBtn.className = 'loadbtn';
@@ -557,6 +847,10 @@ function drawThumb(ch) {
 function selectChar(ch) {
   currentChar = ch;
   for (const [c, o] of thumbs) o.btn.classList.toggle('active', c === ch);
+  const o = thumbs.get(ch);
+  if (o && o.btn.scrollIntoView) {
+    o.btn.scrollIntoView({ block: 'nearest', inline: 'nearest', behavior: 'smooth' });
+  }
   render();
   updateStatus();
 }
@@ -586,7 +880,7 @@ function updateStatus() {
     ` · <b>${count}</b> px` +
     ` · ink centre <b>${inkTxt}</b>` +
     ` · box centre <b>${centerPx.toFixed(1)}px</b>` +
-    (autoCenter ? ` · export offset <b>${shiftTxt}</b>` : ` · centring <b>off</b>`);
+    (autoCenter ? ` · offset <b>${shiftTxt}</b>` : ` · centring <b>off</b>`);
 }
 function escapeHtml(s) {
   return s.replace(/[&<>"]/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[m]));
@@ -621,7 +915,6 @@ function checksum(data) {
 
 /* =====================================================================
    BITMAP  ->  CONTOURS
-   Each horizontal run of ink becomes one rectangular contour.
    ===================================================================== */
 function bitmapToContours(bmp, doCenter) {
   if (!bmp) return [];
@@ -630,9 +923,9 @@ function bitmapToContours(bmp, doCenter) {
 
   let dx = 0;
   if (doCenter) {
-    const inkCentre = (bb.minC + bb.maxC + 1) / 2;   // in paint pixels
+    const inkCentre = (bb.minC + bb.maxC + 1) / 2;
     const target    = GW / 2;
-    dx = (target - inkCentre) * PXU;                 // font units (always integer)
+    dx = (target - inkCentre) * PXU;
   }
 
   const contours = [];
@@ -648,7 +941,6 @@ function bitmapToContours(bmp, doCenter) {
       const yTop = (BASELINE - r) * PXU;
       const yBot = (BASELINE - r - 1) * PXU;
 
-      // clockwise (TrueType outer-contour direction), y-up
       contours.push([
         { x: x0, y: yBot },
         { x: x0, y: yTop },
@@ -662,7 +954,7 @@ function bitmapToContours(bmp, doCenter) {
 }
 
 /* =====================================================================
-   BUILD A SINGLE GLYPH (glyf table entry)
+   BUILD A SINGLE GLYPH
    ===================================================================== */
 function buildGlyph(contours) {
   const pts = [];
@@ -672,7 +964,7 @@ function buildGlyph(contours) {
     for (const p of c) pts.push(p);
     ends.push(pts.length - 1);
   }
-  if (!pts.length) return new Uint8Array(0);   // empty glyph -> zero-length
+  if (!pts.length) return new Uint8Array(0);
 
   const n = pts.length;
   let xMin = Infinity, yMin = Infinity, xMax = -Infinity, yMax = -Infinity;
@@ -684,19 +976,19 @@ function buildGlyph(contours) {
   }
 
   const w = new Writer();
-  w.i16(ends.length);                 // numberOfContours
+  w.i16(ends.length);
   w.i16(xMin); w.i16(yMin); w.i16(xMax); w.i16(yMax);
   for (const e of ends) w.u16(e);
-  w.u16(0);                           // instructionLength
+  w.u16(0);
 
-  for (let i = 0; i < n; i++) w.u8(0x01);   // on-curve, 16-bit deltas
+  for (let i = 0; i < n; i++) w.u8(0x01);
 
   let px = 0;
   for (const p of pts) { w.i16(p.x - px); px = p.x; }
   let py = 0;
   for (const p of pts) { w.i16(p.y - py); py = p.y; }
 
-  while (w.length % 4) w.u8(0);       // keep loca offsets aligned
+  while (w.length % 4) w.u8(0);
   return w.bytes();
 }
 
@@ -705,21 +997,21 @@ function buildGlyph(contours) {
    ===================================================================== */
 function buildHead(xMin, yMin, xMax, yMax) {
   const w = new Writer();
-  const now = Math.floor(Date.now() / 1000) + 2082844800; // 1904 epoch
-  w.u32(0x00010000);        // version
-  w.u32(0x00010000);        // fontRevision
-  w.u32(0);                 // checkSumAdjustment (patched later)
-  w.u32(0x5F0F3CF5);        // magicNumber
-  w.u16(0x0003);            // flags
-  w.u16(UPM);               // unitsPerEm
-  w.u32(0); w.u32(now);     // created
-  w.u32(0); w.u32(now);     // modified
+  const now = Math.floor(Date.now() / 1000) + 2082844800;
+  w.u32(0x00010000);
+  w.u32(0x00010000);
+  w.u32(0);
+  w.u32(0x5F0F3CF5);
+  w.u16(0x0003);
+  w.u16(UPM);
+  w.u32(0); w.u32(now);
+  w.u32(0); w.u32(now);
   w.i16(xMin); w.i16(yMin); w.i16(xMax); w.i16(yMax);
-  w.u16(0);                 // macStyle
-  w.u16(8);                 // lowestRecPPEM
-  w.i16(2);                 // fontDirectionHint
-  w.i16(1);                 // indexToLocFormat = long
-  w.i16(0);                 // glyphDataFormat
+  w.u16(0);
+  w.u16(8);
+  w.i16(2);
+  w.i16(1);
+  w.i16(0);
   return w.bytes();
 }
 
@@ -728,15 +1020,15 @@ function buildHhea(numGlyphs, minLSB, xMaxExtent) {
   w.u32(0x00010000);
   w.i16(ASC);
   w.i16(DESC);
-  w.i16(0);            // lineGap
-  w.u16(ADV);          // advanceWidthMax
+  w.i16(0);
+  w.u16(ADV);
   w.i16(minLSB);
-  w.i16(0);            // minRightSideBearing
+  w.i16(0);
   w.i16(xMaxExtent);
-  w.i16(1); w.i16(0); w.i16(0);              // caret
-  w.i16(0); w.i16(0); w.i16(0); w.i16(0);    // reserved
-  w.i16(0);            // metricDataFormat
-  w.u16(numGlyphs);    // numberOfHMetrics
+  w.i16(1); w.i16(0); w.i16(0);
+  w.i16(0); w.i16(0); w.i16(0); w.i16(0);
+  w.i16(0);
+  w.u16(numGlyphs);
   return w.bytes();
 }
 
@@ -746,58 +1038,58 @@ function buildMaxp(numGlyphs, maxPoints, maxContours) {
   w.u16(numGlyphs);
   w.u16(maxPoints);
   w.u16(maxContours);
-  w.u16(0);  // maxCompositePoints
-  w.u16(0);  // maxCompositeContours
-  w.u16(2);  // maxZones
-  w.u16(0);  // maxTwilightPoints
-  w.u16(0);  // maxStorage
-  w.u16(0);  // maxFunctionDefs
-  w.u16(0);  // maxInstructionDefs
-  w.u16(0);  // maxStackElements
-  w.u16(0);  // maxSizeOfInstructions
-  w.u16(0);  // maxComponentElements
-  w.u16(0);  // maxComponentDepth
+  w.u16(0);
+  w.u16(0);
+  w.u16(2);
+  w.u16(0);
+  w.u16(0);
+  w.u16(0);
+  w.u16(0);
+  w.u16(0);
+  w.u16(0);
+  w.u16(0);
+  w.u16(0);
   return w.bytes();
 }
 
 function buildOS2(firstChar, lastChar) {
   const w = new Writer();
-  w.u16(3);            // version
-  w.i16(ADV);          // xAvgCharWidth
-  w.u16(400);          // usWeightClass
-  w.u16(5);            // usWidthClass
-  w.u16(0);            // fsType (installable)
-  w.i16(650); w.i16(600); w.i16(0); w.i16(75);    // subscript
-  w.i16(650); w.i16(600); w.i16(0); w.i16(350);   // superscript
-  w.i16(50);  w.i16(258);                         // strikeout
-  w.i16(0);                                       // sFamilyClass
-  for (let i = 0; i < 10; i++) w.u8(0);           // panose
-  w.u32(0); w.u32(0); w.u32(0); w.u32(0);         // unicode ranges
-  w.tag('PIXL');                                  // achVendID
-  w.u16(0x0040);       // fsSelection = REGULAR
+  w.u16(3);
+  w.i16(ADV);
+  w.u16(400);
+  w.u16(5);
+  w.u16(0);
+  w.i16(650); w.i16(600); w.i16(0); w.i16(75);
+  w.i16(650); w.i16(600); w.i16(0); w.i16(350);
+  w.i16(50);  w.i16(258);
+  w.i16(0);
+  for (let i = 0; i < 10; i++) w.u8(0);
+  w.u32(0); w.u32(0); w.u32(0); w.u32(0);
+  w.tag('PIXL');
+  w.u16(0x0040);
   w.u16(firstChar);
   w.u16(lastChar);
-  w.i16(ASC);          // sTypoAscender
-  w.i16(DESC);         // sTypoDescender
-  w.i16(0);            // sTypoLineGap
-  w.u16(ASC);          // usWinAscent
-  w.u16(-DESC);        // usWinDescent
-  w.u32(1); w.u32(0);  // ulCodePageRange (Latin 1)
-  w.i16(640);          // sxHeight
-  w.i16(896);          // sCapHeight
-  w.u16(0x20);         // usDefaultChar
-  w.u16(0x20);         // usBreakChar
-  w.u16(1);            // usMaxContext
+  w.i16(ASC);
+  w.i16(DESC);
+  w.i16(0);
+  w.u16(ASC);
+  w.u16(-DESC);
+  w.u32(1); w.u32(0);
+  w.i16(640);
+  w.i16(896);
+  w.u16(0x20);
+  w.u16(0x20);
+  w.u16(1);
   return w.bytes();
 }
 
 function buildPost() {
   const w = new Writer();
-  w.u32(0x00030000);   // version 3.0 (no glyph names)
-  w.u32(0);            // italicAngle
-  w.i16(-100);         // underlinePosition
-  w.i16(50);           // underlineThickness
-  w.u32(0);            // isFixedPitch
+  w.u32(0x00030000);
+  w.u32(0);
+  w.i16(-100);
+  w.i16(50);
+  w.u32(0);
   w.u32(0); w.u32(0); w.u32(0); w.u32(0);
   return w.bytes();
 }
@@ -855,7 +1147,7 @@ function buildCmap(entries) {
       segs.push({ start: e.code, end: e.code, delta });
     }
   }
-  segs.push({ start: 0xFFFF, end: 0xFFFF, delta: 1 }); // terminator
+  segs.push({ start: 0xFFFF, end: 0xFFFF, delta: 1 });
 
   const segCount  = segs.length;
   const segCountX2 = segCount * 2;
@@ -867,21 +1159,21 @@ function buildCmap(entries) {
   const sub = new Writer();
   sub.u16(4);
   sub.u16(16 + 8 * segCount);
-  sub.u16(0);                 // language
+  sub.u16(0);
   sub.u16(segCountX2);
   sub.u16(searchRange);
   sub.u16(entrySelector);
   sub.u16(rangeShift);
   for (const s of segs) sub.u16(s.end);
-  sub.u16(0);                 // reservedPad
+  sub.u16(0);
   for (const s of segs) sub.u16(s.start);
   for (const s of segs) sub.i16(s.delta);
-  for (let i = 0; i < segCount; i++) sub.u16(0);   // idRangeOffset
+  for (let i = 0; i < segCount; i++) sub.u16(0);
 
   const out = new Writer();
-  out.u16(0);                 // version
-  out.u16(1);                 // numTables
-  out.u16(3); out.u16(1); out.u32(12);             // Windows / Unicode BMP
+  out.u16(0);
+  out.u16(1);
+  out.u16(3); out.u16(1); out.u32(12);
   out.raw(sub.bytes());
   return out.bytes();
 }
@@ -932,8 +1224,7 @@ function assembleTables(tables) {
 }
 
 function buildTTF(familyName, doCenter) {
-  /* --- collect glyphs ------------------------------------------------ */
-  const items = [{ code: -1, advance: ADV, contours: [] }];  // .notdef
+  const items = [{ code: -1, advance: ADV, contours: [] }];
   const cmapEntries = [];
 
   for (const ch of ALL_CHARS) {
@@ -947,7 +1238,6 @@ function buildTTF(familyName, doCenter) {
 
   const numGlyphs = items.length;
 
-  /* --- glyf + loca --------------------------------------------------- */
   const glyphDatas = [];
   let maxPoints = 0, maxContours = 0;
   for (const it of items) {
@@ -976,7 +1266,6 @@ function buildTTF(familyName, doCenter) {
   const lv = new DataView(locaData.buffer);
   for (let i = 0; i <= numGlyphs; i++) lv.setUint32(i * 4, loca[i]);
 
-  /* --- metrics & bounding box ---------------------------------------- */
   const hmtx = new Writer();
   let X0 = Infinity, Y0 = Infinity, X1 = -Infinity, Y1 = -Infinity;
   let minLSB = Infinity, xMaxExtent = -Infinity;
@@ -1004,12 +1293,10 @@ function buildTTF(familyName, doCenter) {
   }
   if (!isFinite(X0)) { X0 = 0; Y0 = 0; X1 = 0; Y1 = 0; minLSB = 0; xMaxExtent = 0; }
 
-  /* --- cmap char range ------------------------------------------------ */
   const codes = cmapEntries.map(e => e.code);
   const firstChar = Math.min(...codes, 0xFFFF);
   const lastChar  = Math.min(Math.max(...codes, 0), 0xFFFF);
 
-  /* --- tables --------------------------------------------------------- */
   const tables = {
     'head': buildHead(Math.round(X0), Math.round(Y0), Math.round(X1), Math.round(Y1)),
     'hhea': buildHhea(numGlyphs, Math.round(minLSB), Math.round(xMaxExtent)),
@@ -1047,11 +1334,6 @@ function safeFileName(name) {
 let previewCounter = 0;
 const liveFaces = [];
 
-/*  Per-letter Load:
-      1. select that letter for editing
-      2. rebuild the whole font from all painted glyphs (auto-centered)
-      3. apply it to the preview text, which is centered
-*/
 async function loadGlyph(ch, btn) {
   selectChar(ch);
 
@@ -1074,7 +1356,7 @@ async function loadGlyph(ch, btn) {
 
     const el = document.getElementById('previewText');
     el.style.fontFamily = `"${label}", ui-monospace, monospace`;
-    el.style.textAlign = 'center';           // text always centered
+    el.style.textAlign = 'center';
     el.classList.add('flash');
     setTimeout(() => el.classList.remove('flash'), 350);
   } catch (err) {
@@ -1089,13 +1371,14 @@ async function loadGlyph(ch, btn) {
 /* =====================================================================
    UI WIRING
    ===================================================================== */
-// brush sizes
 const sizesEl = document.getElementById('sizes');
 [1, 2, 3, 4].forEach(n => {
   const b = document.createElement('button');
+  b.type = 'button';
   b.className = 'size' + (n === 1 ? ' active' : '');
   b.dataset.size = n;
   b.title = n + ' px brush';
+  b.setAttribute('aria-label', n + ' pixel brush');
   const i = document.createElement('i');
   const s = 3 + n * 3;
   i.style.width = s + 'px';
@@ -1108,7 +1391,6 @@ const sizesEl = document.getElementById('sizes');
   sizesEl.appendChild(b);
 });
 
-// tools
 document.querySelectorAll('.tool').forEach(btn => {
   btn.addEventListener('click', () => {
     tool = btn.dataset.tool;
@@ -1141,7 +1423,6 @@ document.getElementById('btnExport').addEventListener('click', () => {
   }
 });
 
-// keyboard shortcuts
 window.addEventListener('keydown', e => {
   const tag = (e.target.tagName || '').toLowerCase();
   if (tag === 'input' || e.target.isContentEditable) return;
@@ -1149,6 +1430,8 @@ window.addEventListener('keydown', e => {
   if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'z') {
     e.preventDefault(); undo(); return;
   }
+  if (e.ctrlKey || e.metaKey) return;   // zoom shortcuts handled above
+
   const k = e.key.toLowerCase();
   if (k === 'b') { tool = 'brush';  document.querySelectorAll('.tool').forEach(b => b.classList.toggle('active', b.dataset.tool === 'brush')); }
   if (k === 'e') { tool = 'eraser'; document.querySelectorAll('.tool').forEach(b => b.classList.toggle('active', b.dataset.tool === 'eraser')); }
@@ -1161,6 +1444,13 @@ buildCharGrid();
 selectChar('A');
 render();
 updateStatus();
+
+/* initial fit — after layout so stage.clientWidth / Height are correct */
+requestAnimationFrame(() => {
+  applyZoom();
+  /* second pass in case fonts / scrollbars shift things */
+  requestAnimationFrame(applyZoom);
+});
 </script>
 </body>
 </html>
