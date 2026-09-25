@@ -1,8 +1,448 @@
 <!DOCTYPE html>
-<html>
-  <body>
-    <h1>
-      Nothing for Now!
-    </h1>
-  </body>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>···</title>
+  <meta name="hint-1" content="the first word is what the roots need">
+  <meta name="hint-2" content="7f3a9c1e is the seed, not the answer">
+  <meta name="robots" content="noindex, nofollow">
+
+  <!--
+    you found the roots.
+
+    but roots alone do not grow.
+    they must be fed.
+
+    speak the words you were given on the surface.
+    then speak the seed.
+
+    fragments:
+    · water ·
+    · the roots ·
+    · before ·
+    · the leaves ·
+    · appear ·
+
+    the seed is 7f3a9c1e
+  -->
+
+  <style>
+    :root {
+      --bg: #020604;
+      --green: #22c55e;
+      --green-dim: #14532d;
+      --green-bright: #86efac;
+      --green-glow: rgba(34, 197, 94, 0.5);
+      /* seed for the next chamber: 7f3a9c1e */
+    }
+
+    * { box-sizing: border-box; }
+
+    html, body {
+      margin: 0;
+      padding: 0;
+      background: var(--bg);
+      color: var(--green);
+      font-family: "SF Mono", "Menlo", "Consolas", monospace;
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    body {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 40px 20px;
+      background:
+        radial-gradient(ellipse at 50% 120%, rgba(34, 197, 94, 0.15), transparent 60%),
+        radial-gradient(ellipse at 50% -20%, rgba(21, 128, 61, 0.1), transparent 60%),
+        var(--bg);
+      position: relative;
+    }
+
+    /* subtle scanline overlay */
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background: repeating-linear-gradient(
+        0deg,
+        rgba(34, 197, 94, 0.02) 0px,
+        rgba(34, 197, 94, 0.02) 1px,
+        transparent 1px,
+        transparent 3px
+      );
+      pointer-events: none;
+      z-index: 1;
+    }
+
+    /* vignette */
+    body::after {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background: radial-gradient(ellipse at center, transparent 40%, rgba(0,0,0,0.6) 100%);
+      pointer-events: none;
+      z-index: 2;
+    }
+
+    .stage {
+      position: relative;
+      z-index: 10;
+      max-width: 540px;
+      width: 100%;
+      text-align: center;
+    }
+
+    .seed {
+      font-size: 1.4rem;
+      margin-bottom: 40px;
+      opacity: 0;
+      animation: fadeIn 2s ease forwards 0.5s;
+      color: var(--green-bright);
+      letter-spacing: 0.3em;
+    }
+
+    .seed .dot {
+      display: inline-block;
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--green);
+      box-shadow: 0 0 12px var(--green-glow);
+      animation: pulse 2.4s ease-in-out infinite;
+      vertical-align: middle;
+    }
+
+    @keyframes pulse {
+      0%, 100% { transform: scale(1); opacity: 0.7; }
+      50% { transform: scale(1.4); opacity: 1; }
+    }
+
+    @keyframes fadeIn {
+      to { opacity: 1; }
+    }
+
+    .whisper {
+      font-size: 0.85rem;
+      line-height: 1.9;
+      color: var(--green-dim);
+      margin-bottom: 20px;
+      opacity: 0;
+      animation: fadeIn 2s ease forwards;
+      letter-spacing: 0.05em;
+    }
+
+    .whisper.d1 { animation-delay: 1.5s; }
+    .whisper.d2 { animation-delay: 3s; }
+    .whisper.d3 { animation-delay: 4.5s; color: var(--green); }
+
+    .riddle {
+      font-size: 0.9rem;
+      line-height: 2;
+      color: var(--green-bright);
+      margin: 50px 0 30px;
+      padding: 30px 20px;
+      border-top: 1px solid rgba(34, 197, 94, 0.15);
+      border-bottom: 1px solid rgba(34, 197, 94, 0.15);
+      opacity: 0;
+      animation: fadeIn 2s ease forwards 6s;
+      letter-spacing: 0.08em;
+      font-style: italic;
+    }
+
+    .riddle span {
+      display: block;
+      margin: 6px 0;
+    }
+
+    .input-stage {
+      opacity: 0;
+      animation: fadeIn 2s ease forwards 8s;
+      margin-top: 40px;
+    }
+
+    .stage-2, .stage-3 {
+      display: none;
+    }
+
+    .prompt-line {
+      font-size: 0.8rem;
+      color: var(--green-dim);
+      margin-bottom: 12px;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+    }
+
+    .input-wrap {
+      position: relative;
+      display: flex;
+      align-items: center;
+      border: 1px solid rgba(34, 197, 94, 0.3);
+      background: rgba(34, 197, 94, 0.03);
+      border-radius: 4px;
+      padding: 0 14px;
+      transition: border-color 0.3s, box-shadow 0.3s;
+    }
+
+    .input-wrap:focus-within {
+      border-color: var(--green);
+      box-shadow: 0 0 20px rgba(34, 197, 94, 0.15);
+    }
+
+    .input-wrap::before {
+      content: '›';
+      color: var(--green);
+      margin-right: 10px;
+      font-size: 1rem;
+    }
+
+    input[type="text"] {
+      flex: 1;
+      background: transparent;
+      border: none;
+      outline: none;
+      color: var(--green-bright);
+      font-family: inherit;
+      font-size: 0.9rem;
+      padding: 14px 0;
+      letter-spacing: 0.08em;
+      caret-color: var(--green);
+    }
+
+    input[type="text"]::placeholder {
+      color: rgba(34, 197, 94, 0.25);
+      letter-spacing: 0.1em;
+    }
+
+    .response {
+      margin-top: 18px;
+      font-size: 0.8rem;
+      min-height: 1.4em;
+      color: var(--green-dim);
+      letter-spacing: 0.05em;
+      transition: color 0.3s;
+    }
+
+    .response.ok { color: var(--green-bright); }
+    .response.no { color: #b91c1c; }
+
+    .stage-3 {
+      padding: 30px 0;
+    }
+
+    .final-msg {
+      font-size: 0.95rem;
+      color: var(--green-bright);
+      line-height: 2.2;
+      letter-spacing: 0.08em;
+    }
+
+    .final-msg .line {
+      opacity: 0;
+      display: block;
+      animation: fadeIn 2s ease forwards;
+    }
+
+    .final-msg .line:nth-child(1) { animation-delay: 0.5s; }
+    .final-msg .line:nth-child(2) { animation-delay: 2s; }
+    .final-msg .line:nth-child(3) { animation-delay: 3.5s; }
+    .final-msg .line:nth-child(4) { animation-delay: 5s; }
+    .final-msg .line:nth-child(5) { animation-delay: 6.5s; color: var(--green-dim); font-size: 0.8rem; }
+    .final-msg .line:nth-child(6) { animation-delay: 8s; margin-top: 30px; font-size: 0.8rem; }
+
+    .leaf-link {
+      color: var(--green);
+      text-decoration: none;
+      border-bottom: 1px dashed rgba(34, 197, 94, 0.4);
+      padding-bottom: 2px;
+      transition: color 0.3s, text-shadow 0.3s;
+    }
+
+    .leaf-link:hover {
+      color: var(--green-bright);
+      text-shadow: 0 0 8px var(--green-glow);
+    }
+
+    /* hidden element - only visible via selection/inspection */
+    .ghost {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      overflow: hidden;
+      clip: rect(0 0 0 0);
+      white-space: nowrap;
+    }
+
+    /* printed copy reveals everything */
+    @media print {
+      body::after { content: 'water the roots before the leaves appear / seed: 7f3a9c1e'; }
+    }
+
+    @keyframes shake {
+      0%, 100% { transform: translateX(0); }
+      20% { transform: translateX(-6px); }
+      40% { transform: translateX(6px); }
+      60% { transform: translateX(-4px); }
+      80% { transform: translateX(4px); }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="stage">
+    <div class="seed">
+      <span class="dot"></span> · <span class="dot"></span> · <span class="dot"></span>
+    </div>
+
+    <div class="whisper d1">you found the roots.</div>
+    <div class="whisper d2">but roots alone do not grow.</div>
+    <div class="whisper d3">they must be fed.</div>
+
+    <div class="riddle">
+      <span>i am not the seed,</span>
+      <span>though i contain it.</span>
+      <span>i am not the answer,</span>
+      <span>though i am what you must say.</span>
+      <span>i was on the surface.</span>
+      <span>you saw me in the dark.</span>
+    </div>
+
+    <!-- STAGE 1 -->
+    <div class="input-stage stage-1" id="stage1">
+      <div class="prompt-line">speak the words</div>
+      <div class="input-wrap">
+        <input type="text" id="input1" placeholder="..." autocomplete="off" spellcheck="false">
+      </div>
+      <div class="response" id="response1"></div>
+    </div>
+
+    <!-- STAGE 2 -->
+    <div class="input-stage stage-2" id="stage2">
+      <div class="prompt-line">speak the seed</div>
+      <div class="input-wrap">
+        <input type="text" id="input2" placeholder="..." autocomplete="off" spellcheck="false">
+      </div>
+      <div class="response" id="response2"></div>
+    </div>
+
+    <!-- STAGE 3 -->
+    <div class="input-stage stage-3" id="stage3">
+      <div class="final-msg">
+        <span class="line">the roots drink.</span>
+        <span class="line">something stirs beneath the soil.</span>
+        <span class="line">a leaf has not yet formed.</span>
+        <span class="line">but the stem is rising.</span>
+        <span class="line">— the next chamber is still being dug —</span>
+        <span class="line">when it is ready, it will live at <a href="leaves.html" class="leaf-link">/leaves.html</a></span>
+      </div>
+    </div>
+  </div>
+
+  <!--
+    fragments:
+    · water ·
+    · the roots ·
+    · before ·
+    · the leaves ·
+    · appear ·
+
+    (these are already in your hands from the surface)
+    the seed is 7f3a9c1e
+  -->
+
+  <div class="ghost" id="ghost" aria-hidden="true">
+    water the roots before the leaves appear
+  </div>
+
+  <script>
+    // you opened the console. good.
+    console.log('%c🌱', 'font-size: 30px;');
+    console.log('%cthe roots are listening.', 'color: #22c55e; font-style: italic;');
+    console.log('%cspeak what you were given.', 'color: #14532d;');
+    console.log('%c(hint: it was whispered in the surface console)', 'color: #14532d; font-size: 10px;');
+
+    const input1 = document.getElementById('input1');
+    const input2 = document.getElementById('input2');
+    const response1 = document.getElementById('response1');
+    const response2 = document.getElementById('response2');
+    const stage1 = document.getElementById('stage1');
+    const stage2 = document.getElementById('stage2');
+    const stage3 = document.getElementById('stage3');
+
+    const PHRASE = 'water the roots before the leaves appear';
+    const SEED = '7f3a9c1e';
+
+    const wrongPhrase = [
+      'the roots do not stir.',
+      'the soil remains dry.',
+      'that is not what the surface whispered.',
+      'try again. listen closer.'
+    ];
+
+    const wrongSeed = [
+      'the seed is not that.',
+      'a different number was left behind.',
+      'the chamber rejects it.',
+      'look at what was inscribed on the surface.'
+    ];
+
+    let wrongCount1 = 0;
+    let wrongCount2 = 0;
+
+    input1.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') checkPhrase();
+    });
+
+    input2.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') checkSeed();
+    });
+
+    function checkPhrase() {
+      const val = input1.value.trim().toLowerCase().replace(/[.,!?]/g, '');
+      const normalized = val.replace(/\s+/g, ' ');
+
+      if (normalized === PHRASE) {
+        response1.textContent = 'the roots begin to drink.';
+        response1.className = 'response ok';
+        input1.disabled = true;
+        setTimeout(() => {
+          stage1.style.display = 'none';
+          stage2.style.display = 'block';
+          input2.focus();
+        }, 1800);
+      } else {
+        response1.textContent = wrongPhrase[wrongCount1 % wrongPhrase.length];
+        response1.className = 'response no';
+        wrongCount1++;
+        input1.parentElement.style.animation = 'none';
+        void input1.parentElement.offsetWidth;
+        input1.parentElement.style.animation = 'shake 0.3s';
+      }
+    }
+
+    function checkSeed() {
+      const val = input2.value.trim().toLowerCase().replace(/[^a-f0-9]/g, '');
+
+      if (val === SEED) {
+        response2.textContent = 'the chamber opens.';
+        response2.className = 'response ok';
+        input2.disabled = true;
+        setTimeout(() => {
+          stage2.style.display = 'none';
+          stage3.style.display = 'block';
+        }, 1800);
+      } else {
+        response2.textContent = wrongSeed[wrongCount2 % wrongSeed.length];
+        response2.className = 'response no';
+        wrongCount2++;
+        input2.parentElement.style.animation = 'none';
+        void input2.parentElement.offsetWidth;
+        input2.parentElement.style.animation = 'shake 0.3s';
+      }
+    }
+  </script>
+</body>
 </html>
