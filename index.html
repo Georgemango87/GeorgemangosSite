@@ -47,8 +47,6 @@
 
     /* ==========================================
        HIDDEN ARG LINKS
-       (no visual change — cursor stays default,
-        no color shift, no underline)
        ========================================== */
     .secret-pulse,
     .secret-char,
@@ -465,6 +463,82 @@
 
     .launch-btn:active { transform: scale(0.985); }
 
+    /* ==========================================
+       ELSEWHERE / ACCOUNTS
+       ========================================== */
+    .accounts-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));
+      gap: 14px;
+    }
+
+    .account-card {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      padding: 16px 18px;
+      background: linear-gradient(180deg, var(--surface), var(--surface-2));
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      text-decoration: none;
+      color: var(--text);
+      transition: transform 0.2s ease, border-color 0.2s, box-shadow 0.2s;
+    }
+
+    .account-card:hover {
+      transform: translateY(-3px);
+      border-color: rgba(34, 197, 94, 0.5);
+      box-shadow: 0 14px 32px rgba(0, 0, 0, 0.45), 0 0 0 1px rgba(34, 197, 94, 0.15);
+    }
+
+    .account-icon {
+      width: 44px;
+      height: 44px;
+      flex: 0 0 44px;
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 20px;
+      font-weight: 700;
+      color: #fff;
+      box-shadow: 0 6px 16px rgba(0, 0, 0, 0.35);
+    }
+
+    .account-info {
+      display: flex;
+      flex-direction: column;
+      min-width: 0;
+      flex: 1;
+    }
+
+    .account-platform {
+      font-size: 0.95rem;
+      font-weight: 700;
+      letter-spacing: -0.01em;
+    }
+
+    .account-handle {
+      font-size: 0.76rem;
+      color: var(--muted);
+      font-family: "SF Mono", "Menlo", "Consolas", monospace;
+      letter-spacing: 0.02em;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .account-arrow {
+      color: var(--muted);
+      font-size: 0.9rem;
+      transition: color 0.2s, transform 0.2s;
+    }
+
+    .account-card:hover .account-arrow {
+      color: var(--accent-soft);
+      transform: translateX(2px);
+    }
+
     footer {
       margin-top: 80px;
       padding: 28px 20px 40px;
@@ -632,6 +706,7 @@
     @media (max-width: 520px) {
       .hero { padding: 56px 0 48px; }
       .project-grid { grid-template-columns: 1fr; }
+      .accounts-grid { grid-template-columns: 1fr; }
       .game-modal {
         align-items: flex-start;
         justify-content: flex-start;
@@ -660,6 +735,7 @@
     <div class="nav-links">
       <a href="#about">About</a>
       <a href="#projects">Projects</a>
+      <a href="#elsewhere">Elsewhere</a>
     </div>
   </nav>
 
@@ -966,6 +1042,68 @@
           </div>
           <button class="launch-btn" onclick="openGameModal('game12-modal')">▶ Launch</button>
         </article>
+
+      </div>
+    </div>
+  </section>
+
+  <!-- ==========================================
+       ELSEWHERE / ACCOUNTS
+       ========================================== -->
+  <section id="elsewhere" style="margin-top: 90px;">
+    <div class="wrap">
+      <div class="section-head reveal">
+        <span class="eyebrow">Elsewhere</span>
+        <h2>Find me on other platforms</h2>
+        <p>Mods, 3D models, videos, code — this is where it all lives.</p>
+      </div>
+
+      <div class="accounts-grid reveal">
+
+        <a class="account-card" href="https://modrinth.com/user/georgemango" target="_blank" rel="noopener noreferrer">
+          <div class="account-icon" style="background: linear-gradient(135deg, #1bd96a, #15803d);">⬢</div>
+          <div class="account-info">
+            <span class="account-platform">Modrinth</span>
+            <span class="account-handle">@georgemango85</span>
+          </div>
+          <span class="account-arrow">↗</span>
+        </a>
+
+        <a class="account-card" href="https://mcreator.net/user/824614/magnusstepan" target="_blank" rel="noopener noreferrer">
+          <div class="account-icon" style="background: linear-gradient(135deg, #6366f1, #4338ca);">⚙</div>
+          <div class="account-info">
+            <span class="account-platform">MCreator</span>
+            <span class="account-handle">@georgemango85</span>
+          </div>
+          <span class="account-arrow">↗</span>
+        </a>
+
+        <a class="account-card" href="https://sketchfab.com/georgemango85" target="_blank" rel="noopener noreferrer">
+          <div class="account-icon" style="background: linear-gradient(135deg, #22d3ee, #0891b2);">◆</div>
+          <div class="account-info">
+            <span class="account-platform">Sketchfab</span>
+            <span class="account-handle">@georgemango85</span>
+          </div>
+          <span class="account-arrow">↗</span>
+        </a>
+
+        <a class="account-card" href="https://www.youtube.com/@georgemango47" target="_blank" rel="noopener noreferrer">
+          <div class="account-icon" style="background: linear-gradient(135deg, #ef4444, #991b1b);">▶</div>
+          <div class="account-info">
+            <span class="account-platform">YouTube</span>
+            <span class="account-handle">@georgemango47</span>
+          </div>
+          <span class="account-arrow">↗</span>
+        </a>
+
+        <a class="account-card" href="https://github.com/georgemango87" target="_blank" rel="noopener noreferrer">
+          <div class="account-icon" style="background: linear-gradient(135deg, #4b5563, #111827);">⌘</div>
+          <div class="account-info">
+            <span class="account-platform">GitHub</span>
+            <span class="account-handle">@georgemango87</span>
+          </div>
+          <span class="account-arrow">↗</span>
+        </a>
 
       </div>
     </div>
