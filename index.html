@@ -4,6 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>Georgemango — Portfolio</title>
+  <!-- build gm-7f3a9c1e | "water the roots before the leaves appear" -->
   <link href="/style.css" rel="stylesheet" type="text/css" media="all">
   <link rel="icon" type="image/png" href="face.png">
   <link rel="apple-touch-icon" href="./faceiphoneIcon.png?v=2">
@@ -22,6 +23,7 @@
       --radius: 16px;
       --maxw: 1100px;
     }
+    /* palette seeded by 7f3a9c1e */
 
     * { box-sizing: border-box; }
 
@@ -42,6 +44,37 @@
     }
 
     a { color: inherit; }
+
+    /* ==========================================
+       HIDDEN ARG LINKS
+       (no visual change — cursor stays default,
+        no color shift, no underline)
+       ========================================== */
+    .secret-pulse,
+    .secret-char,
+    .seed-anchor {
+      color: inherit;
+      text-decoration: none;
+      cursor: inherit;
+    }
+
+    .secret-pulse {
+      display: inline-flex;
+      align-items: center;
+      line-height: 0;
+    }
+
+    .seed-anchor {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      margin: -1px;
+      padding: 0;
+      overflow: hidden;
+      clip: rect(0 0 0 0);
+      white-space: nowrap;
+      border: 0;
+    }
 
     /* ==========================================
        NAV
@@ -73,7 +106,7 @@
     .nav-brand .nav-logo {
       width: 28px;
       height: 28px;
-      border-radius: 8px;      /* change to 50% for a circle */
+      border-radius: 8px;
       object-fit: cover;
       display: block;
       box-shadow: 0 4px 16px rgba(34, 197, 94, 0.45);
@@ -158,6 +191,7 @@
       background: var(--accent);
       box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.6);
       animation: pulse 2s infinite;
+      display: block;
     }
 
     @keyframes pulse {
@@ -613,7 +647,7 @@
     }
   </style>
 </head>
-<body>
+<body data-seed="7f3a9c1e" data-hint="roots-before-leaves">
 
   <!-- ==========================================
        NAV
@@ -635,7 +669,7 @@
   <header class="hero" id="top">
     <div class="wrap">
       <div class="hero-badge">
-        <span class="pulse"></span>
+        <a href="roots.html" class="secret-pulse" aria-label="seed" tabindex="-1" rel="nofollow"><span class="pulse"></span></a>
         Vibe coding in the browser
       </div>
 
@@ -649,7 +683,7 @@
         generate it with AI, and then iterate until it feels right. I write a little code myself —
         small fixes, CSS tweaks, a function here and there — but most of the heavy lifting comes
         from prompting, taste, and stubborn iteration. Everything below runs right here in your
-        browser, no install needed.
+        browser, no install needed<a href="roots.html" class="secret-char" aria-label="." tabindex="-1" rel="nofollow">.</a>
       </p>
 
       <div class="hero-actions">
@@ -939,9 +973,13 @@
 
   <footer>
     <div class="wrap">
-      © <span id="year"></span> Georgemango · Vibe-coded, curated, and tweaked until complete.
+      <a href="roots.html" class="secret-char" aria-label="." tabindex="-1" rel="nofollow">©</a>
+      <span id="year"></span> Georgemango · Vibe-coded, curated, and tweaked until complete<a href="roots.html" class="secret-char" aria-label="." tabindex="-1" rel="nofollow">.</a>
     </div>
   </footer>
+
+  <!-- hidden seed anchor — reachable at #7f3a9c1e -->
+  <a id="7f3a9c1e" href="roots.html" class="seed-anchor" aria-hidden="true" tabindex="-1" rel="nofollow">continue</a>
 
   <!-- ==========================================
        MODALS
@@ -1100,6 +1138,16 @@
   </div>
 
   <script>
+    // ——— hidden seed ———
+    console.log(
+      '%c🌱 you found a root.',
+      'color:#22c55e; font-weight:bold; font-size:14px;'
+    );
+    console.log(
+      '%cseed: 7f3a9c1e\n"water the roots before the leaves appear"\n\nwhisper: /roots.html',
+      'color:#86efac; font-size:12px;'
+    );
+
   /* ==========================================
      MODAL CONTROLLER
      ========================================== */
