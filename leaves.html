@@ -1,0 +1,545 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>···</title>
+  <meta name="hint-1" content="leaves hunger for one thing from above">
+  <meta name="hint-2" content="and they breathe in what you breathe out">
+  <meta name="robots" content="noindex, nofollow">
+
+  <!--
+    the roots drank. the stem rose. now there are leaves.
+
+    they ask two things.
+    the first: light
+    the second: carbon dioxide
+
+    give them both, and the fruit will come.
+    the next chamber lives at /fruit.html
+  -->
+
+  <style>
+    :root {
+      --bg: #020604;
+      --green: #22c55e;
+      --green-dim: #14532d;
+      --green-bright: #86efac;
+      --green-glow: rgba(34, 197, 94, 0.5);
+      --leaf-1: #16a34a;
+      --leaf-2: #15803d;
+      --leaf-3: #4ade80;
+      /* chamber key: light / carbon dioxide */
+    }
+
+    * { box-sizing: border-box; }
+
+    html, body {
+      margin: 0;
+      padding: 0;
+      background: var(--bg);
+      color: var(--green);
+      font-family: "SF Mono", "Menlo", "Consolas", monospace;
+      min-height: 100vh;
+      overflow-x: hidden;
+      transition: background 2s ease;
+    }
+
+    body {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 40px 20px;
+      background:
+        radial-gradient(ellipse at 50% 120%, rgba(34, 197, 94, 0.12), transparent 60%),
+        radial-gradient(ellipse at 50% -20%, rgba(21, 128, 61, 0.08), transparent 60%),
+        var(--bg);
+      position: relative;
+      transition: background 2.5s ease, box-shadow 2.5s ease;
+    }
+
+    /* growth bloom */
+    body.bloom-1 {
+      background:
+        radial-gradient(ellipse at 50% 120%, rgba(34, 197, 94, 0.28), transparent 65%),
+        radial-gradient(ellipse at 50% -20%, rgba(21, 128, 61, 0.14), transparent 60%),
+        var(--bg);
+    }
+    body.bloom-2 {
+      background:
+        radial-gradient(ellipse at 50% 120%, rgba(74, 222, 128, 0.35), transparent 70%),
+        radial-gradient(ellipse at 50% -20%, rgba(34, 197, 94, 0.2), transparent 65%),
+        var(--bg);
+      box-shadow: inset 0 0 200px rgba(34, 197, 94, 0.08);
+    }
+
+    /* scanlines */
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background: repeating-linear-gradient(
+        0deg,
+        rgba(34, 197, 94, 0.02) 0px,
+        rgba(34, 197, 94, 0.02) 1px,
+        transparent 1px,
+        transparent 3px
+      );
+      pointer-events: none;
+      z-index: 1;
+    }
+
+    /* vignette */
+    body::after {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background: radial-gradient(ellipse at center, transparent 40%, rgba(0,0,0,0.7) 100%);
+      pointer-events: none;
+      z-index: 2;
+    }
+
+    /* ==========================================
+       FALLING LEAVES
+       ========================================== */
+    .leaves-bg {
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      overflow: hidden;
+      z-index: 1;
+    }
+
+    .falling-leaf {
+      position: absolute;
+      width: 18px;
+      height: 18px;
+      background: linear-gradient(135deg, var(--leaf-1), var(--leaf-3));
+      border-radius: 0 100% 0 100%;
+      transform-origin: center;
+      opacity: 0.12;
+      animation: fall linear infinite;
+      transition: opacity 2s ease;
+    }
+
+    body.bloom-1 .falling-leaf { opacity: 0.2; }
+    body.bloom-2 .falling-leaf { opacity: 0.3; }
+
+    @keyframes fall {
+      0% {
+        transform: translateY(-60px) rotate(0deg);
+        opacity: 0;
+      }
+      10% { opacity: 0.12; }
+      90% { opacity: 0.12; }
+      100% {
+        transform: translateY(110vh) rotate(680deg);
+        opacity: 0;
+      }
+    }
+
+    /* leaf individual positions */
+    .leaf-a { left: 8%;  animation-duration: 22s; animation-delay: 0s;   width: 22px; height: 22px; }
+    .leaf-b { left: 22%; animation-duration: 28s; animation-delay: -5s;  width: 14px; height: 14px; }
+    .leaf-c { left: 40%; animation-duration: 26s; animation-delay: -12s; width: 18px; height: 18px; }
+    .leaf-d { left: 58%; animation-duration: 31s; animation-delay: -3s;  width: 16px; height: 16px; }
+    .leaf-e { left: 74%; animation-duration: 24s; animation-delay: -9s;  width: 20px; height: 20px; }
+    .leaf-f { left: 88%; animation-duration: 29s; animation-delay: -17s; width: 12px; height: 12px; }
+    .leaf-g { left: 50%; animation-duration: 34s; animation-delay: -22s; width: 15px; height: 15px; }
+
+    /* ==========================================
+       STAGE LAYOUT
+       ========================================== */
+    .stage {
+      position: relative;
+      z-index: 10;
+      max-width: 560px;
+      width: 100%;
+      text-align: center;
+    }
+
+    .seed {
+      font-size: 1.4rem;
+      margin-bottom: 36px;
+      opacity: 0;
+      animation: fadeIn 2s ease forwards 0.4s;
+      color: var(--green-bright);
+      letter-spacing: 0.3em;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 18px;
+    }
+
+    .leaf-mark {
+      display: inline-block;
+      width: 16px;
+      height: 16px;
+      background: linear-gradient(135deg, var(--leaf-1), var(--leaf-3));
+      border-radius: 0 100% 0 100%;
+      transform: rotate(-45deg);
+      box-shadow: 0 0 14px var(--green-glow);
+      animation: sway 3.2s ease-in-out infinite;
+    }
+
+    .leaf-mark:nth-child(2) {
+      width: 22px;
+      height: 22px;
+      animation-delay: 0.4s;
+    }
+    .leaf-mark:nth-child(3) {
+      width: 14px;
+      height: 14px;
+      animation-delay: 0.8s;
+    }
+
+    @keyframes sway {
+      0%, 100% { transform: rotate(-45deg) translateY(0); }
+      50% { transform: rotate(-35deg) translateY(-3px); }
+    }
+
+    @keyframes fadeIn {
+      to { opacity: 1; }
+    }
+
+    .whisper {
+      font-size: 0.85rem;
+      line-height: 1.9;
+      color: var(--green-dim);
+      margin-bottom: 20px;
+      opacity: 0;
+      animation: fadeIn 2s ease forwards;
+      letter-spacing: 0.05em;
+    }
+
+    .whisper.d1 { animation-delay: 1.2s; }
+    .whisper.d2 { animation-delay: 2.4s; }
+    .whisper.d3 { animation-delay: 3.6s; color: var(--green); }
+
+    .riddle {
+      font-size: 0.9rem;
+      line-height: 2;
+      color: var(--green-bright);
+      margin: 44px 0 30px;
+      padding: 28px 20px;
+      border-top: 1px solid rgba(34, 197, 94, 0.15);
+      border-bottom: 1px solid rgba(34, 197, 94, 0.15);
+      opacity: 0;
+      animation: fadeIn 2s ease forwards 4.8s;
+      letter-spacing: 0.08em;
+      font-style: italic;
+    }
+
+    .riddle span {
+      display: block;
+      margin: 6px 0;
+    }
+
+    .input-stage {
+      opacity: 0;
+      animation: fadeIn 2s ease forwards 6.5s;
+      margin-top: 36px;
+    }
+
+    .stage-2, .stage-3 {
+      display: none;
+    }
+
+    .prompt-line {
+      font-size: 0.8rem;
+      color: var(--green-dim);
+      margin-bottom: 12px;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+    }
+
+    .input-wrap {
+      position: relative;
+      display: flex;
+      align-items: center;
+      border: 1px solid rgba(34, 197, 94, 0.3);
+      background: rgba(34, 197, 94, 0.03);
+      border-radius: 4px;
+      padding: 0 14px;
+      transition: border-color 0.3s, box-shadow 0.3s;
+    }
+
+    .input-wrap:focus-within {
+      border-color: var(--green);
+      box-shadow: 0 0 22px rgba(34, 197, 94, 0.2);
+    }
+
+    .input-wrap::before {
+      content: '›';
+      color: var(--green);
+      margin-right: 10px;
+      font-size: 1rem;
+    }
+
+    input[type="text"] {
+      flex: 1;
+      background: transparent;
+      border: none;
+      outline: none;
+      color: var(--green-bright);
+      font-family: inherit;
+      font-size: 0.9rem;
+      padding: 14px 0;
+      letter-spacing: 0.08em;
+      caret-color: var(--green);
+    }
+
+    input[type="text"]::placeholder {
+      color: rgba(34, 197, 94, 0.25);
+      letter-spacing: 0.1em;
+    }
+
+    .response {
+      margin-top: 18px;
+      font-size: 0.8rem;
+      min-height: 1.4em;
+      color: var(--green-dim);
+      letter-spacing: 0.05em;
+      transition: color 0.3s;
+    }
+
+    .response.ok { color: var(--green-bright); }
+    .response.no { color: #b91c1c; }
+
+    .final-msg {
+      font-size: 0.95rem;
+      color: var(--green-bright);
+      line-height: 2.2;
+      letter-spacing: 0.08em;
+      padding: 30px 0;
+    }
+
+    .final-msg .line {
+      opacity: 0;
+      display: block;
+      animation: fadeIn 2s ease forwards;
+    }
+
+    .final-msg .line:nth-child(1) { animation-delay: 0.5s; }
+    .final-msg .line:nth-child(2) { animation-delay: 1.8s; }
+    .final-msg .line:nth-child(3) { animation-delay: 3.2s; }
+    .final-msg .line:nth-child(4) { animation-delay: 4.6s; }
+    .final-msg .line:nth-child(5) { animation-delay: 6s; color: var(--green-dim); font-size: 0.8rem; }
+    .final-msg .line:nth-child(6) { animation-delay: 7.6s; margin-top: 30px; font-size: 0.8rem; }
+
+    .fruit-link {
+      color: var(--green);
+      text-decoration: none;
+      border-bottom: 1px dashed rgba(34, 197, 94, 0.4);
+      padding-bottom: 2px;
+      transition: color 0.3s, text-shadow 0.3s;
+    }
+
+    .fruit-link:hover {
+      color: var(--green-bright);
+      text-shadow: 0 0 10px var(--green-glow);
+    }
+
+    /* hidden element */
+    .ghost {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      overflow: hidden;
+      clip: rect(0 0 0 0);
+      white-space: nowrap;
+    }
+
+    /* printed page reveals */
+    @media print {
+      body::after {
+        content: 'chamber of leaves — light, then carbon dioxide. next: /fruit.html';
+      }
+    }
+
+    @keyframes shake {
+      0%, 100% { transform: translateX(0); }
+      20% { transform: translateX(-6px); }
+      40% { transform: translateX(6px); }
+      60% { transform: translateX(-4px); }
+      80% { transform: translateX(4px); }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .falling-leaf, .leaf-mark { animation: none !important; }
+      .whisper, .riddle, .input-stage, .seed, .final-msg .line { opacity: 1; animation: none; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- falling leaves background -->
+  <div class="leaves-bg" aria-hidden="true">
+    <div class="falling-leaf leaf-a"></div>
+    <div class="falling-leaf leaf-b"></div>
+    <div class="falling-leaf leaf-c"></div>
+    <div class="falling-leaf leaf-d"></div>
+    <div class="falling-leaf leaf-e"></div>
+    <div class="falling-leaf leaf-f"></div>
+    <div class="falling-leaf leaf-g"></div>
+  </div>
+
+  <div class="stage">
+    <div class="seed">
+      <span class="leaf-mark"></span>
+      <span class="leaf-mark"></span>
+      <span class="leaf-mark"></span>
+    </div>
+
+    <div class="whisper d1">the roots drank.</div>
+    <div class="whisper d2">the stem rose.</div>
+    <div class="whisper d3">now there are leaves.</div>
+
+    <div class="riddle">
+      <span>i have no mouth,</span>
+      <span>yet i hunger.</span>
+      <span>i have no lungs,</span>
+      <span>yet i breathe.</span>
+      <span>give me what falls on me from above,</span>
+      <span>and what drifts through the air.</span>
+    </div>
+
+    <!-- STAGE 1 -->
+    <div class="input-stage stage-1" id="stage1">
+      <div class="prompt-line">first — what do leaves hunger for</div>
+      <div class="input-wrap">
+        <input type="text" id="input1" placeholder="..." autocomplete="off" spellcheck="false">
+      </div>
+      <div class="response" id="response1"></div>
+    </div>
+
+    <!-- STAGE 2 -->
+    <div class="input-stage stage-2" id="stage2">
+      <div class="prompt-line">second — what do leaves breathe in</div>
+      <div class="input-wrap">
+        <input type="text" id="input2" placeholder="..." autocomplete="off" spellcheck="false">
+      </div>
+      <div class="response" id="response2"></div>
+    </div>
+
+    <!-- STAGE 3 -->
+    <div class="input-stage stage-3" id="stage3">
+      <div class="final-msg">
+        <span class="line">light falls.</span>
+        <span class="line">air flows.</span>
+        <span class="line">the leaves are full.</span>
+        <span class="line">something is ripening in the branches.</span>
+        <span class="line">— the fruit is not yet picked —</span>
+        <span class="line">when it is ready, it will hang at <a href="fruit.html" class="fruit-link">/fruit.html</a></span>
+      </div>
+    </div>
+  </div>
+
+  <!--
+    answers:
+    first: light (or: sun, sunlight)
+    second: carbon dioxide (or: co2, carbon)
+    next: /fruit.html
+  -->
+
+  <div class="ghost" id="ghost" aria-hidden="true">
+    light and carbon dioxide
+  </div>
+
+  <script>
+    // the leaves are listening too.
+    console.log('%c🍃', 'font-size: 30px;');
+    console.log('%cthe leaves have opened.', 'color: #22c55e; font-style: italic;');
+    console.log('%cthey ask for what all green things ask for.', 'color: #14532d;');
+    console.log('%c(first: what falls from above. second: what drifts through the air.)', 'color: #14532d; font-size: 10px;');
+    console.log('%cthe next chamber: /fruit.html', 'color: #4ade80; font-size: 10px;');
+
+    const input1 = document.getElementById('input1');
+    const input2 = document.getElementById('input2');
+    const response1 = document.getElementById('response1');
+    const response2 = document.getElementById('response2');
+    const stage1 = document.getElementById('stage1');
+    const stage2 = document.getElementById('stage2');
+    const stage3 = document.getElementById('stage3');
+
+    // accepted answers (normalized lowercase, no punctuation)
+    const ANSWERS_1 = ['light', 'sun', 'sunlight', 'the sun', 'the light'];
+    const ANSWERS_2 = ['carbon dioxide', 'co2', 'carbon', 'co 2', 'carbondioxide'];
+
+    const wrongPhrase = [
+      'the leaf curls away.',
+      'not that. the leaf waits.',
+      'the leaf cannot use it.',
+      'something else. something warmer.'
+    ];
+
+    const wrongSeed = [
+      'the leaf does not drink that.',
+      'not from the soil. from the air.',
+      'that is not what it takes in.',
+      'breathe differently.'
+    ];
+
+    let wrongCount1 = 0;
+    let wrongCount2 = 0;
+
+    input1.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') checkFirst();
+    });
+
+    input2.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') checkSecond();
+    });
+
+    function normalize(str) {
+      return str.trim().toLowerCase().replace(/[.,!?]/g, '').replace(/\s+/g, ' ');
+    }
+
+    function checkFirst() {
+      const val = normalize(input1.value);
+
+      if (ANSWERS_1.includes(val)) {
+        response1.textContent = 'the leaf turns toward you.';
+        response1.className = 'response ok';
+        input1.disabled = true;
+        document.body.classList.add('bloom-1');
+        setTimeout(() => {
+          stage1.style.display = 'none';
+          stage2.style.display = 'block';
+          input2.focus();
+        }, 1800);
+      } else {
+        response1.textContent = wrongPhrase[wrongCount1 % wrongPhrase.length];
+        response1.className = 'response no';
+        wrongCount1++;
+        input1.parentElement.style.animation = 'none';
+        void input1.parentElement.offsetWidth;
+        input1.parentElement.style.animation = 'shake 0.3s';
+      }
+    }
+
+    function checkSecond() {
+      const val = normalize(input2.value);
+
+      if (ANSWERS_2.includes(val)) {
+        response2.textContent = 'the leaf drinks the air.';
+        response2.className = 'response ok';
+        input2.disabled = true;
+        document.body.classList.add('bloom-2');
+        setTimeout(() => {
+          stage2.style.display = 'none';
+          stage3.style.display = 'block';
+        }, 1800);
+      } else {
+        response2.textContent = wrongSeed[wrongCount2 % wrongSeed.length];
+        response2.className = 'response no';
+        wrongCount2++;
+        input2.parentElement.style.animation = 'none';
+        void input2.parentElement.offsetWidth;
+        input2.parentElement.style.animation = 'shake 0.3s';
+      }
+    }
+  </script>
+</body>
+</html>
