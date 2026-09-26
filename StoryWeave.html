@@ -1,0 +1,2232 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>StoryWeave — Visual Story Planner</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<style>
+  html, body { height: 100%; }
+  body {
+    margin: 0; overflow: hidden; background: #0b0f19; color: #e2e8f0;
+    font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, Inter, sans-serif;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* ═══════════ Buttons (modals only) ═══════════ */
+  .btn {
+    display: inline-flex; align-items: center; gap: .375rem;
+    border-radius: .5rem; padding: .4rem .65rem;
+    font-size: .75rem; font-weight: 500; line-height: 1;
+    color: #cbd5e1; background: rgba(255,255,255,.05);
+    border: 1px solid rgba(255,255,255,.08);
+    transition: background .15s, color .15s, border-color .15s;
+    cursor: pointer; white-space: nowrap; user-select: none;
+  }
+  .btn:hover { background: rgba(255,255,255,.1); color: #f1f5f9; }
+  .btn:active { transform: translateY(1px); }
+  .btn-primary {
+    background: linear-gradient(135deg, #6366f1, #a855f7);
+    border-color: transparent; color: #fff;
+  }
+  .btn-primary:hover { background: linear-gradient(135deg, #4f46e5, #9333ea); color: #fff; }
+  .btn-danger { color: #fca5a5; }
+  .btn-danger:hover { background: rgba(239,68,68,.15); color: #fecaca; }
+
+  /* ═══════════ Fields ═══════════ */
+  .field {
+    width: 100%; border-radius: .5rem; padding: .5rem .75rem;
+    font-size: .8125rem; color: #e2e8f0; background: rgba(255,255,255,.05);
+    border: 1px solid rgba(255,255,255,.1); outline: none;
+    transition: border-color .15s, background .15s;
+  }
+  .field::placeholder { color: #64748b; }
+  .field:focus { border-color: rgba(129,140,248,.7); background: rgba(255,255,255,.09); }
+
+  /* ═══════════════════════════════════════════
+     DECK ROW
+     ═══════════════════════════════════════════ */
+  .deckrow {
+    flex: 0 0 auto;
+    display: flex; align-items: stretch; gap: 10px;
+    height: 152px;
+    padding: 9px 12px;
+    background: #0f1523;
+    border-bottom: 1px solid rgba(255,255,255,.06);
+    overflow-x: auto; overflow-y: hidden;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(255,255,255,.12) transparent;
+    z-index: 25;
+  }
+  .deckrow::-webkit-scrollbar { height: 7px; }
+  .deckrow::-webkit-scrollbar-thumb { background: rgba(255,255,255,.12); border-radius: 99px; }
+  .deckrow::-webkit-scrollbar-track { background: transparent; }
+
+  .deck {
+    position: relative;
+    flex: 0 0 auto;
+    width: 160px;
+    display: flex; flex-direction: column;
+    border-radius: 12px;
+    background: linear-gradient(180deg, rgba(255,255,255,.035) 0%, rgba(0,0,0,.18) 100%);
+    border: 1px solid var(--cat-line);
+    box-shadow: inset 0 1px 0 rgba(255,255,255,.05);
+    transition: border-color .18s, box-shadow .18s, transform .18s;
+  }
+  .deck.drop-target {
+    border-color: var(--cat);
+    transform: translateY(-2px);
+    box-shadow:
+      inset 0 1px 0 rgba(255,255,255,.1),
+      0 0 0 2px var(--cat-faint),
+      0 0 22px -6px var(--cat);
+  }
+
+  .deck-head {
+    flex: 0 0 auto;
+    display: flex; align-items: center; gap: 6px;
+    height: 26px; padding: 0 8px 0 10px;
+    border-bottom: 1px solid var(--cat-line);
+    background: linear-gradient(180deg, var(--cat-fill) 0%, transparent 100%);
+    border-radius: 11px 11px 0 0;
+    user-select: none;
+  }
+  .deck-dot { width: 7px; height: 7px; border-radius: 99px; flex: 0 0 auto; box-shadow: 0 0 8px -1px currentColor; }
+  .deck-name {
+    font-size: 10.5px; font-weight: 800; letter-spacing: .09em;
+    text-transform: uppercase;
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+    color: var(--cat);
+    text-shadow: 0 0 14px currentColor;
+    flex: 1;
+  }
+  .deck-count {
+    font-size: 9px; font-weight: 800; color: #94a3b8;
+    background: rgba(0,0,0,.4);
+    border: 1px solid rgba(255,255,255,.09);
+    padding: .05rem .32rem; border-radius: 99px;
+    min-width: 1.05rem; text-align: center;
+    flex: 0 0 auto;
+  }
+  .deck-head-add {
+    width: 17px; height: 17px; border-radius: 5px;
+    display: grid; place-items: center;
+    font-size: 12px; line-height: 1; font-weight: 400;
+    color: var(--cat); background: rgba(0,0,0,.35);
+    border: 1px solid var(--cat-line);
+    cursor: pointer; flex: 0 0 auto;
+    transition: background .15s, color .15s, transform .1s;
+  }
+  .deck-head-add:hover { background: var(--cat); color: #0b0f19; }
+  .deck-head-add:active { transform: scale(.92); }
+
+  .deck-body {
+    flex: 1;
+    position: relative;
+    padding: 8px 7px 8px 7px;
+    overflow-y: auto; overflow-x: hidden;
+    min-height: 0;
+    scrollbar-width: none;
+  }
+  .deck-body::-webkit-scrollbar { display: none; }
+
+  .deck-card {
+    position: relative;
+    width: 100%;
+    height: 34px;
+    margin-top: -12px;
+    border-radius: 7px;
+    background: linear-gradient(180deg, #1e2638 0%, #131a28 100%);
+    border: 1px solid var(--cat-line);
+    overflow: hidden;
+    cursor: grab;
+    user-select: none;
+    touch-action: none;
+    box-shadow:
+      0 -3px 6px -3px rgba(0,0,0,.85),
+      inset 0 1px 0 rgba(255,255,255,.06);
+    transition: transform .14s cubic-bezier(.2,.9,.3,1.3), box-shadow .16s, border-color .16s, opacity .18s;
+  }
+  .deck-card:first-child { margin-top: 0; }
+  .deck-card:hover {
+    border-color: var(--cat);
+    z-index: 50;
+    transform: translateX(4px);
+    box-shadow:
+      0 -3px 6px -3px rgba(0,0,0,.85),
+      0 8px 18px -8px rgba(0,0,0,.9),
+      0 0 16px -6px var(--cat),
+      inset 0 1px 0 rgba(255,255,255,.1);
+  }
+  .deck-card.dragging { opacity: .3; }
+
+  .deck-card-bar { height: 3px; background: var(--cat); box-shadow: 0 0 8px -2px var(--cat); }
+  .deck-card-title {
+    padding: 3px 22px 0 8px;
+    font-size: 10.5px; font-weight: 700; line-height: 1.25;
+    color: #e2e8f0;
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  }
+  .deck-card-x {
+    position: absolute; top: 5px; right: 5px;
+    width: 15px; height: 15px; border-radius: 4px;
+    display: grid; place-items: center;
+    font-size: 9px; line-height: 1; color: #94a3b8;
+    background: rgba(0,0,0,.65);
+    border: 1px solid rgba(255,255,255,.08);
+    opacity: 0; cursor: pointer;
+    transition: opacity .15s, background .15s, color .15s;
+  }
+  .deck-card:hover .deck-card-x { opacity: 1; }
+  .deck-card-x:hover { background: rgba(239,68,68,.9); color: #fff; border-color: transparent; }
+
+  .deck-body::after {
+    content: '';
+    display: block;
+    height: 4px;
+    margin-top: 4px;
+    border-radius: 4px;
+    background: var(--cat-faint);
+    opacity: .5;
+  }
+  .deck-body.is-empty::after { display: none; }
+
+  .deck-empty {
+    display: flex; align-items: center; justify-content: center;
+    height: 100%;
+    font-size: 10px; color: #475569; font-style: italic;
+    text-align: center; padding: 0 8px;
+  }
+
+  .deck-add-cat {
+    flex: 0 0 auto;
+    width: 160px;
+    display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 5px;
+    border-radius: 12px;
+    border: 1.5px dashed rgba(255,255,255,.12);
+    background: rgba(255,255,255,.012);
+    color: #556176;
+    font-size: 11px; font-weight: 600;
+    cursor: pointer;
+    transition: border-color .15s, color .15s, background .15s;
+  }
+  .deck-add-cat span:first-child { font-size: 20px; line-height: 1; font-weight: 300; }
+  .deck-add-cat:hover {
+    border-color: rgba(129,140,248,.5);
+    color: #a5b4fc;
+    background: rgba(99,102,241,.06);
+  }
+
+  .deckrow-empty {
+    display: flex; align-items: center; justify-content: center;
+    flex: 1 0 auto;
+    font-size: 12px; color: #556176; font-style: italic;
+    padding: 0 20px;
+  }
+
+  /* ═══════════════════════════════════════════
+     CANVAS
+     ═══════════════════════════════════════════ */
+  #canvas {
+    position: relative; flex: 1 1 auto; overflow: hidden;
+    cursor: grab; touch-action: none; background: #0b0f19;
+  }
+  #canvas.panning { cursor: grabbing; }
+  #canvas::before {
+    content: ''; position: absolute; inset: 0; pointer-events: none;
+    background-image: radial-gradient(rgba(255,255,255,.055) 1px, transparent 1px);
+    background-size: 26px 26px;
+  }
+  #world { position: absolute; top: 0; left: 0; width: 0; height: 0; transform-origin: 0 0; will-change: transform; }
+  #cards-layer { position: absolute; top: 0; left: 0; width: 0; height: 0; }
+  #link-layer { position: absolute; top: 0; left: 0; width: 1px; height: 1px; overflow: visible; pointer-events: none; }
+
+  /* ═══════════ Board card ═══════════ */
+  .board-card {
+    position: absolute;
+    width: 151px; height: 150px;
+    border-radius: 11px;
+    background: linear-gradient(180deg, #1b2334 0%, #101725 100%);
+    border: 1px solid var(--cat-line);
+    overflow: hidden;
+    cursor: grab;
+    display: flex; flex-direction: column;
+    box-shadow:
+      0 10px 22px -12px rgba(0,0,0,.9),
+      inset 0 1px 0 rgba(255,255,255,.07);
+    transition: box-shadow .16s, transform .12s, border-color .16s;
+    touch-action: none; user-select: none;
+  }
+  .board-card:hover {
+    border-color: var(--cat);
+    transform: translateY(-2px);
+    box-shadow:
+      0 18px 32px -14px rgba(0,0,0,.95),
+      0 0 24px -8px var(--cat),
+      inset 0 1px 0 rgba(255,255,255,.12);
+  }
+  .board-card.dragging {
+    transition: none;
+    cursor: grabbing;
+    z-index: 900 !important;
+    box-shadow:
+      0 32px 60px -18px rgba(0,0,0,.95),
+      0 0 30px -6px var(--cat),
+      inset 0 1px 0 rgba(255,255,255,.15);
+  }
+  .board-card.link-target { outline: 2px solid rgba(129,140,248,.95); outline-offset: 4px; }
+  .board-card.flash { outline: 2px solid rgba(255,255,255,.85); outline-offset: 4px; }
+
+  .board-card-bar { height: 4px; flex: 0 0 auto; background: var(--cat); box-shadow: 0 0 14px -2px var(--cat); }
+  .board-card-content { flex: 1; padding: 8px 9px 7px; overflow: hidden; display: flex; flex-direction: column; }
+  .board-card-title {
+    font-size: .75rem; font-weight: 700; color: #f1f5f9; line-height: 1.22;
+    display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;
+    overflow: hidden; word-break: break-word; margin-bottom: 4px;
+  }
+  .board-card-body {
+    font-size: .5938rem; line-height: 1.5; color: #8b9ab0;
+    display: -webkit-box; -webkit-line-clamp: 6; -webkit-box-orient: vertical;
+    overflow: hidden; word-break: break-word; white-space: pre-wrap;
+    flex: 1;
+  }
+  .board-card-body.empty { color: #475569; font-style: italic; }
+
+  .board-card-actions {
+    position: absolute; top: 7px; right: 6px;
+    display: flex; gap: 3px;
+    opacity: 0; transition: opacity .15s;
+  }
+  .board-card:hover .board-card-actions { opacity: 1; }
+  .bca-btn {
+    width: 20px; height: 20px; border-radius: 6px;
+    display: grid; place-items: center;
+    font-size: 11px; line-height: 1;
+    color: #cbd5e1; background: rgba(0,0,0,.7);
+    border: 1px solid rgba(255,255,255,.1);
+    cursor: pointer; transition: background .15s, color .15s, border-color .15s;
+  }
+  .bca-btn:hover { background: var(--cat); color: #0b0f19; border-color: transparent; }
+
+  body.is-dragging, body.is-dragging * { cursor: grabbing !important; user-select: none !important; }
+
+  /* ═══════════ Drop preview on the board ═══════════ */
+  #drop-preview {
+    position: absolute;
+    width: 151px; height: 150px;
+    border-radius: 11px;
+    border: 2px dashed var(--cat, #818cf8);
+    background: var(--cat-fill, rgba(129,140,248,.1));
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity .12s;
+    z-index: 4;
+  }
+  #drop-preview.show { opacity: .62; }
+
+  /* ═══════════ Drag ghost ═══════════ */
+  .drag-ghost {
+    position: fixed !important;
+    z-index: 1000;
+    pointer-events: none;
+    transform: rotate(-3deg) scale(1.06);
+    filter: drop-shadow(0 22px 32px rgba(0,0,0,.85));
+    transition: none !important;
+    opacity: .96;
+  }
+
+  /* ═══════════ Links ═══════════ */
+  .link-vis { fill: none; stroke: #7c8aa5; stroke-width: 2; stroke-linecap: round; opacity: .55; transition: stroke .15s, opacity .15s, stroke-width .15s; }
+  .link-hit { fill: none; stroke: transparent; stroke-width: 22; pointer-events: stroke; cursor: pointer; }
+  g.link:hover .link-vis { stroke: #ef4444; opacity: 1; stroke-width: 2.6; }
+
+  /* ═══════════════════════════════════════════
+     LINKING MODE — VISUAL FEEDBACK
+     ═══════════════════════════════════════════ */
+  #canvas::after {
+    content: '';
+    position: absolute; inset: 0;
+    pointer-events: none;
+    border: 2px solid transparent;
+    transition: border-color .25s, box-shadow .25s;
+    z-index: 15;
+  }
+  body.linking #canvas::after {
+    border-color: rgba(129,140,248,.55);
+    box-shadow: inset 0 0 100px -35px rgba(99,102,241,.9);
+    animation: linkPulse 2.2s ease-in-out infinite;
+  }
+  @keyframes linkPulse {
+    0%, 100% {
+      border-color: rgba(129,140,248,.35);
+      box-shadow: inset 0 0 100px -35px rgba(99,102,241,.55);
+    }
+    50% {
+      border-color: rgba(129,140,248,.8);
+      box-shadow: inset 0 0 100px -28px rgba(99,102,241,1);
+    }
+  }
+
+  body.linking .board-card,
+  body.linking .deck-card { cursor: crosshair; }
+
+  body.linking .board-card:hover {
+    border-color: rgba(129,140,248,.9);
+    box-shadow:
+      0 18px 32px -14px rgba(0,0,0,.95),
+      0 0 34px -3px rgba(129,140,248,.9),
+      inset 0 1px 0 rgba(255,255,255,.12);
+  }
+
+  body.linking .deck-card:hover {
+    border-color: rgba(129,140,248,.9);
+    box-shadow:
+      0 -3px 6px -3px rgba(0,0,0,.85),
+      0 8px 18px -8px rgba(0,0,0,.9),
+      0 0 20px -4px rgba(129,140,248,.9),
+      inset 0 1px 0 rgba(255,255,255,.1);
+  }
+
+  /* ═══════════ Context menu ═══════════ */
+  #context-menu {
+    position: fixed; z-index: 400; min-width: 216px;
+    padding: 5px; border-radius: 12px;
+    background: #151d2e;
+    border: 1px solid rgba(255,255,255,.1);
+    box-shadow: 0 24px 60px -14px rgba(0,0,0,.95), 0 0 0 1px rgba(0,0,0,.4);
+    opacity: 0; transform: scale(.96) translateY(-4px);
+    pointer-events: none;
+    transition: opacity .1s, transform .1s;
+    transform-origin: top left;
+  }
+  #context-menu.show { opacity: 1; transform: scale(1) translateY(0); pointer-events: auto; }
+  .ctx-item {
+    display: flex; align-items: center; gap: .55rem;
+    width: 100%; padding: .45rem .55rem;
+    border-radius: 8px; border: none; background: transparent;
+    font-size: .78rem; font-weight: 500; color: #cbd5e1;
+    text-align: left; cursor: pointer;
+    transition: background .12s, color .12s;
+  }
+  .ctx-item:hover { background: rgba(255,255,255,.08); color: #f1f5f9; }
+  .ctx-item.danger { color: #fca5a5; }
+  .ctx-item.danger:hover { background: rgba(239,68,68,.16); color: #fecaca; }
+  .ctx-icon { width: 16px; text-align: center; font-size: .8rem; opacity: .85; flex: 0 0 auto; }
+  .ctx-key {
+    margin-left: auto;
+    font-size: .625rem; font-weight: 700; color: #64748b;
+    background: rgba(255,255,255,.05);
+    border: 1px solid rgba(255,255,255,.08);
+    border-radius: 4px;
+    padding: .05rem .35rem;
+    font-family: ui-monospace, "SF Mono", Menlo, monospace;
+  }
+  .ctx-sep { height: 1px; margin: 4px 6px; background: rgba(255,255,255,.07); }
+  .ctx-label {
+    padding: .3rem .55rem .15rem;
+    font-size: .6rem; font-weight: 700; text-transform: uppercase;
+    letter-spacing: .1em; color: #475569;
+  }
+
+  /* ═══════════ Hover tooltip ═══════════ */
+  #hover-tip {
+    position: fixed; z-index: 380; width: 252px;
+    padding: .7rem .8rem; border-radius: 12px;
+    background: #171f31;
+    border: 1px solid rgba(255,255,255,.12);
+    box-shadow: 0 22px 50px -16px rgba(0,0,0,.95);
+    opacity: 0; pointer-events: none;
+    transition: opacity .12s, transform .12s;
+    transform: translateY(4px);
+  }
+  #hover-tip.show { opacity: 1; transform: translateY(0); }
+  .tip-cat {
+    display: flex; align-items: center; gap: .4rem;
+    font-size: .5625rem; font-weight: 800; text-transform: uppercase;
+    letter-spacing: .1em; margin-bottom: .35rem;
+  }
+  .tip-dot { width: 6px; height: 6px; border-radius: 99px; flex: 0 0 auto; }
+  .tip-title { font-size: .8125rem; font-weight: 700; color: #f1f5f9; margin-bottom: .35rem; line-height: 1.25; }
+  .tip-body { font-size: .6875rem; line-height: 1.55; color: #94a3b8; white-space: pre-wrap; word-break: break-word; max-height: 240px; overflow: hidden; }
+  .tip-body.tip-empty { color: #475569; font-style: italic; }
+  .tip-hint {
+    margin-top: .5rem; padding-top: .45rem;
+    border-top: 1px solid rgba(255,255,255,.06);
+    font-size: .5938rem; color: #556176; font-style: italic;
+  }
+
+  /* ═══════════ Empty state ═══════════ */
+  #empty-state { position: absolute; inset: 0; display: grid; place-items: center; pointer-events: none; }
+
+  /* ═══════════ Link hint ═══════════ */
+  #link-hint {
+    position: absolute; left: 50%; top: 1rem; transform: translateX(-50%);
+    padding: .45rem 1.05rem; border-radius: 999px;
+    font-size: .72rem; font-weight: 600; color: #c7d2fe;
+    background: rgba(99,102,241,.18);
+    border: 1px solid rgba(129,140,248,.5);
+    backdrop-filter: blur(10px);
+    box-shadow: 0 8px 30px -10px rgba(99,102,241,.7);
+    pointer-events: none; z-index: 20;
+    white-space: nowrap;
+  }
+  #link-hint kbd {
+    display: inline-block;
+    padding: 0 .42em;
+    border-radius: 4px;
+    background: rgba(255,255,255,.15);
+    border: 1px solid rgba(255,255,255,.22);
+    font-family: inherit;
+    font-size: .92em;
+    font-weight: 700;
+    color: #e0e7ff;
+    box-shadow: 0 1px 0 rgba(0,0,0,.3);
+  }
+
+  /* ═══════════ Keyboard hint (subtle, bottom-right) ═══════════ */
+  #kbd-hint {
+    position: fixed; right: 1rem; bottom: 1rem; z-index: 15;
+    display: flex; gap: .6rem;
+    padding: .4rem .8rem; border-radius: 999px;
+    background: rgba(15,21,35,.7);
+    border: 1px solid rgba(255,255,255,.06);
+    backdrop-filter: blur(10px);
+    font-size: .625rem; font-weight: 600; color: #556176;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity .4s;
+  }
+  #kbd-hint.show { opacity: 1; }
+  #kbd-hint b {
+    color: #94a3b8; font-weight: 700;
+    padding: 0 .3em;
+    background: rgba(255,255,255,.06);
+    border: 1px solid rgba(255,255,255,.09);
+    border-radius: 4px;
+    margin-right: .15rem;
+    font-family: ui-monospace, "SF Mono", Menlo, monospace;
+  }
+
+  /* ═══════════ Toast ═══════════ */
+  #toast {
+    position: fixed; left: 50%; bottom: 1.5rem; transform: translateX(-50%) translateY(1rem);
+    opacity: 0; pointer-events: none; transition: opacity .2s, transform .2s; z-index: 500;
+    display: flex; align-items: center; gap: .25rem;
+    max-width: min(92vw, 26rem);
+    padding: .55rem .9rem; border-radius: 999px;
+    background: #1a2233; border: 1px solid rgba(255,255,255,.1);
+    box-shadow: 0 18px 40px -12px rgba(0,0,0,.9);
+    font-size: .75rem; font-weight: 500; color: #e2e8f0;
+  }
+  #toast.show { opacity: 1; transform: translateX(-50%) translateY(0); pointer-events: auto; }
+  #toast .toast-btn {
+    margin-left: .5rem; border-radius: 999px; padding: .18rem .6rem;
+    font-size: .6875rem; font-weight: 700; color: #c7d2fe;
+    background: rgba(129,140,248,.18); border: 1px solid rgba(129,140,248,.35);
+    cursor: pointer; transition: background .15s;
+  }
+  #toast .toast-btn:hover { background: rgba(129,140,248,.32); }
+  #toast .toast-btn.danger { color: #fecaca; background: rgba(239,68,68,.22); border-color: rgba(248,113,113,.45); }
+  #toast .toast-btn.danger:hover { background: rgba(239,68,68,.38); }
+
+  /* ═══════════ Modal ═══════════ */
+  .modal-backdrop {
+    position: fixed; inset: 0; z-index: 450;
+    display: none; align-items: center; justify-content: center;
+    padding: 1rem; background: rgba(0,0,0,.68); backdrop-filter: blur(4px);
+  }
+  .modal-backdrop.open { display: flex; }
+  .modal-panel {
+    width: 100%; max-width: 30rem; overflow: hidden;
+    border-radius: 1rem; background: #121a29;
+    border: 1px solid rgba(255,255,255,.1);
+    box-shadow: 0 30px 70px -20px rgba(0,0,0,.95);
+    animation: pop .16s ease-out;
+  }
+  @keyframes pop { from { opacity: 0; transform: scale(.96) translateY(8px); } to { opacity: 1; transform: none; } }
+
+  .swatch-lg {
+    position: relative; width: 100%; height: 42px;
+    border-radius: .5rem; overflow: hidden;
+    border: 1px solid rgba(255,255,255,.12); cursor: pointer;
+  }
+  .swatch-lg input { position: absolute; inset: -20px; width: 200%; height: 200%; cursor: pointer; border: 0; padding: 0; background: transparent; }
+</style>
+</head>
+
+<body>
+<div class="flex h-full w-full flex-col">
+
+  <!-- ═══════════ ALL CATEGORY DECKS — visible at once ═══════════ -->
+  <div id="deckrow" class="deckrow"></div>
+
+  <!-- ═══════════ CANVAS / PLOT BOARD ═══════════ -->
+  <main id="canvas" class="relative flex-1 overflow-hidden">
+    <div id="world">
+      <svg id="link-layer" xmlns="http://www.w3.org/2000/svg"></svg>
+      <div id="cards-layer"></div>
+      <div id="drop-preview"></div>
+    </div>
+
+    <div id="empty-state">
+      <div class="max-w-sm text-center">
+        <div class="mx-auto mb-4 grid h-16 w-16 place-items-center rounded-2xl border border-white/10 bg-white/5 text-3xl">🎲</div>
+        <h3 class="text-base font-semibold text-slate-200">Your story board is empty</h3>
+        <p class="mx-auto mt-2 max-w-xs text-xs leading-relaxed text-slate-500">
+          <span class="font-semibold text-slate-400">Right-click anywhere</span> to create a category deck,
+          then drag cards onto this board to plot your story.
+        </p>
+      </div>
+    </div>
+
+    <div id="link-hint" class="hidden"></div>
+  </main>
+</div>
+
+<!-- ═══════════ CONTEXT MENU ═══════════ -->
+<div id="context-menu"></div>
+
+<!-- ═══════════ HOVER TOOLTIP ═══════════ -->
+<div id="hover-tip"></div>
+
+<!-- ═══════════ Subtle keyboard hint ═══════════ -->
+<div id="kbd-hint">
+  <span><b>Right-click</b>to add</span>
+  <span><b>Shift</b>to link</span>
+  <span><b>N</b>new card</span>
+  <span><b>C</b>new deck</span>
+</div>
+
+<!-- ═══════════ CARD EDITOR MODAL ═══════════ -->
+<div id="card-modal" class="modal-backdrop">
+  <div class="modal-panel">
+    <div class="flex items-center justify-between border-b border-white/5 px-5 py-3.5">
+      <h2 id="card-modal-title" class="text-sm font-semibold text-slate-100">New card</h2>
+      <button id="card-modal-close" class="btn !px-2" aria-label="Close">✕</button>
+    </div>
+
+    <div class="space-y-4 p-5">
+      <div>
+        <label class="mb-1.5 block text-[11px] font-semibold uppercase tracking-wider text-slate-500">Title</label>
+        <input id="card-title-input" class="field" placeholder="e.g. Mira Vale" maxlength="80" />
+      </div>
+
+      <div>
+        <label class="mb-1.5 block text-[11px] font-semibold uppercase tracking-wider text-slate-500">Deck</label>
+        <select id="card-category-input" class="field appearance-none"></select>
+      </div>
+
+      <div>
+        <label class="mb-1.5 block text-[11px] font-semibold uppercase tracking-wider text-slate-500">Notes</label>
+        <textarea id="card-body-input" rows="6" class="field resize-none leading-relaxed"
+          placeholder="Backstory, motivations, secrets, description…"></textarea>
+      </div>
+    </div>
+
+    <div class="flex items-center gap-2 border-t border-white/5 bg-white/[0.02] px-5 py-3.5">
+      <button id="delete-card-btn" class="btn btn-danger">Delete</button>
+      <div class="ml-auto flex gap-2">
+        <button id="cancel-card-btn" class="btn">Cancel</button>
+        <button id="save-card-btn" class="btn btn-primary">Save card</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════ CATEGORY EDITOR MODAL ═══════════ -->
+<div id="cat-modal" class="modal-backdrop">
+  <div class="modal-panel" style="max-width:22rem">
+    <div class="flex items-center justify-between border-b border-white/5 px-5 py-3.5">
+      <h2 id="cat-modal-title" class="text-sm font-semibold text-slate-100">New category deck</h2>
+      <button id="cat-modal-close" class="btn !px-2" aria-label="Close">✕</button>
+    </div>
+
+    <div class="space-y-4 p-5">
+      <div>
+        <label class="mb-1.5 block text-[11px] font-semibold uppercase tracking-wider text-slate-500">Name</label>
+        <input id="cat-name-input" class="field" placeholder="e.g. Characters, Locations…" maxlength="28" />
+      </div>
+
+      <div>
+        <label class="mb-1.5 block text-[11px] font-semibold uppercase tracking-wider text-slate-500">Color</label>
+        <div class="swatch-lg" id="cat-swatch">
+          <input type="color" id="cat-color-input" value="#60a5fa" />
+        </div>
+      </div>
+    </div>
+
+    <div class="flex items-center gap-2 border-t border-white/5 bg-white/[0.02] px-5 py-3.5">
+      <button id="delete-cat-btn" class="btn btn-danger">Delete deck</button>
+      <div class="ml-auto flex gap-2">
+        <button id="cancel-cat-btn" class="btn">Cancel</button>
+        <button id="save-cat-btn" class="btn btn-primary">Save</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════ TOAST ═══════════ -->
+<div id="toast"></div>
+
+<!-- Hidden file input for import -->
+<input type="file" id="import-input" accept="application/json,.json" class="hidden" />
+
+<script>
+(() => {
+'use strict';
+
+/* ═══════════════════════════════════════════
+   HELPERS
+   ═══════════════════════════════════════════ */
+const NS = 'http://www.w3.org/2000/svg';
+const uid = () => Math.random().toString(36).slice(2, 10);
+const clamp = (v, a, b) => Math.min(b, Math.max(a, v));
+const $ = (s) => document.querySelector(s);
+
+const esc = (s) => String(s ?? '').replace(/[&<>"']/g,
+  (m) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[m]));
+
+function withAlpha(hex, a) {
+  let h = String(hex || '#64748b').replace('#', '');
+  if (h.length === 3) h = h.split('').map((c) => c + c).join('');
+  const n = parseInt(h, 16);
+  if (Number.isNaN(n)) return `rgba(100,116,139,${a})`;
+  return `rgba(${(n >> 16) & 255},${(n >> 8) & 255},${n & 255},${a})`;
+}
+
+const CARD_W = 151;
+const CARD_H = 150;
+
+/* ═══════════════════════════════════════════
+   STATE
+   ═══════════════════════════════════════════ */
+const STORAGE_KEY = 'storyweave.v7';
+
+let state = {
+  categories: [],
+  cards: [],
+  links: [],
+  view: { x: 0, y: 0, scale: 1 },
+  lastCat: null,
+};
+
+let zTop = 1;
+const deckEls = new Map();
+const boardEls = new Map();
+const linkEls = new Map();
+
+let linkSource = null;
+let linkMode = false;
+let shiftHeld = false;
+let boardDrag = null;
+let deckDrag = null;
+let pan = null;
+let editingCardId = null;
+let editingCatId = null;
+let pendingCardPos = null;
+
+const getCard = (id) => state.cards.find((c) => c.id === id);
+const getCategory = (id) => state.categories.find((c) => c.id === id) || state.categories[0];
+const cardsIn = (catId) => state.cards.filter((c) => c.categoryId === catId);
+const deckCards = (catId) => cardsIn(catId).filter((c) => !c.onBoard);
+const boardCards = () => state.cards.filter((c) => c.onBoard);
+
+function isLinking() { return linkMode || shiftHeld; }
+
+function sortAlpha(cards) {
+  return [...cards].sort((a, b) =>
+    String(a.title || '').localeCompare(String(b.title || ''), undefined, { sensitivity: 'base' })
+  );
+}
+
+/* ═══════════════════════════════════════════
+   PERSISTENCE
+   ═══════════════════════════════════════════ */
+function save() {
+  try { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); } catch (e) { /* ignore */ }
+}
+
+function load() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (raw) {
+      const d = JSON.parse(raw);
+      if (d && Array.isArray(d.categories) && Array.isArray(d.cards)) {
+        state = {
+          categories: d.categories,
+          cards: d.cards.map((c) => ({ ...c, onBoard: !!c.onBoard })),
+          links: Array.isArray(d.links) ? d.links : [],
+          view: d.view || { x: 0, y: 0, scale: 1 },
+          lastCat: d.lastCat ?? (d.categories[0]?.id ?? null),
+        };
+        zTop = state.cards.reduce((m, c) => Math.max(m, c.z || 1), 1);
+        return;
+      }
+    }
+  } catch (e) { console.warn('Could not load saved project:', e); }
+  seed();
+}
+
+function seed() {
+  const c1 = uid(), c2 = uid(), c3 = uid(), c4 = uid();
+  state.categories = [
+    { id: c1, name: 'Characters',  color: '#60a5fa' },
+    { id: c2, name: 'Locations',   color: '#34d399' },
+    { id: c3, name: 'Lore',        color: '#f59e0b' },
+    { id: c4, name: 'Plot Points', color: '#f472b6' },
+  ];
+  state.cards = [
+    { id: uid(), title: 'Sable the Archivist', body: 'Keeps the tide-ledgers. Knows which maps were burned, and by whom.', categoryId: c1, onBoard: false },
+    { id: uid(), title: 'Stormglass Keep',     body: 'Lighthouse-fortress built on a spire of black basalt. No door faces land.', categoryId: c2, onBoard: false },
+    { id: uid(), title: 'The Tide Guild',      body: 'Merchant cartel that controls every safe harbour. Their ledgers are law.', categoryId: c3, onBoard: false },
+    { id: uid(), title: 'Midpoint',            body: 'Rook sells her out. She sails alone into the drowned quarter.', categoryId: c4, onBoard: false },
+    { id: uid(), title: 'The Undertow',        body: 'A current that runs against every chart. Sailors say it leads somewhere.', categoryId: c3, onBoard: false },
+    { id: uid(), title: 'Mira Vale',           body: 'Reluctant cartographer who can read the language of storms. Fears open water.', categoryId: c1, onBoard: true, x: 120, y: 80, z: 1 },
+    { id: uid(), title: 'Captain Rook',        body: 'Smuggler with a debt to the Tide Guild. Loyal, but only to a point.', categoryId: c1, onBoard: true, x: 120, y: 300, z: 2 },
+    { id: uid(), title: 'The Drowned City',    body: 'Sunken capital, visible only at the lowest tide. Bells still ring at dusk.', categoryId: c2, onBoard: true, x: 400, y: 80, z: 3 },
+    { id: uid(), title: 'Storm Tongue',        body: 'A dead language. Speaking it aloud changes the weather — slightly.', categoryId: c3, onBoard: true, x: 400, y: 300, z: 4 },
+    { id: uid(), title: 'Inciting Incident',   body: 'Mira deciphers a storm-map that points to a city that should not exist.', categoryId: c4, onBoard: true, x: 680, y: 190, z: 5 },
+  ];
+
+  const byTitle = (t) => state.cards.find((c) => c.title === t).id;
+  state.links = [
+    { id: uid(), from: byTitle('Mira Vale'), to: byTitle('Inciting Incident') },
+    { id: uid(), from: byTitle('The Drowned City'), to: byTitle('Storm Tongue') },
+  ];
+
+  state.lastCat = c1;
+  state.view = { x: 0, y: 0, scale: 1 };
+}
+
+/* ═══════════════════════════════════════════
+   DOM REFS
+   ═══════════════════════════════════════════ */
+const canvas      = $('#canvas');
+const world       = $('#world');
+const cardsLayer  = $('#cards-layer');
+const linkLayer   = $('#link-layer');
+const dropPreview = $('#drop-preview');
+const deckrow     = $('#deckrow');
+const emptyState  = $('#empty-state');
+const linkHint    = $('#link-hint');
+const ctxMenu     = $('#context-menu');
+const hoverTip    = $('#hover-tip');
+const cardModal   = $('#card-modal');
+const catModal    = $('#cat-modal');
+const kbdHint     = $('#kbd-hint');
+
+/* ═══════════════════════════════════════════
+   LINK MODE UI
+   ═══════════════════════════════════════════ */
+function updateLinkUI() {
+  const linking = isLinking();
+
+  document.body.classList.toggle('linking', linking);
+  canvas.style.cursor = linking ? 'crosshair' : '';
+
+  if (linking) {
+    let html;
+    if (shiftHeld && !linkMode) {
+      html = 'Hold <kbd>Shift</kbd> to link — click two cards <span class="opacity-60">(release Shift to exit)</span>';
+    } else if (linkMode && !shiftHeld) {
+      html = 'Link mode — click two cards to connect <span class="opacity-60">(Esc to exit)</span>';
+    } else {
+      html = 'Link mode — click two cards to connect <span class="opacity-60">(Esc, release Shift, or toggle to exit)</span>';
+    }
+    linkHint.innerHTML = html;
+    linkHint.classList.remove('hidden');
+  } else {
+    linkHint.classList.add('hidden');
+  }
+
+  if (!linking) clearLinkSource();
+}
+
+function setLinkMode(on) {
+  linkMode = on;
+  updateLinkUI();
+}
+
+function clearLinkSource() {
+  if (linkSource) {
+    boardEls.get(linkSource)?.classList.remove('link-target');
+    linkSource = null;
+  }
+}
+
+/* ═══════════════════════════════════════════
+   VIEWPORT
+   ═══════════════════════════════════════════ */
+function applyView() {
+  const { x, y, scale } = state.view;
+  world.style.transform = `translate(${x}px, ${y}px) scale(${scale})`;
+}
+
+function zoomAt(clientX, clientY, factor) {
+  const rect = canvas.getBoundingClientRect();
+  const mx = clientX - rect.left;
+  const my = clientY - rect.top;
+  const old = state.view.scale;
+  const next = clamp(old * factor, 0.2, 2.5);
+  const k = next / old;
+  state.view.x = mx - (mx - state.view.x) * k;
+  state.view.y = my - (my - state.view.y) * k;
+  state.view.scale = next;
+  applyView();
+  save();
+}
+
+function zoomCenter(f) {
+  const r = canvas.getBoundingClientRect();
+  zoomAt(r.left + r.width / 2, r.top + r.height / 2, f);
+}
+
+function screenToWorld(clientX, clientY) {
+  const r = canvas.getBoundingClientRect();
+  return {
+    x: (clientX - r.left - state.view.x) / state.view.scale,
+    y: (clientY - r.top  - state.view.y) / state.view.scale,
+  };
+}
+
+function fitView() {
+  const cards = boardCards();
+  const rect = canvas.getBoundingClientRect();
+
+  if (!cards.length) {
+    state.view = { x: rect.width / 2, y: rect.height / 2, scale: 1 };
+    applyView(); save();
+    return;
+  }
+
+  let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+  cards.forEach((c) => {
+    minX = Math.min(minX, c.x);
+    minY = Math.min(minY, c.y);
+    maxX = Math.max(maxX, c.x + CARD_W);
+    maxY = Math.max(maxY, c.y + CARD_H);
+  });
+
+  const pad = 90;
+  const bw = maxX - minX + pad * 2;
+  const bh = maxY - minY + pad * 2;
+  const scale = clamp(Math.min(rect.width / bw, rect.height / bh), 0.25, 1.15);
+
+  state.view.scale = scale;
+  state.view.x = rect.width / 2 - ((minX + maxX) / 2) * scale;
+  state.view.y = rect.height / 2 - ((minY + maxY) / 2) * scale;
+  applyView();
+  save();
+}
+
+function resetView() {
+  state.view = { x: 100, y: 80, scale: 1 };
+  applyView();
+  save();
+}
+
+function focusCard(id) {
+  const card = getCard(id);
+  if (!card || !card.onBoard) return;
+  const rect = canvas.getBoundingClientRect();
+  const s = state.view.scale;
+
+  state.view.x = rect.width / 2 - (card.x + CARD_W / 2) * s;
+  state.view.y = rect.height / 2 - (card.y + CARD_H / 2) * s;
+  applyView();
+  save();
+
+  const el = boardEls.get(id);
+  if (el) { el.classList.add('flash'); setTimeout(() => el.classList.remove('flash'), 950); }
+}
+
+/* ═══════════════════════════════════════════
+   RENDER — DECKS
+   ═══════════════════════════════════════════ */
+function renderDecks() {
+  hideCardTip();
+  deckrow.innerHTML = '';
+  deckEls.clear();
+
+  if (state.categories.length === 0) {
+    const empty = document.createElement('div');
+    empty.className = 'deckrow-empty';
+    empty.textContent = 'No category decks yet — right-click the board to create one.';
+    deckrow.appendChild(empty);
+    return;
+  }
+
+  state.categories.forEach((cat) => {
+    const deck = buildDeck(cat);
+    deckrow.appendChild(deck);
+    deckEls.set(cat.id, deck);
+  });
+}
+
+function buildDeck(cat) {
+  const deck = document.createElement('div');
+  deck.className = 'deck';
+  deck.dataset.catId = cat.id;
+  deck.style.setProperty('--cat', cat.color);
+  deck.style.setProperty('--cat-line', withAlpha(cat.color, 0.32));
+  deck.style.setProperty('--cat-fill', withAlpha(cat.color, 0.14));
+  deck.style.setProperty('--cat-faint', withAlpha(cat.color, 0.16));
+
+  const cards = sortAlpha(deckCards(cat.id));
+
+  const head = document.createElement('div');
+  head.className = 'deck-head';
+  head.innerHTML = `
+    <span class="deck-dot" style="background:${cat.color};color:${cat.color}"></span>
+    <span class="deck-name">${esc(cat.name)}</span>
+    <span class="deck-count">${cards.length}</span>
+    <button class="deck-head-add" data-add title="New card in ${esc(cat.name)}">+</button>
+  `;
+
+  head.querySelector('[data-add]').addEventListener('click', (e) => {
+    e.stopPropagation();
+    state.lastCat = cat.id;
+    openCardEditor(null, cat.id);
+  });
+
+  head.addEventListener('contextmenu', (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    hideAllFloating();
+    showContextMenu(e.clientX, e.clientY, [
+      { icon: '🃏', label: `New card in "${cat.name}"`, key: 'N', onClick: () => openCardEditor(null, cat.id) },
+      { separator: true },
+      { icon: '✏️', label: 'Rename deck…', onClick: () => openCatEditor(cat.id) },
+      { icon: '🎨', label: 'Change color…', onClick: () => openCatEditor(cat.id) },
+      { separator: true },
+      { icon: '🗑️', label: 'Delete deck', danger: true, onClick: () => deleteCategory(cat.id) },
+    ]);
+  });
+
+  deck.appendChild(head);
+
+  const body = document.createElement('div');
+  body.className = 'deck-body' + (cards.length === 0 ? ' is-empty' : '');
+
+  if (cards.length === 0) {
+    const hint = document.createElement('div');
+    hint.className = 'deck-empty';
+    hint.textContent = 'empty — click + to add';
+    body.appendChild(hint);
+  } else {
+    cards.forEach((card) => {
+      body.appendChild(buildDeckCard(card, deck));
+    });
+  }
+
+  deck.appendChild(body);
+  return deck;
+}
+
+function buildDeckCard(card, deckEl) {
+  const cat = getCategory(card.categoryId);
+
+  const el = document.createElement('div');
+  el.className = 'deck-card';
+  el.dataset.id = card.id;
+  el.style.setProperty('--cat', cat.color);
+  el.style.setProperty('--cat-line', withAlpha(cat.color, 0.4));
+
+  el.innerHTML = `
+    <div class="deck-card-bar"></div>
+    <div class="deck-card-title">${esc(card.title || 'Untitled')}</div>
+    <button class="deck-card-x" data-del title="Delete card">✕</button>
+  `;
+
+  const xBtn = el.querySelector('[data-del]');
+  xBtn.addEventListener('pointerdown', (e) => e.stopPropagation());
+  xBtn.addEventListener('click', (e) => {
+    e.stopPropagation();
+    deleteCard(card.id);
+  });
+
+  el.addEventListener('pointerdown', (e) => onDeckCardPointerDown(e, card, el, deckEl));
+  el.addEventListener('mouseenter', () => {
+    if (deckDrag) return;
+    if (isLinking()) return;
+    showTipFor(el, card, 'Drag onto the plot board to place');
+  });
+  el.addEventListener('mouseleave', hideCardTip);
+  el.addEventListener('contextmenu', (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    hideCardTip();
+    showDeckCardContextMenu(card, e.clientX, e.clientY);
+  });
+
+  return el;
+}
+
+/* ═══════════════════════════════════════════
+   RENDER — BOARD CARDS
+   ═══════════════════════════════════════════ */
+function buildBoardCard(card) {
+  const cat = getCategory(card.categoryId);
+
+  const el = document.createElement('div');
+  el.className = 'board-card';
+  el.dataset.id = card.id;
+  el.style.left = card.x + 'px';
+  el.style.top  = card.y + 'px';
+  el.style.zIndex = card.z || 1;
+  el.style.setProperty('--cat', cat.color);
+  el.style.setProperty('--cat-line', withAlpha(cat.color, 0.42));
+  el.style.setProperty('--cat-fill', withAlpha(cat.color, 0.16));
+
+  el.innerHTML = `
+    <div class="board-card-bar"></div>
+    <div class="board-card-content">
+      <div class="board-card-title">${esc(card.title || 'Untitled')}</div>
+      <div class="board-card-body ${card.body ? '' : 'empty'}">${card.body ? esc(card.body) : 'No notes yet…'}</div>
+    </div>
+    <div class="board-card-actions">
+      <button class="bca-btn" data-return title="Return to deck">↩</button>
+    </div>
+  `;
+
+  const retBtn = el.querySelector('[data-return]');
+  retBtn.addEventListener('pointerdown', (e) => e.stopPropagation());
+  retBtn.addEventListener('click', (e) => {
+    e.stopPropagation();
+    returnToDeck(card.id);
+  });
+
+  el.addEventListener('pointerdown', (e) => onBoardCardPointerDown(e, card));
+  el.addEventListener('mouseenter', () => {
+    if (boardDrag) return;
+    const hint = isLinking() ? 'Click to connect' : 'Drag up to a deck to remove · drag to move';
+    showTipFor(el, card, hint);
+  });
+  el.addEventListener('mouseleave', hideCardTip);
+  el.addEventListener('contextmenu', (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    hideCardTip();
+    showBoardCardContextMenu(card, e.clientX, e.clientY);
+  });
+
+  return el;
+}
+
+function renderBoard() {
+  hideCardTip();
+  cardsLayer.innerHTML = '';
+  boardEls.clear();
+
+  boardCards().forEach((card) => {
+    const el = buildBoardCard(card);
+    cardsLayer.appendChild(el);
+    boardEls.set(card.id, el);
+  });
+
+  emptyState.style.display = boardCards().length === 0 ? '' : 'none';
+}
+
+/* ═══════════════════════════════════════════
+   RENDER — LINKS
+   ═══════════════════════════════════════════ */
+function cardRect(cardId) {
+  const card = getCard(cardId);
+  if (!card || !card.onBoard) return null;
+
+  let x = card.x, y = card.y;
+
+  if (boardDrag && boardDrag.id === cardId && boardDrag.moved) {
+    x = boardDrag.worldX; y = boardDrag.worldY;
+  }
+
+  return { x, y, w: CARD_W, h: CARD_H, cx: x + CARD_W / 2, cy: y + CARD_H / 2 };
+}
+
+function curveFor(a, b) {
+  const A = cardRect(a.id);
+  const B = cardRect(b.id);
+  if (!A || !B) return null;
+
+  const dx = B.cx - A.cx;
+  const dy = B.cy - A.cy;
+
+  if (Math.abs(dx) >= Math.abs(dy)) {
+    const c = Math.max(55, Math.abs(dx) * 0.45);
+    const s = Math.sign(dx) || 1;
+    return `M ${A.cx} ${A.cy} C ${A.cx + s * c} ${A.cy}, ${B.cx - s * c} ${B.cy}, ${B.cx} ${B.cy}`;
+  }
+  const c = Math.max(55, Math.abs(dy) * 0.45);
+  const s = Math.sign(dy) || 1;
+  return `M ${A.cx} ${A.cy} C ${A.cx} ${A.cy + s * c}, ${B.cx} ${B.cy - s * c}, ${B.cx} ${B.cy}`;
+}
+
+function renderLinks() {
+  const alive = new Set();
+
+  state.links.forEach((link) => {
+    const a = getCard(link.from);
+    const b = getCard(link.to);
+    if (!a || !b || !a.onBoard || !b.onBoard) return;
+
+    const d = curveFor(a, b);
+    if (!d) return;
+    alive.add(link.id);
+
+    let g = linkEls.get(link.id);
+    if (!g) {
+      g = document.createElementNS(NS, 'g');
+      g.setAttribute('class', 'link');
+
+      const hit = document.createElementNS(NS, 'path');
+      hit.setAttribute('class', 'link-hit');
+
+      const vis = document.createElementNS(NS, 'path');
+      vis.setAttribute('class', 'link-vis');
+
+      g.appendChild(hit);
+      g.appendChild(vis);
+      g.addEventListener('click', (e) => { e.stopPropagation(); deleteLink(link.id); });
+
+      linkLayer.appendChild(g);
+      linkEls.set(link.id, g);
+    }
+
+    g.children[0].setAttribute('d', d);
+    g.children[1].setAttribute('d', d);
+  });
+
+  for (const [id, g] of [...linkEls]) {
+    if (!alive.has(id)) { g.remove(); linkEls.delete(id); }
+  }
+}
+
+/* ═══════════════════════════════════════════
+   FULL RENDER
+   ═══════════════════════════════════════════ */
+function renderAll() {
+  renderDecks();
+  renderBoard();
+  renderLinks();
+}
+
+/* ═══════════════════════════════════════════
+   DECK HIT TESTING
+   ═══════════════════════════════════════════ */
+function deckAtClientPoint(clientX, clientY) {
+  const dr = deckrow.getBoundingClientRect();
+  if (clientY < dr.top || clientY > dr.bottom) return null;
+  if (clientX < dr.left || clientX > dr.right) return null;
+
+  for (const [catId, deckEl] of deckEls) {
+    const r = deckEl.getBoundingClientRect();
+    if (clientX >= r.left && clientX <= r.right) {
+      return { catId, el: deckEl };
+    }
+  }
+  return null;
+}
+
+/* ═══════════════════════════════════════════
+   DRAG — FROM A DECK
+   ═══════════════════════════════════════════ */
+function onDeckCardPointerDown(e, card, srcEl, deckEl) {
+  if (e.button !== 0 && e.pointerType === 'mouse') return;
+  e.stopPropagation();
+  e.preventDefault();
+
+  if (isLinking()) return;
+
+  hideCardTip();
+  hideContextMenu();
+
+  state.lastCat = card.categoryId;
+  save();
+
+  const rect = srcEl.getBoundingClientRect();
+
+  const ghost = srcEl.cloneNode(true);
+  ghost.classList.add('drag-ghost');
+  ghost.style.left   = rect.left + 'px';
+  ghost.style.top    = rect.top + 'px';
+  ghost.style.width  = rect.width + 'px';
+  ghost.style.height = rect.height + 'px';
+  ghost.querySelector('.deck-card-x')?.remove();
+  document.body.appendChild(ghost);
+
+  srcEl.classList.add('dragging');
+
+  deckDrag = {
+    card, srcEl, srcDeckEl: deckEl, ghost,
+    offsetX: e.clientX - rect.left,
+    offsetY: e.clientY - rect.top,
+    startX: e.clientX, startY: e.clientY,
+    moved: false, overCanvas: false, overDeck: null,
+    worldX: 0, worldY: 0,
+  };
+
+  window.addEventListener('pointermove', onDeckDragMove);
+  window.addEventListener('pointerup', onDeckDragEnd);
+}
+
+function onDeckDragMove(e) {
+  if (!deckDrag) return;
+  const d = deckDrag;
+
+  const dx = e.clientX - d.startX;
+  const dy = e.clientY - d.startY;
+  if (!d.moved && Math.hypot(dx, dy) > 4) d.moved = true;
+  if (!d.moved) return;
+
+  d.ghost.style.left = (e.clientX - d.offsetX) + 'px';
+  d.ghost.style.top  = (e.clientY - d.offsetY) + 'px';
+
+  const targetDeck = deckAtClientPoint(e.clientX, e.clientY);
+  deckEls.forEach((el) => el.classList.remove('drop-target'));
+
+  if (targetDeck && targetDeck.catId !== d.card.categoryId) {
+    targetDeck.el.classList.add('drop-target');
+    d.overDeck = targetDeck;
+    d.overCanvas = false;
+    dropPreview.classList.remove('show');
+    return;
+  }
+  d.overDeck = null;
+
+  const r = canvas.getBoundingClientRect();
+  const inside =
+    e.clientX >= r.left && e.clientX <= r.right &&
+    e.clientY >= r.top  && e.clientY <= r.bottom;
+
+  d.overCanvas = inside;
+
+  if (inside) {
+    const wp = screenToWorld(e.clientX, e.clientY);
+    d.worldX = Math.round(wp.x - CARD_W / 2);
+    d.worldY = Math.round(wp.y - CARD_H / 2);
+
+    const cat = getCategory(d.card.categoryId);
+    dropPreview.style.left = d.worldX + 'px';
+    dropPreview.style.top  = d.worldY + 'px';
+    dropPreview.style.setProperty('--cat', cat.color);
+    dropPreview.style.setProperty('--cat-fill', withAlpha(cat.color, 0.14));
+    dropPreview.classList.add('show');
+  } else {
+    dropPreview.classList.remove('show');
+  }
+}
+
+function onDeckDragEnd() {
+  if (!deckDrag) return;
+  const d = deckDrag;
+  deckDrag = null;
+
+  window.removeEventListener('pointermove', onDeckDragMove);
+  window.removeEventListener('pointerup', onDeckDragEnd);
+
+  d.ghost.remove();
+  d.srcEl.classList.remove('dragging');
+  dropPreview.classList.remove('show');
+  deckEls.forEach((el) => el.classList.remove('drop-target'));
+
+  if (!d.moved) {
+    openCardEditor(d.card.id);
+    return;
+  }
+
+  if (d.overDeck) {
+    d.card.categoryId = d.overDeck.catId;
+    renderAll();
+    save();
+    toast(`Moved to "${getCategory(d.overDeck.catId).name}"`);
+    return;
+  }
+
+  if (d.overCanvas) {
+    d.card.onBoard = true;
+    d.card.x = d.worldX;
+    d.card.y = d.worldY;
+    d.card.z = ++zTop;
+    renderAll();
+    save();
+    toast(`Placed "${d.card.title}" on the plot`, {
+      label: 'Undo',
+      onClick: () => { d.card.onBoard = false; renderAll(); save(); toast('Returned to deck'); },
+    });
+  }
+}
+
+/* ═══════════════════════════════════════════
+   DRAG — FROM THE BOARD
+   ═══════════════════════════════════════════ */
+function onBoardCardPointerDown(e, card) {
+  if (e.button !== 0 && e.pointerType === 'mouse') return;
+  e.stopPropagation();
+
+  if (isLinking()) { handleLinkClick(card); return; }
+
+  const el = boardEls.get(card.id);
+  if (!el) return;
+
+  hideCardTip();
+  hideContextMenu();
+
+  card.z = ++zTop;
+  el.style.zIndex = card.z;
+
+  boardDrag = {
+    id: card.id,
+    sx: e.clientX, sy: e.clientY,
+    ox: card.x, oy: card.y,
+    moved: false, overDeck: null,
+    worldX: card.x, worldY: card.y,
+  };
+}
+
+window.addEventListener('pointermove', (e) => {
+  if (boardDrag) {
+    const dx = (e.clientX - boardDrag.sx) / state.view.scale;
+    const dy = (e.clientY - boardDrag.sy) / state.view.scale;
+
+    if (!boardDrag.moved && Math.hypot(e.clientX - boardDrag.sx, e.clientY - boardDrag.sy) > 4) {
+      boardDrag.moved = true;
+      boardEls.get(boardDrag.id)?.classList.add('dragging');
+      document.body.classList.add('is-dragging');
+    }
+    if (!boardDrag.moved) return;
+
+    const card = getCard(boardDrag.id);
+    if (!card) return;
+
+    card.x = Math.round(boardDrag.ox + dx);
+    card.y = Math.round(boardDrag.oy + dy);
+    boardDrag.worldX = card.x;
+    boardDrag.worldY = card.y;
+
+    const el = boardEls.get(card.id);
+    if (el) { el.style.left = card.x + 'px'; el.style.top = card.y + 'px'; }
+
+    const targetDeck = deckAtClientPoint(e.clientX, e.clientY);
+    deckEls.forEach((el) => el.classList.remove('drop-target'));
+    if (targetDeck) {
+      targetDeck.el.classList.add('drop-target');
+      boardDrag.overDeck = targetDeck;
+    } else {
+      boardDrag.overDeck = null;
+    }
+
+    renderLinks();
+    return;
+  }
+
+  if (pan) {
+    state.view.x = pan.ox + (e.clientX - pan.sx);
+    state.view.y = pan.oy + (e.clientY - pan.sy);
+    applyView();
+  }
+});
+
+function endPointer() {
+  if (boardDrag) {
+    const d = boardDrag;
+    boardDrag = null;
+
+    deckEls.forEach((el) => el.classList.remove('drop-target'));
+    boardEls.get(d.id)?.classList.remove('dragging');
+    document.body.classList.remove('is-dragging');
+
+    if (!d.moved) {
+      openCardEditor(d.id);
+      return;
+    }
+
+    if (d.overDeck) {
+      const card = getCard(d.id);
+      const targetCatId = d.overDeck.catId;
+      const sameCategory = card.categoryId === targetCatId;
+
+      card.onBoard = false;
+      if (!sameCategory) card.categoryId = targetCatId;
+
+      renderAll();
+      save();
+      toast(sameCategory
+        ? `Returned "${card.title}" to the ${getCategory(targetCatId).name} deck`
+        : `Moved "${card.title}" to the ${getCategory(targetCatId).name} deck`);
+    } else {
+      save();
+    }
+    return;
+  }
+
+  if (pan) {
+    pan = null;
+    canvas.classList.remove('panning');
+    save();
+  }
+}
+
+window.addEventListener('pointerup', endPointer);
+window.addEventListener('pointercancel', endPointer);
+
+canvas.addEventListener('pointerdown', (e) => {
+  if (e.target.closest('.board-card')) return;
+  if (e.target.closest('g.link')) return;
+  if (e.button !== 0 && e.button !== 1) return;
+
+  hideAllFloating();
+  if (linkSource) clearLinkSource();
+
+  pan = { sx: e.clientX, sy: e.clientY, ox: state.view.x, oy: state.view.y };
+  canvas.classList.add('panning');
+});
+
+canvas.addEventListener('wheel', (e) => {
+  e.preventDefault();
+  zoomAt(e.clientX, e.clientY, Math.exp(-e.deltaY * 0.0015));
+}, { passive: false });
+
+/* ═══════════════════════════════════════════
+   PLACE / RETURN
+   ═══════════════════════════════════════════ */
+function returnToDeck(cardId) {
+  const card = getCard(cardId);
+  if (!card || !card.onBoard) return;
+
+  card.onBoard = false;
+  renderAll();
+  save();
+  toast(`"${card.title}" returned to the ${getCategory(card.categoryId).name} deck`);
+}
+
+/* ═══════════════════════════════════════════
+   LINK CLICK
+   ═══════════════════════════════════════════ */
+function handleLinkClick(card) {
+  if (!card.onBoard) {
+    toast('Place the card on the plot board first');
+    return;
+  }
+
+  if (!linkSource) {
+    linkSource = card.id;
+    boardEls.get(card.id)?.classList.add('link-target');
+    toast('Now click a second card to connect');
+    return;
+  }
+  if (linkSource === card.id) { clearLinkSource(); return; }
+
+  const exists = state.links.some(
+    (l) => (l.from === linkSource && l.to === card.id) || (l.from === card.id && l.to === linkSource)
+  );
+
+  if (exists) {
+    toast('Those cards are already linked');
+  } else {
+    state.links.push({ id: uid(), from: linkSource, to: card.id });
+    renderLinks();
+    save();
+    toast('Linked ✓');
+  }
+  clearLinkSource();
+}
+
+/* ═══════════════════════════════════════════
+   CARD CRUD
+   ═══════════════════════════════════════════ */
+function deleteCard(id) {
+  const card = getCard(id);
+  if (!card) return;
+
+  const snapshot = {
+    card: { ...card },
+    index: state.cards.indexOf(card),
+    links: state.links.filter((l) => l.from === id || l.to === id).map((l) => ({ ...l })),
+  };
+
+  state.cards = state.cards.filter((c) => c.id !== id);
+  state.links = state.links.filter((l) => l.from !== id && l.to !== id);
+
+  renderAll();
+  save();
+
+  toast(`Deleted "${card.title || 'Untitled'}"`, {
+    label: 'Undo',
+    onClick: () => {
+      state.cards.splice(snapshot.index, 0, snapshot.card);
+      snapshot.links.forEach((l) => {
+        if (!state.links.some((x) => x.id === l.id)) state.links.push(l);
+      });
+      renderAll();
+      save();
+      toast('Card restored');
+    },
+  });
+}
+
+function duplicateCard(id) {
+  const card = getCard(id);
+  if (!card) return;
+
+  const i = state.cards.indexOf(card);
+  const copy = {
+    ...card,
+    id: uid(),
+    title: card.title + ' copy',
+    onBoard: card.onBoard,
+    x: card.onBoard ? card.x + 26 : undefined,
+    y: card.onBoard ? card.y + 26 : undefined,
+    z: card.onBoard ? ++zTop : undefined,
+  };
+  state.cards.splice(i + 1, 0, copy);
+
+  renderAll();
+  save();
+  toast('Card duplicated');
+}
+
+function deleteLink(id) {
+  const link = state.links.find((l) => l.id === id);
+  if (!link) return;
+  const snap = { ...link };
+
+  state.links = state.links.filter((l) => l.id !== id);
+  renderLinks();
+  save();
+
+  toast('Connection removed', {
+    label: 'Undo',
+    onClick: () => {
+      if (!state.links.some((l) => l.id === snap.id)) state.links.push(snap);
+      renderLinks();
+      save();
+      toast('Connection restored');
+    },
+  });
+}
+
+/* ═══════════════════════════════════════════
+   CATEGORY CRUD
+   ═══════════════════════════════════════════ */
+function deleteCategory(id) {
+  const cat = state.categories.find((c) => c.id === id);
+  if (!cat) return;
+
+  const snapshot = {
+    category: { ...cat },
+    index: state.categories.indexOf(cat),
+    cards: state.cards.filter((c) => c.categoryId === id).map((c) => ({ ...c, _idx: state.cards.indexOf(c) })),
+    links: state.links.filter((l) => {
+      const a = getCard(l.from), b = getCard(l.to);
+      return (a && a.categoryId === id) || (b && b.categoryId === id);
+    }).map((l) => ({ ...l })),
+  };
+
+  state.categories = state.categories.filter((c) => c.id !== id);
+  const removedIds = new Set(snapshot.cards.map((c) => c.id));
+  state.cards = state.cards.filter((c) => !removedIds.has(c.id));
+  state.links = state.links.filter((l) => !removedIds.has(l.from) && !removedIds.has(l.to));
+
+  if (state.lastCat === id) state.lastCat = state.categories[0]?.id ?? null;
+
+  renderAll();
+  save();
+
+  toast(`Deleted "${cat.name}"${snapshot.cards.length ? ` (${snapshot.cards.length} card${snapshot.cards.length === 1 ? '' : 's'})` : ''}`, {
+    label: 'Undo',
+    onClick: () => {
+      state.categories.splice(snapshot.index, 0, snapshot.category);
+
+      snapshot.cards.sort((a, b) => a._idx - b._idx);
+      snapshot.cards.forEach((c) => {
+        const { _idx, ...card } = c;
+        const at = Math.min(_idx, state.cards.length);
+        state.cards.splice(at, 0, card);
+      });
+      snapshot.links.forEach((l) => {
+        if (!state.links.some((x) => x.id === l.id)) state.links.push(l);
+      });
+
+      state.lastCat = snapshot.category.id;
+      renderAll();
+      save();
+      toast('Deck restored');
+    },
+  });
+}
+
+/* ═══════════════════════════════════════════
+   HOVER TOOLTIP
+   ═══════════════════════════════════════════ */
+function showTipFor(el, card, hint) {
+  const cat = getCategory(card.categoryId);
+
+  hoverTip.innerHTML = `
+    <div class="tip-cat" style="color:${cat.color}">
+      <span class="tip-dot" style="background:${cat.color}"></span>${esc(cat.name)}
+    </div>
+    <div class="tip-title">${esc(card.title || 'Untitled')}</div>
+    <div class="tip-body ${card.body ? '' : 'tip-empty'}">${card.body ? esc(card.body) : 'No notes yet'}</div>
+    ${hint ? `<div class="tip-hint">${esc(hint)}</div>` : ''}
+  `;
+  hoverTip.classList.add('show');
+
+  const r = el.getBoundingClientRect();
+  const tw = hoverTip.offsetWidth;
+  const th = hoverTip.offsetHeight;
+
+  let left = r.right + 14;
+  if (left + tw > window.innerWidth - 12) left = r.left - tw - 14;
+  if (left < 12) left = 12;
+
+  let top;
+  if (r.top < 200) top = r.bottom + 12;
+  else top = r.top + (r.height - th) / 2;
+
+  top = clamp(top, 12, window.innerHeight - th - 12);
+
+  hoverTip.style.left = left + 'px';
+  hoverTip.style.top  = top + 'px';
+}
+
+function hideCardTip() { hoverTip.classList.remove('show'); }
+
+/* ═══════════════════════════════════════════
+   CONTEXT MENU
+   ═══════════════════════════════════════════ */
+function showContextMenu(x, y, items) {
+  ctxMenu.innerHTML = '';
+
+  items.forEach((it) => {
+    if (it.separator) {
+      const sep = document.createElement('div');
+      sep.className = 'ctx-sep';
+      ctxMenu.appendChild(sep);
+      return;
+    }
+    if (it.header) {
+      const h = document.createElement('div');
+      h.className = 'ctx-label';
+      h.textContent = it.label;
+      ctxMenu.appendChild(h);
+      return;
+    }
+
+    const btn = document.createElement('button');
+    btn.className = 'ctx-item' + (it.danger ? ' danger' : '');
+    btn.innerHTML = `
+      <span class="ctx-icon">${it.icon || ''}</span>
+      <span>${esc(it.label)}</span>
+      ${it.key ? `<span class="ctx-key">${esc(it.key)}</span>` : ''}
+    `;
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      hideContextMenu();
+      it.onClick();
+    });
+    ctxMenu.appendChild(btn);
+  });
+
+  ctxMenu.style.visibility = 'hidden';
+  ctxMenu.style.left = '0px';
+  ctxMenu.style.top = '0px';
+  ctxMenu.classList.add('show');
+
+  const r = ctxMenu.getBoundingClientRect();
+  let px = x, py = y;
+  if (px + r.width  > window.innerWidth  - 8) px = window.innerWidth  - r.width  - 8;
+  if (py + r.height > window.innerHeight - 8) py = window.innerHeight - r.height - 8;
+  px = Math.max(8, px);
+  py = Math.max(8, py);
+
+  ctxMenu.style.left = px + 'px';
+  ctxMenu.style.top  = py + 'px';
+  ctxMenu.style.visibility = '';
+}
+
+function hideContextMenu() { ctxMenu.classList.remove('show'); }
+
+function hideAllFloating() {
+  hideContextMenu();
+  hideCardTip();
+}
+
+function showDeckCardContextMenu(card, x, y) {
+  const items = [
+    { icon: '✏️', label: 'Edit card', onClick: () => openCardEditor(card.id) },
+    { icon: '📋', label: 'Duplicate', onClick: () => duplicateCard(card.id) },
+    {
+      icon: '🎯', label: 'Place on plot board',
+      onClick: () => {
+        card.onBoard = true;
+        const rect = canvas.getBoundingClientRect();
+        const c = screenToWorld(rect.left + rect.width / 2, rect.top + rect.height / 2);
+        card.x = Math.round(c.x - CARD_W / 2 + (Math.random() - 0.5) * 80);
+        card.y = Math.round(c.y - CARD_H / 2 + (Math.random() - 0.5) * 80);
+        card.z = ++zTop;
+        renderAll();
+        save();
+        toast('Placed on the plot board');
+      },
+    },
+  ];
+
+  const others = state.categories.filter((c) => c.id !== card.categoryId);
+  if (others.length) {
+    items.push({ separator: true });
+    items.push({ header: true, label: 'Move to deck' });
+    others.forEach((cat) => {
+      items.push({
+        icon: '○', label: cat.name,
+        onClick: () => {
+          card.categoryId = cat.id;
+          renderAll();
+          save();
+          toast(`Moved to "${cat.name}"`);
+        },
+      });
+    });
+  }
+
+  items.push({ separator: true });
+  items.push({ icon: '🗑️', label: 'Delete card', danger: true, onClick: () => deleteCard(card.id) });
+
+  showContextMenu(x, y, items);
+}
+
+function showBoardCardContextMenu(card, x, y) {
+  const items = [
+    { icon: '✏️', label: 'Edit card', onClick: () => openCardEditor(card.id) },
+    { icon: '📋', label: 'Duplicate', onClick: () => duplicateCard(card.id) },
+    { icon: '🔗', label: 'Link from here', onClick: () => { setLinkMode(true); handleLinkClick(card); } },
+    { separator: true },
+    { icon: '↩', label: 'Return to deck', onClick: () => returnToDeck(card.id) },
+    { separator: true },
+    { header: true, label: 'To delete, return to deck first' },
+  ];
+
+  showContextMenu(x, y, items);
+}
+
+/* ── Canvas background context menu (now holds EVERYTHING) ── */
+canvas.addEventListener('contextmenu', (e) => {
+  e.preventDefault();
+  if (e.target.closest('.board-card')) return;
+  if (e.target.closest('g.link')) return;
+
+  const wp = screenToWorld(e.clientX, e.clientY);
+
+  const items = [];
+
+  if (state.categories.length === 0) {
+    items.push({ icon: '🎨', label: 'Create your first deck…', key: 'C', onClick: () => openCatEditor(null) });
+  } else {
+    const targetCat = state.lastCat ?? state.categories[0].id;
+
+    items.push({
+      icon: '🃏', label: 'New card at this spot', key: 'N',
+      onClick: () => {
+        openCardEditor(null, targetCat, {
+          x: Math.round(wp.x - CARD_W / 2),
+          y: Math.round(wp.y - CARD_H / 2),
+        });
+      },
+    });
+    items.push({ icon: '🎨', label: 'New category deck…', key: 'C', onClick: () => openCatEditor(null) });
+
+    items.push({ separator: true });
+    items.push({ header: true, label: 'View' });
+    items.push({ icon: '➕', label: 'Zoom in', key: '⌘ +', onClick: () => zoomCenter(1.2) });
+    items.push({ icon: '➖', label: 'Zoom out', key: '⌘ −', onClick: () => zoomCenter(1 / 1.2) });
+    items.push({ icon: '🎯', label: 'Fit board to screen', key: 'F', onClick: fitView });
+    items.push({ icon: '↺', label: 'Reset view', onClick: resetView });
+
+    items.push({ separator: true });
+    items.push({
+      icon: '🔗',
+      label: isLinking() ? 'Exit link mode' : 'Link mode',
+      key: 'L',
+      onClick: () => {
+        if (shiftHeld) { shiftHeld = false; }
+        setLinkMode(!linkMode);
+      },
+    });
+
+    items.push({ separator: true });
+    items.push({ header: true, label: 'Project' });
+    items.push({ icon: '📤', label: 'Export project…', onClick: exportProject });
+    items.push({ icon: '📥', label: 'Import project…', onClick: importProject });
+    items.push({ icon: '🗑️', label: 'Reset everything…', danger: true, onClick: requestReset });
+  }
+
+  showContextMenu(e.clientX, e.clientY, items);
+});
+
+window.addEventListener('pointerdown', (e) => {
+  if (!e.target.closest('#context-menu')) hideContextMenu();
+  if (!e.target.closest('#hover-tip')) hideCardTip();
+}, true);
+
+window.addEventListener('blur', () => {
+  hideAllFloating();
+  if (shiftHeld) { shiftHeld = false; updateLinkUI(); }
+});
+canvas.addEventListener('wheel', hideAllFloating, { passive: true });
+
+/* ═══════════════════════════════════════════
+   PROJECT ACTIONS (formerly top-bar buttons)
+   ═══════════════════════════════════════════ */
+function exportProject() {
+  const blob = new Blob([JSON.stringify(state, null, 2)], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `storyweave-${new Date().toISOString().slice(0, 10)}.json`;
+  a.click();
+  URL.revokeObjectURL(url);
+  toast('Project exported');
+}
+
+function importProject() {
+  $('#import-input').click();
+}
+
+$('#import-input').addEventListener('change', (e) => {
+  const file = e.target.files?.[0];
+  if (!file) return;
+
+  const reader = new FileReader();
+  reader.onload = () => {
+    try {
+      const data = JSON.parse(reader.result);
+      if (!Array.isArray(data.cards) || !Array.isArray(data.categories)) throw new Error('Invalid file');
+
+      state = {
+        categories: data.categories,
+        cards: data.cards.map((c) => ({ ...c, onBoard: !!c.onBoard })),
+        links: Array.isArray(data.links) ? data.links : [],
+        view: data.view || { x: 0, y: 0, scale: 1 },
+        lastCat: data.lastCat ?? (data.categories[0]?.id ?? null),
+      };
+
+      zTop = state.cards.reduce((m, c) => Math.max(m, c.z || 1), 1);
+      linkEls.forEach((g) => g.remove());
+      linkEls.clear();
+
+      renderAll();
+      setTimeout(fitView, 20);
+      save();
+      toast('Project imported');
+    } catch (err) {
+      toast('Could not read that file');
+    }
+    e.target.value = '';
+  };
+  reader.readAsText(file);
+});
+
+/* Reset — first click shows a confirm toast with a danger action */
+function requestReset() {
+  toast('Reset everything? This cannot be undone.', {
+    label: 'Confirm reset',
+    danger: true,
+    onClick: doReset,
+  });
+}
+
+function doReset() {
+  localStorage.removeItem(STORAGE_KEY);
+  linkEls.forEach((g) => g.remove());
+  linkEls.clear();
+  seed();
+  renderAll();
+  setTimeout(fitView, 20);
+  save();
+  toast('Board reset');
+}
+
+/* ═══════════════════════════════════════════
+   CARD EDITOR MODAL
+   ═══════════════════════════════════════════ */
+function openCardEditor(id, presetCatId, at) {
+  if (!id && state.categories.length === 0) {
+    toast('Create a deck first');
+    openCatEditor(null);
+    return;
+  }
+
+  editingCardId = id || null;
+  pendingCardPos = at || null;
+  const card = id ? getCard(id) : null;
+
+  $('#card-modal-title').textContent = card ? 'Edit card' : 'New card';
+
+  const sel = $('#card-category-input');
+  sel.innerHTML = state.categories
+    .map((c) => `<option value="${c.id}">${esc(c.name)}</option>`)
+    .join('');
+
+  $('#card-title-input').value = card?.title ?? '';
+  $('#card-body-input').value = card?.body ?? '';
+
+  if (card) sel.value = card.categoryId;
+  else if (presetCatId) sel.value = presetCatId;
+  else sel.value = state.lastCat ?? state.categories[0].id;
+
+  $('#delete-card-btn').classList.toggle('hidden', !card);
+
+  cardModal.classList.add('open');
+  setTimeout(() => $('#card-title-input').focus(), 60);
+}
+
+function closeCardEditor() {
+  cardModal.classList.remove('open');
+  editingCardId = null;
+  pendingCardPos = null;
+}
+
+function saveCardEditor() {
+  const title = $('#card-title-input').value.trim();
+  const body = $('#card-body-input').value.trim();
+  const categoryId = $('#card-category-input').value || state.categories[0].id;
+
+  if (!title) {
+    toast('Please give the card a title');
+    $('#card-title-input').focus();
+    return;
+  }
+
+  if (editingCardId) {
+    const card = getCard(editingCardId);
+    if (card) {
+      card.title = title;
+      card.body = body;
+      if (categoryId !== card.categoryId) {
+        card.categoryId = categoryId;
+        card.onBoard = false;
+      }
+    }
+    state.lastCat = categoryId;
+  } else {
+    const newCard = {
+      id: uid(),
+      title, body, categoryId,
+      onBoard: false,
+    };
+
+    if (pendingCardPos) {
+      newCard.onBoard = true;
+      newCard.x = pendingCardPos.x;
+      newCard.y = pendingCardPos.y;
+      newCard.z = ++zTop;
+    }
+
+    state.cards.push(newCard);
+    state.lastCat = categoryId;
+  }
+
+  closeCardEditor();
+  renderAll();
+  save();
+}
+
+$('#save-card-btn').addEventListener('click', saveCardEditor);
+$('#cancel-card-btn').addEventListener('click', closeCardEditor);
+$('#card-modal-close').addEventListener('click', closeCardEditor);
+$('#delete-card-btn').addEventListener('click', () => {
+  const id = editingCardId;
+  closeCardEditor();
+  if (id) deleteCard(id);
+});
+cardModal.addEventListener('click', (e) => { if (e.target === cardModal) closeCardEditor(); });
+$('#card-title-input').addEventListener('keydown', (e) => {
+  if (e.key === 'Enter') { e.preventDefault(); saveCardEditor(); }
+});
+$('#card-body-input').addEventListener('keydown', (e) => {
+  if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) { e.preventDefault(); saveCardEditor(); }
+});
+
+/* ═══════════════════════════════════════════
+   CATEGORY EDITOR MODAL
+   ═══════════════════════════════════════════ */
+function openCatEditor(id) {
+  editingCatId = id || null;
+  const cat = id ? state.categories.find((c) => c.id === id) : null;
+
+  $('#cat-modal-title').textContent = cat ? 'Edit category deck' : 'New category deck';
+  $('#cat-name-input').value = cat?.name ?? '';
+  $('#cat-color-input').value = cat?.color ?? '#60a5fa';
+  $('#cat-swatch').style.background = cat?.color ?? '#60a5fa';
+  $('#delete-cat-btn').classList.toggle('hidden', !cat);
+
+  catModal.classList.add('open');
+  setTimeout(() => $('#cat-name-input').focus(), 60);
+}
+
+function closeCatEditor() {
+  catModal.classList.remove('open');
+  editingCatId = null;
+}
+
+function saveCatEditor() {
+  const name = $('#cat-name-input').value.trim();
+  const color = $('#cat-color-input').value;
+
+  if (!name) { toast('Please name the deck'); $('#cat-name-input').focus(); return; }
+
+  if (editingCatId) {
+    const cat = state.categories.find((c) => c.id === editingCatId);
+    if (cat) { cat.name = name; cat.color = color; }
+  } else {
+    const newCat = { id: uid(), name, color };
+    state.categories.push(newCat);
+    state.lastCat = newCat.id;
+  }
+
+  closeCatEditor();
+  renderAll();
+  save();
+  toast(editingCatId ? 'Deck updated' : `Deck "${name}" created`);
+}
+
+$('#cat-color-input').addEventListener('input', (e) => {
+  $('#cat-swatch').style.background = e.target.value;
+});
+$('#save-cat-btn').addEventListener('click', saveCatEditor);
+$('#cancel-cat-btn').addEventListener('click', closeCatEditor);
+$('#cat-modal-close').addEventListener('click', closeCatEditor);
+$('#delete-cat-btn').addEventListener('click', () => {
+  const id = editingCatId;
+  closeCatEditor();
+  if (id) deleteCategory(id);
+});
+catModal.addEventListener('click', (e) => { if (e.target === catModal) closeCatEditor(); });
+$('#cat-name-input').addEventListener('keydown', (e) => {
+  if (e.key === 'Enter') { e.preventDefault(); saveCatEditor(); }
+});
+
+/* ═══════════════════════════════════════════
+   KEYBOARD
+   ═══════════════════════════════════════════ */
+window.addEventListener('keydown', (e) => {
+  /* ── Zoom shortcuts ── */
+  if ((e.ctrlKey || e.metaKey) && (e.key === '=' || e.key === '+')) {
+    e.preventDefault();
+    zoomCenter(1.2);
+    return;
+  }
+  if ((e.ctrlKey || e.metaKey) && e.key === '-') {
+    e.preventDefault();
+    zoomCenter(1 / 1.2);
+    return;
+  }
+  if ((e.ctrlKey || e.metaKey) && e.key === '0') {
+    e.preventDefault();
+    fitView();
+    return;
+  }
+
+  /* ── Escape ── */
+  if (e.key === 'Escape') {
+    if (cardModal.classList.contains('open')) { closeCardEditor(); return; }
+    if (catModal.classList.contains('open'))  { closeCatEditor();  return; }
+    if (ctxMenu.classList.contains('show'))   { hideContextMenu(); return; }
+    if (isLinking()) {
+      linkMode = false;
+      shiftHeld = false;
+      updateLinkUI();
+      return;
+    }
+    return;
+  }
+
+  const typing = /^(INPUT|TEXTAREA|SELECT)$/.test(document.activeElement?.tagName || '');
+  const inModal = cardModal.classList.contains('open') || catModal.classList.contains('open');
+
+  /* ── Shift: temporary linking ── */
+  if (e.key === 'Shift') {
+    if (!typing && !inModal && !shiftHeld) {
+      shiftHeld = true;
+      updateLinkUI();
+    }
+    return;
+  }
+
+  if (typing) return;
+  if (inModal) return;
+
+  /* ── Single-key shortcuts ── */
+  if (e.key === 'n' || e.key === 'N') {
+    e.preventDefault();
+    const cat = state.lastCat ?? state.categories[0]?.id;
+    openCardEditor(null, cat);
+  }
+  if (e.key === 'l' || e.key === 'L') { e.preventDefault(); setLinkMode(!linkMode); }
+  if (e.key === 'f' || e.key === 'F') { e.preventDefault(); fitView(); }
+  if (e.key === 'c' || e.key === 'C') { e.preventDefault(); openCatEditor(null); }
+});
+
+window.addEventListener('keyup', (e) => {
+  if (e.key === 'Shift') {
+    if (shiftHeld) {
+      shiftHeld = false;
+      updateLinkUI();
+    }
+  }
+});
+
+/* ═══════════════════════════════════════════
+   TOAST
+   ═══════════════════════════════════════════ */
+let toastTimer;
+function toast(msg, action) {
+  const el = $('#toast');
+  el.innerHTML = '';
+
+  const text = document.createElement('span');
+  text.textContent = msg;
+  el.appendChild(text);
+
+  if (action) {
+    const btn = document.createElement('button');
+    btn.className = 'toast-btn' + (action.danger ? ' danger' : '');
+    btn.textContent = action.label || 'Undo';
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      clearTimeout(toastTimer);
+      el.classList.remove('show');
+      action.onClick();
+    });
+    el.appendChild(btn);
+  }
+
+  el.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => el.classList.remove('show'), action ? 6500 : 1900);
+}
+
+/* ═══════════════════════════════════════════
+   BOOT
+   ═══════════════════════════════════════════ */
+load();
+renderAll();
+updateLinkUI();
+requestAnimationFrame(() => fitView());
+
+document.fonts?.ready.then(renderAll);
+window.addEventListener('load', () => { renderAll(); fitView(); });
+window.addEventListener('resize', () => { renderLinks(); hideAllFloating(); });
+
+/* Show the subtle keyboard hint shortly after load, then fade */
+setTimeout(() => kbdHint.classList.add('show'), 600);
+let kbdFadeTimer = setTimeout(() => kbdHint.classList.remove('show'), 12000);
+window.addEventListener('pointerdown', () => {
+  clearTimeout(kbdFadeTimer);
+  kbdHint.classList.remove('show');
+}, { once: true });
+
+console.log('%cStoryWeave — right-click anywhere to get started', 'color:#a855f7;font-weight:bold');
+})();
+</script>
+</body>
+</html>
