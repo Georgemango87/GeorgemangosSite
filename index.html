@@ -99,6 +99,7 @@
       font-weight: 700;
       letter-spacing: -0.01em;
       text-decoration: none;
+      flex: 0 0 auto;
     }
 
     .nav-brand .nav-logo {
@@ -124,9 +125,144 @@
 
     .nav-links a:hover { color: var(--accent-soft); }
 
+    /* ==========================================
+       NAV — AUTH AREA  (new)
+       ========================================== */
+    .nav-auth {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex: 0 0 auto;
+    }
+
+    .auth-btn {
+      padding: 8px 16px;
+      border-radius: 999px;
+      border: 1px solid rgba(34, 197, 94, 0.35);
+      background: rgba(34, 197, 94, 0.1);
+      color: var(--accent-soft);
+      font-family: inherit;
+      font-size: 0.84rem;
+      font-weight: 600;
+      cursor: pointer;
+      white-space: nowrap;
+      transition: background 0.18s, color 0.18s, border-color 0.18s;
+    }
+
+    .auth-btn:hover {
+      background: rgba(34, 197, 94, 0.2);
+      border-color: rgba(34, 197, 94, 0.6);
+      color: #fff;
+    }
+
+    .account-menu { position: relative; }
+
+    .avatar-btn {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 4px 11px 4px 4px;
+      border-radius: 999px;
+      border: 1px solid var(--border);
+      background: rgba(255, 255, 255, 0.03);
+      color: var(--text);
+      font-family: inherit;
+      cursor: pointer;
+      transition: border-color 0.18s, background 0.18s;
+    }
+
+    .avatar-btn:hover {
+      border-color: rgba(34, 197, 94, 0.5);
+      background: rgba(34, 197, 94, 0.08);
+    }
+
+    .avatar {
+      width: 26px;
+      height: 26px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, var(--accent), var(--accent-2));
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.78rem;
+      font-weight: 700;
+      color: #fff;
+      flex: 0 0 26px;
+    }
+
+    .sync-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: #64748b;
+      transition: background 0.2s;
+      flex: 0 0 8px;
+    }
+    .sync-dot.synced     { background: var(--accent); box-shadow: 0 0 8px rgba(34, 197, 94, 0.85); }
+    .sync-dot.syncing,
+    .sync-dot.pending    { background: #f59e0b; animation: pulse 1.4s infinite; }
+    .sync-dot.error      { background: #ef4444; }
+    .sync-dot.local,
+    .sync-dot.signed-out { background: #64748b; }
+
+    .dropdown {
+      position: absolute;
+      right: 0;
+      top: calc(100% + 10px);
+      min-width: 240px;
+      padding: 8px;
+      background: linear-gradient(180deg, var(--surface), var(--surface-2));
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      box-shadow: 0 22px 55px rgba(0, 0, 0, 0.65);
+      z-index: 600;
+    }
+
+    .dropdown-head {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+      padding: 10px 12px 12px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .dd-email {
+      font-size: 0.74rem;
+      color: var(--muted);
+      word-break: break-all;
+    }
+
+    .dd-status {
+      font-size: 0.72rem;
+      color: var(--muted);
+      padding: 10px 12px 4px;
+    }
+
+    .dd-item {
+      width: 100%;
+      text-align: left;
+      padding: 10px 12px;
+      border: 0;
+      border-radius: 9px;
+      background: transparent;
+      color: var(--text);
+      font-family: inherit;
+      font-size: 0.85rem;
+      cursor: pointer;
+      transition: background 0.16s, color 0.16s;
+    }
+
+    .dd-item:hover { background: rgba(34, 197, 94, 0.13); }
+    .dd-item.danger:hover { background: rgba(239, 68, 68, 0.15); color: #fca5a5; }
+
     @media (max-width: 620px) {
       .nav-links { gap: 14px; font-size: 0.82rem; }
       .nav-brand span { display: none; }
+    }
+
+    @media (max-width: 560px) {
+      .nav { padding: 12px 14px; gap: 10px; }
+      .nav-links { display: none; }
     }
 
     /* ==========================================
@@ -263,6 +399,8 @@
 
     .btn-ghost:hover { background: rgba(34, 197, 94, 0.14); }
 
+    .btn:disabled { opacity: 0.55; cursor: not-allowed; }
+
     .hero-stats {
       display: flex;
       flex-wrap: wrap;
@@ -387,6 +525,8 @@
       margin-bottom: 14px;
     }
 
+    .card-title { min-width: 0; }
+
     .icon-graphic {
       width: 50px;
       height: 50px;
@@ -411,6 +551,38 @@
       text-transform: uppercase;
       color: var(--accent-soft);
       font-weight: 700;
+    }
+
+    /* ---- save / favourite star (new) ---- */
+    .star-btn {
+      margin-left: auto;
+      flex: 0 0 auto;
+      width: 34px;
+      height: 34px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 10px;
+      border: 1px solid var(--border);
+      background: rgba(255, 255, 255, 0.03);
+      color: var(--muted);
+      font-size: 1rem;
+      line-height: 1;
+      cursor: pointer;
+      transition: all 0.18s;
+    }
+
+    .star-btn:hover {
+      color: #facc15;
+      border-color: rgba(250, 204, 21, 0.45);
+      background: rgba(250, 204, 21, 0.08);
+    }
+
+    .star-btn.on {
+      color: #facc15;
+      border-color: rgba(250, 204, 21, 0.55);
+      background: rgba(250, 204, 21, 0.12);
+      box-shadow: 0 0 14px rgba(250, 204, 21, 0.2);
     }
 
     .project-card p {
@@ -625,12 +797,209 @@
     .close-modal-btn:hover { background: #c0392b; }
 
     /* ==========================================
+       AUTH MODAL  (new)
+       ========================================== */
+    .auth-content {
+      width: min(100%, 430px);
+      padding: 26px 24px 22px;
+      background: linear-gradient(180deg, var(--surface), var(--surface-2));
+      color: var(--text);
+      border: 1px solid var(--border);
+    }
+
+    .auth-content .close-modal-btn {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+    }
+
+    .auth-content h2 {
+      margin: 0 0 6px;
+      font-size: 1.28rem;
+      letter-spacing: -0.02em;
+      color: var(--text);
+    }
+
+    .auth-sub {
+      margin: 0 0 20px;
+      font-size: 0.85rem;
+      color: var(--muted);
+    }
+
+    .auth-tabs {
+      display: flex;
+      gap: 6px;
+      padding: 4px;
+      margin-bottom: 18px;
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+    }
+
+    .auth-tab {
+      flex: 1;
+      padding: 9px;
+      border: 0;
+      border-radius: 9px;
+      background: transparent;
+      color: var(--muted);
+      font-family: inherit;
+      font-size: 0.85rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.18s;
+    }
+
+    .auth-tab.active {
+      background: linear-gradient(135deg, var(--accent), var(--accent-2));
+      color: #fff;
+      box-shadow: 0 6px 16px rgba(34, 197, 94, 0.28);
+    }
+
+    .field {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      margin-bottom: 14px;
+    }
+
+    .field label {
+      font-size: 0.76rem;
+      font-weight: 600;
+      letter-spacing: 0.02em;
+      color: var(--muted);
+    }
+
+    .field input {
+      width: 100%;
+      padding: 11px 13px;
+      border-radius: 10px;
+      border: 1px solid var(--border);
+      background: rgba(0, 0, 0, 0.28);
+      color: var(--text);
+      font-family: inherit;
+      font-size: 0.92rem;
+      outline: none;
+      transition: border-color 0.18s, box-shadow 0.18s;
+    }
+
+    .field input:focus {
+      border-color: rgba(34, 197, 94, 0.6);
+      box-shadow: 0 0 0 3px rgba(34, 197, 94, 0.15);
+    }
+
+    .auth-msg {
+      min-height: 18px;
+      margin-bottom: 10px;
+      font-size: 0.8rem;
+      line-height: 1.4;
+    }
+    .auth-msg.error { color: #fca5a5; }
+    .auth-msg.ok    { color: var(--accent-soft); }
+
+    .auth-submit { width: 100%; justify-content: center; }
+
+    .auth-divider {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin: 16px 0;
+      color: var(--muted);
+      font-size: 0.75rem;
+    }
+
+    .auth-divider::before,
+    .auth-divider::after {
+      content: '';
+      flex: 1;
+      height: 1px;
+      background: var(--border);
+    }
+
+    .auth-google { width: 100%; justify-content: center; }
+
+    .auth-link {
+      display: block;
+      margin: 14px auto 0;
+      padding: 0;
+      border: 0;
+      background: none;
+      color: var(--muted);
+      font-family: inherit;
+      font-size: 0.8rem;
+      cursor: pointer;
+      text-decoration: underline;
+      text-underline-offset: 3px;
+    }
+
+    .auth-link:hover { color: var(--accent-soft); }
+
+    .auth-note {
+      margin: 16px 0 0;
+      text-align: center;
+      font-size: 0.72rem;
+      line-height: 1.55;
+      color: #6f8c7c;
+    }
+
+    .auth-note code {
+      font-size: 0.7rem;
+      color: var(--accent-soft);
+      background: rgba(34, 197, 94, 0.1);
+      padding: 1px 5px;
+      border-radius: 5px;
+    }
+
+    /* ==========================================
+       TOAST  (new)
+       ========================================== */
+    .toast {
+      position: fixed;
+      left: 50%;
+      bottom: 26px;
+      transform: translate(-50%, 24px);
+      z-index: 2000;
+      max-width: calc(100vw - 40px);
+      padding: 12px 20px;
+      border-radius: 12px;
+      background: linear-gradient(180deg, var(--surface), var(--surface-2));
+      border: 1px solid rgba(34, 197, 94, 0.35);
+      color: var(--text);
+      font-size: 0.85rem;
+      box-shadow: 0 18px 45px rgba(0, 0, 0, 0.6);
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.28s ease, transform 0.28s ease;
+    }
+
+    .toast.show {
+      opacity: 1;
+      transform: translate(-50%, 0);
+    }
+
+    .toast.ok    { border-color: rgba(34, 197, 94, 0.55); }
+    .toast.warn  { border-color: rgba(245, 158, 11, 0.55); }
+    .toast.error { border-color: rgba(239, 68, 68, 0.55); }
+
+    /* ==========================================
        GAME 1: COLOR CONTEXTO
        ========================================== */
     #game1-container h2 {
       text-align: center;
       color: #14532d;
       margin-top: 0;
+    }
+    #game1-container .stats-bar {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px 16px;
+      justify-content: center;
+      padding: 8px 12px;
+      margin-bottom: 14px;
+      border-radius: 8px;
+      background: #dcfce7;
+      color: #14532d;
+      font-size: 0.78rem;
     }
     #game1-container .game-controls {
       display: flex;
@@ -719,6 +1088,7 @@
         margin-top: 44px;
         border-radius: 14px;
       }
+      .auth-content { padding: 22px 18px 18px; }
     }
   </style>
 </head>
@@ -736,6 +1106,27 @@
       <a href="#about">About</a>
       <a href="#projects">Projects</a>
       <a href="#elsewhere">Elsewhere</a>
+    </div>
+
+    <!-- ===== AUTH AREA (new) ===== -->
+    <div class="nav-auth">
+      <button class="auth-btn" id="navSignIn" type="button">Sign in</button>
+
+      <div class="account-menu" id="accountMenu" hidden>
+        <button class="avatar-btn" id="avatarBtn" type="button" aria-haspopup="true" aria-expanded="false">
+          <span class="avatar" id="avatarInitial">G</span>
+          <span class="sync-dot" id="syncDot" title="Sync status"></span>
+        </button>
+        <div class="dropdown" id="accountDropdown" hidden>
+          <div class="dropdown-head">
+            <strong id="ddName">Signed in</strong>
+            <span class="dd-email" id="ddEmail"></span>
+          </div>
+          <div class="dd-status" id="ddStatus">Synced</div>
+          <button class="dd-item" id="ddSyncNow" type="button">↻ Sync now</button>
+          <button class="dd-item danger" id="ddSignOut" type="button">Sign out</button>
+        </div>
+      </div>
     </div>
   </nav>
 
@@ -764,6 +1155,7 @@
 
       <div class="hero-actions">
         <a class="btn btn-primary" href="#projects">View Projects →</a>
+        <button class="btn btn-ghost" id="heroSignIn" type="button">Create a free account</button>
       </div>
 
       <div class="hero-stats">
@@ -839,7 +1231,7 @@
       <div class="section-head reveal">
         <span class="eyebrow">Projects</span>
         <h2>Things I've vibe-coded</h2>
-        <p>Click any card to launch it right here. Every one was directed, iterated and tweaked until it worked.</p>
+        <p>Click any card to launch it right here. Star a card to save it to your account — it follows you to every device you sign in on.</p>
       </div>
 
       <div class="filters reveal">
@@ -847,34 +1239,37 @@
         <button class="filter-btn" data-filter="game">Games</button>
         <button class="filter-btn" data-filter="tool">Tools</button>
         <button class="filter-btn" data-filter="science">Science &amp; Math</button>
+        <button class="filter-btn" data-filter="saved">★ Saved</button>
       </div>
 
       <div class="project-grid">
 
         <!-- 1 -->
-        <article class="project-card reveal" data-category="game">
+        <article class="project-card reveal" data-category="game" data-project-id="color-contexto">
           <div class="card-head">
             <div class="icon-graphic" style="background: linear-gradient(135deg, #ff7675, #74b9ff);">🎨</div>
-            <div>
+            <div class="card-title">
               <h3>Color Contexto</h3>
               <span class="card-cat">Game</span>
             </div>
+            <button class="star-btn" type="button" data-star="color-contexto" aria-label="Save Color Contexto" aria-pressed="false">☆</button>
           </div>
           <p>A daily-style colour guessing game. Find the hidden hex colour using RGB distance feedback — closer guesses rank higher.</p>
           <div class="card-tags">
-            <span>Vanilla JS</span><span>RGB Math</span>
+            <span>Vanilla JS</span><span>RGB Math</span><span>Cloud stats</span>
           </div>
           <button class="launch-btn" onclick="openGameModal('game1-modal')">▶ Launch</button>
         </article>
 
         <!-- 2 -->
-        <article class="project-card reveal" data-category="science">
+        <article class="project-card reveal" data-category="science" data-project-id="atom-forge">
           <div class="card-head">
             <div class="icon-graphic" style="background: linear-gradient(135deg, #10b981, #047857);">⚛</div>
-            <div>
+            <div class="card-title">
               <h3>Atom Forge</h3>
               <span class="card-cat">Science</span>
             </div>
+            <button class="star-btn" type="button" data-star="atom-forge" aria-label="Save Atom Forge" aria-pressed="false">☆</button>
           </div>
           <p>Build atoms from protons, neutrons and electrons. Watch electron shells fill up and see how elements come together.</p>
           <div class="card-tags">
@@ -884,13 +1279,14 @@
         </article>
 
         <!-- 3 -->
-        <article class="project-card reveal" data-category="tool">
+        <article class="project-card reveal" data-category="tool" data-project-id="sparktalk">
           <div class="card-head">
             <div class="icon-graphic" style="background: linear-gradient(135deg, #ec4899, #7c3aed);">💬</div>
-            <div>
+            <div class="card-title">
               <h3>SparkTalk</h3>
               <span class="card-cat">Tool</span>
             </div>
+            <button class="star-btn" type="button" data-star="sparktalk" aria-label="Save SparkTalk" aria-pressed="false">☆</button>
           </div>
           <p>An ice-breaker generator for meetings, classrooms and parties. Random prompts that actually get people talking.</p>
           <div class="card-tags">
@@ -900,13 +1296,14 @@
         </article>
 
         <!-- 4 -->
-        <article class="project-card reveal" data-category="tool">
+        <article class="project-card reveal" data-category="tool" data-project-id="webcraft">
           <div class="card-head">
             <div class="icon-graphic" style="background: linear-gradient(135deg, #0ea5e9, #6366f1);">◆</div>
-            <div>
+            <div class="card-title">
               <h3>WebCraft</h3>
               <span class="card-cat">Tool</span>
             </div>
+            <button class="star-btn" type="button" data-star="webcraft" aria-label="Save WebCraft" aria-pressed="false">☆</button>
           </div>
           <p>A live HTML/CSS playground. Write markup on one side, see the rendered page instantly on the other.</p>
           <div class="card-tags">
@@ -916,13 +1313,14 @@
         </article>
 
         <!-- 5 -->
-        <article class="project-card reveal" data-category="science">
+        <article class="project-card reveal" data-category="science" data-project-id="neural-net">
           <div class="card-head">
             <div class="icon-graphic" style="background: linear-gradient(135deg, #f59e0b, #dc2626);">🧠</div>
-            <div>
+            <div class="card-title">
               <h3>Neural Net</h3>
               <span class="card-cat">Science</span>
             </div>
+            <button class="star-btn" type="button" data-star="neural-net" aria-label="Save Neural Net" aria-pressed="false">☆</button>
           </div>
           <p>A visual neural-network studio. Design layers, tweak weights and watch signals propagate through the grid in real time.</p>
           <div class="card-tags">
@@ -932,13 +1330,14 @@
         </article>
 
         <!-- 6 -->
-        <article class="project-card reveal" data-category="science">
+        <article class="project-card reveal" data-category="science" data-project-id="mathlab">
           <div class="card-head">
             <div class="icon-graphic" style="background: linear-gradient(135deg, #4cc2ff, #7c3aed);">∑</div>
-            <div>
+            <div class="card-title">
               <h3>MathLab</h3>
               <span class="card-cat">Science</span>
             </div>
+            <button class="star-btn" type="button" data-star="mathlab" aria-label="Save MathLab" aria-pressed="false">☆</button>
           </div>
           <p>Plot functions, explore curves and experiment with parameters. A graphing calculator you can actually understand.</p>
           <div class="card-tags">
@@ -948,13 +1347,14 @@
         </article>
 
         <!-- 7 -->
-        <article class="project-card reveal" data-category="science">
+        <article class="project-card reveal" data-category="science" data-project-id="logic-gates">
           <div class="card-head">
             <div class="icon-graphic" style="background: linear-gradient(135deg, #16a34a, #0f766e);">⚡</div>
-            <div>
+            <div class="card-title">
               <h3>Logic Gates</h3>
               <span class="card-cat">Science</span>
             </div>
+            <button class="star-btn" type="button" data-star="logic-gates" aria-label="Save Logic Gates" aria-pressed="false">☆</button>
           </div>
           <p>Wire up AND, OR, NOT and XOR gates into working circuits. Learn digital logic by building it yourself.</p>
           <div class="card-tags">
@@ -964,13 +1364,14 @@
         </article>
 
         <!-- 8 -->
-        <article class="project-card reveal" data-category="science">
+        <article class="project-card reveal" data-category="science" data-project-id="ai-builder">
           <div class="card-head">
             <div class="icon-graphic" style="background: linear-gradient(135deg, #f8cdda, #1d2b64);">◈</div>
-            <div>
+            <div class="card-title">
               <h3>AI Builder</h3>
               <span class="card-cat">Science</span>
             </div>
+            <button class="star-btn" type="button" data-star="ai-builder" aria-label="Save AI Builder" aria-pressed="false">☆</button>
           </div>
           <p>Assemble an AI pipeline block by block — data in, layers in the middle, predictions out. See how the pieces connect.</p>
           <div class="card-tags">
@@ -980,13 +1381,14 @@
         </article>
 
         <!-- 9 -->
-        <article class="project-card reveal" data-category="tool">
+        <article class="project-card reveal" data-category="tool" data-project-id="colorlab">
           <div class="card-head">
             <div class="icon-graphic" style="background: linear-gradient(135deg, #FF5733 0%, #6A5ACD 50%, #1FE547 100%);">🖌️</div>
-            <div>
+            <div class="card-title">
               <h3>ColorLab</h3>
               <span class="card-cat">Tool</span>
             </div>
+            <button class="star-btn" type="button" data-star="colorlab" aria-label="Save ColorLab" aria-pressed="false">☆</button>
           </div>
           <p>Generate, blend and compare colour palettes. Export swatches for your next design project.</p>
           <div class="card-tags">
@@ -996,13 +1398,14 @@
         </article>
 
         <!-- 10 -->
-        <article class="project-card reveal" data-category="tool">
+        <article class="project-card reveal" data-category="tool" data-project-id="4d-shape-maker">
           <div class="card-head">
             <div class="icon-graphic" style="background: linear-gradient(135deg, #ffffff, #000000);">🔲</div>
-            <div>
+            <div class="card-title">
               <h3>4D Shape Maker</h3>
               <span class="card-cat">Tool</span>
             </div>
+            <button class="star-btn" type="button" data-star="4d-shape-maker" aria-label="Save 4D Shape Maker" aria-pressed="false">☆</button>
           </div>
           <p>Build and rotate hyper-dimensional shapes. A hands-on way to get a feel for the fourth dimension.</p>
           <div class="card-tags">
@@ -1012,13 +1415,14 @@
         </article>
 
         <!-- 11 -->
-        <article class="project-card reveal" data-category="tool">
+        <article class="project-card reveal" data-category="tool" data-project-id="font-maker">
           <div class="card-head">
             <div class="icon-graphic" style="background: linear-gradient(135deg, #ffffff, #ffffff); color: #000000;">𝐀</div>
-            <div>
+            <div class="card-title">
               <h3>Font Maker</h3>
               <span class="card-cat">Tool</span>
             </div>
+            <button class="star-btn" type="button" data-star="font-maker" aria-label="Save Font Maker" aria-pressed="false">☆</button>
           </div>
           <p>Draw your own glyphs and turn them into a usable typeface. Typography, from the ground up.</p>
           <div class="card-tags">
@@ -1028,13 +1432,14 @@
         </article>
 
         <!-- 12 -->
-        <article class="project-card reveal" data-category="game">
+        <article class="project-card reveal" data-category="game" data-project-id="brain-trainer">
           <div class="card-head">
             <div class="icon-graphic" style="background: linear-gradient(135deg, #ffffff, #33ddff);">🧠</div>
-            <div>
+            <div class="card-title">
               <h3>Brain Trainer</h3>
               <span class="card-cat">Game</span>
             </div>
+            <button class="star-btn" type="button" data-star="brain-trainer" aria-label="Save Brain Trainer" aria-pressed="false">☆</button>
           </div>
           <p>Quick-fire cognitive drills — memory, reaction and pattern recognition. How sharp are you today?</p>
           <div class="card-tags">
@@ -1044,13 +1449,14 @@
         </article>
 
         <!-- 13 -->
-        <article class="project-card reveal" data-category="tool">
+        <article class="project-card reveal" data-category="tool" data-project-id="story-weave">
           <div class="card-head">
             <div class="icon-graphic" style="background: linear-gradient(135deg, #062274, #53067C);">📖</div>
-            <div>
+            <div class="card-title">
               <h3>Story Weave</h3>
               <span class="card-cat">Tool</span>
             </div>
+            <button class="star-btn" type="button" data-star="story-weave" aria-label="Save Story Weave" aria-pressed="false">☆</button>
           </div>
           <p>Build your own stories from scratch like a card game.</p>
           <div class="card-tags">
@@ -1139,19 +1545,69 @@
        MODALS
        ========================================== -->
 
+  <!-- ===== AUTH MODAL (new) ===== -->
+  <div id="auth-modal" class="game-modal">
+    <div class="game-modal-content auth-content">
+      <button class="close-modal-btn" type="button" onclick="closeGameModal('auth-modal')">&times;</button>
+
+      <h2 id="authTitle">Welcome back</h2>
+      <p class="auth-sub" id="authSub">Sign in to sync your saved projects and stats across every device.</p>
+
+      <div class="auth-tabs" role="tablist">
+        <button class="auth-tab active" type="button" data-tab="signin" role="tab">Sign in</button>
+        <button class="auth-tab" type="button" data-tab="signup" role="tab">Create account</button>
+      </div>
+
+      <form id="authForm" novalidate>
+        <div class="field" id="nameField" hidden>
+          <label for="authName">Display name</label>
+          <input type="text" id="authName" autocomplete="name" placeholder="Georgemango" maxlength="40">
+        </div>
+
+        <div class="field">
+          <label for="authEmail">Email</label>
+          <input type="email" id="authEmail" autocomplete="email" placeholder="you@example.com" required>
+        </div>
+
+        <div class="field">
+          <label for="authPassword">Password</label>
+          <input type="password" id="authPassword" autocomplete="current-password" placeholder="••••••••" minlength="6" required>
+        </div>
+
+        <div class="auth-msg" id="authMsg" role="status" aria-live="polite"></div>
+
+        <button class="btn btn-primary auth-submit" type="submit" id="authSubmit">Sign in</button>
+      </form>
+
+      <div class="auth-divider"><span>or</span></div>
+
+      <button class="btn btn-ghost auth-google" type="button" id="googleBtn">
+        <span style="font-weight:700;">G</span> Continue with Google
+      </button>
+
+      <button class="auth-link" type="button" id="forgotBtn">Forgot password?</button>
+
+      <p class="auth-note" id="authNote">
+        Your saves live in your own account. No ads, no tracking, no spam — just your starred
+        projects and high scores, everywhere you sign in.
+      </p>
+    </div>
+  </div>
+
   <!-- GAME 1 MODAL: COLOR CONTEXTO -->
   <div id="game1-modal" class="game-modal">
     <div class="game-modal-content">
-      <button class="close-modal-btn" onclick="closeGameModal('game1-modal')">&times;</button>
+      <button class="close-modal-btn" type="button" onclick="closeGameModal('game1-modal')">&times;</button>
       <div id="game1-container">
         <h2>🎨 Color Contexto</h2>
+        <div class="stats-bar" id="game1-stats"></div>
         <p style="text-align: center; color: #666;">Guess the hidden hex color! Lower distance means closer (0 is an exact match).</p>
         <div class="game-controls">
           <input type="color" id="game1-colorPicker" value="#000000">
           <input type="text" id="game1-colorInput" placeholder="#RRGGBB">
-          <button id="game1-guessBtn" class="action-btn">Guess</button>
-          <button id="game1-giveUpBtn" class="action-btn give-up">Give Up</button>
-          <button id="game1-newGameBtn" class="action-btn new-game">New Game</button>
+          <button id="game1-guessBtn" class="action-btn" type="button">Guess</button>
+          <button id="game1-giveUpBtn" class="action-btn give-up" type="button">Give Up</button>
+          <button id="game1-newGameBtn" class="action-btn new-game" type="button">New Game</button>
         </div>
         <div class="message" id="game1-message"></div>
         <div class="guesses-container">
@@ -1167,8 +1623,8 @@
     <div class="game-modal-content"
          style="max-width: 98vw; width: 98vw; height: 94vh; padding: 0;
                 background: #070911; overflow: hidden; border-radius: 12px;">
-      <button class="close-modal-btn" onclick="closeGameModal('game2-modal')">&times;</button>
-      <iframe id="game2-iframe" data-src="AtomForge.html"
+      <button class="close-modal-btn" type="button" onclick="closeGameModal('game2-modal')">&times;</button>
+      <iframe id="game2-iframe" data-src="AtomForge.html" title="Atom Forge"
               style="width: 100%; height: 100%; border: 0; display: block;"
               allow="clipboard-write"></iframe>
     </div>
@@ -1179,8 +1635,8 @@
     <div class="game-modal-content"
          style="max-width: 98vw; width: 98vw; height: 94vh; padding: 0;
                 background: #0f172a; overflow: hidden; border-radius: 12px;">
-      <button class="close-modal-btn" onclick="closeGameModal('game3-modal')">&times;</button>
-      <iframe id="game3-iframe" data-src="IceBreakers.html"
+      <button class="close-modal-btn" type="button" onclick="closeGameModal('game3-modal')">&times;</button>
+      <iframe id="game3-iframe" data-src="IceBreakers.html" title="SparkTalk"
               style="width: 100%; height: 100%; border: 0; display: block;"></iframe>
     </div>
   </div>
@@ -1190,8 +1646,8 @@
     <div class="game-modal-content"
          style="max-width: 98vw; width: 98vw; height: 94vh; padding: 0;
                 background: #0f1115; overflow: hidden; border-radius: 12px;">
-      <button class="close-modal-btn" onclick="closeGameModal('game4-modal')">&times;</button>
-      <iframe id="game4-iframe" data-src="Lumo.html"
+      <button class="close-modal-btn" type="button" onclick="closeGameModal('game4-modal')">&times;</button>
+      <iframe id="game4-iframe" data-src="Lumo.html" title="WebCraft"
               style="width: 100%; height: 100%; border: 0; display: block;"
               allow="clipboard-write"></iframe>
     </div>
@@ -1202,8 +1658,8 @@
     <div class="game-modal-content"
          style="max-width: 98vw; width: 98vw; height: 94vh; padding: 0;
                 background: #0b0f19; overflow: hidden; border-radius: 12px;">
-      <button class="close-modal-btn" onclick="closeGameModal('game5-modal')">&times;</button>
-      <iframe id="game5-iframe" data-src="Neural.html"
+      <button class="close-modal-btn" type="button" onclick="closeGameModal('game5-modal')">&times;</button>
+      <iframe id="game5-iframe" data-src="Neural.html" title="Neural Net"
               style="width: 100%; height: 100%; border: 0; display: block;"></iframe>
     </div>
   </div>
@@ -1213,8 +1669,8 @@
     <div class="game-modal-content"
          style="max-width: 98vw; width: 98vw; height: 94vh; padding: 0;
                 background: #0c1016; overflow: hidden; border-radius: 12px;">
-      <button class="close-modal-btn" onclick="closeGameModal('game6-modal')">&times;</button>
-      <iframe id="game6-iframe" data-src="MathLab.html?v=1"
+      <button class="close-modal-btn" type="button" onclick="closeGameModal('game6-modal')">&times;</button>
+      <iframe id="game6-iframe" data-src="MathLab.html?v=1" title="MathLab"
               style="width: 100%; height: 100%; border: 0; display: block;"></iframe>
     </div>
   </div>
@@ -1224,8 +1680,8 @@
     <div class="game-modal-content"
          style="max-width: 98vw; width: 98vw; height: 94vh; padding: 0;
                 background: #f0f2f5; overflow: hidden; border-radius: 12px;">
-      <button class="close-modal-btn" onclick="closeGameModal('game7-modal')">&times;</button>
-      <iframe id="game7-iframe" data-src="LogicGates.html"
+      <button class="close-modal-btn" type="button" onclick="closeGameModal('game7-modal')">&times;</button>
+      <iframe id="game7-iframe" data-src="LogicGates.html" title="Logic Gates"
               style="width: 100%; height: 100%; border: 0; display: block;"
               allow="clipboard-write"></iframe>
     </div>
@@ -1236,8 +1692,8 @@
     <div class="game-modal-content"
          style="max-width: 98vw; width: 98vw; height: 94vh; padding: 0;
                 background: #f1f2f5; overflow: hidden; border-radius: 12px;">
-      <button class="close-modal-btn" onclick="closeGameModal('game8-modal')">&times;</button>
-      <iframe id="game8-iframe" data-src="AiBuilder.html"
+      <button class="close-modal-btn" type="button" onclick="closeGameModal('game8-modal')">&times;</button>
+      <iframe id="game8-iframe" data-src="AiBuilder.html" title="AI Builder"
               style="width: 100%; height: 100%; border: 0; display: block;"
               allow="clipboard-write"></iframe>
     </div>
@@ -1248,8 +1704,8 @@
     <div class="game-modal-content"
          style="max-width: 98vw; width: 98vw; height: 94vh; padding: 0;
                 background: #14532d; overflow: hidden; border-radius: 12px;">
-      <button class="close-modal-btn" onclick="closeGameModal('game9-modal')">&times;</button>
-      <iframe id="game9-iframe" data-src="ColorLab.html"
+      <button class="close-modal-btn" type="button" onclick="closeGameModal('game9-modal')">&times;</button>
+      <iframe id="game9-iframe" data-src="ColorLab.html" title="ColorLab"
               style="width: 100%; height: 100%; border: 0; display: block;"
               allow="clipboard-write"></iframe>
     </div>
@@ -1260,8 +1716,8 @@
     <div class="game-modal-content"
          style="max-width: 98vw; width: 98vw; height: 94vh; padding: 0;
                 background: #ffffff; overflow: hidden; border-radius: 12px;">
-      <button class="close-modal-btn" onclick="closeGameModal('game10-modal')">&times;</button>
-      <iframe id="game10-iframe" data-src="4dShapeMaker.html"
+      <button class="close-modal-btn" type="button" onclick="closeGameModal('game10-modal')">&times;</button>
+      <iframe id="game10-iframe" data-src="4dShapeMaker.html" title="4D Shape Maker"
               style="width: 100%; height: 100%; border: 0; display: block;"
               allow="clipboard-write"></iframe>
     </div>
@@ -1272,8 +1728,8 @@
     <div class="game-modal-content"
          style="max-width: 98vw; width: 98vw; height: 94vh; padding: 0;
                 background: #ffffff; overflow: hidden; border-radius: 12px;">
-      <button class="close-modal-btn" onclick="closeGameModal('game11-modal')">&times;</button>
-      <iframe id="game11-iframe" data-src="FontsMaker.html"
+      <button class="close-modal-btn" type="button" onclick="closeGameModal('game11-modal')">&times;</button>
+      <iframe id="game11-iframe" data-src="FontsMaker.html" title="Font Maker"
               style="width: 100%; height: 100%; border: 0; display: block;"
               allow="clipboard-write"></iframe>
     </div>
@@ -1284,27 +1740,32 @@
     <div class="game-modal-content"
          style="max-width: 98vw; width: 98vw; height: 94vh; padding: 0;
                 background: #ffffff; overflow: hidden; border-radius: 12px;">
-      <button class="close-modal-btn" onclick="closeGameModal('game12-modal')">&times;</button>
-      <iframe id="game12-iframe" data-src="BrainTrainer.html"
+      <button class="close-modal-btn" type="button" onclick="closeGameModal('game12-modal')">&times;</button>
+      <iframe id="game12-iframe" data-src="BrainTrainer.html" title="Brain Trainer"
               style="width: 100%; height: 100%; border: 0; display: block;"
               allow="clipboard-write"></iframe>
     </div>
   </div>
 
-  <!-- GAME 13 MODAL: BRAIN TRAINER -->
+  <!-- GAME 13 MODAL: STORY WEAVE -->
   <div id="game13-modal" class="game-modal">
     <div class="game-modal-content"
          style="max-width: 98vw; width: 98vw; height: 94vh; padding: 0;
                 background: #ffffff; overflow: hidden; border-radius: 12px;">
-      <button class="close-modal-btn" onclick="closeGameModal('game13-modal')">&times;</button>
-      <iframe id="game13-iframe" data-src="StoryWeave.html"
+      <button class="close-modal-btn" type="button" onclick="closeGameModal('game13-modal')">&times;</button>
+      <iframe id="game13-iframe" data-src="StoryWeave.html" title="Story Weave"
               style="width: 100%; height: 100%; border: 0; display: block;"
               allow="clipboard-write"></iframe>
     </div>
   </div>
 
+  <!-- toast host -->
+  <div id="toast" class="toast" role="status" aria-live="polite"></div>
+
   <script>
-    // ——— hidden seed ———
+    /* ==========================================================
+       🌱 hidden seed
+       ========================================================== */
     console.log(
       '%c🌱 you found a root.',
       'color:#22c55e; font-weight:bold; font-size:14px;'
@@ -1314,225 +1775,819 @@
       'color:#86efac; font-size:12px;'
     );
 
-  /* ==========================================
-     MODAL CONTROLLER
-     ========================================== */
-  function openGameModal(modalId) {
-    document.getElementById(modalId).style.display = 'flex';
-    document.body.style.overflow = 'hidden';
+    /* ==========================================================
+       MODAL CONTROLLER
+       ========================================================== */
+    function openGameModal(modalId) {
+      document.getElementById(modalId).style.display = 'flex';
+      document.body.style.overflow = 'hidden';
 
-    const iframe = document.getElementById(modalId.replace('-modal', '-iframe'));
-    if (iframe && !iframe.src && iframe.dataset.src) {
-      const base = iframe.dataset.src;
-      const sep = base.includes('?') ? '&' : '?';
-      iframe.src = base + sep + 'v=' + Date.now();
+      const iframe = document.getElementById(modalId.replace('-modal', '-iframe'));
+      if (iframe && !iframe.src && iframe.dataset.src) {
+        const base = iframe.dataset.src;
+        const sep = base.includes('?') ? '&' : '?';
+        iframe.src = base + sep + 'v=' + Date.now();
+      }
     }
-  }
 
-  function closeGameModal(modalId) {
-    document.getElementById(modalId).style.display = 'none';
-    if (!document.querySelector('.game-modal[style*="flex"]')) {
-      document.body.style.overflow = '';
-    }
-  }
-
-  window.addEventListener('click', function (event) {
-    if (event.target.classList.contains('game-modal')) {
-      event.target.style.display = 'none';
+    function closeGameModal(modalId) {
+      document.getElementById(modalId).style.display = 'none';
       if (!document.querySelector('.game-modal[style*="flex"]')) {
         document.body.style.overflow = '';
       }
     }
-  });
 
-  document.addEventListener('keydown', function (e) {
-    if (e.key === 'Escape') {
-      document.querySelectorAll('.game-modal').forEach(m => m.style.display = 'none');
-      document.body.style.overflow = '';
-    }
-  });
-
-  /* ==========================================
-     PROJECT FILTERS
-     ========================================== */
-  document.querySelectorAll('.filter-btn').forEach(btn => {
-    btn.addEventListener('click', () => {
-      document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
-      btn.classList.add('active');
-
-      const filter = btn.dataset.filter;
-      document.querySelectorAll('.project-card').forEach(card => {
-        const show = filter === 'all' || card.dataset.category === filter;
-        card.style.display = show ? '' : 'none';
-      });
+    window.addEventListener('click', function (event) {
+      if (event.target.classList.contains('game-modal')) {
+        event.target.style.display = 'none';
+        if (!document.querySelector('.game-modal[style*="flex"]')) {
+          document.body.style.overflow = '';
+        }
+      }
     });
-  });
 
-  /* ==========================================
-     SCROLL REVEAL
-     ========================================== */
-  const revealEls = document.querySelectorAll('.reveal');
-  if ('IntersectionObserver' in window) {
-    const io = new IntersectionObserver((entries) => {
-      entries.forEach(entry => {
-        if (entry.isIntersecting) {
-          entry.target.classList.add('in');
-          io.unobserve(entry.target);
+    document.addEventListener('keydown', function (e) {
+      if (e.key === 'Escape') {
+        document.querySelectorAll('.game-modal').forEach(m => m.style.display = 'none');
+        document.body.style.overflow = '';
+        closeDropdown();
+      }
+    });
+
+    /* ==========================================================
+       CLOUD — auth + cross-device saves
+       ----------------------------------------------------------
+       Paste your Firebase web config below. Until you do, the
+       site still works — everything just saves to this device.
+       ========================================================== */
+
+    const FIREBASE_CONFIG = {
+      apiKey: "AIzaSyCnsac8Ds7Ww6YcQZMCBmeBj-b8Ah_8SPk",
+      authDomain: "georgemango-s-site.firebaseapp.com",
+      projectId: "georgemango-s-site",
+      storageBucket: "georgemango-s-site.firebasestorage.app",
+      messagingSenderId: "882754733832",
+      appId: "1:882754733832:web:43121162336eaa86790ebd",
+    };
+
+    const Cloud = (function () {
+      const SDK        = 'https://www.gstatic.com/firebasejs/10.12.5/';
+      const CACHE_KEY  = 'gm.cache.v1';
+      const DIRTY_KEY  = 'gm.dirty.v1';
+      const configured = !!(FIREBASE_CONFIG.apiKey &&
+                            !FIREBASE_CONFIG.apiKey.startsWith('YOUR_'));
+
+      let A = null, DB = null, F = null;
+      let user = null;
+      let hadUser = false;
+      let cache = {};
+      let dirty = new Set();
+      let pushTimer = null;
+      const authSubs = [];
+      const dataSubs = [];
+
+      /* ---------- local persistence ---------- */
+      function readLocal() {
+        try { cache = JSON.parse(localStorage.getItem(CACHE_KEY)) || {}; }
+        catch (e) { cache = {}; }
+        try { dirty = new Set(JSON.parse(localStorage.getItem(DIRTY_KEY)) || []); }
+        catch (e) { dirty = new Set(); }
+      }
+
+      function writeLocal() {
+        try {
+          localStorage.setItem(CACHE_KEY, JSON.stringify(cache));
+          localStorage.setItem(DIRTY_KEY, JSON.stringify(Array.from(dirty)));
+        } catch (e) { /* storage full / private mode — ignore */ }
+      }
+
+      /* ---------- events ---------- */
+      function emitData() { dataSubs.forEach(fn => { try { fn(cache); } catch (e) {} }); }
+      function emitAuth() { authSubs.forEach(fn => { try { fn(user); } catch (e) {} }); }
+      function setStatus(s) {
+        document.dispatchEvent(new CustomEvent('cloud-status', { detail: s }));
+      }
+
+      /* ---------- firestore field names ---------- */
+      function fieldFor(key) {
+        return 'k_' + String(key).replace(/[^A-Za-z0-9_]/g, '_');
+      }
+
+      /* ---------- push ---------- */
+      function queuePush() {
+        if (!user || !DB) { setStatus(configured ? 'signed-out' : 'local'); return; }
+        setStatus('pending');
+        clearTimeout(pushTimer);
+        pushTimer = setTimeout(pushDirty, 700);
+      }
+
+      async function pushDirty() {
+        if (!user || !DB) return;
+        const keys = Array.from(dirty);
+        if (!keys.length) { setStatus('synced'); return; }
+
+        const payload = { updatedAt: F.serverTimestamp() };
+        keys.forEach(k => { payload[fieldFor(k)] = JSON.stringify(cache[k]); });
+
+        setStatus('syncing');
+        try {
+          await F.setDoc(F.doc(DB, 'users', user.uid), payload, { merge: true });
+          keys.forEach(k => dirty.delete(k));
+          writeLocal();
+          setStatus('synced');
+        } catch (e) {
+          console.warn('[cloud] push failed', e);
+          setStatus('error');
+        }
+      }
+
+      /* ---------- pull + merge ---------- */
+      async function pullAll() {
+        if (!user || !DB) return;
+
+        const snap = await F.getDoc(F.doc(DB, 'users', user.uid));
+        const cloud = {};
+
+        if (snap.exists()) {
+          const raw = snap.data() || {};
+          Object.keys(raw).forEach(k => {
+            if (k.indexOf('k_') !== 0) return;
+            const name = k.slice(2);
+            try { cloud[name] = JSON.parse(raw[k]); }
+            catch (e) { cloud[name] = raw[k]; }
+          });
+        }
+
+        const merged = Object.assign({}, cloud);
+
+        // local edits made while signed out win
+        dirty.forEach(k => { merged[k] = cache[k]; });
+
+        // anything local that the cloud has never seen gets pushed up
+        Object.keys(cache).forEach(k => {
+          if (!(k in cloud)) { merged[k] = cache[k]; dirty.add(k); }
+        });
+
+        cache = merged;
+        writeLocal();
+        emitData();
+        await pushDirty();
+      }
+
+      /* ---------- auth ---------- */
+      function friendlyError(e) {
+        const code = (e && e.code) || '';
+        const map = {
+          'auth/invalid-email':          'That email address doesn’t look right.',
+          'auth/user-disabled':          'This account has been disabled.',
+          'auth/user-not-found':         'No account found with that email.',
+          'auth/wrong-password':         'Incorrect password.',
+          'auth/invalid-credential':     'Incorrect email or password.',
+          'auth/email-already-in-use':   'An account with that email already exists.',
+          'auth/weak-password':          'Passwords need at least 6 characters.',
+          'auth/popup-closed-by-user':   'Sign-in popup was closed.',
+          'auth/cancelled-popup-request':'Sign-in was cancelled.',
+          'auth/network-request-failed': 'Network error — check your connection.',
+          'auth/too-many-requests':      'Too many attempts. Try again in a minute.',
+          'auth/operation-not-allowed':  'That sign-in method isn’t enabled in your Firebase project.',
+          'auth/unauthorized-domain':    'This domain isn’t authorised in Firebase Auth → Settings → Authorised domains.'
+        };
+        return map[code] || (e && e.message) || 'Something went wrong. Please try again.';
+      }
+
+      function wrap(promise) {
+        return promise.catch(e => { throw new Error(friendlyError(e)); });
+      }
+
+      async function handleUser(u) {
+        user = u;
+        emitAuth();
+
+        if (u) {
+          hadUser = true;
+          setStatus('syncing');
+          try { await pullAll(); setStatus('synced'); }
+          catch (e) { console.warn('[cloud] pull failed', e); setStatus('error'); }
+        } else {
+          if (hadUser) {
+            // signed out on purpose — don't leave another person's data behind
+            cache = {};
+            dirty.clear();
+            writeLocal();
+            emitData();
+          }
+          setStatus(configured ? 'signed-out' : 'local');
+        }
+      }
+
+      /* ---------- init ---------- */
+      async function init() {
+        readLocal();
+        emitData();
+        emitAuth();
+
+        if (!configured) {
+          setStatus('local');
+          return;
+        }
+
+        try {
+          const [appM, authM, dbM] = await Promise.all([
+            import(SDK + 'firebase-app.js'),
+            import(SDK + 'firebase-auth.js'),
+            import(SDK + 'firebase-firestore.js')
+          ]);
+
+          const app = appM.initializeApp(FIREBASE_CONFIG);
+          A  = authM.getAuth(app);
+          DB = dbM.getFirestore(app);
+          F  = Object.assign({}, authM, dbM);
+
+          authM.onAuthStateChanged(A, handleUser);
+        } catch (e) {
+          console.error('[cloud] Firebase failed to initialise', e);
+          setStatus('error');
+        }
+      }
+
+      /* ---------- public API ---------- */
+      return {
+        get configured() { return configured; },
+        get user()       { return user; },
+        init,
+
+        onAuth: fn => authSubs.push(fn),
+        onData: fn => dataSubs.push(fn),
+
+        get(key, fallback) {
+          return Object.prototype.hasOwnProperty.call(cache, key) ? cache[key] : fallback;
+        },
+
+        set(key, value) {
+          cache[key] = value;
+          dirty.add(key);
+          writeLocal();
+          emitData();
+          queuePush();
+        },
+
+        async signUp(email, password, name) {
+          if (!A) throw new Error('Accounts are not configured yet.');
+          const cred = await wrap(F.createUserWithEmailAndPassword(A, email, password));
+          if (name) {
+            try { await F.updateProfile(cred.user, { displayName: name }); } catch (e) {}
+            emitAuth();
+          }
+          return cred.user;
+        },
+
+        async signIn(email, password) {
+          if (!A) throw new Error('Accounts are not configured yet.');
+          const cred = await wrap(F.signInWithEmailAndPassword(A, email, password));
+          return cred.user;
+        },
+
+        async signInWithGoogle() {
+          if (!A) throw new Error('Accounts are not configured yet.');
+          const provider = new F.GoogleAuthProvider();
+          const cred = await wrap(F.signInWithPopup(A, provider));
+          return cred.user;
+        },
+
+        async resetPassword(email) {
+          if (!A) throw new Error('Accounts are not configured yet.');
+          await wrap(F.sendPasswordResetEmail(A, email));
+        },
+
+        async signOut() {
+          if (!A) return;
+          await wrap(F.signOut(A));
+        },
+
+        syncNow() { return pushDirty(); }
+      };
+    })();
+
+    // expose for the iframe apps (same-origin): window.parent.Cloud.get(...)
+    window.Cloud = Cloud;
+
+    /* ==========================================================
+       TOAST
+       ========================================================== */
+    let toastTimer = null;
+    function toast(message, kind) {
+      const el = document.getElementById('toast');
+      el.textContent = message;
+      el.className = 'toast show' + (kind ? ' ' + kind : '');
+      clearTimeout(toastTimer);
+      toastTimer = setTimeout(() => { el.className = 'toast'; }, 3400);
+    }
+
+    /* ==========================================================
+       AUTH UI
+       ========================================================== */
+    const navSignIn       = document.getElementById('navSignIn');
+    const heroSignIn      = document.getElementById('heroSignIn');
+    const accountMenu     = document.getElementById('accountMenu');
+    const avatarBtn       = document.getElementById('avatarBtn');
+    const accountDropdown = document.getElementById('accountDropdown');
+    const avatarInitial   = document.getElementById('avatarInitial');
+    const ddName          = document.getElementById('ddName');
+    const ddEmail         = document.getElementById('ddEmail');
+    const ddStatus        = document.getElementById('ddStatus');
+    const ddSyncNow       = document.getElementById('ddSyncNow');
+    const ddSignOut       = document.getElementById('ddSignOut');
+    const syncDot         = document.getElementById('syncDot');
+
+    const authTitle  = document.getElementById('authTitle');
+    const authSub    = document.getElementById('authSub');
+    const authForm   = document.getElementById('authForm');
+    const authName   = document.getElementById('authName');
+    const authEmail  = document.getElementById('authEmail');
+    const authPassword = document.getElementById('authPassword');
+    const authMsg    = document.getElementById('authMsg');
+    const authSubmit = document.getElementById('authSubmit');
+    const nameField  = document.getElementById('nameField');
+    const googleBtn  = document.getElementById('googleBtn');
+    const forgotBtn  = document.getElementById('forgotBtn');
+    const authNote   = document.getElementById('authNote');
+
+    let authTab = 'signin';
+
+    function setAuthMsg(text, kind) {
+      authMsg.textContent = text || '';
+      authMsg.className = 'auth-msg' + (kind ? ' ' + kind : '');
+    }
+
+    function setAuthTab(tab) {
+      authTab = tab;
+      document.querySelectorAll('.auth-tab').forEach(b => {
+        b.classList.toggle('active', b.dataset.tab === tab);
+      });
+
+      const signup = tab === 'signup';
+      nameField.hidden = !signup;
+      authTitle.textContent = signup ? 'Create your account' : 'Welcome back';
+      authSub.textContent   = signup
+        ? 'One account, every device. Your saves follow you around.'
+        : 'Sign in to sync your saved projects and stats across every device.';
+      authSubmit.textContent = signup ? 'Create account' : 'Sign in';
+      authPassword.setAttribute('autocomplete', signup ? 'new-password' : 'current-password');
+      setAuthMsg('', '');
+    }
+
+    function openAuth(tab) {
+      setAuthTab(tab || 'signin');
+      openGameModal('auth-modal');
+      setTimeout(() => { (authTab === 'signup' ? authName : authEmail).focus(); }, 60);
+    }
+
+    function closeDropdown() {
+      accountDropdown.hidden = true;
+      avatarBtn.setAttribute('aria-expanded', 'false');
+    }
+
+    navSignIn.addEventListener('click', () => openAuth('signin'));
+    heroSignIn.addEventListener('click', () => openAuth('signup'));
+
+    document.querySelectorAll('.auth-tab').forEach(btn => {
+      btn.addEventListener('click', () => setAuthTab(btn.dataset.tab));
+    });
+
+    avatarBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const open = accountDropdown.hidden;
+      accountDropdown.hidden = !open;
+      avatarBtn.setAttribute('aria-expanded', String(open));
+    });
+
+    document.addEventListener('click', (e) => {
+      if (!accountMenu.contains(e.target)) closeDropdown();
+    });
+
+    ddSyncNow.addEventListener('click', async () => {
+      ddStatus.textContent = 'Syncing…';
+      await Cloud.syncNow();
+      toast('Sync complete.', 'ok');
+    });
+
+    ddSignOut.addEventListener('click', async () => {
+      closeDropdown();
+      try {
+        await Cloud.signOut();
+        toast('Signed out. Your saves are safe in the cloud.', 'ok');
+      } catch (e) {
+        toast(e.message, 'error');
+      }
+    });
+
+    authForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+
+      if (!Cloud.configured) {
+        setAuthMsg('Accounts aren’t configured yet — add your Firebase keys to the FIREBASE_CONFIG block in this file.', 'error');
+        return;
+      }
+
+      const email = authEmail.value.trim();
+      const pass  = authPassword.value;
+      const name  = authName.value.trim();
+
+      if (!email || !email.includes('@')) { setAuthMsg('Please enter a valid email address.', 'error'); return; }
+      if (!pass || pass.length < 6)       { setAuthMsg('Passwords need at least 6 characters.', 'error'); return; }
+
+      setAuthMsg('', '');
+      authSubmit.disabled = true;
+      const original = authSubmit.textContent;
+      authSubmit.textContent = authTab === 'signup' ? 'Creating account…' : 'Signing in…';
+
+      try {
+        if (authTab === 'signup') {
+          await Cloud.signUp(email, pass, name);
+          toast('Account created — your saves will now sync.', 'ok');
+        } else {
+          await Cloud.signIn(email, pass);
+          toast('Signed in. Syncing your saves…', 'ok');
+        }
+        closeGameModal('auth-modal');
+        authForm.reset();
+      } catch (err) {
+        setAuthMsg(err.message, 'error');
+      } finally {
+        authSubmit.disabled = false;
+        authSubmit.textContent = original;
+      }
+    });
+
+    googleBtn.addEventListener('click', async () => {
+      if (!Cloud.configured) {
+        setAuthMsg('Accounts aren’t configured yet — add your Firebase keys to this file.', 'error');
+        return;
+      }
+      setAuthMsg('', '');
+      googleBtn.disabled = true;
+      try {
+        await Cloud.signInWithGoogle();
+        closeGameModal('auth-modal');
+        toast('Signed in with Google.', 'ok');
+      } catch (err) {
+        setAuthMsg(err.message, 'error');
+      } finally {
+        googleBtn.disabled = false;
+      }
+    });
+
+    forgotBtn.addEventListener('click', async () => {
+      const email = authEmail.value.trim();
+      if (!Cloud.configured) {
+        setAuthMsg('Accounts aren’t configured yet.', 'error');
+        return;
+      }
+      if (!email) { setAuthMsg('Type your email above first, then hit “Forgot password?”.', 'error'); return; }
+      try {
+        await Cloud.resetPassword(email);
+        setAuthMsg('Password reset email sent — check your inbox.', 'ok');
+      } catch (err) {
+        setAuthMsg(err.message, 'error');
+      }
+    });
+
+    /* ---------- auth rendering ---------- */
+    Cloud.onAuth((u) => {
+      const signedIn = !!u;
+      navSignIn.hidden = signedIn;
+      heroSignIn.hidden = signedIn;
+      accountMenu.hidden = !signedIn;
+
+      if (signedIn) {
+        const name = u.displayName || (u.email || 'you').split('@')[0];
+        avatarInitial.textContent = name.charAt(0).toUpperCase();
+        ddName.textContent = name;
+        ddEmail.textContent = u.email || '';
+        authNote.innerHTML = 'Signed in as <code>' + (u.email || '') + '</code>. Starred projects and stats sync automatically.';
+      } else {
+        closeDropdown();
+        authNote.innerHTML = Cloud.configured
+          ? 'Your saves live in your own account. No ads, no tracking, no spam — just your starred projects and high scores, everywhere you sign in.'
+          : 'Accounts aren’t configured yet. Add your Firebase keys to the <code>FIREBASE_CONFIG</code> block in this file to enable cross-device sync.';
+        googleBtn.disabled = !Cloud.configured;
+        forgotBtn.disabled = !Cloud.configured;
+      }
+    });
+
+    /* ---------- sync status rendering ---------- */
+    const STATUS_TEXT = {
+      'local':      'Local only — accounts not configured',
+      'signed-out': 'Not signed in — saving on this device',
+      'syncing':    'Syncing…',
+      'pending':    'Saving…',
+      'synced':     'Synced to cloud',
+      'error':      'Sync problem — will retry'
+    };
+
+    document.addEventListener('cloud-status', (e) => {
+      const s = e.detail;
+      syncDot.className = 'sync-dot ' + s;
+      ddStatus.textContent = STATUS_TEXT[s] || s;
+      syncDot.title = STATUS_TEXT[s] || s;
+    });
+
+    /* ==========================================================
+       FAVOURITES (synced)
+       ========================================================== */
+    const favButtons = Array.from(document.querySelectorAll('.star-btn'));
+
+    function getFavourites() {
+      const v = Cloud.get('favorites', []);
+      return Array.isArray(v) ? v : [];
+    }
+
+    function renderStars() {
+      const favs = getFavourites();
+      document.querySelectorAll('.project-card').forEach(card => {
+        const id = card.dataset.projectId;
+        const on = favs.indexOf(id) !== -1;
+        card.classList.toggle('is-saved', on);
+        const btn = card.querySelector('.star-btn');
+        if (btn) {
+          btn.classList.toggle('on', on);
+          btn.textContent = on ? '★' : '☆';
+          btn.setAttribute('aria-pressed', String(on));
+          btn.title = on ? 'Saved to your account' : 'Save to your account';
         }
       });
-    }, { threshold: 0.12, rootMargin: '0px 0px -40px 0px' });
-
-    revealEls.forEach(el => io.observe(el));
-  } else {
-    revealEls.forEach(el => el.classList.add('in'));
-  }
-
-  /* ==========================================
-     FOOTER YEAR
-     ========================================== */
-  document.getElementById('year').textContent = new Date().getFullYear();
-
-  /* ==========================================
-     GAME 1: COLOR CONTEXTO
-     ========================================== */
-  let game1_secretColor, game1_guesses, game1_gameOver;
-
-  const game1_colorPicker = document.getElementById('game1-colorPicker');
-  const game1_colorInput = document.getElementById('game1-colorInput');
-  const game1_guessBtn = document.getElementById('game1-guessBtn');
-  const game1_giveUpBtn = document.getElementById('game1-giveUpBtn');
-  const game1_newGameBtn = document.getElementById('game1-newGameBtn');
-  const game1_messageDiv = document.getElementById('game1-message');
-  const game1_guessesContainer = document.getElementById('game1-guessesContainer');
-
-  function game1_initGame() {
-    game1_secretColor = game1_generateRandomColor();
-    game1_guesses = [];
-    game1_gameOver = false;
-    game1_colorPicker.disabled = false;
-    game1_colorPicker.value = '#000000';
-    game1_colorInput.disabled = false;
-    game1_colorInput.value = '';
-    game1_guessBtn.disabled = false;
-    game1_giveUpBtn.disabled = false;
-    game1_newGameBtn.style.display = 'none';
-    game1_messageDiv.textContent = '';
-    game1_renderGuesses();
-  }
-
-  game1_colorPicker.addEventListener('input', (e) => {
-    if (game1_gameOver) return;
-    game1_colorInput.value = e.target.value.toUpperCase();
-  });
-
-  game1_colorInput.addEventListener('input', (e) => {
-    if (game1_gameOver) return;
-    const val = e.target.value;
-    if (val.startsWith('#') && (val.length === 4 || val.length === 7)) {
-      game1_colorPicker.value = val;
     }
-  });
 
-  game1_guessBtn.addEventListener('click', game1_makeGuess);
-  game1_giveUpBtn.addEventListener('click', game1_giveUp);
-  game1_newGameBtn.addEventListener('click', game1_initGame);
-  game1_colorInput.addEventListener('keypress', (e) => {
-    if (e.key === 'Enter' && !game1_gameOver) game1_makeGuess();
-  });
+    favButtons.forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const id = btn.dataset.star;
+        const favs = getFavourites();
+        const idx = favs.indexOf(id);
 
-  function game1_generateRandomColor() {
-    const letters = '0123456789ABCDEF';
-    let color = '#';
-    for (let i = 0; i < 6; i++) {
-      color += letters[Math.floor(Math.random() * 16)];
-    }
-    return color;
-  }
-
-  function game1_hexToRgb(hex) {
-    let c = hex.replace('#', '');
-    if (c.length === 3) c = c.split('').map(ch => ch + ch).join('');
-    const num = parseInt(c, 16);
-    return { r: (num >> 16) & 255, g: (num >> 8) & 255, b: num & 255 };
-  }
-
-  function game1_calculateDistance(hex1, hex2) {
-    const rgb1 = game1_hexToRgb(hex1);
-    const rgb2 = game1_hexToRgb(hex2);
-    const rDiff = rgb1.r - rgb2.r;
-    const gDiff = rgb1.g - rgb2.g;
-    const bDiff = rgb1.b - rgb2.b;
-    return Math.round(Math.sqrt(rDiff * rDiff + gDiff * gDiff + bDiff * bDiff) * 100) / 100;
-  }
-
-  function game1_makeGuess() {
-    if (game1_gameOver) return;
-    let guess = game1_colorInput.value.trim().toUpperCase();
-    if (!guess.startsWith('#')) guess = '#' + guess;
-    if (!/^#[0-9A-F]{6}$/i.test(guess)) {
-      game1_messageDiv.style.color = 'red';
-      game1_messageDiv.textContent = 'Please enter a valid 6-digit hex code (e.g., #FF5733).';
-      return;
-    }
-    if (game1_guesses.some(g => g.color === guess)) {
-      game1_messageDiv.style.color = 'orange';
-      game1_messageDiv.textContent = 'You already guessed that color!';
-      return;
-    }
-    const distance = game1_calculateDistance(guess, game1_secretColor);
-    game1_guesses.push({ color: guess, distance });
-    game1_guesses.sort((a, b) => a.distance - b.distance);
-    game1_renderGuesses();
-    if (distance === 0) {
-      game1_endGame(true);
-    } else {
-      game1_messageDiv.style.color = '#333';
-      game1_messageDiv.textContent = `Distance: ${distance}`;
-    }
-  }
-
-  function game1_giveUp() {
-    if (game1_gameOver) return;
-    game1_endGame(false);
-  }
-
-  function game1_endGame(won) {
-    game1_gameOver = true;
-    game1_guessBtn.disabled = true;
-    game1_giveUpBtn.disabled = true;
-    game1_colorInput.disabled = true;
-    game1_colorPicker.disabled = true;
-    game1_newGameBtn.style.display = 'inline-block';
-    if (won) {
-      game1_messageDiv.style.color = 'green';
-      game1_messageDiv.textContent = `🎉 Correct! You found the secret color ${game1_secretColor}!`;
-    } else {
-      game1_messageDiv.style.color = '#e74c3c';
-      game1_messageDiv.innerHTML = `Game Over! The secret color was <span style="background:${game1_secretColor}; padding: 2px 8px; border-radius:4px; color:white; border:1px solid #333;">${game1_secretColor}</span>`;
-    }
-  }
-
-  function game1_renderGuesses() {
-    game1_guessesContainer.innerHTML = '';
-    game1_guesses.forEach((g, index) => {
-      const row = document.createElement('div');
-      row.className = 'guess-row';
-      const swatch = document.createElement('div');
-      swatch.className = 'swatch';
-      swatch.style.backgroundColor = g.color;
-      const text = document.createElement('span');
-      text.textContent = `#${index + 1}: ${g.color}`;
-      const dist = document.createElement('span');
-      dist.textContent = `Distance: ${g.distance}`;
-      dist.style.fontWeight = 'bold';
-      row.appendChild(swatch);
-      row.appendChild(text);
-      row.appendChild(dist);
-      game1_guessesContainer.appendChild(row);
+        if (idx === -1) {
+          favs.push(id);
+          Cloud.set('favorites', favs);
+          if (Cloud.user) toast('Saved — it’ll follow you to your other devices.', 'ok');
+          else toast('Saved on this device. Sign in to sync across devices.', 'warn');
+        } else {
+          favs.splice(idx, 1);
+          Cloud.set('favorites', favs);
+          toast('Removed from your saved projects.', '');
+        }
+      });
     });
-  }
 
-  game1_initGame();
+    Cloud.onData(renderStars);
+
+    /* ==========================================================
+       PROJECT FILTERS
+       ========================================================== */
+    document.querySelectorAll('.filter-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+
+        const filter = btn.dataset.filter;
+        document.querySelectorAll('.project-card').forEach(card => {
+          let show;
+          if (filter === 'all')        show = true;
+          else if (filter === 'saved') show = card.classList.contains('is-saved');
+          else                         show = card.dataset.category === filter;
+          card.style.display = show ? '' : 'none';
+        });
+      });
+    });
+
+    /* ==========================================================
+       SCROLL REVEAL
+       ========================================================== */
+    const revealEls = document.querySelectorAll('.reveal');
+    if ('IntersectionObserver' in window) {
+      const io = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+          if (entry.isIntersecting) {
+            entry.target.classList.add('in');
+            io.unobserve(entry.target);
+          }
+        });
+      }, { threshold: 0.12, rootMargin: '0px 0px -40px 0px' });
+
+      revealEls.forEach(el => io.observe(el));
+    } else {
+      revealEls.forEach(el => el.classList.add('in'));
+    }
+
+    /* ==========================================================
+       FOOTER YEAR
+       ========================================================== */
+    document.getElementById('year').textContent = new Date().getFullYear();
+
+    /* ==========================================================
+       GAME 1: COLOR CONTEXTO  (+ synced stats)
+       ========================================================== */
+    let game1_secretColor, game1_guesses, game1_gameOver;
+
+    const game1_colorPicker       = document.getElementById('game1-colorPicker');
+    const game1_colorInput        = document.getElementById('game1-colorInput');
+    const game1_guessBtn          = document.getElementById('game1-guessBtn');
+    const game1_giveUpBtn         = document.getElementById('game1-giveUpBtn');
+    const game1_newGameBtn        = document.getElementById('game1-newGameBtn');
+    const game1_messageDiv        = document.getElementById('game1-message');
+    const game1_guessesContainer  = document.getElementById('game1-guessesContainer');
+    const game1_statsBar          = document.getElementById('game1-stats');
+
+    const STATS_KEY = 'stats.colorContexto';
+    const DEFAULT_STATS = { played: 0, won: 0, streak: 0, bestStreak: 0, fewestGuesses: null };
+
+    function game1_renderStats() {
+      const s = Object.assign({}, DEFAULT_STATS, Cloud.get(STATS_KEY, {}) || {});
+      game1_statsBar.innerHTML =
+        '<span><strong>' + s.played + '</strong> played</span>' +
+        '<span><strong>' + s.won + '</strong> solved</span>' +
+        '<span>streak <strong>' + s.streak + '</strong></span>' +
+        '<span>best streak <strong>' + s.bestStreak + '</strong></span>' +
+        '<span>fewest guesses <strong>' + (s.fewestGuesses == null ? '—' : s.fewestGuesses) + '</strong></span>';
+    }
+
+    function game1_recordResult(won) {
+      const s = Object.assign({}, DEFAULT_STATS, Cloud.get(STATS_KEY, {}) || {});
+      s.played += 1;
+
+      if (won) {
+        s.won += 1;
+        s.streak += 1;
+        s.bestStreak = Math.max(s.bestStreak, s.streak);
+        const n = game1_guesses.length;
+        s.fewestGuesses = (s.fewestGuesses == null) ? n : Math.min(s.fewestGuesses, n);
+      } else {
+        s.streak = 0;
+      }
+
+      Cloud.set(STATS_KEY, s);
+      game1_renderStats();
+    }
+
+    function game1_initGame() {
+      game1_secretColor = game1_generateRandomColor();
+      game1_guesses = [];
+      game1_gameOver = false;
+      game1_colorPicker.disabled = false;
+      game1_colorPicker.value = '#000000';
+      game1_colorInput.disabled = false;
+      game1_colorInput.value = '';
+      game1_guessBtn.disabled = false;
+      game1_giveUpBtn.disabled = false;
+      game1_newGameBtn.style.display = 'none';
+      game1_messageDiv.textContent = '';
+      game1_renderGuesses();
+      game1_renderStats();
+    }
+
+    game1_colorPicker.addEventListener('input', (e) => {
+      if (game1_gameOver) return;
+      game1_colorInput.value = e.target.value.toUpperCase();
+    });
+
+    game1_colorInput.addEventListener('input', (e) => {
+      if (game1_gameOver) return;
+      const val = e.target.value;
+      if (val.startsWith('#') && (val.length === 4 || val.length === 7)) {
+        game1_colorPicker.value = val;
+      }
+    });
+
+    game1_guessBtn.addEventListener('click', game1_makeGuess);
+    game1_giveUpBtn.addEventListener('click', game1_giveUp);
+    game1_newGameBtn.addEventListener('click', game1_initGame);
+    game1_colorInput.addEventListener('keypress', (e) => {
+      if (e.key === 'Enter' && !game1_gameOver) game1_makeGuess();
+    });
+
+    function game1_generateRandomColor() {
+      const letters = '0123456789ABCDEF';
+      let color = '#';
+      for (let i = 0; i < 6; i++) {
+        color += letters[Math.floor(Math.random() * 16)];
+      }
+      return color;
+    }
+
+    function game1_hexToRgb(hex) {
+      let c = hex.replace('#', '');
+      if (c.length === 3) c = c.split('').map(ch => ch + ch).join('');
+      const num = parseInt(c, 16);
+      return { r: (num >> 16) & 255, g: (num >> 8) & 255, b: num & 255 };
+    }
+
+    function game1_calculateDistance(hex1, hex2) {
+      const rgb1 = game1_hexToRgb(hex1);
+      const rgb2 = game1_hexToRgb(hex2);
+      const rDiff = rgb1.r - rgb2.r;
+      const gDiff = rgb1.g - rgb2.g;
+      const bDiff = rgb1.b - rgb2.b;
+      return Math.round(Math.sqrt(rDiff * rDiff + gDiff * gDiff + bDiff * bDiff) * 100) / 100;
+    }
+
+    function game1_makeGuess() {
+      if (game1_gameOver) return;
+
+      let guess = game1_colorInput.value.trim().toUpperCase();
+      if (!guess.startsWith('#')) guess = '#' + guess;
+
+      if (!/^#[0-9A-F]{6}$/i.test(guess)) {
+        game1_messageDiv.style.color = 'red';
+        game1_messageDiv.textContent = 'Please enter a valid 6-digit hex code (e.g., #FF5733).';
+        return;
+      }
+
+      if (game1_guesses.some(g => g.color === guess)) {
+        game1_messageDiv.style.color = 'orange';
+        game1_messageDiv.textContent = 'You already guessed that color!';
+        return;
+      }
+
+      const distance = game1_calculateDistance(guess, game1_secretColor);
+      game1_guesses.push({ color: guess, distance });
+      game1_guesses.sort((a, b) => a.distance - b.distance);
+      game1_renderGuesses();
+
+      if (distance === 0) {
+        game1_endGame(true);
+      } else {
+        game1_messageDiv.style.color = '#333';
+        game1_messageDiv.textContent = 'Distance: ' + distance;
+      }
+    }
+
+    function game1_giveUp() {
+      if (game1_gameOver) return;
+      game1_endGame(false);
+    }
+
+    function game1_endGame(won) {
+      game1_gameOver = true;
+      game1_guessBtn.disabled = true;
+      game1_giveUpBtn.disabled = true;
+      game1_colorInput.disabled = true;
+      game1_colorPicker.disabled = true;
+      game1_newGameBtn.style.display = 'inline-block';
+
+      if (won) {
+        game1_messageDiv.style.color = 'green';
+        game1_messageDiv.textContent = '🎉 Correct! You found the secret color ' + game1_secretColor + '!';
+      } else {
+        game1_messageDiv.style.color = '#e74c3c';
+        game1_messageDiv.innerHTML =
+          'Game Over! The secret color was ' +
+          '<span style="background:' + game1_secretColor + '; padding: 2px 8px; border-radius:4px; color:white; border:1px solid #333;">' +
+          game1_secretColor + '</span>';
+      }
+
+      game1_recordResult(won);
+    }
+
+    function game1_renderGuesses() {
+      game1_guessesContainer.innerHTML = '';
+      game1_guesses.forEach((g, index) => {
+        const row = document.createElement('div');
+        row.className = 'guess-row';
+
+        const swatch = document.createElement('div');
+        swatch.className = 'swatch';
+        swatch.style.backgroundColor = g.color;
+
+        const text = document.createElement('span');
+        text.textContent = '#' + (index + 1) + ': ' + g.color;
+
+        const dist = document.createElement('span');
+        dist.textContent = 'Distance: ' + g.distance;
+        dist.style.fontWeight = 'bold';
+
+        row.appendChild(swatch);
+        row.appendChild(text);
+        row.appendChild(dist);
+        game1_guessesContainer.appendChild(row);
+      });
+    }
+
+    Cloud.onData(game1_renderStats);
+
+    game1_initGame();
+
+    /* ==========================================================
+       BOOT
+       ========================================================== */
+    Cloud.init().then(() => {
+      renderStars();
+      game1_renderStats();
+      if (!Cloud.configured) {
+        console.log(
+          '%c[cloud] running in local-only mode — add your Firebase config to FIREBASE_CONFIG to enable cross-device sync.',
+          'color:#f59e0b;'
+        );
+      }
+    });
   </script>
 </body>
 </html>
