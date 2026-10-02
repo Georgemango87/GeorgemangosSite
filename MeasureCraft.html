@@ -479,9 +479,20 @@
     function swapUnits() {
         const fromSelect = document.getElementById('from-unit-select');
         const toSelect = document.getElementById('to-unit-select');
-        const temp = fromSelect.value;
+        const fromInput = document.getElementById('from-input');
+        const toInput = document.getElementById('to-input');
+
+        // Swap selected units in dropdowns
+        const tempUnit = fromSelect.value;
         fromSelect.value = toSelect.value;
-        toSelect.value = temp;
+        toSelect.value = tempUnit;
+
+        // Swap numerical input values
+        const tempVal = fromInput.value;
+        fromInput.value = toInput.value;
+        toInput.value = tempVal;
+
+        // Recalculate based on the new 'from' value
         performConversion('from');
     }
 
