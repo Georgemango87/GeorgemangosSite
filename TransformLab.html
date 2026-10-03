@@ -1,0 +1,2645 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>Transform Lab — turn anything into anything</title>
+<style>
+:root{
+  --bg:#05070d;
+  --panel:#0a0f18;
+  --panel2:#0f1624;
+  --line:#1b2637;
+  --line2:#243349;
+  --txt:#dbe7f5;
+  --dim:#7b8ca6;
+  --dim2:#54637a;
+  --cyan:#22d3ee;
+  --mag:#f472b6;
+  --grn:#4ade80;
+  --amb:#fbbf24;
+  --vio:#a78bfa;
+  --red:#f87171;
+  --mono: ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
+}
+*{box-sizing:border-box}
+html,body{height:100%;margin:0}
+body{
+  background:var(--bg);
+  color:var(--txt);
+  font:13px/1.45 "Inter",system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  overflow:hidden;
+  -webkit-font-smoothing:antialiased;
+}
+button{font-family:inherit;font-size:12px;cursor:pointer}
+input,select,textarea{font-family:inherit;font-size:12px}
+
+/* ---------- header ---------- */
+header{
+  height:52px;display:flex;align-items:center;gap:16px;padding:0 14px;
+  border-bottom:1px solid var(--line);
+  background:linear-gradient(180deg,#0b1220,#070b13);
+  position:relative;z-index:20;
+}
+.logo{
+  font-weight:800;letter-spacing:.16em;font-size:14px;
+  color:#eaf6ff;display:flex;align-items:center;gap:8px;white-space:nowrap;
+}
+.logo b{color:var(--cyan);text-shadow:0 0 14px rgba(34,211,238,.55)}
+.logo .glyph{
+  color:var(--cyan);font-size:16px;
+  animation:spin 9s linear infinite;display:inline-block;
+  text-shadow:0 0 12px rgba(34,211,238,.8);
+}
+@keyframes spin{to{transform:rotate(360deg)}}
+.htools{margin-left:auto;display:flex;gap:7px;flex-wrap:wrap}
+.hbtn{
+  background:#121b2b;border:1px solid var(--line2);color:var(--txt);
+  padding:6px 11px;border-radius:7px;transition:.15s;white-space:nowrap;
+}
+.hbtn:hover{background:#1a2740;border-color:#2f4a6d;color:#fff}
+.hbtn.primary{background:linear-gradient(180deg,#123043,#0d2230);border-color:#1d5a70;color:#a5f3fc}
+.hbtn.primary:hover{border-color:var(--cyan);box-shadow:0 0 16px -4px var(--cyan)}
+.hbtn.danger:hover{border-color:#7f2233;color:#fecdd3;background:#2a1018}
+
+/* ---------- layout ---------- */
+#app{display:grid;grid-template-columns:290px 1fr 350px;height:calc(100vh - 52px)}
+aside{background:var(--panel);overflow-y:auto;overflow-x:hidden}
+#left{border-right:1px solid var(--line)}
+#right{border-left:1px solid var(--line)}
+aside::-webkit-scrollbar,#inspector::-webkit-scrollbar{width:9px}
+aside::-webkit-scrollbar-thumb,#inspector::-webkit-scrollbar-thumb{background:#1d2b41;border-radius:9px}
+aside::-webkit-scrollbar-track,#inspector::-webkit-scrollbar-track{background:transparent}
+
+.sec{border-bottom:1px solid var(--line);padding:12px 12px 14px}
+.sec h2{
+  margin:0 0 9px;font-size:10px;letter-spacing:.18em;text-transform:uppercase;
+  color:var(--dim2);font-weight:700;
+}
+textarea#seedInput{
+  width:100%;min-height:76px;resize:vertical;background:#070c15;color:#cfe9ff;
+  border:1px solid var(--line2);border-radius:8px;padding:9px;font-family:var(--mono);
+  outline:none;transition:.15s;
+}
+textarea#seedInput:focus{border-color:var(--cyan);box-shadow:0 0 0 3px rgba(34,211,238,.09)}
+.row{display:flex;gap:7px;margin-top:8px;align-items:center}
+.row>*{flex:1}
+select,input[type=text],input[type=number]{
+  background:#070c15;border:1px solid var(--line2);color:var(--txt);
+  border-radius:7px;padding:6px 8px;outline:none;width:100%;
+}
+select:focus,input:focus{border-color:#2f6f8a}
+.btn{
+  background:#132033;border:1px solid var(--line2);color:var(--txt);
+  padding:7px 10px;border-radius:7px;transition:.15s;width:100%;
+}
+.btn:hover{background:#1a2b45;border-color:#31527a}
+.btn.acc{background:linear-gradient(180deg,#0f3b4a,#0b2a36);border-color:#1c5b72;color:#a5f3fc}
+.btn.acc:hover{border-color:var(--cyan);box-shadow:0 0 14px -4px var(--cyan)}
+.gen-grid{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+.gen-grid .btn{padding:6px 4px;font-size:11px}
+.hint{color:var(--dim2);font-size:10.5px;margin-top:8px;line-height:1.5}
+.detected{
+  margin-top:7px;font-size:11px;color:var(--dim);font-family:var(--mono);
+}
+.detected b{color:var(--cyan)}
+
+/* saved */
+.saveitem{
+  display:flex;align-items:center;gap:6px;padding:6px 8px;border-radius:7px;
+  border:1px solid var(--line);background:#0c1421;margin-bottom:5px;
+}
+.saveitem .t{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:11.5px;cursor:pointer}
+.saveitem .t:hover{color:var(--cyan)}
+.saveitem .d{font-size:9.5px;color:var(--dim2)}
+.xbtn{background:none;border:none;color:var(--dim2);padding:2px 4px;border-radius:4px}
+.xbtn:hover{color:var(--red);background:#2a1018}
+
+/* ---------- stage ---------- */
+#stage{
+  position:relative;overflow:hidden;
+  background:
+    radial-gradient(900px 500px at 20% 0%, rgba(34,211,238,.055), transparent 65%),
+    radial-gradient(700px 500px at 90% 100%, rgba(244,114,182,.05), transparent 65%),
+    #04060b;
+}
+#stage::before{
+  content:"";position:absolute;inset:0;pointer-events:none;opacity:.5;
+  background-image:linear-gradient(rgba(60,90,130,.09) 1px,transparent 1px),
+                   linear-gradient(90deg,rgba(60,90,130,.09) 1px,transparent 1px);
+  background-size:26px 26px;
+  mask-image:radial-gradient(circle at 50% 40%,#000 30%,transparent 92%);
+  -webkit-mask-image:radial-gradient(circle at 50% 40%,#000 30%,transparent 92%);
+}
+#graph{position:absolute;inset:0;transform-origin:0 0}
+#edges{position:absolute;left:0;top:0;width:100%;height:100%;overflow:visible;pointer-events:none}
+.edge{fill:none;stroke:#2f5f8f;stroke-width:1.6;opacity:.85}
+.stagehint{
+  position:absolute;left:12px;bottom:10px;color:var(--dim2);font-size:10.5px;
+  pointer-events:none;letter-spacing:.03em;
+}
+.zoombox{
+  position:absolute;right:12px;bottom:10px;display:flex;gap:6px;align-items:center;
+  background:rgba(9,14,23,.85);border:1px solid var(--line);border-radius:8px;padding:4px 8px;
+  font-family:var(--mono);font-size:11px;color:var(--dim);
+}
+.zoombox button{background:none;border:none;color:var(--dim);font-size:13px;padding:0 3px}
+.zoombox button:hover{color:var(--cyan)}
+
+/* ---------- nodes ---------- */
+.node{
+  position:absolute;width:224px;border-radius:11px;padding:8px 10px 7px;
+  background:linear-gradient(180deg,#101a2b,#0a111d);
+  border:1px solid #22314a;border-left:3px solid var(--tc,#7d8ea6);
+  box-shadow:0 8px 22px -8px rgba(0,0,0,.85);
+  cursor:grab;user-select:none;transition:box-shadow .15s,border-color .15s;
+}
+.node:hover{border-color:#31456a}
+.node.selected{
+  border-color:var(--tc);box-shadow:0 0 0 1px var(--tc),0 0 28px -8px var(--tc),0 8px 22px -8px #000;
+}
+.node.dragging{cursor:grabbing;opacity:.92;z-index:9}
+.nhead{display:flex;align-items:center;gap:6px;margin-bottom:6px}
+.ntrans{
+  flex:1;font-size:11px;font-weight:600;color:#cfe2f7;overflow:hidden;
+  text-overflow:ellipsis;white-space:nowrap;
+}
+.ntype{
+  font-size:9px;letter-spacing:.06em;text-transform:uppercase;padding:2px 6px;border-radius:20px;
+  background:color-mix(in srgb,var(--tc) 16%,transparent);color:var(--tc);
+  border:1px solid color-mix(in srgb,var(--tc) 40%,transparent);white-space:nowrap;
+}
+.nbody{font-family:var(--mono);font-size:11px;color:#9fd8f5;line-height:1.42}
+.nbody pre{
+  margin:0;white-space:pre-wrap;word-break:break-all;max-height:76px;overflow:hidden;
+  color:#9fd8f5;font-family:var(--mono);font-size:11px;
+}
+.nbody code{font-family:var(--mono);font-size:11px;color:#cfe9ff;display:block;margin-top:4px;word-break:break-all}
+.thumb{width:100%;border-radius:6px;display:block;max-height:110px;object-fit:cover;background:#000}
+.swatch{height:52px;border-radius:7px;border:1px solid rgba(255,255,255,.14)}
+.playbtn{
+  background:#0f2f28;border:1px solid #1e6b57;color:#7ff0c2;border-radius:7px;
+  padding:4px 9px;font-size:11px;width:100%;
+}
+.playbtn:hover{background:#144238;border-color:#34d399}
+.nfoot{display:flex;justify-content:flex-end;margin-top:6px}
+.rev{font-size:9px;letter-spacing:.05em;text-transform:uppercase;padding:2px 6px;border-radius:20px;border:1px solid}
+.rev.reversible{color:#6ee7b7;border-color:#1c5c47;background:#0b241c}
+.rev.partial{color:#fcd34d;border-color:#6b5320;background:#241c0a}
+.rev.lossy{color:#fca5a5;border-color:#7a2b34;background:#2a0f13}
+.rev.oneway{color:#fca5a5;border-color:#7a2b34;background:#2a0f13}
+.rev.source{color:#93c5fd;border-color:#1f4472;background:#0c1a2c}
+
+/* ---------- inspector ---------- */
+#inspector{padding:12px}
+.empty{color:var(--dim2);font-size:12px;text-align:center;padding:38px 14px;line-height:1.7}
+.insp-badge{
+  display:inline-block;font-size:9.5px;letter-spacing:.08em;text-transform:uppercase;
+  padding:2px 8px;border-radius:20px;border:1px solid;margin-bottom:7px;
+}
+.insp-title{font-size:14px;font-weight:700;margin:0 0 8px;color:#eaf6ff;line-height:1.3}
+.valbox{
+  background:#060a12;border:1px solid var(--line);border-radius:8px;padding:9px;
+  font-family:var(--mono);font-size:11.5px;color:#a5e5ff;
+  max-height:190px;overflow:auto;white-space:pre-wrap;word-break:break-all;line-height:1.5;
+}
+.valbox::-webkit-scrollbar{width:8px}
+.valbox::-webkit-scrollbar-thumb{background:#1d2b41;border-radius:8px}
+.bigimg{width:100%;border-radius:7px;border:1px solid var(--line2);display:block}
+.bigswatch{height:74px;border-radius:8px;border:1px solid rgba(255,255,255,.16)}
+.note{
+  margin-top:8px;font-size:11px;color:#8fd0ea;background:#08202b;border-left:2px solid #1c6b85;
+  padding:6px 9px;border-radius:0 6px 6px 0;line-height:1.5;
+}
+.detail{
+  margin-top:8px;background:#0a0714;border:1px solid #241a3d;border-left:2px solid var(--vio);
+  border-radius:0 7px 7px 0;padding:8px 10px;font-family:var(--mono);font-size:11px;
+  color:#c9b6ff;white-space:pre-wrap;line-height:1.55;overflow:auto;max-height:200px;
+}
+.detail::-webkit-scrollbar{width:8px}
+.detail::-webkit-scrollbar-thumb{background:#2a2145;border-radius:8px}
+.divider{height:1px;background:var(--line);margin:13px 0 11px}
+.wcid{
+  width:100%;background:linear-gradient(180deg,#1a1030,#120b22);border:1px solid #3b2a63;
+  color:#d7c6ff;padding:8px;border-radius:8px;font-weight:600;letter-spacing:.03em;transition:.15s;
+}
+.wcid:hover{border-color:var(--vio);box-shadow:0 0 18px -6px var(--vio)}
+.wcid.flash{animation:flash .9s ease}
+@keyframes flash{0%,100%{box-shadow:0 0 0 0 rgba(167,139,250,0)}40%{box-shadow:0 0 22px 2px rgba(167,139,250,.7)}}
+.txsearch{margin:9px 0 4px}
+.cathead{
+  font-size:9.5px;letter-spacing:.16em;text-transform:uppercase;color:var(--dim2);
+  margin:12px 0 5px;font-weight:700;
+}
+.tx{
+  border:1px solid var(--line);border-radius:8px;background:#0b1220;margin-bottom:5px;
+  overflow:hidden;transition:.15s;
+}
+.tx:hover{border-color:#2c4467;background:#0e1728}
+.tx.open{border-color:#2f5f8f;background:#0d1727}
+.txrow{display:flex;align-items:center;gap:6px;padding:7px 8px}
+.txmain{
+  flex:1;background:none;border:none;color:#d5e6fa;text-align:left;padding:0;
+  display:flex;align-items:center;gap:7px;overflow:hidden;font-size:12px;
+}
+.txmain .nm{font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.txmain .to{
+  margin-left:auto;font-family:var(--mono);font-size:9.5px;color:var(--dim2);white-space:nowrap;
+}
+.txinfo{
+  background:none;border:1px solid var(--line2);color:var(--dim2);border-radius:50%;
+  width:17px;height:17px;line-height:1;font-size:10px;padding:0;flex:none;
+}
+.txinfo:hover{color:var(--cyan);border-color:#2f6f8a}
+.txbody{padding:0 9px 9px;display:none}
+.tx.open .txbody{display:block}
+.txdesc{font-size:11px;color:var(--dim);line-height:1.5;margin-bottom:8px}
+.prms{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:8px}
+.prm{display:flex;flex-direction:column;gap:3px;font-size:10px;color:var(--dim2)}
+.prm span{letter-spacing:.05em;text-transform:uppercase;font-size:9px}
+.prm input,.prm select{padding:5px 7px;font-size:11.5px}
+.revpill{font-size:9px;padding:1px 6px;border-radius:20px;border:1px solid;flex:none}
+.go{
+  width:100%;background:#0f3b4a;border:1px solid #1c5b72;color:#a5f3fc;padding:6px;
+  border-radius:7px;font-size:11.5px;
+}
+.go:hover{border-color:var(--cyan);box-shadow:0 0 14px -4px var(--cyan)}
+
+/* toast */
+#toasts{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);z-index:100;display:flex;flex-direction:column;gap:7px;align-items:center}
+.toast{
+  background:#2a1018;border:1px solid #7f2233;color:#fecdd3;padding:8px 15px;border-radius:9px;
+  font-size:12px;box-shadow:0 10px 30px -10px #000;animation:pop .25s ease;
+}
+.toast.ok{background:#0b241c;border-color:#1c5c47;color:#a7f3d0}
+@keyframes pop{from{opacity:0;transform:translateY(9px)}to{opacity:1;transform:none}}
+
+@media (max-width:1180px){
+  #app{grid-template-columns:250px 1fr 310px}
+}
+@media (max-width:900px){
+  #app{grid-template-columns:1fr}
+  #left,#right{display:none}
+}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo"><span class="glyph">◈</span>TRANSFORM<b>LAB</b></div>
+  <div class="htools">
+    <button class="hbtn primary" id="btnSurprise">✨ Surprise Me</button>
+    <button class="hbtn" id="btnFit">⤢ Fit</button>
+    <button class="hbtn" id="btnUndo">↶ Undo</button>
+    <button class="hbtn" id="btnSave">💾 Save</button>
+    <button class="hbtn danger" id="btnClear">✕ Reset</button>
+  </div>
+</header>
+
+<div id="app">
+  <!-- ================= LEFT ================= -->
+  <aside id="left">
+    <div class="sec">
+      <h2>Seed</h2>
+      <textarea id="seedInput" placeholder="HELLO&#10;42&#10;01001000 01101001&#10;#ff0000&#10;... --- ...&#10;{&quot;a&quot;:1}"></textarea>
+      <div class="row">
+        <select id="seedType">
+          <option value="auto">Auto-detect</option>
+          <option value="text">Text</option>
+          <option value="number">Number</option>
+          <option value="numbers">Numbers</option>
+          <option value="binary">Binary</option>
+          <option value="hex">Hexadecimal</option>
+          <option value="morse">Morse</option>
+          <option value="bool">Boolean</option>
+          <option value="json">JSON</option>
+          <option value="color">Color</option>
+          <option value="expr">Expression</option>
+        </select>
+      </div>
+      <div class="detected" id="detected">detected: <b>text</b></div>
+      <div class="row"><button class="btn acc" id="addSeed">▶ Add to lab</button></div>
+      <div class="row">
+        <button class="btn" id="pickImage">🖼 Upload image</button>
+      </div>
+      <input type="file" id="fileInput" accept="image/*" style="display:none">
+      <div class="hint">Images are processed entirely in your browser. Nothing is uploaded anywhere.</div>
+    </div>
+
+    <div class="sec">
+      <h2>Generate</h2>
+      <div class="gen-grid">
+        <button class="btn" data-gen="number"># number</button>
+        <button class="btn" data-gen="binary">01 binary</button>
+        <button class="btn" data-gen="hex">hex</button>
+        <button class="btn" data-gen="string">string</button>
+        <button class="btn" data-gen="color">color</button>
+        <button class="btn" data-gen="morse">morse</button>
+        <button class="btn" data-gen="expr">expr</button>
+        <button class="btn" data-gen="json">json</button>
+      </div>
+      <div class="hint">Generated values drop straight into the seed box — then transform them.</div>
+    </div>
+
+    <div class="sec">
+      <h2>Saved experiments</h2>
+      <div id="savedList"></div>
+      <div class="hint">Saving stores the whole graph in this browser's localStorage.</div>
+    </div>
+  </aside>
+
+  <!-- ================= STAGE ================= -->
+  <main id="stage">
+    <div id="graph"><svg id="edges"></svg></div>
+    <div class="stagehint">drag nodes · drag background to pan · scroll to zoom</div>
+    <div class="zoombox">
+      <button id="zoomOut">−</button><span id="zoomVal">100%</span><button id="zoomIn">+</button>
+    </div>
+  </main>
+
+  <!-- ================= RIGHT ================= -->
+  <aside id="right"><div id="inspector"></div></aside>
+</div>
+
+<div id="toasts"></div>
+
+<script>
+"use strict";
+/* =========================================================================
+   0. TINY UTILITIES
+   ========================================================================= */
+const $  = (s, r = document) => r.querySelector(s);
+const $$ = (s, r = document) => Array.from(r.querySelectorAll(s));
+const esc = s => String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+const truncate = (s, n) => { s = String(s); return s.length > n ? s.slice(0, n) + ' …' : s; };
+let _uid = 1;
+const uid = () => 'n' + (_uid++);
+
+function toast(msg, ok) {
+  const d = document.createElement('div');
+  d.className = 'toast' + (ok ? ' ok' : '');
+  d.textContent = msg;
+  $('#toasts').appendChild(d);
+  setTimeout(() => { d.style.opacity = '0'; d.style.transition = 'opacity .3s'; }, 2200);
+  setTimeout(() => d.remove(), 2600);
+}
+
+/* ---- text / byte helpers ---- */
+const TE = new TextEncoder(), TD = new TextDecoder();
+const toBytes = s => Array.from(TE.encode(String(s)));
+const fromBytes = a => { try { return TD.decode(new Uint8Array(a)); } catch (e) { return ''; } };
+const nums = v => (String(v).match(/-?\d+(?:\.\d+)?/g) || []).map(Number);
+const cleanBin = s => String(s).replace(/[^01]/g, '');
+const bitsOfByte = n => ((n & 255) >>> 0).toString(2).padStart(8, '0');
+const hexOfByte = n => ((n & 255) >>> 0).toString(16).toUpperCase().padStart(2, '0');
+
+function binToBytes(bits) {
+  let b = cleanBin(bits);
+  if (!b.length) return [];
+  if (b.length % 8) b = b.padStart(Math.ceil(b.length / 8) * 8, '0');
+  const out = [];
+  for (let i = 0; i < b.length; i += 8) out.push(parseInt(b.slice(i, i + 8), 2));
+  return out;
+}
+function hexToBytes(h) {
+  let s = String(h).replace(/[^0-9a-fA-F]/g, '');
+  if (s.length % 2) s = '0' + s;
+  const out = [];
+  for (let i = 0; i < s.length; i += 2) out.push(parseInt(s.substr(i, 2), 16));
+  return out;
+}
+function gcd(a, b) { a = Math.abs(a); b = Math.abs(b); while (b) { [a, b] = [b, a % b]; } return a; }
+function lcm(a, b) { return Math.abs(a * b) / (gcd(a, b) || 1); }
+function isPrime(n) {
+  n = Math.abs(Math.trunc(n));
+  if (n < 2) return false;
+  if (n % 2 === 0) return n === 2;
+  for (let i = 3; i * i <= n; i += 2) if (n % i === 0) return false;
+  return true;
+}
+function primeFactors(n) {
+  n = Math.abs(Math.trunc(n));
+  const out = [];
+  if (n < 2) return out;
+  for (let d = 2; d * d <= n; d++) while (n % d === 0) { out.push(d); n /= d; }
+  if (n > 1) out.push(n);
+  return out;
+}
+function divisors(n) {
+  n = Math.abs(Math.trunc(n));
+  const out = [];
+  if (n === 0) return out;
+  for (let i = 1; i * i <= n; i++) if (n % i === 0) { out.push(i); if (i !== n / i) out.push(n / i); }
+  return out.sort((a, b) => a - b);
+}
+
+/* ---- type metadata ---- */
+const TYPE_META = {
+  text:    { label: 'Text',       c: '#7dd3fc' },
+  number:  { label: 'Number',     c: '#4ade80' },
+  numbers: { label: 'Numbers',    c: '#86efac' },
+  binary:  { label: 'Binary',     c: '#a78bfa' },
+  hex:     { label: 'Hex',        c: '#fbbf24' },
+  morse:   { label: 'Morse',      c: '#f472b6' },
+  bool:    { label: 'Boolean',    c: '#22d3ee' },
+  json:    { label: 'JSON',       c: '#fb923c' },
+  color:   { label: 'Color',      c: '#f87171' },
+  image:   { label: 'Image',      c: '#38bdf8' },
+  expr:    { label: 'Expression', c: '#c084fc' },
+  sound:   { label: 'Sound',      c: '#34d399' },
+};
+const REV_LABEL = { reversible: 'reversible', partial: 'partially reversible', lossy: 'lossy', oneway: 'one-way', source: 'source' };
+const revLabel = r => REV_LABEL[r] || 'reversible';
+const revClass = r => (r === 'partial' ? 'partial' : r === 'lossy' || r === 'oneway' ? 'lossy' : r === 'source' ? 'source' : 'reversible');
+
+/* =========================================================================
+   1. MORSE / CIPHERS / MATH EXPRESSION
+   ========================================================================= */
+const MORSE = {
+  A:'.-', B:'-...', C:'-.-.', D:'-..', E:'.', F:'..-.', G:'--.', H:'....', I:'..', J:'.---',
+  K:'-.-', L:'.-..', M:'--', N:'-.', O:'---', P:'.--.', Q:'--.-', R:'.-.', S:'...', T:'-',
+  U:'..-', V:'...-', W:'.--', X:'-..-', Y:'-.--', Z:'--..',
+  '0':'-----','1':'.----','2':'..---','3':'...--','4':'....-','5':'.....',
+  '6':'-....','7':'--...','8':'---..','9':'----.',
+  '.':'.-.-.-', ',':'--..--', '?':'..--..', "'":'.----.', '!':'-.-.--', '/':'-..-.',
+  '(':'-.--.', ')':'-.--.-', '&':'.-...', ':':'---...', ';':'-.-.-.', '=':'-...-',
+  '+':'.-.-.', '-':'-....-', '_':'..--.-', '"':'.-..-.', '$':'...-..-', '@':'.--.-.'
+};
+const UNMORSE = {};
+for (const k in MORSE) UNMORSE[MORSE[k]] = k;
+
+function textToMorse(s) {
+  const words = String(s).toUpperCase().split(/\s+/);
+  return words.map(w => [...w].map(c => MORSE[c] || '').filter(Boolean).join(' '))
+              .filter(Boolean).join(' / ');
+}
+function morseToText(s) {
+  return String(s).trim().split(/\s*\/\s*|\s{3,}/)
+    .map(word => word.trim().split(/\s+/).map(c => UNMORSE[c] || '').join(''))
+    .join(' ').trim();
+}
+function caesarShift(s, k) {
+  return [...String(s)].map(c => {
+    const u = c.toUpperCase(), code = u.charCodeAt(0);
+    if (code >= 65 && code <= 90) {
+      const n = ((code - 65 + k) % 26 + 26) % 26;
+      const ch = String.fromCharCode(65 + n);
+      return c === u ? ch : ch.toLowerCase();
+    }
+    return c;
+  }).join('');
+}
+const AFFINE_A = [1, 3, 5, 7, 9, 11, 15, 17, 19, 21, 23, 25];
+function modInverse(a, m) { a = ((a % m) + m) % m; for (let i = 1; i < m; i++) if ((a * i) % m === 1) return i; return 1; }
+function affine(s, a, b, dec) {
+  a = +a; b = +b;
+  if (!AFFINE_A.includes(((a % 26) + 26) % 26)) throw new Error('Key "a" must be coprime with 26 (1,3,5,7,9,11,15,17,19,21,23,25)');
+  const ai = modInverse(a, 26);
+  return [...String(s)].map(c => {
+    const u = c.toUpperCase(), code = u.charCodeAt(0);
+    if (code < 65 || code > 90) return c;
+    const x = code - 65;
+    const y = dec ? (((ai * (x - b)) % 26) + 26) % 26 : ((a * x + b) % 26 + 26) % 26;
+    const ch = String.fromCharCode(65 + y);
+    return c === u ? ch : ch.toLowerCase();
+  }).join('');
+}
+function vigenere(s, key, dec) {
+  key = String(key).toUpperCase().replace(/[^A-Z]/g, '');
+  if (!key) throw new Error('Key must contain letters');
+  let ki = 0;
+  return [...String(s)].map(c => {
+    const u = c.toUpperCase(), code = u.charCodeAt(0);
+    if (code < 65 || code > 90) return c;
+    const k = key.charCodeAt(ki % key.length) - 65; ki++;
+    const x = code - 65;
+    const y = dec ? ((x - k) % 26 + 26) % 26 : (x + k) % 26;
+    const ch = String.fromCharCode(65 + y);
+    return c === u ? ch : ch.toLowerCase();
+  }).join('');
+}
+function railEncode(s, rails) {
+  rails = Math.max(2, Math.round(rails));
+  const rows = Array.from({ length: rails }, () => []);
+  let r = 0, dir = 1;
+  for (const ch of String(s)) {
+    rows[r].push(ch);
+    r += dir;
+    if (r === 0 || r === rails - 1) dir *= -1;
+  }
+  return rows.map(x => x.join('')).join('');
+}
+function railDecode(s, rails) {
+  rails = Math.max(2, Math.round(rails));
+  s = String(s);
+  const pattern = [];
+  let r = 0, dir = 1;
+  for (let i = 0; i < s.length; i++) {
+    pattern.push(r); r += dir;
+    if (r === 0 || r === rails - 1) dir *= -1;
+  }
+  const counts = new Array(rails).fill(0);
+  pattern.forEach(x => counts[x]++);
+  const rows = []; let idx = 0;
+  for (let i = 0; i < rails; i++) { rows.push(s.slice(idx, idx + counts[i]).split('')); idx += counts[i]; }
+  const pos = new Array(rails).fill(0);
+  return pattern.map(x => rows[x][pos[x]++]).join('');
+}
+function substitution(s, key, dec) {
+  key = String(key).toUpperCase().replace(/[^A-Z]/g, '');
+  if (key.length !== 26 || new Set(key).size !== 26) throw new Error('Key must be a permutation of 26 letters (A–Z)');
+  const plain = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+  const from = dec ? key : plain, to = dec ? plain : key;
+  return [...String(s)].map(c => {
+    const u = c.toUpperCase(), idx = from.indexOf(u);
+    if (idx < 0) return c;
+    const ch = to[idx];
+    return c === u ? ch : ch.toLowerCase();
+  }).join('');
+}
+
+/* ---- FNV / djb2 hashes (non-cryptographic) ---- */
+function fnv1a(str) { let h = 0x811c9dc5; for (const b of toBytes(str)) { h ^= b; h = Math.imul(h, 0x01000193) >>> 0; } return h >>> 0; }
+function djb2(str)  { let h = 5381; for (const b of toBytes(str)) h = (Math.imul(h, 33) + b) >>> 0; return h >>> 0; }
+
+/* ---- math expression evaluator ---- */
+function evalExpr(src, xVal) {
+  const s = String(src).replace(/\s+/g, '');
+  let i = 0;
+  const peek = () => s[i];
+  function expr() { let v = term(); while (peek() === '+' || peek() === '-') { const op = s[i++]; const r = term(); v = op === '+' ? v + r : v - r; } return v; }
+  function term() { let v = unary(); while (peek() === '*' || peek() === '/' || peek() === '%') { const op = s[i++]; const r = unary(); v = op === '*' ? v * r : op === '/' ? v / r : v % r; } return v; }
+  function unary() { if (peek() === '-') { i++; return -unary(); } if (peek() === '+') { i++; return unary(); } return power(); }
+  function power() { const b = atom(); if (peek() === '^') { i++; return Math.pow(b, unary()); } return b; }
+  function atom() {
+    if (peek() === '(') { i++; const v = expr(); if (peek() === ')') i++; return v; }
+    const m = /^\d+(?:\.\d+)?/.exec(s.slice(i));
+    if (m) { i += m[0].length; return parseFloat(m[0]); }
+    const f = /^[a-zA-Z]+/.exec(s.slice(i));
+    if (f) {
+      const name = f[0].toLowerCase(); i += name.length;
+      if (name === 'x') return xVal;
+      if (name === 'pi') return Math.PI;
+      if (name === 'e') return Math.E;
+      const F = { sin: Math.sin, cos: Math.cos, tan: Math.tan, sqrt: Math.sqrt, abs: Math.abs,
+                  log: Math.log10 || Math.log, ln: Math.log, exp: Math.exp,
+                  floor: Math.floor, ceil: Math.ceil, round: Math.round };
+      if (F[name]) {
+        if (peek() === '(') { i++; const a = expr(); if (peek() === ')') i++; return F[name](a); }
+        return F[name](atom());
+      }
+      throw new Error('Unknown name "' + name + '"');
+    }
+    throw new Error('Unexpected ' + (peek() ? '"' + peek() + '"' : 'end of expression'));
+  }
+  const v = expr();
+  if (i < s.length) throw new Error('Unexpected "' + s[i] + '"');
+  return v;
+}
+
+/* =========================================================================
+   2. TRANSFORMATION REGISTRY
+   ========================================================================= */
+const REG = [];
+function reg(o) { REG.push(o); return o; }
+const byId = id => REG.find(t => t.id === id);
+const accepts = (t, type) => (Array.isArray(t.from) ? t.from : [t.from]).includes(type);
+
+/* ---------- TEXT : encoding ---------- */
+reg({ id:'t-ascii', name:'ASCII / char codes', from:'text', to:'numbers', rev:'reversible', cat:'Encoding',
+  info:'Each character becomes its numeric code point. Space is 32, "A" is 65, "a" is 97.',
+  run(v){
+    const chars = [...String(v)];
+    const ns = chars.map(c => c.codePointAt(0));
+    const detail = chars.slice(0, 10).map((c, i) => `"${c}" → ${ns[i]}`).join('\n');
+    return { value: ns.join(' '), note: ns.length + ' character code(s)', detail };
+  }});
+
+reg({ id:'t-unicode', name:'Unicode code points', from:'text', to:'text', rev:'reversible', cat:'Encoding',
+  info:'Shows every character as a U+XXXX hexadecimal code point.',
+  run(v){
+    return { value: [...String(v)].map(c => 'U+' + c.codePointAt(0).toString(16).toUpperCase().padStart(4, '0')).join(' ') };
+  }});
+
+reg({ id:'t-utf8', name:'UTF-8 bytes', from:'text', to:'numbers', rev:'reversible', cat:'Encoding',
+  info:'Text encoded as UTF-8 bytes. ASCII characters stay one byte; emoji and accents take more.',
+  run(v){ const b = toBytes(v); return { value: b.join(' '), note: b.length + ' byte(s)' }; }});
+
+reg({ id:'t-bin', name:'Binary (UTF-8)', from:'text', to:'binary', rev:'reversible', cat:'Encoding',
+  info:'Every UTF-8 byte written as eight 0/1 bits.',
+  run(v){
+    const b = toBytes(v);
+    const detail = b.slice(0, 6).map(x => `${x} = ${bitsOfByte(x)}`).join('\n');
+    return { value: b.map(bitsOfByte).join(' '), detail };
+  }});
+
+reg({ id:'t-hex', name:'Hexadecimal (UTF-8)', from:'text', to:'hex', rev:'reversible', cat:'Encoding',
+  info:'Every UTF-8 byte written as two hexadecimal digits.',
+  run(v){ return { value: toBytes(v).map(hexOfByte).join(' ') }; }});
+
+reg({ id:'t-oct', name:'Octal (UTF-8)', from:'text', to:'numbers', rev:'reversible', cat:'Encoding',
+  info:'Every UTF-8 byte written in base 8.',
+  run(v){ return { value: toBytes(v).map(b => b.toString(8)).join(' ') }; }});
+
+reg({ id:'t-b64', name:'Base64 encode', from:'text', to:'text', rev:'reversible', cat:'Encoding',
+  info:'Base64 packs 3 bytes into 4 printable characters using the standard A–Z a–z 0–9 + / alphabet.',
+  run(v){ let s = ''; for (const b of toBytes(v)) s += String.fromCharCode(b); return { value: btoa(s) }; }});
+
+reg({ id:'t-b64d', name:'Base64 decode', from:'text', to:'text', rev:'reversible', cat:'Encoding',
+  info:'Decodes a Base64 string back into UTF-8 text.',
+  run(v){
+    const s = String(v).trim().replace(/\s+/g, '');
+    if (!/^[A-Za-z0-9+/]*={0,2}$/.test(s)) throw new Error('Not valid Base64');
+    try {
+      const raw = atob(s);
+      const bytes = Uint8Array.from(raw, c => c.charCodeAt(0));
+      return { value: fromBytes(bytes) };
+    } catch (e) { throw new Error('Not valid Base64'); }
+  }});
+
+reg({ id:'t-url', name:'URL encode', from:'text', to:'text', rev:'reversible', cat:'Encoding',
+  info:'Percent-encodes characters so the text can travel safely inside a URL.',
+  run(v){ return { value: encodeURIComponent(v) }; }});
+
+reg({ id:'t-urld', name:'URL decode', from:'text', to:'text', rev:'reversible', cat:'Encoding',
+  info:'Turns %XX escapes back into characters.',
+  run(v){ try { return { value: decodeURIComponent(v) }; } catch (e) { throw new Error('Invalid percent-encoding'); } }});
+
+reg({ id:'t-html', name:'HTML entities', from:'text', to:'text', rev:'reversible', cat:'Encoding',
+  info:'Escapes characters as HTML numeric entities.',
+  run(v){
+    return { value: [...String(v)].map(c => { const n = c.codePointAt(0); return /[&<>"']/.test(c) || n > 126 ? '&#' + n + ';' : c; }).join('') };
+  }});
+
+reg({ id:'t-htmld', name:'HTML entities decode', from:'text', to:'text', rev:'reversible', cat:'Encoding',
+  info:'Converts &#NN; entities and a few common named entities back to characters.',
+  run(v){
+    const named = { amp:'&', lt:'<', gt:'>', quot:'"', apos:"'", nbsp:' ' };
+    return { value: String(v).replace(/&#(\d+);/g, (m, d) => String.fromCodePoint(+d))
+                            .replace(/&#x([0-9a-f]+);/gi, (m, h) => String.fromCodePoint(parseInt(h, 16)))
+                            .replace(/&([a-z]+);/gi, (m, n) => named[n.toLowerCase()] !== undefined ? named[n.toLowerCase()] : m) };
+  }});
+
+/* ---------- TEXT : ciphers ---------- */
+reg({ id:'t-caesar', name:'Caesar cipher', from:'text', to:'text', rev:'reversible', cat:'Ciphers',
+  info:'Shifts every letter a fixed number of places through the alphabet. Educational only — NOT secure encryption.',
+  params:[ { key:'shift', label:'Shift', type:'number', def:3, min:1, max:25 },
+           { key:'mode', label:'Mode', type:'select', options:['encode','decode'], def:'encode' } ],
+  run(v,p){
+    const k = (+p.shift || 0) * (p.mode === 'decode' ? -1 : 1);
+    const ex = caesarShift('ABCXYZ', k);
+    return { value: caesarShift(v, k), detail:`shift ${k >= 0 ? '+' : ''}${k}\nA B C X Y Z  →  ${ex.split('').join(' ')}` };
+  }});
+
+reg({ id:'t-rot13', name:'ROT13', from:'text', to:'text', rev:'reversible', cat:'Ciphers',
+  info:'A Caesar shift of 13. Applying it twice returns the original text.',
+  run(v){ return { value: caesarShift(v, 13), detail:'ROT13 is its own inverse.' }; }});
+
+reg({ id:'t-atbash', name:'Atbash', from:'text', to:'text', rev:'reversible', cat:'Ciphers',
+  info:'Mirrors the alphabet: A↔Z, B↔Y, C↔X …',
+  run(v){
+    return { value: [...String(v)].map(c => {
+      const u = c.toUpperCase(), code = u.charCodeAt(0);
+      if (code < 65 || code > 90) return c;
+      const ch = String.fromCharCode(90 - (code - 65));
+      return c === u ? ch : ch.toLowerCase();
+    }).join(''), detail:'A↔Z  B↔Y  C↔X  …  Z↔A' };
+  }});
+
+reg({ id:'t-affine', name:'Affine cipher', from:'text', to:'text', rev:'reversible', cat:'Ciphers',
+  info:'Maps each letter with E(x) = (a·x + b) mod 26. "a" must be coprime with 26 so the mapping can be reversed. Educational only.',
+  params:[ { key:'a', label:'Key a', type:'number', def:5, min:1, max:25 },
+           { key:'b', label:'Key b', type:'number', def:8, min:0, max:25 },
+           { key:'mode', label:'Mode', type:'select', options:['encode','decode'], def:'encode' } ],
+  run(v,p){
+    const out = affine(v, p.a, p.b, p.mode === 'decode');
+    return { value: out, detail:`E(x) = (${p.a}·x + ${p.b}) mod 26${p.mode === 'decode' ? '\nusing inverse of a mod 26' : ''}` };
+  }});
+
+reg({ id:'t-vigenere', name:'Vigenère cipher', from:'text', to:'text', rev:'reversible', cat:'Ciphers',
+  info:'A polyalphabetic cipher: each letter is shifted by the corresponding letter of a repeating keyword. Educational only.',
+  params:[ { key:'key', label:'Keyword', type:'text', def:'LEMON' },
+           { key:'mode', label:'Mode', type:'select', options:['encode','decode'], def:'encode' } ],
+  run(v,p){ return { value: vigenere(v, p.key, p.mode === 'decode'), detail:`keyword: ${String(p.key).toUpperCase()}` }; }});
+
+reg({ id:'t-rail', name:'Rail Fence cipher', from:'text', to:'text', rev:'reversible', cat:'Ciphers',
+  info:'Writes the text in a zig-zag across N rails, then reads each rail in order. Educational only.',
+  params:[ { key:'rails', label:'Rails', type:'number', def:3, min:2, max:10 },
+           { key:'mode', label:'Mode', type:'select', options:['encode','decode'], def:'encode' } ],
+  run(v,p){
+    const r = clamp(Math.round(+p.rails || 3), 2, 10);
+    return { value: p.mode === 'decode' ? railDecode(v, r) : railEncode(v, r), detail:`${r} rails` };
+  }});
+
+reg({ id:'t-subst', name:'Substitution cipher', from:'text', to:'text', rev:'reversible', cat:'Ciphers',
+  info:'Replaces each letter using a 26-letter key alphabet. Educational only — a simple substitution is easily broken by frequency analysis.',
+  params:[ { key:'key', label:'Key alphabet', type:'text', def:'QWERTYUIOPASDFGHJKLZXCVBNM' },
+           { key:'mode', label:'Mode', type:'select', options:['encode','decode'], def:'encode' } ],
+  run(v,p){ return { value: substitution(v, p.key, p.mode === 'decode'), detail:'key: ' + String(p.key).toUpperCase() }; }});
+
+/* ---------- TEXT : manipulation ---------- */
+reg({ id:'t-rev', name:'Reverse text', from:'text', to:'text', rev:'reversible', cat:'Text',
+  info:'Writes every character in reverse order.',
+  run(v){ return { value: [...String(v)].reverse().join('') }; }});
+
+reg({ id:'t-revw', name:'Reverse words', from:'text', to:'text', rev:'reversible', cat:'Text',
+  info:'Keeps word order reversed but leaves the letters inside each word intact.',
+  run(v){ return { value: String(v).split(/(\s+)/).reverse().join('') }; }});
+
+reg({ id:'t-sort', name:'Sort characters', from:'text', to:'text', rev:'lossy', cat:'Text',
+  info:'Sorts characters alphabetically. Order information is lost, but the multiset of characters is preserved.',
+  run(v){ return { value: [...String(v)].sort().join('') }; }});
+
+reg({ id:'t-unique', name:'Unique characters', from:'text', to:'text', rev:'lossy', cat:'Text',
+  info:'Lists each distinct character once, in order of first appearance.',
+  run(v){
+    const seen = [], set = new Set();
+    for (const c of String(v)) if (!set.has(c)) { set.add(c); seen.push(c); }
+    return { value: seen.join(''), note: seen.length + ' unique of ' + [...String(v)].length };
+  }});
+
+reg({ id:'t-nospace', name:'Remove spaces', from:'text', to:'text', rev:'lossy', cat:'Text',
+  info:'Deletes all whitespace characters.',
+  run(v){ return { value: String(v).replace(/\s+/g, '') }; }});
+
+reg({ id:'t-upper', name:'UPPERCASE', from:'text', to:'text', rev:'partial', cat:'Text',
+  info:'Converts to upper case. The original casing cannot be recovered.',
+  run(v){ return { value: String(v).toUpperCase() }; }});
+
+reg({ id:'t-lower', name:'lowercase', from:'text', to:'text', rev:'partial', cat:'Text',
+  info:'Converts to lower case. The original casing cannot be recovered.',
+  run(v){ return { value: String(v).toLowerCase() }; }});
+
+reg({ id:'t-title', name:'Title Case', from:'text', to:'text', rev:'partial', cat:'Text',
+  info:'Capitalises the first letter of every word.',
+  run(v){ return { value: String(v).replace(/\w\S*/g, w => w[0].toUpperCase() + w.slice(1).toLowerCase()) }; }});
+
+reg({ id:'t-charfreq', name:'Character frequency', from:'text', to:'text', rev:'lossy', cat:'Text',
+  info:'Counts how often each character appears, most frequent first.',
+  run(v){
+    const map = new Map();
+    for (const c of String(v)) map.set(c, (map.get(c) || 0) + 1);
+    const rows = [...map.entries()].sort((a, b) => b[1] - a[1]);
+    const total = [...String(v)].length || 1;
+    return { value: rows.map(([c, n]) => `${c === ' ' ? '␠' : c}\t${n}\t${(n / total * 100).toFixed(1)}%`).join('\n'),
+             note: rows.length + ' distinct characters' };
+  }});
+
+reg({ id:'t-wordfreq', name:'Word frequency', from:'text', to:'text', rev:'lossy', cat:'Text',
+  info:'Counts how often each word appears, most frequent first.',
+  run(v){
+    const map = new Map();
+    for (const w of String(v).toLowerCase().split(/\s+/).filter(Boolean)) map.set(w, (map.get(w) || 0) + 1);
+    const rows = [...map.entries()].sort((a, b) => b[1] - a[1]);
+    return { value: rows.map(([w, n]) => `${w}\t${n}`).join('\n'), note: rows.length + ' distinct words' };
+  }});
+
+reg({ id:'t-pos', name:'Character positions', from:'text', to:'text', rev:'lossy', cat:'Text',
+  info:'Shows each character together with its index.',
+  run(v){
+    return { value: [...String(v)].map((c, i) => `${c}@${i}`).join(' ') };
+  }});
+
+reg({ id:'t-stats', name:'Text statistics', from:'text', to:'text', rev:'lossy', cat:'Text',
+  info:'Length, word count, character class counts and byte size.',
+  run(v){
+    const s = String(v), chars = [...s];
+    const lines = [
+      'characters : ' + chars.length,
+      'words      : ' + s.split(/\s+/).filter(Boolean).length,
+      'lines      : ' + s.split('\n').length,
+      'letters    : ' + chars.filter(c => /[a-z]/i.test(c)).length,
+      'digits     : ' + chars.filter(c => /\d/.test(c)).length,
+      'spaces     : ' + chars.filter(c => /\s/.test(c)).length,
+      'unique     : ' + new Set(chars).size,
+      'utf-8 bytes: ' + toBytes(s).length,
+    ];
+    return { value: lines.join('\n') };
+  }});
+
+reg({ id:'t-hash', name:'Hash (FNV-1a / djb2)', from:'text', to:'text', rev:'oneway', cat:'Text',
+  info:'Non-cryptographic 32-bit hashes. Fast, useful for bucketing — NOT suitable for security or passwords.',
+  run(v){
+    const f = fnv1a(v), d = djb2(v);
+    return { value: `FNV-1a : 0x${f.toString(16).toUpperCase().padStart(8,'0')}  (${f})\ndjb2   : 0x${d.toString(16).toUpperCase().padStart(8,'0')}  (${d})`,
+             detail:'These are one-way: the original text cannot be recovered from the hash.\nThey are also not collision-resistant in a cryptographic sense.' };
+  }});
+
+reg({ id:'t-nato', name:'NATO phonetic', from:'text', to:'text', rev:'lossy', cat:'Text',
+  info:'Spells the text with the NATO phonetic alphabet.',
+  run(v){
+    const NATO = { A:'Alfa',B:'Bravo',C:'Charlie',D:'Delta',E:'Echo',F:'Foxtrot',G:'Golf',H:'Hotel',I:'India',
+      J:'Juliett',K:'Kilo',L:'Lima',M:'Mike',N:'November',O:'Oscar',P:'Papa',Q:'Quebec',R:'Romeo',S:'Sierra',
+      T:'Tango',U:'Uniform',V:'Victor',W:'Whiskey',X:'X-ray',Y:'Yankee',Z:'Zulu' };
+    return { value: [...String(v).toUpperCase()].map(c => NATO[c] || (/[0-9]/.test(c) ? c : '')).filter(Boolean).join(' ') };
+  }});
+
+reg({ id:'t-morse', name:'Text → Morse code', from:'text', to:'morse', rev:'partial', cat:'Morse',
+  info:'Each letter becomes dots and dashes. Letters are separated by a space, words by a slash.',
+  run(v){
+    const m = textToMorse(v);
+    return { value: m, detail: [...String(v).toUpperCase().replace(/\s+/g,'').slice(0,8)].map(c => `${c} = ${MORSE[c] || '—'}`).join('\n') };
+  }});
+
+reg({ id:'t-sound', name:'Text → sound', from:'text', to:'sound', rev:'oneway', cat:'Sound',
+  info:'Converts the text to Morse and plays it as audio tones. Purely for experimentation.',
+  params:[ { key:'freq', label:'Frequency Hz', type:'number', def:620, min:80, max:2000 },
+           { key:'speed', label:'Speed ×', type:'number', def:1, min:0.2, max:4 } ],
+  run(v,p){
+    const m = textToMorse(v);
+    if (!m) throw new Error('Nothing to play');
+    return { value: m, note:'Press ▶ to hear it', detail:`Morse: ${m}\nTone: ${p.freq} Hz` };
+  }});
+
+/* ---------- NUMBERS ---------- */
+reg({ id:'n-bin', name:'Binary', from:['number','numbers'], to:'binary', rev:'reversible', cat:'Numbers',
+  info:'Binary represents a number using only 0 and 1 — each position is a power of two.',
+  run(v){
+    const ns = nums(v);
+    if (!ns.length) throw new Error('No numbers found');
+    const out = ns.map(n => { n = Math.trunc(n); return n < 0 ? '-' + Math.abs(n).toString(2) : n.toString(2); });
+    let detail = '';
+    if (ns.length === 1 && ns[0] >= 0 && ns[0] < 4096) {
+      const n = Math.trunc(ns[0]);
+      const bits = n.toString(2);
+      const parts = [];
+      for (let i = 0; i < bits.length; i++) if (bits[i] === '1') parts.push(Math.pow(2, bits.length - 1 - i));
+      const places = bits.split('').map((b, i) => Math.pow(2, bits.length - 1 - i));
+      detail = `${n} = ${parts.join(' + ') || '0'}\n\nplaces: ${places.join(' ')}\nbits:   ${bits.split('').join(' ')}\n\n→ ${bits}`;
+    }
+    return { value: out.join(' '), detail };
+  }});
+
+reg({ id:'n-hex', name:'Hexadecimal', from:['number','numbers'], to:'hex', rev:'reversible', cat:'Numbers',
+  info:'Hexadecimal is base 16 — digits 0–9 and A–F. One hex digit equals exactly four binary bits.',
+  run(v){
+    const ns = nums(v);
+    if (!ns.length) throw new Error('No numbers found');
+    let detail = '';
+    if (ns.length === 1) {
+      const n = Math.trunc(ns[0]);
+      const h = (n < 0 ? '-' : '') + Math.abs(n).toString(16).toUpperCase();
+      detail = `${n} ÷ 16 repeatedly:\n` + (n >= 0 && n < 100000 ?
+        (() => { const steps = []; let x = n; if (x === 0) return '0 → 0';
+          while (x > 0) { steps.push(`${x} ÷ 16 = ${Math.floor(x/16)} remainder ${(x%16).toString(16).toUpperCase()}`); x = Math.floor(x/16); }
+          return steps.join('\n') + '\n(read remainders bottom-up) → ' + h; })() : '→ ' + h);
+    }
+    return { value: ns.map(n => (n < 0 ? '-' : '') + Math.abs(Math.trunc(n)).toString(16).toUpperCase()).join(' '), detail };
+  }});
+
+reg({ id:'n-oct', name:'Octal', from:['number','numbers'], to:'numbers', rev:'reversible', cat:'Numbers',
+  info:'Base 8 representation, using digits 0–7.',
+  run(v){ return { value: nums(v).map(n => (n < 0 ? '-' : '') + Math.abs(Math.trunc(n)).toString(8)).join(' ') }; }});
+
+reg({ id:'n-base', name:'Base N', from:['number','numbers'], to:'text', rev:'reversible', cat:'Numbers',
+  info:'Converts to any base from 2 to 36.',
+  params:[ { key:'base', label:'Base', type:'number', def:36, min:2, max:36 } ],
+  run(v,p){
+    const b = clamp(Math.round(+p.base || 10), 2, 36);
+    return { value: nums(v).map(n => (n < 0 ? '-' : '') + Math.abs(Math.trunc(n)).toString(b).toUpperCase()).join(' '),
+             detail:`base ${b} digits: 0-9A-Z` };
+  }});
+
+reg({ id:'n-roman', name:'Roman numerals', from:'number', to:'text', rev:'partial', cat:'Math',
+  info:'Classic Roman numerals. Only works for whole numbers from 1 to 3999.',
+  run(v){
+    const n = Math.trunc(nums(v)[0]);
+    if (!n || n < 1 || n > 3999) throw new Error('Roman numerals cover 1–3999');
+    const table = [[1000,'M'],[900,'CM'],[500,'D'],[400,'CD'],[100,'C'],[90,'XC'],[50,'L'],[40,'XL'],[10,'X'],[9,'IX'],[5,'V'],[4,'IV'],[1,'I']];
+    let x = n, out = '';
+    const steps = [];
+    for (const [val, sym] of table) while (x >= val) { out += sym; steps.push(`${x} − ${val} = ${x - val}  (${sym})`); x -= val; }
+    return { value: out, detail: steps.slice(0, 12).join('\n') };
+  }});
+
+reg({ id:'n-char', name:'→ ASCII character', from:'number', to:'text', rev:'reversible', cat:'Numbers',
+  info:'Interprets the number as an ASCII code point (0–127) and shows the character.',
+  run(v){
+    const n = Math.trunc(nums(v)[0]);
+    if (n < 0 || n > 127) throw new Error('Not an ASCII code (0–127)');
+    const ch = String.fromCharCode(n);
+    return { value: ch, note: `${n} is ${JSON.stringify(ch)}`, detail: `${n} → ${JSON.stringify(ch)}  (printable: ${n >= 32 && n !== 127})` };
+  }});
+
+reg({ id:'n-unicodechar', name:'→ Unicode character', from:'number', to:'text', rev:'reversible', cat:'Numbers',
+  info:'Interprets the number as a Unicode code point.',
+  run(v){
+    const n = Math.trunc(nums(v)[0]);
+    if (n < 0 || n > 0x10FFFF) throw new Error('Not a valid code point');
+    return { value: String.fromCodePoint(n), note: 'U+' + n.toString(16).toUpperCase().padStart(4, '0') };
+  }});
+
+reg({ id:'n-factor', name:'Prime factorization', from:'number', to:'text', rev:'reversible', cat:'Math',
+  info:'Breaks a number into the primes that multiply to make it. This is unique for every number.',
+  run(v){
+    const n = Math.abs(Math.trunc(nums(v)[0]));
+    if (n < 2) return { value: String(n), note: 'no prime factors' };
+    const f = primeFactors(n);
+    const counts = {};
+    f.forEach(p => counts[p] = (counts[p] || 0) + 1);
+    const pretty = Object.entries(counts).map(([p, c]) => c > 1 ? `${p}^${c}` : p).join(' × ');
+    return { value: pretty, detail: `${n} = ${f.join(' × ')}\n\nprimes: ${Object.keys(counts).join(', ')}\nprime? ${isPrime(n) ? 'yes' : 'no'}` };
+  }});
+
+reg({ id:'n-divisors', name:'Divisors', from:'number', to:'numbers', rev:'reversible', cat:'Math',
+  info:'Every whole number that divides the input exactly.',
+  run(v){
+    const n = Math.abs(Math.trunc(nums(v)[0]));
+    const d = divisors(n);
+    return { value: d.join(' '), note: d.length + ' divisor(s)', detail:`${n} has ${d.length} divisors` };
+  }});
+
+reg({ id:'n-isprime', name:'Primality test', from:'number', to:'text', rev:'lossy', cat:'Math',
+  info:'Checks whether the number has any divisors other than 1 and itself.',
+  run(v){
+    const n = Math.trunc(nums(v)[0]);
+    return { value: isPrime(n) ? 'prime' : 'composite', note: n + ' is ' + (isPrime(n) ? 'prime' : 'not prime') };
+  }});
+
+reg({ id:'n-digitsum', name:'Digit sum', from:['number','numbers'], to:'number', rev:'lossy', cat:'Math',
+  info:'Adds all the decimal digits together. Useful for quick divisibility checks (e.g. by 9).',
+  run(v){
+    const ns = nums(v);
+    const s = ns.map(n => String(Math.abs(Math.trunc(n))).split('').reduce((a, b) => a + (+b), 0)).reduce((a, b) => a + b, 0);
+    return { value: String(s), detail: ns.length > 1 ? `${ns.join(' , ')} → sum of digits = ${s}` : `${Math.trunc(ns[0])} → ${s}` };
+  }});
+
+reg({ id:'n-mod', name:'Modulo (mod m)', from:['number','numbers'], to:'number', rev:'lossy', cat:'Math',
+  info:'The remainder after division. This is a LOSSY transformation: many different inputs produce the same remainder.',
+  params:[ { key:'m', label:'Modulus', type:'number', def:6, min:1, max:1000000 } ],
+  run(v,p){
+    const m = Math.max(1, Math.round(+p.m || 6));
+    const n = Math.trunc(nums(v)[0]);
+    const q = Math.floor(n / m), r = ((n % m) + m) % m;
+    const others = [];
+    for (let i = -3; i <= 5; i++) others.push(r + i * m);
+    return {
+      value: String(r),
+      detail: `${n} = ${q} × ${m} + ${r}\n\nThis transformation loses information.\nPossible originals include:\n${others.join(', ')} …`
+    };
+  }});
+
+reg({ id:'n-collatz', name:'Collatz sequence', from:'number', to:'numbers', rev:'oneway', cat:'Math',
+  info:'If a number is even, halve it; if odd, multiply by 3 and add 1. Repeat until you reach 1. Nobody knows whether every starting number terminates.',
+  run(v){
+    let n = Math.abs(Math.trunc(nums(v)[0]));
+    if (!n) throw new Error('Need a positive number');
+    const seq = [n];
+    while (n !== 1 && seq.length < 400) { n = n % 2 === 0 ? n / 2 : 3 * n + 1; seq.push(n); }
+    return { value: seq.join(' → '), note: seq.length + ' terms', detail: seq.length >= 400 ? 'Stopped early at 400 terms.' : `Reached 1 in ${seq.length - 1} steps.` };
+  }});
+
+reg({ id:'n-fib', name:'Fibonacci sequence', from:'number', to:'numbers', rev:'lossy', cat:'Math',
+  info:'Each term is the sum of the two before it. The input decides how many terms to generate (capped for sanity).',
+  params:[ { key:'count', label:'Terms', type:'number', def:12, min:2, max:80 } ],
+  run(v,p){
+    const c = clamp(Math.round(+p.count || 12), 2, 80);
+    let a = 0, b = 1; const out = [];
+    for (let i = 0; i < c; i++) { out.push(a); [a, b] = [b, a + b]; }
+    return { value: out.join(' '), note: c + ' terms' };
+  }});
+
+reg({ id:'n-fact', name:'Factorial', from:'number', to:'number', rev:'reversible', cat:'Math',
+  info:'n! = 1 × 2 × 3 × … × n.',
+  run(v){
+    const n = Math.trunc(nums(v)[0]);
+    if (n < 0 || n > 170) throw new Error('Factorial supports 0–170');
+    let r = 1;
+    for (let i = 2; i <= n; i++) r *= i;
+    return { value: String(r), detail: `${n}! = ${n <= 8 ? Array.from({length:n},(_,i)=>i+1).join(' × ') || '1' : '…'}` };
+  }});
+
+reg({ id:'n-tri', name:'Triangular numbers', from:'number', to:'numbers', rev:'lossy', cat:'Math',
+  info:'T(n) = n(n+1)/2 — the number of dots needed to build a triangle of side n.',
+  run(v){
+    const c = clamp(Math.abs(Math.trunc(nums(v)[0])) || 10, 1, 60);
+    const out = [];
+    for (let i = 1; i <= c; i++) out.push(i * (i + 1) / 2);
+    return { value: out.join(' ') };
+  }});
+
+reg({ id:'n-pow2', name:'Powers of two', from:'number', to:'numbers', rev:'lossy', cat:'Math',
+  info:'2⁰, 2¹, 2² … up to the count you give.',
+  run(v){
+    const c = clamp(Math.abs(Math.trunc(nums(v)[0])) || 10, 1, 62);
+    const out = [];
+    for (let i = 0; i < c; i++) out.push(Math.pow(2, i));
+    return { value: out.join(' ') };
+  }});
+
+reg({ id:'n-color', name:'Hue → color', from:'number', to:'color', rev:'partial', cat:'Color',
+  info:'Treats the number as a hue angle (0–360) and builds a saturated, half-bright color from it.',
+  run(v){
+    const h = ((Math.trunc(nums(v)[0]) % 360) + 360) % 360;
+    const hex = hslToHex(h, 78, 56);
+    return { value: hex, note: `hue ${h}°`, detail: `hsl(${h}, 78%, 56%) → ${hex}` };
+  }});
+
+reg({ id:'n-note', name:'Musical note', from:'number', to:'text', rev:'lossy', cat:'Sound',
+  info:'Maps the number onto a MIDI note number (0–127) and names the note.',
+  run(v){
+    const n = Math.trunc(nums(v)[0]);
+    if (n < 0 || n > 127) throw new Error('MIDI notes run 0–127');
+    const names = ['C','C#','D','D#','E','F','F#','G','G#','A','A#','B'];
+    const oct = Math.floor(n / 12) - 1;
+    const freq = 440 * Math.pow(2, (n - 69) / 12);
+    return { value: names[n % 12] + oct, note: `${freq.toFixed(1)} Hz`, detail: `MIDI ${n} = ${names[n % 12]}${oct}\n440 × 2^((${n}−69)/12) = ${freq.toFixed(2)} Hz` };
+  }});
+
+reg({ id:'n-sound', name:'Frequency → tone', from:'number', to:'sound', rev:'oneway', cat:'Sound',
+  info:'Plays the number as an audio frequency. Useful for hearing binary or hex data.',
+  params:[ { key:'dur', label:'Duration s', type:'number', def:0.6, min:0.05, max:5 },
+           { key:'wave', label:'Waveform', type:'select', options:['sine','square','sawtooth','triangle'], def:'sine' } ],
+  run(v,p){
+    const n = Math.trunc(nums(v)[0]);
+    const f = clamp(n, 20, 12000);
+    return { value: String(f), note: 'Press ▶ to play', detail: `f = ${f} Hz, ${p.dur}s, ${p.wave}` };
+  }});
+
+reg({ id:'n-bool', name:'→ Boolean', from:'number', to:'bool', rev:'lossy', cat:'Numbers',
+  info:'Any non-zero value becomes true. Zero becomes false.',
+  run(v){
+    const n = Math.trunc(nums(v)[0]);
+    return { value: n ? 'true' : 'false', detail:`${n} is ${n ? 'non-zero → true' : 'zero → false'}` };
+  }});
+
+reg({ id:'n-plot', name:'Plot as graph', from:['number','numbers'], to:'image', rev:'lossy', cat:'Math',
+  info:'Draws the values as a line chart. Sequences become visible shapes.',
+  run(v){
+    const ns = nums(v);
+    if (ns.length < 2) throw new Error('Need at least 2 values to plot');
+    return { value: plotSeries(ns.slice(0, 400)), note: ns.length + ' points', detail: 'y axis auto-scaled to the data range.' };
+  }});
+
+/* ---------- NUMBERS (lists) ---------- */
+reg({ id:'ns-text', name:'→ Text (char codes)', from:'numbers', to:'text', rev:'reversible', cat:'Numbers',
+  info:'Interprets every number as a character code and joins them into text.',
+  run(v){
+    const ns = nums(v);
+    const chars = ns.map(n => { const c = Math.trunc(n); return (c >= 0 && c <= 0x10FFFF) ? String.fromCodePoint(c) : ''; });
+    return { value: chars.join(''), detail: ns.slice(0, 8).map((n, i) => `${n} → ${JSON.stringify(chars[i])}`).join('\n') };
+  }});
+
+reg({ id:'ns-stats', name:'Statistics', from:'numbers', to:'text', rev:'lossy', cat:'Math',
+  info:'Count, sum, mean, median, min, max and range of the list.',
+  run(v){
+    const ns = nums(v).slice().sort((a, b) => a - b);
+    if (!ns.length) throw new Error('No numbers');
+    const sum = ns.reduce((a, b) => a + b, 0);
+    const mid = ns.length % 2 ? ns[(ns.length - 1) / 2] : (ns[ns.length / 2 - 1] + ns[ns.length / 2]) / 2;
+    return { value: [
+      'count  : ' + ns.length,
+      'sum    : ' + sum,
+      'mean   : ' + (sum / ns.length).toFixed(4),
+      'median : ' + mid,
+      'min    : ' + ns[0],
+      'max    : ' + ns[ns.length - 1],
+      'range  : ' + (ns[ns.length - 1] - ns[0]),
+    ].join('\n') };
+  }});
+
+reg({ id:'ns-gcd', name:'Greatest common divisor', from:'numbers', to:'number', rev:'reversible', cat:'Math',
+  info:'The largest number that divides every value in the list.',
+  run(v){
+    const ns = nums(v).map(n => Math.abs(Math.trunc(n)));
+    if (ns.length < 2) throw new Error('Need at least two numbers');
+    const g = ns.reduce((a, b) => gcd(a, b));
+    return { value: String(g), detail:`gcd(${ns.join(', ')}) = ${g}` };
+  }});
+
+reg({ id:'ns-lcm', name:'Least common multiple', from:'numbers', to:'number', rev:'reversible', cat:'Math',
+  info:'The smallest number that every value in the list divides into.',
+  run(v){
+    const ns = nums(v).map(n => Math.abs(Math.trunc(n)));
+    if (ns.length < 2) throw new Error('Need at least two numbers');
+    const l = ns.reduce((a, b) => lcm(a, b));
+    return { value: String(l), detail:`lcm(${ns.join(', ')}) = ${l}` };
+  }});
+
+reg({ id:'ns-sort', name:'Sort ascending', from:'numbers', to:'numbers', rev:'lossy', cat:'Math',
+  info:'Sorts the list from smallest to largest. Original order is lost.',
+  run(v){ return { value: nums(v).sort((a, b) => a - b).join(' ') }; }});
+
+reg({ id:'ns-diff', name:'Differences', from:'numbers', to:'numbers', rev:'lossy', cat:'Math',
+  info:'The gap between each consecutive pair of values.',
+  run(v){
+    const ns = nums(v);
+    const out = [];
+    for (let i = 1; i < ns.length; i++) out.push(ns[i] - ns[i - 1]);
+    return { value: out.join(' ') };
+  }});
+
+reg({ id:'ns-cumsum', name:'Cumulative sum', from:'numbers', to:'numbers', rev:'reversible', cat:'Math',
+  info:'Running total of the list.',
+  run(v){
+    let t = 0;
+    return { value: nums(v).map(n => t += n).join(' ') };
+  }});
+
+reg({ id:'ns-factors', name:'Prime factors of each', from:'numbers', to:'text', rev:'lossy', cat:'Math',
+  info:'Factorises every number in the list.',
+  run(v){
+    return { value: nums(v).slice(0, 40).map(n => `${Math.trunc(n)} = ${primeFactors(n).join(' × ') || '—'}`).join('\n') };
+  }});
+
+reg({ id:'ns-rgb', name:'First three → RGB color', from:'numbers', to:'color', rev:'partial', cat:'Color',
+  info:'Takes the first three values as red, green and blue channels (0–255).',
+  run(v){
+    const ns = nums(v);
+    if (ns.length < 3) throw new Error('Need at least 3 numbers for RGB');
+    const [r, g, b] = ns.map(n => clamp(Math.round(n), 0, 255));
+    return { value: rgbToHex(r, g, b), detail:`rgb(${r}, ${g}, ${b})` };
+  }});
+
+reg({ id:'ns-sound', name:'Numbers → tone sequence', from:'numbers', to:'sound', rev:'oneway', cat:'Sound',
+  info:'Maps each number onto a pitch and plays them in sequence.',
+  params:[ { key:'freq', label:'Base Hz', type:'number', def:440, min:60, max:1600 },
+           { key:'wave', label:'Waveform', type:'select', options:['sine','square','sawtooth','triangle'], def:'sine' } ],
+  run(v){
+    const ns = nums(v).slice(0, 64);
+    if (!ns.length) throw new Error('No numbers to play');
+    return { value: ns.join(' '), note: ns.length + ' tones' };
+  }});
+
+/* ---------- BINARY ---------- */
+reg({ id:'b-dec', name:'Binary → decimal', from:'binary', to:'numbers', rev:'reversible', cat:'Binary',
+  info:'Reads the bits in groups of 8 (one byte each) and converts every byte to a decimal number.',
+  run(v){
+    const bytes = binToBytes(v);
+    if (!bytes.length) throw new Error('No binary digits found');
+    let detail = '';
+    if (bytes.length === 1) {
+      const b = cleanBin(v).padStart(8, '0');
+      const parts = [];
+      b.split('').forEach((bit, i) => { if (bit === '1') parts.push(Math.pow(2, 7 - i)); });
+      detail = `${b.split('').join(' ')}\n× 128 64 32 16  8  4  2  1\n= ${parts.join(' + ') || '0'}\n= ${bytes[0]}`;
+    } else {
+      detail = bytes.slice(0, 6).map(x => `${bitsOfByte(x)} = ${x}`).join('\n') + (bytes.length > 6 ? '\n…' : '');
+    }
+    return { value: bytes.join(' '), detail };
+  }});
+
+reg({ id:'b-hex', name:'Binary → hex', from:'binary', to:'hex', rev:'reversible', cat:'Binary',
+  info:'Every 8 bits become two hexadecimal digits.',
+  run(v){
+    const bytes = binToBytes(v);
+    if (!bytes.length) throw new Error('No binary digits found');
+    return { value: bytes.map(hexOfByte).join(' '), detail: bytes.slice(0, 6).map(x => `${bitsOfByte(x)} = ${hexOfByte(x)}`).join('\n') };
+  }});
+
+reg({ id:'b-text', name:'Binary → text', from:'binary', to:'text', rev:'reversible', cat:'Binary',
+  info:'Interprets the bits as UTF-8 bytes and decodes them into text.',
+  run(v){
+    const bytes = binToBytes(v);
+    if (!bytes.length) throw new Error('No binary digits found');
+    return { value: fromBytes(bytes), note: bytes.length + ' byte(s)' };
+  }});
+
+reg({ id:'b-bool', name:'Binary → booleans', from:'binary', to:'bool', rev:'reversible', cat:'Binary',
+  info:'1 becomes true, 0 becomes false.',
+  run(v){
+    const b = cleanBin(v);
+    if (!b.length) throw new Error('No binary digits found');
+    return { value: b.split('').map(x => x === '1' ? 'true' : 'false').join(' ') };
+  }});
+
+reg({ id:'b-pattern', name:'Bit pattern', from:'binary', to:'text', rev:'lossy', cat:'Binary',
+  info:'Draws the bits as blocks so the pattern becomes visible.',
+  run(v){
+    const b = cleanBin(v);
+    if (!b.length) throw new Error('No binary digits found');
+    const art = b.split('').map(x => x === '1' ? '█' : '·').join('');
+    const rows = [];
+    for (let i = 0; i < art.length; i += 32) rows.push(art.slice(i, i + 32));
+    return { value: rows.join('\n'), note: b.length + ' bits' };
+  }});
+
+reg({ id:'b-image', name:'Bits → image', from:'binary', to:'image', rev:'lossy', cat:'Image',
+  info:'Renders the bit stream as a black-and-white bitmap. 1 = white pixel, 0 = black pixel.',
+  params:[ { key:'width', label:'Width px', type:'number', def:16, min:1, max:200 } ],
+  run(v,p){
+    const b = cleanBin(v);
+    if (!b.length) throw new Error('No binary digits found');
+    const w = clamp(Math.round(+p.width || 16), 1, 200);
+    const h = Math.max(1, Math.ceil(b.length / w));
+    const cv = document.createElement('canvas');
+    cv.width = w; cv.height = h;
+    const ctx = cv.getContext('2d');
+    const img = ctx.createImageData(w, h);
+    for (let i = 0; i < w * h; i++) {
+      const bit = b[i] === '1' ? 255 : 0;
+      img.data[i * 4] = bit; img.data[i * 4 + 1] = bit; img.data[i * 4 + 2] = bit; img.data[i * 4 + 3] = 255;
+    }
+    ctx.putImageData(img, 0, 0);
+    return { value: cv.toDataURL('image/png'), note: `${w}×${h} bitmap` };
+  }});
+
+reg({ id:'b-sound', name:'Bits → sound', from:'binary', to:'sound', rev:'oneway', cat:'Sound',
+  info:'Plays a short high tone for 1 and a low tone for 0.',
+  params:[ { key:'freq', label:'Base Hz', type:'number', def:600, min:80, max:2000 },
+           { key:'wave', label:'Waveform', type:'select', options:['sine','square','sawtooth','triangle'], def:'square' } ],
+  run(v){
+    const b = cleanBin(v).slice(0, 128);
+    if (!b.length) throw new Error('No bits to play');
+    return { value: b, note: b.length + ' bits' };
+  }});
+
+reg({ id:'b-invert', name:'Invert bits', from:'binary', to:'binary', rev:'reversible', cat:'Binary',
+  info:'Flips every 0 to 1 and every 1 to 0.',
+  run(v){
+    const b = cleanBin(v);
+    return { value: b.split('').map(x => x === '1' ? '0' : '1').join(''), detail: 'Bitwise NOT of the whole stream.' };
+  }});
+
+reg({ id:'b-stats', name:'Bit statistics', from:'binary', to:'text', rev:'lossy', cat:'Binary',
+  info:'How many bits there are, how many are ones, and what the byte length is.',
+  run(v){
+    const b = cleanBin(v);
+    const ones = b.split('').filter(x => x === '1').length;
+    return { value: [
+      'bits      : ' + b.length,
+      'ones      : ' + ones,
+      'zeros     : ' + (b.length - ones),
+      'density   : ' + (b.length ? (ones / b.length * 100).toFixed(1) : 0) + '%',
+      'bytes     : ' + Math.ceil(b.length / 8),
+    ].join('\n') };
+  }});
+
+reg({ id:'b-b64', name:'Bytes → Base64', from:'binary', to:'text', rev:'reversible', cat:'Binary',
+  info:'Groups the bits into bytes and Base64-encodes them.',
+  run(v){
+    const bytes = binToBytes(v);
+    if (!bytes.length) throw new Error('No binary digits found');
+    let s = ''; bytes.forEach(x => s += String.fromCharCode(x));
+    return { value: btoa(s) };
+  }});
+
+reg({ id:'b-oct', name:'Binary → octal', from:'binary', to:'numbers', rev:'reversible', cat:'Binary',
+  info:'Converts each byte to its octal representation.',
+  run(v){
+    const bytes = binToBytes(v);
+    if (!bytes.length) throw new Error('No binary digits found');
+    return { value: bytes.map(x => x.toString(8)).join(' ') };
+  }});
+
+/* ---------- HEX ---------- */
+reg({ id:'h-dec', name:'Hex → decimal', from:'hex', to:'numbers', rev:'reversible', cat:'Hex',
+  info:'Converts each hex byte into a decimal number.',
+  run(v){
+    const bytes = hexToBytes(v);
+    if (!bytes.length) throw new Error('No hex digits found');
+    let detail = '';
+    if (bytes.length === 1) {
+      const h = String(v).replace(/[^0-9a-fA-F]/g, '');
+      detail = `${h.toUpperCase()}\n= ${h.split('').map((d, i) => parseInt(d, 16) * Math.pow(16, h.length - 1 - i)).join(' + ')}\n= ${bytes[0]}`;
+    } else {
+      detail = bytes.slice(0, 6).map(x => `${hexOfByte(x)} = ${x}`).join('\n');
+    }
+    return { value: bytes.join(' '), detail };
+  }});
+
+reg({ id:'h-bin', name:'Hex → binary', from:'hex', to:'binary', rev:'reversible', cat:'Hex',
+  info:'Each hex digit becomes exactly four bits.',
+  run(v){
+    const bytes = hexToBytes(v);
+    if (!bytes.length) throw new Error('No hex digits found');
+    return { value: bytes.map(bitsOfByte).join(' '), detail: bytes.slice(0, 5).map(x => `${hexOfByte(x)} = ${bitsOfByte(x)}`).join('\n') };
+  }});
+
+reg({ id:'h-text', name:'Hex → text', from:'hex', to:'text', rev:'reversible', cat:'Hex',
+  info:'Reads the hex as UTF-8 bytes and decodes them into text.',
+  run(v){
+    const bytes = hexToBytes(v);
+    if (!bytes.length) throw new Error('No hex digits found');
+    return { value: fromBytes(bytes), note: bytes.length + ' byte(s)' };
+  }});
+
+reg({ id:'h-rgb', name:'Hex → RGB color', from:'hex', to:'color', rev:'reversible', cat:'Color',
+  info:'Interprets six hex digits as a red, green and blue triple.',
+  run(v){
+    const s = String(v).replace(/[^0-9a-fA-F]/g, '');
+    if (s.length !== 6) throw new Error('Need exactly 6 hex digits for a color (e.g. FF0000)');
+    const r = parseInt(s.slice(0, 2), 16), g = parseInt(s.slice(2, 4), 16), b = parseInt(s.slice(4, 6), 16);
+    return { value: '#' + s.toUpperCase(), detail: `#${s.toUpperCase()}\n= rgb(${r}, ${g}, ${b})` };
+  }});
+
+reg({ id:'h-b64', name:'Hex → Base64', from:'hex', to:'text', rev:'reversible', cat:'Hex',
+  info:'Turns the hex bytes into Base64.',
+  run(v){
+    const bytes = hexToBytes(v);
+    if (!bytes.length) throw new Error('No hex digits found');
+    let s = ''; bytes.forEach(x => s += String.fromCharCode(x));
+    return { value: btoa(s) };
+  }});
+
+/* ---------- MORSE ---------- */
+reg({ id:'m-text', name:'Morse → text', from:'morse', to:'text', rev:'reversible', cat:'Morse',
+  info:'Decodes dots and dashes back into letters. A slash separates words.',
+  run(v){
+    const t = morseToText(v);
+    if (!t) throw new Error('Could not decode that Morse');
+    return { value: t };
+  }});
+
+reg({ id:'m-bin', name:'Morse → binary', from:'morse', to:'binary', rev:'reversible', cat:'Morse',
+  info:'Dot becomes 0, dash becomes 1. Spaces are dropped.',
+  run(v){
+    const s = String(v).replace(/[^.\-]/g, '');
+    if (!s.length) throw new Error('No dots or dashes found');
+    return { value: s.split('').map(c => c === '.' ? '0' : '1').join(''), detail: '. → 0    − → 1' };
+  }});
+
+reg({ id:'m-sound', name:'Morse → sound', from:'morse', to:'sound', rev:'oneway', cat:'Sound',
+  info:'Plays the Morse code as audio tones using the Web Audio API.',
+  params:[ { key:'freq', label:'Frequency Hz', type:'number', def:620, min:80, max:2000 },
+           { key:'speed', label:'Speed ×', type:'number', def:1, min:0.2, max:4 },
+           { key:'wave', label:'Waveform', type:'select', options:['sine','square','sawtooth','triangle'], def:'sine' } ],
+  run(v){
+    const s = String(v).trim();
+    if (!/[.\-]/.test(s)) throw new Error('No dots or dashes found');
+    return { value: s, note: 'Press ▶ to play' };
+  }});
+
+reg({ id:'m-stats', name:'Morse statistics', from:'morse', to:'text', rev:'lossy', cat:'Morse',
+  info:'Counts dots, dashes and symbols.',
+  run(v){
+    const s = String(v);
+    const dots = (s.match(/\./g) || []).length;
+    const dash = (s.match(/-/g) || []).length;
+    const sym = s.trim().split(/\s+/).filter(Boolean).length;
+    return { value: `dots      : ${dots}\ndashes    : ${dash}\nsymbols   : ${sym}\ntotal len : ${dots + dash}` };
+  }});
+
+/* ---------- BOOLEAN ---------- */
+reg({ id:'bo-bin', name:'Booleans → binary', from:'bool', to:'binary', rev:'reversible', cat:'Binary',
+  info:'true becomes 1, false becomes 0.',
+  run(v){
+    const parts = String(v).toLowerCase().split(/[\s,]+/).filter(Boolean);
+    if (!parts.length) throw new Error('No boolean values found');
+    return { value: parts.map(x => (x === 'true' || x === '1') ? '1' : '0').join(''), detail: 'true → 1    false → 0' };
+  }});
+
+reg({ id:'bo-dec', name:'Booleans → decimal', from:'bool', to:'numbers', rev:'reversible', cat:'Binary',
+  info:'Groups the booleans into 8-bit bytes and converts them to numbers.',
+  run(v){
+    const parts = String(v).toLowerCase().split(/[\s,]+/).filter(Boolean);
+    if (!parts.length) throw new Error('No boolean values found');
+    const bits = parts.map(x => (x === 'true' || x === '1') ? '1' : '0').join('');
+    return { value: binToBytes(bits).join(' ') };
+  }});
+
+reg({ id:'bo-gates', name:'Logic gate visualization', from:'bool', to:'text', rev:'lossy', cat:'Binary',
+  info:'Shows what basic logic gates produce for the given inputs.',
+  run(v){
+    const parts = String(v).toLowerCase().split(/[\s,]+/).filter(Boolean).map(x => x === 'true' || x === '1');
+    if (!parts.length) throw new Error('No boolean values found');
+    const a = parts[0], b = parts.length > 1 ? parts[1] : parts[0];
+    const f = x => x ? '1' : '0';
+    return { value: [
+      `A = ${f(a)}   B = ${f(b)}`,
+      '',
+      `NOT A   : ${f(!a)}`,
+      `NOT B   : ${f(!b)}`,
+      `A AND B : ${f(a && b)}`,
+      `A OR  B : ${f(a || b)}`,
+      `A XOR B : ${f(a !== b)}`,
+      `A NAND B: ${f(!(a && b))}`,
+      `A NOR  B: ${f(!(a || b))}`,
+      `A XNOR B: ${f(a === b)}`,
+    ].join('\n') };
+  }});
+
+reg({ id:'bo-pattern', name:'Pixel pattern', from:'bool', to:'text', rev:'lossy', cat:'Binary',
+  info:'Draws true/false as filled and empty blocks.',
+  run(v){
+    const parts = String(v).toLowerCase().split(/[\s,]+/).filter(Boolean);
+    if (!parts.length) throw new Error('No boolean values found');
+    const art = parts.map(x => (x === 'true' || x === '1') ? '█' : '·').join('');
+    const rows = [];
+    for (let i = 0; i < art.length; i += 32) rows.push(art.slice(i, i + 32));
+    return { value: rows.join('\n') };
+  }});
+
+/* ---------- JSON ---------- */
+function parseJSON(v) { try { return JSON.parse(v); } catch (e) { throw new Error('Not valid JSON'); } }
+
+reg({ id:'j-pretty', name:'Pretty print', from:'json', to:'json', rev:'reversible', cat:'JSON',
+  info:'Re-indents the JSON with two spaces.',
+  run(v){ return { value: JSON.stringify(parseJSON(v), null, 2) }; }});
+
+reg({ id:'j-min', name:'Minify', from:'json', to:'json', rev:'reversible', cat:'JSON',
+  info:'Removes all unnecessary whitespace.',
+  run(v){ return { value: JSON.stringify(parseJSON(v)) }; }});
+
+reg({ id:'j-keys', name:'All keys', from:'json', to:'text', rev:'lossy', cat:'JSON',
+  info:'Lists every property name in the structure.',
+  run(v){
+    const out = [];
+    (function walk(o) {
+      if (Array.isArray(o)) o.forEach(walk);
+      else if (o && typeof o === 'object') {
+        for (const k in o) { out.push(k); walk(o[k]); }
+      }
+    })(parseJSON(v));
+    return { value: out.join('\n'), note: out.length + ' keys' };
+  }});
+
+reg({ id:'j-numbers', name:'Numeric values', from:'json', to:'numbers', rev:'lossy', cat:'JSON',
+  info:'Extracts every number found anywhere in the JSON.',
+  run(v){
+    const out = [];
+    (function walk(o) {
+      if (typeof o === 'number') out.push(o);
+      else if (Array.isArray(o)) o.forEach(walk);
+      else if (o && typeof o === 'object') Object.values(o).forEach(walk);
+    })(parseJSON(v));
+    if (!out.length) throw new Error('No numbers in this JSON');
+    return { value: out.join(' ') };
+  }});
+
+reg({ id:'j-text', name:'Raw text', from:'json', to:'text', rev:'reversible', cat:'JSON',
+  info:'Treats the JSON as plain text.',
+  run(v){ return { value: String(v) }; }});
+
+reg({ id:'j-b64', name:'Base64', from:'json', to:'text', rev:'reversible', cat:'JSON',
+  info:'Base64-encodes the minified JSON.',
+  run(v){
+    const s = JSON.stringify(parseJSON(v));
+    let bin = ''; toBytes(s).forEach(b => bin += String.fromCharCode(b));
+    return { value: btoa(bin) };
+  }});
+
+reg({ id:'j-tree', name:'Tree view', from:'json', to:'text', rev:'lossy', cat:'JSON',
+  info:'Draws the structure as an indented tree.',
+  run(v){
+    const lines = [];
+    (function walk(o, depth, label) {
+      const pad = '  '.repeat(depth);
+      if (Array.isArray(o)) {
+        lines.push(`${pad}${label}[${o.length}]`);
+        o.slice(0, 20).forEach((x, i) => walk(x, depth + 1, i + ': '));
+      } else if (o && typeof o === 'object') {
+        lines.push(`${pad}${label}{${Object.keys(o).length}}`);
+        Object.entries(o).slice(0, 20).forEach(([k, x]) => walk(x, depth + 1, k + ': '));
+      } else {
+        lines.push(`${pad}${label}${JSON.stringify(o)}`);
+      }
+    })(parseJSON(v), 0, '');
+    return { value: lines.slice(0, 80).join('\n') };
+  }});
+
+/* ---------- COLOR ---------- */
+function hexToRgb(hex) {
+  let s = String(hex).trim().replace(/^#/, '');
+  if (s.length === 3) s = s.split('').map(c => c + c).join('');
+  if (!/^[0-9a-f]{6}$/i.test(s)) throw new Error('Not a valid hex color');
+  return { r: parseInt(s.slice(0, 2), 16), g: parseInt(s.slice(2, 4), 16), b: parseInt(s.slice(4, 6), 16) };
+}
+function rgbToHex(r, g, b) {
+  return '#' + [r, g, b].map(x => clamp(Math.round(x), 0, 255).toString(16).padStart(2, '0')).join('').toUpperCase();
+}
+function rgbToHsl(r, g, b) {
+  r /= 255; g /= 255; b /= 255;
+  const max = Math.max(r, g, b), min = Math.min(r, g, b);
+  let h = 0, s = 0; const l = (max + min) / 2;
+  if (max !== min) {
+    const d = max - min;
+    s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
+    if (max === r) h = (g - b) / d + (g < b ? 6 : 0);
+    else if (max === g) h = (b - r) / d + 2;
+    else h = (r - g) / d + 4;
+    h *= 60;
+  }
+  return { h: Math.round(h), s: Math.round(s * 100), l: Math.round(l * 100) };
+}
+function hslToHex(h, s, l) {
+  s /= 100; l /= 100;
+  const k = n => (n + h / 30) % 12;
+  const a = s * Math.min(l, 1 - l);
+  const f = n => l - a * Math.max(-1, Math.min(k(n) - 3, Math.min(9 - k(n), 1)));
+  return rgbToHex(f(0) * 255, f(8) * 255, f(4) * 255);
+}
+function parseColor(v) {
+  const s = String(v).trim();
+  let m = /^#?([0-9a-f]{3}|[0-9a-f]{6})$/i.exec(s);
+  if (m) return hexToRgb(m[1]);
+  m = /^rgb\s*\(\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)\s*\)$/i.exec(s);
+  if (m) return { r: +m[1], g: +m[2], b: +m[3] };
+  throw new Error('Not a recognizable color');
+}
+
+reg({ id:'c-hex', name:'Color → hex', from:'color', to:'hex', rev:'reversible', cat:'Color',
+  info:'Shows the color as a six-digit hexadecimal code.',
+  run(v){ const c = parseColor(v); return { value: rgbToHex(c.r, c.g, c.b) }; }});
+
+reg({ id:'c-rgb', name:'Color → RGB numbers', from:'color', to:'numbers', rev:'reversible', cat:'Color',
+  info:'Splits the color into its red, green and blue channels (0–255).',
+  run(v){ const c = parseColor(v); return { value: `${c.r} ${c.g} ${c.b}`, detail: `rgb(${c.r}, ${c.g}, ${c.b})` }; }});
+
+reg({ id:'c-rgbtxt', name:'Color → rgb() text', from:'color', to:'text', rev:'reversible', cat:'Color',
+  info:'Formats the color as a CSS rgb() function.',
+  run(v){ const c = parseColor(v); return { value: `rgb(${c.r}, ${c.g}, ${c.b})` }; }});
+
+reg({ id:'c-hsl', name:'Color → HSL', from:'color', to:'text', rev:'reversible', cat:'Color',
+  info:'Hue (0–360°), saturation and lightness.',
+  run(v){ const c = parseColor(v); const h = rgbToHsl(c.r, c.g, c.b);
+    return { value: `hsl(${h.h}, ${h.s}%, ${h.l}%)`, detail: `H ${h.h}°   S ${h.s}%   L ${h.l}%` }; }});
+
+reg({ id:'c-invert', name:'Invert color', from:'color', to:'color', rev:'reversible', cat:'Color',
+  info:'Subtracts each channel from 255.',
+  run(v){ const c = parseColor(v); return { value: rgbToHex(255 - c.r, 255 - c.g, 255 - c.b) }; }});
+
+reg({ id:'c-gray', name:'Grayscale color', from:'color', to:'color', rev:'lossy', cat:'Color',
+  info:'Uses the luminance formula 0.299R + 0.587G + 0.114B.',
+  run(v){
+    const c = parseColor(v);
+    const y = Math.round(0.299 * c.r + 0.587 * c.g + 0.114 * c.b);
+    return { value: rgbToHex(y, y, y), detail: `luminance = ${y}` };
+  }});
+
+reg({ id:'c-comp', name:'Complementary color', from:'color', to:'color', rev:'reversible', cat:'Color',
+  info:'Rotates the hue by 180° on the color wheel.',
+  run(v){
+    const c = parseColor(v); const h = rgbToHsl(c.r, c.g, c.b);
+    return { value: hslToHex((h.h + 180) % 360, h.s, h.l), detail: `hue ${h.h}° → ${(h.h + 180) % 360}°` };
+  }});
+
+reg({ id:'c-bright', name:'Brightness', from:'color', to:'number', rev:'lossy', cat:'Color',
+  info:'Perceived brightness from 0 (black) to 255 (white).',
+  run(v){ const c = parseColor(v); return { value: String(Math.round(0.299 * c.r + 0.587 * c.g + 0.114 * c.b)) }; }});
+
+reg({ id:'c-bin', name:'Color → binary', from:'color', to:'binary', rev:'reversible', cat:'Color',
+  info:'Writes the three channel bytes as binary.',
+  run(v){ const c = parseColor(v); return { value: [c.r, c.g, c.b].map(bitsOfByte).join(' '), detail: `R=${c.r} G=${c.g} B=${c.b}` }; }});
+
+/* ---------- IMAGE ---------- */
+const imgCache = new Map();
+function loadImg(src) {
+  if (imgCache.has(src)) return Promise.resolve(imgCache.get(src));
+  return new Promise((res, rej) => {
+    const im = new Image();
+    im.onload = () => { imgCache.set(src, im); res(im); };
+    im.onerror = () => rej(new Error('Could not load that image'));
+    im.src = src;
+  });
+}
+async function imgCanvas(src, maxW) {
+  const im = await loadImg(src);
+  const scale = Math.min(1, (maxW || 320) / im.width);
+  const w = Math.max(1, Math.round(im.width * scale));
+  const h = Math.max(1, Math.round(im.height * scale));
+  const cv = document.createElement('canvas');
+  cv.width = w; cv.height = h;
+  const ctx = cv.getContext('2d');
+  ctx.drawImage(im, 0, 0, w, h);
+  return { cv, ctx, w, h, data: ctx.getImageData(0, 0, w, h) };
+}
+
+reg({ id:'i-gray', name:'Grayscale', from:'image', to:'image', rev:'lossy', cat:'Image',
+  info:'Converts every pixel to its luminance value.',
+  async run(v){
+    const { cv, ctx, w, h, data } = await imgCanvas(v, 420);
+    const d = data.data;
+    for (let i = 0; i < d.length; i += 4) {
+      const y = 0.299 * d[i] + 0.587 * d[i + 1] + 0.114 * d[i + 2];
+      d[i] = d[i + 1] = d[i + 2] = y;
+    }
+    ctx.putImageData(data, 0, 0);
+    return { value: cv.toDataURL('image/png'), note: `${w}×${h}`, detail: 'Luminance: 0.299R + 0.587G + 0.114B' };
+  }});
+
+reg({ id:'i-invert', name:'Invert', from:'image', to:'image', rev:'reversible', cat:'Image',
+  info:'Inverts every color channel — a photographic negative.',
+  async run(v){
+    const { cv, ctx, data } = await imgCanvas(v, 420);
+    const d = data.data;
+    for (let i = 0; i < d.length; i += 4) { d[i] = 255 - d[i]; d[i + 1] = 255 - d[i + 1]; d[i + 2] = 255 - d[i + 2]; }
+    ctx.putImageData(data, 0, 0);
+    return { value: cv.toDataURL('image/png') };
+  }});
+
+reg({ id:'i-ascii', name:'ASCII art', from:'image', to:'text', rev:'lossy', cat:'Image',
+  info:'Samples the image and maps brightness onto a ramp of characters.',
+  params:[ { key:'width', label:'Width chars', type:'number', def:72, min:20, max:160 } ],
+  async run(v, p){
+    const w = clamp(Math.round(+p.width || 72), 20, 160);
+    const { w: cw, h: ch, data } = await imgCanvas(v, w);
+    const ramp = ' .:-=+*#%@';
+    const d = data.data;
+    const rows = [];
+    for (let y = 0; y < ch; y++) {
+      let line = '';
+      for (let x = 0; x < cw; x++) {
+        const i = (y * cw + x) * 4;
+        const lum = (0.299 * d[i] + 0.587 * d[i + 1] + 0.114 * d[i + 2]) / 255;
+        line += ramp[Math.min(ramp.length - 1, Math.floor(lum * ramp.length))];
+      }
+      rows.push(line);
+    }
+    return { value: rows.join('\n'), note: `${cw}×${ch} characters` };
+  }});
+
+reg({ id:'i-thresh', name:'Binary threshold', from:'image', to:'image', rev:'lossy', cat:'Image',
+  info:'Every pixel becomes either black or white depending on a brightness cutoff.',
+  params:[ { key:'level', label:'Threshold', type:'number', def:128, min:0, max:255 } ],
+  async run(v, p){
+    const lv = clamp(Math.round(+p.level || 128), 0, 255);
+    const { cv, ctx, data } = await imgCanvas(v, 420);
+    const d = data.data;
+    for (let i = 0; i < d.length; i += 4) {
+      const y = 0.299 * d[i] + 0.587 * d[i + 1] + 0.114 * d[i + 2];
+      const px = y >= lv ? 255 : 0;
+      d[i] = d[i + 1] = d[i + 2] = px;
+    }
+    ctx.putImageData(data, 0, 0);
+    return { value: cv.toDataURL('image/png'), detail: `cutoff: ${lv}` };
+  }});
+
+reg({ id:'i-poster', name:'Posterize', from:'image', to:'image', rev:'lossy', cat:'Image',
+  info:'Reduces each channel to a small number of levels, flattening the image into bands.',
+  params:[ { key:'levels', label:'Levels', type:'number', def:4, min:2, max:16 } ],
+  async run(v, p){
+    const lv = clamp(Math.round(+p.levels || 4), 2, 16);
+    const step = 255 / (lv - 1);
+    const { cv, ctx, data } = await imgCanvas(v, 420);
+    const d = data.data;
+    for (let i = 0; i < d.length; i += 4) {
+      d[i] = Math.round(d[i] / step) * step;
+      d[i + 1] = Math.round(d[i + 1] / step) * step;
+      d[i + 2] = Math.round(d[i + 2] / step) * step;
+    }
+    ctx.putImageData(data, 0, 0);
+    return { value: cv.toDataURL('image/png'), detail: `${lv} levels per channel` };
+  }});
+
+reg({ id:'i-avg', name:'Average color', from:'image', to:'color', rev:'lossy', cat:'Image',
+  info:'Averages every pixel into one representative color.',
+  async run(v){
+    const { data } = await imgCanvas(v, 160);
+    const d = data.data;
+    let r = 0, g = 0, b = 0, n = 0;
+    for (let i = 0; i < d.length; i += 4) { r += d[i]; g += d[i + 1]; b += d[i + 2]; n++; }
+    r = Math.round(r / n); g = Math.round(g / n); b = Math.round(b / n);
+    return { value: rgbToHex(r, g, b), detail: `rgb(${r}, ${g}, ${b})` };
+  }});
+
+reg({ id:'i-colors', name:'Dominant colors', from:'image', to:'text', rev:'lossy', cat:'Image',
+  info:'Buckets pixels into a coarse palette and reports the most common colors.',
+  async run(v){
+    const { data } = await imgCanvas(v, 160);
+    const d = data.data;
+    const counts = new Map();
+    for (let i = 0; i < d.length; i += 4) {
+      const key = ((d[i] >> 4) << 8) | ((d[i + 1] >> 4) << 4) | (d[i + 2] >> 4);
+      const e = counts.get(key) || { n: 0, r: 0, g: 0, b: 0 };
+      e.n++; e.r += d[i]; e.g += d[i + 1]; e.b += d[i + 2];
+      counts.set(key, e);
+    }
+    const top = [...counts.values()].sort((a, b) => b.n - a.n).slice(0, 8);
+    const total = [...counts.values()].reduce((a, e) => a + e.n, 0) || 1;
+    return { value: top.map(e => `${rgbToHex(e.r / e.n, e.g / e.n, e.b / e.n)}   ${(e.n / total * 100).toFixed(1)}%`).join('\n') };
+  }});
+
+reg({ id:'i-dims', name:'Dimensions & info', from:'image', to:'text', rev:'lossy', cat:'Image',
+  info:'Size in pixels, aspect ratio and a rough megapixel count.',
+  async run(v){
+    const im = await loadImg(v);
+    const ratio = gcd(im.width, im.height) || 1;
+    return { value: [
+      'width  : ' + im.width + ' px',
+      'height : ' + im.height + ' px',
+      'pixels : ' + (im.width * im.height).toLocaleString(),
+      'ratio  : ' + (im.width / im.height).toFixed(3) + '  (' + (im.width / ratio) + ':' + (im.height / ratio) + ')',
+    ].join('\n') };
+  }});
+
+reg({ id:'i-hex', name:'Pixel data (hex)', from:'image', to:'hex', rev:'lossy', cat:'Image',
+  info:'Exports the raw RGB values of a sample of pixels as hex bytes.',
+  params:[ { key:'count', label:'Pixels', type:'number', def:64, min:8, max:512 } ],
+  async run(v, p){
+    const n = clamp(Math.round(+p.count || 64), 8, 512);
+    const { data } = await imgCanvas(v, 64);
+    const d = data.data;
+    const out = [];
+    for (let i = 0; i < d.length && out.length < n; i += 4) {
+      out.push(hexOfByte(d[i]) + hexOfByte(d[i + 1]) + hexOfByte(d[i + 2]));
+    }
+    return { value: out.join(' '), note: out.length + ' pixels' };
+  }});
+
+/* ---------- EXPRESSION ---------- */
+reg({ id:'e-eval', name:'Evaluate', from:'expr', to:'number', rev:'lossy', cat:'Math',
+  info:'Computes the expression. If it contains x, x is treated as 0.',
+  run(v){
+    const r = evalExpr(v, 0);
+    if (!isFinite(r)) throw new Error('Result is not a finite number');
+    return { value: String(+r.toFixed(10)), detail: `${v}  →  ${r}` };
+  }});
+
+reg({ id:'e-plot', name:'Plot y = f(x)', from:'expr', to:'image', rev:'lossy', cat:'Math',
+  info:'Samples the expression from x = −10 to x = +10 and draws the curve.',
+  async run(v){
+    const pts = [], xs = [];
+    for (let i = 0; i <= 300; i++) {
+      const x = -10 + (20 * i / 300);
+      let y;
+      try { y = evalExpr(v, x); } catch (e) { y = NaN; }
+      xs.push(x);
+      pts.push(isFinite(y) ? y : null);
+    }
+    const finite = pts.filter(p => p !== null);
+    if (!finite.length) throw new Error('No finite values to plot — check the expression');
+    const cv = document.createElement('canvas');
+    const W = 560, H = 300, pad = 26;
+    cv.width = W; cv.height = H;
+    const ctx = cv.getContext('2d');
+    ctx.fillStyle = '#05080f'; ctx.fillRect(0, 0, W, H);
+    let min = Math.min(...finite), max = Math.max(...finite);
+    if (max - min < 1e-9) { max += 1; min -= 1; }
+    const padY = (max - min) * 0.12;
+    min -= padY; max += padY;
+    const X = x => pad + ((x + 10) / 20) * (W - 2 * pad);
+    const Y = y => H - pad - ((y - min) / (max - min)) * (H - 2 * pad);
+    ctx.strokeStyle = '#122033'; ctx.lineWidth = 1;
+    for (let i = 0; i <= 10; i++) {
+      const gx = pad + (i / 10) * (W - 2 * pad);
+      ctx.beginPath(); ctx.moveTo(gx, pad); ctx.lineTo(gx, H - pad); ctx.stroke();
+    }
+    for (let i = 0; i <= 6; i++) {
+      const gy = pad + (i / 6) * (H - 2 * pad);
+      ctx.beginPath(); ctx.moveTo(pad, gy); ctx.lineTo(W - pad, gy); ctx.stroke();
+    }
+    ctx.strokeStyle = '#2c4a6e';
+    ctx.beginPath(); ctx.moveTo(pad, Y(0)); ctx.lineTo(W - pad, Y(0)); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(X(0), pad); ctx.lineTo(X(0), H - pad); ctx.stroke();
+    ctx.strokeStyle = '#22d3ee'; ctx.lineWidth = 2; ctx.beginPath();
+    let started = false;
+    pts.forEach((y, i) => {
+      if (y === null) { started = false; return; }
+      const px = X(xs[i]), py = Y(y);
+      if (!started) { ctx.moveTo(px, py); started = true; } else ctx.lineTo(px, py);
+    });
+    ctx.stroke();
+    ctx.fillStyle = '#5b7590'; ctx.font = '10px monospace';
+    ctx.fillText(`y = ${v}`, pad + 4, pad + 12);
+    ctx.fillText('x: −10 … +10', pad, H - 8);
+    return { value: cv.toDataURL('image/png'), note: 'x ∈ [−10, 10]' };
+  }});
+
+reg({ id:'e-text', name:'As text', from:'expr', to:'text', rev:'reversible', cat:'Math',
+  info:'Keeps the expression as plain text so you can apply text transformations to it.',
+  run(v){ return { value: String(v) }; }});
+
+/* ---------- plotting helper ---------- */
+function plotSeries(series, label) {
+  const W = 560, H = 280, pad = 26;
+  const cv = document.createElement('canvas');
+  cv.width = W; cv.height = H;
+  const ctx = cv.getContext('2d');
+  ctx.fillStyle = '#05080f'; ctx.fillRect(0, 0, W, H);
+  const min = Math.min(...series), max = Math.max(...series);
+  const range = (max - min) || 1;
+  ctx.strokeStyle = '#122033'; ctx.lineWidth = 1;
+  for (let i = 0; i <= 8; i++) {
+    const y = pad + (i / 8) * (H - 2 * pad);
+    ctx.beginPath(); ctx.moveTo(pad, y); ctx.lineTo(W - pad, y); ctx.stroke();
+  }
+  ctx.strokeStyle = '#22d3ee'; ctx.lineWidth = 2;
+  ctx.beginPath();
+  series.forEach((v, i) => {
+    const x = pad + (i / Math.max(1, series.length - 1)) * (W - 2 * pad);
+    const y = H - pad - ((v - min) / range) * (H - 2 * pad);
+    i ? ctx.lineTo(x, y) : ctx.moveTo(x, y);
+  });
+  ctx.stroke();
+  ctx.fillStyle = '#5b7590'; ctx.font = '10px monospace';
+  ctx.fillText('max ' + max, pad + 2, pad - 8);
+  ctx.fillText('min ' + min, pad + 2, H - 6);
+  return cv.toDataURL('image/png');
+}
+
+/* =========================================================================
+   3. AUDIO
+   ========================================================================= */
+let actx = null;
+function audioCtx() {
+  if (!actx) actx = new (window.AudioContext || window.webkitAudioContext)();
+  if (actx.state === 'suspended') actx.resume();
+  return actx;
+}
+function beep(t0, dur, freq, wave, gain) {
+  const ctx = audioCtx();
+  const o = ctx.createOscillator(), g = ctx.createGain();
+  o.type = wave || 'sine';
+  o.frequency.value = clamp(freq, 20, 16000);
+  g.gain.setValueAtTime(0, t0);
+  g.gain.linearRampToValueAtTime(gain || 0.07, t0 + 0.008);
+  g.gain.setValueAtTime(gain || 0.07, t0 + Math.max(0.01, dur - 0.012));
+  g.gain.linearRampToValueAtTime(0, t0 + dur);
+  o.connect(g).connect(ctx.destination);
+  o.start(t0); o.stop(t0 + dur + 0.03);
+}
+function playMorse(code, opts) {
+  const ctx = audioCtx();
+  const unit = (opts.unit || 0.09), freq = opts.freq || 620, wave = opts.wave || 'sine';
+  let t = ctx.currentTime + 0.06;
+  for (const ch of code) {
+    if (ch === '.') { beep(t, unit, freq, wave); t += unit * 2; }
+    else if (ch === '-') { beep(t, unit * 3, freq, wave); t += unit * 4; }
+    else if (ch === ' ') t += unit * 2;
+    else if (ch === '/') t += unit * 6;
+  }
+}
+function playBits(bits, opts) {
+  const ctx = audioCtx();
+  const unit = opts.unit || 0.12, base = opts.freq || 600, wave = opts.wave || 'square';
+  let t = ctx.currentTime + 0.06;
+  for (const b of bits) {
+    beep(t, unit * 0.8, b === '1' ? base * 1.5 : base * 0.75, wave);
+    t += unit;
+  }
+}
+function playNumbers(ns, opts) {
+  const ctx = audioCtx();
+  const unit = opts.unit || 0.22, base = opts.freq || 440, wave = opts.wave || 'sine';
+  let t = ctx.currentTime + 0.06;
+  for (const n of ns) {
+    const f = base * Math.pow(2, ((Math.abs(Math.round(n)) % 12) / 12));
+    beep(t, unit * 0.85, f, wave);
+    t += unit;
+  }
+}
+function playTone(freq, dur, wave) {
+  const ctx = audioCtx();
+  beep(ctx.currentTime + 0.05, clamp(dur, 0.05, 5), freq, wave || 'sine', 0.09);
+}
+function playNode(n) {
+  try {
+    const p = n.params || {};
+    const freq = +p.freq || 620;
+    const wave = p.wave || 'sine';
+    const unit = (p.speed ? +p.speed : 1) * 0.09;
+    switch (n.transformId) {
+      case 'm-sound':  playMorse(n.value, { freq, wave, unit }); break;
+      case 't-sound':  playMorse(textToMorse(n.value), { freq, wave, unit }); break;
+      case 'b-sound':  playBits(n.value, { freq, wave, unit: unit * 1.2 }); break;
+      case 'ns-sound': playNumbers(nums(n.value), { freq, wave }); break;
+      case 'n-sound':  playTone(+n.value, +p.dur || 0.6, wave); break;
+      default:         playMorse(n.value, { freq, wave, unit });
+    }
+  } catch (e) { toast('Audio error: ' + e.message); }
+}
+
+/* =========================================================================
+   4. STATE + GRAPH
+   ========================================================================= */
+const state = {
+  nodes: [],
+  selected: null,
+  history: [],
+  view: { x: 40, y: 40, s: 1 },
+};
+const getNode = id => state.nodes.find(n => n.id === id);
+const NODE_W = 224, NODE_GAP = 300;
+
+function pushHistory() {
+  try {
+    state.history.push(JSON.stringify(state.nodes));
+    if (state.history.length > 30) state.history.shift();
+  } catch (e) { /* ignore */ }
+}
+function undo() {
+  if (!state.history.length) return toast('Nothing to undo');
+  state.nodes = JSON.parse(state.history.pop());
+  if (!getNode(state.selected)) state.selected = state.nodes.length ? state.nodes[state.nodes.length - 1].id : null;
+  renderGraph();
+  renderInspector();
+  saveSession();
+}
+function measureNode(id) {
+  const el = document.querySelector(`.node[data-id="${id}"]`);
+  return el ? el.offsetHeight : 120;
+}
+function addNode(data) {
+  pushHistory();
+  const n = Object.assign({ id: uid(), x: 60, y: 90, rev: 'reversible' }, data);
+  if (n.parent) {
+    const p = getNode(n.parent);
+    const sibs = state.nodes.filter(x => x.parent === n.parent);
+    let y = p.y;
+    if (sibs.length) y = Math.max(...sibs.map(s => s.y + measureNode(s.id) + 18));
+    n.x = p.x + NODE_GAP;
+    n.y = y;
+  } else {
+    const roots = state.nodes.filter(x => !x.parent);
+    n.x = 60 + roots.length * 34;
+    n.y = 90 + roots.length * 34;
+  }
+  state.nodes.push(n);
+  renderGraph();
+  saveSession();
+  return n;
+}
+function selectNode(id) {
+  state.selected = id;
+  $$('.node').forEach(el => el.classList.toggle('selected', el.dataset.id === id));
+  renderInspector();
+}
+function deleteNode(id) {
+  pushHistory();
+  const kill = new Set([id]);
+  let changed = true;
+  while (changed) {
+    changed = false;
+    for (const n of state.nodes) if (n.parent && kill.has(n.parent) && !kill.has(n.id)) { kill.add(n.id); changed = true; }
+  }
+  state.nodes = state.nodes.filter(n => !kill.has(n.id));
+  if (kill.has(state.selected)) state.selected = null;
+  renderGraph(); renderInspector(); saveSession();
+}
+
+/* ---------- rendering the graph ---------- */
+function renderGraph() {
+  const g = $('#graph');
+  [...g.querySelectorAll('.node')].forEach(x => x.remove());
+  for (const n of state.nodes) g.appendChild(buildNode(n));
+  updateEdges();
+}
+function buildNode(n) {
+  const meta = TYPE_META[n.type] || { label: n.type, c: '#7d8ea6' };
+  const d = document.createElement('div');
+  d.className = 'node' + (state.selected === n.id ? ' selected' : '');
+  d.dataset.id = n.id;
+  d.style.left = n.x + 'px';
+  d.style.top = n.y + 'px';
+  d.style.setProperty('--tc', meta.c);
+
+  const head = document.createElement('div');
+  head.className = 'nhead';
+  head.innerHTML = `<span class="ntrans">${esc(n.label || 'Input')}</span><span class="ntype">${esc(meta.label)}</span>`;
+  d.appendChild(head);
+
+  const body = document.createElement('div');
+  body.className = 'nbody';
+
+  if (n.type === 'image') {
+    const im = document.createElement('img');
+    im.className = 'thumb'; im.src = n.value; im.alt = 'image';
+    body.appendChild(im);
+  } else if (n.type === 'color') {
+    const sw = document.createElement('div');
+    sw.className = 'swatch';
+    try { sw.style.background = n.value; } catch (e) { sw.style.background = '#333'; }
+    body.appendChild(sw);
+    const c = document.createElement('code');
+    c.textContent = n.value;
+    body.appendChild(c);
+  } else if (n.type === 'sound') {
+    const b = document.createElement('button');
+    b.className = 'playbtn';
+    b.textContent = '▶ Play';
+    b.onclick = ev => { ev.stopPropagation(); playNode(n); };
+    body.appendChild(b);
+    const pre = document.createElement('pre');
+    pre.textContent = truncate(n.value, 70);
+    body.appendChild(pre);
+  } else {
+    const pre = document.createElement('pre');
+    pre.textContent = truncate(n.value, 150);
+    body.appendChild(pre);
+  }
+  d.appendChild(body);
+
+  const foot = document.createElement('div');
+  foot.className = 'nfoot';
+  foot.innerHTML = `<span class="rev ${revClass(n.rev)}">${esc(revLabel(n.rev))}</span>`;
+  d.appendChild(foot);
+
+  return d;
+}
+function updateEdges() {
+  const svg = $('#edges');
+  if (!svg) return;
+  const parts = [];
+  for (const n of state.nodes) {
+    if (!n.parent) continue;
+    const p = getNode(n.parent);
+    if (!p) continue;
+    const pe = document.querySelector(`.node[data-id="${p.id}"]`);
+    const ne = document.querySelector(`.node[data-id="${n.id}"]`);
+    if (!pe || !ne) continue;
+    const x1 = p.x + pe.offsetWidth, y1 = p.y + pe.offsetHeight / 2;
+    const x2 = n.x, y2 = n.y + ne.offsetHeight / 2;
+    const mx = (x1 + x2) / 2;
+    parts.push(`<path class="edge" vector-effect="non-scaling-stroke" d="M ${x1} ${y1} C ${mx} ${y1}, ${mx} ${y2}, ${x2} ${y2}" marker-end="url(#arw)"/>`);
+  }
+  svg.innerHTML =
+    `<defs><marker id="arw" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#3b7fbf"/></marker></defs>` +
+    parts.join('');
+}
+function applyView() {
+  $('#graph').style.transform = `translate(${state.view.x}px, ${state.view.y}px) scale(${state.view.s})`;
+  $('#zoomVal').textContent = Math.round(state.view.s * 100) + '%';
+}
+function fitView() {
+  if (!state.nodes.length) { state.view = { x: 40, y: 40, s: 1 }; applyView(); return; }
+  let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+  for (const n of state.nodes) {
+    const el = document.querySelector(`.node[data-id="${n.id}"]`);
+    const w = el ? el.offsetWidth : NODE_W, h = el ? el.offsetHeight : 120;
+    minX = Math.min(minX, n.x); minY = Math.min(minY, n.y);
+    maxX = Math.max(maxX, n.x + w); maxY = Math.max(maxY, n.y + h);
+  }
+  const stage = $('#stage').getBoundingClientRect();
+  const pad = 60;
+  const sx = (stage.width - pad * 2) / Math.max(1, maxX - minX);
+  const sy = (stage.height - pad * 2) / Math.max(1, maxY - minY);
+  const s = clamp(Math.min(sx, sy, 1.2), 0.15, 1.2);
+  state.view.s = s;
+  state.view.x = pad - minX * s + Math.max(0, (stage.width - pad * 2 - (maxX - minX) * s) / 2);
+  state.view.y = pad - minY * s + Math.max(0, (stage.height - pad * 2 - (maxY - minY) * s) / 2);
+  applyView();
+}
+
+/* =========================================================================
+   5. TRANSFORM EXECUTION
+   ========================================================================= */
+async function applyTransform(parent, t, params) {
+  let res;
+  try {
+    res = await t.run(parent.value, params || {}, parent);
+  } catch (err) {
+    toast(err && err.message ? err.message : 'Transformation failed');
+    return null;
+  }
+  if (res === undefined || res === null) { toast('No result produced'); return null; }
+  const obj = (typeof res === 'object' && 'value' in res) ? res : { value: res };
+  const child = addNode({
+    parent: parent.id,
+    value: String(obj.value),
+    type: t.to,
+    label: t.name,
+    transformId: t.id,
+    params: params || {},
+    note: obj.note || '',
+    detail: obj.detail || '',
+    rev: t.rev || 'reversible',
+  });
+  selectNode(child.id);
+  return child;
+}
+
+/* =========================================================================
+   6. INSPECTOR
+   ========================================================================= */
+let txFilter = '';
+
+function renderInspector() {
+  const box = $('#inspector');
+  const n = getNode(state.selected);
+  if (!n) {
+    box.innerHTML = `<div class="empty">
+      Nothing selected yet.<br><br>
+      Type something in <b>Seed</b> and press <b>▶ Add to lab</b>,<br>
+      or hit <b>✨ Surprise Me</b> to watch a chain build itself.<br><br>
+      Then click any node to see everything it can become.
+    </div>`;
+    return;
+  }
+  const meta = TYPE_META[n.type] || { label: n.type, c: '#7d8ea6' };
+  const parent = n.parent ? getNode(n.parent) : null;
+
+  let html = '';
+  html += `<div class="insp-badge" style="color:${meta.c};border-color:${meta.c}55;background:${meta.c}18">${esc(meta.label)}</div>`;
+  html += `<h3 class="insp-title">${esc(n.label || 'Input')}</h3>`;
+
+  if (parent) {
+    html += `<div style="font-size:10.5px;color:var(--dim2);font-family:var(--mono);margin-bottom:7px">
+      from ${esc(truncate(parent.value, 28))}</div>`;
+  }
+
+  // value
+  if (n.type === 'image') {
+    html += `<img class="bigimg" src="${esc(n.value)}" alt="result">`;
+  } else if (n.type === 'color') {
+    html += `<div class="bigswatch" style="background:${esc(n.value)}"></div>
+             <div class="valbox" style="margin-top:7px">${esc(n.value)}</div>`;
+  } else if (n.type === 'sound') {
+    html += `<div class="valbox">${esc(truncate(n.value, 1200))}</div>
+             <button class="btn" style="margin-top:7px" id="playThis">▶ Play this sound</button>`;
+  } else {
+    html += `<div class="valbox">${esc(truncate(n.value, 2500))}</div>`;
+  }
+
+  if (n.note) html += `<div class="note">${esc(n.note)}</div>`;
+  if (n.detail) html += `<div class="detail">${esc(n.detail)}</div>`;
+
+  html += `<div class="divider"></div>`;
+  html += `<button class="wcid" id="wcidBtn">🔎 What can I do with this?</button>`;
+  html += `<div id="wcidSummary" style="font-size:11px;color:var(--dim2);margin-top:7px"></div>`;
+  html += `<div class="txsearch"><input type="text" id="txSearch" placeholder="filter transformations…" value="${esc(txFilter)}"></div>`;
+  html += `<div id="txList"></div>`;
+
+  box.innerHTML = html;
+
+  if (n.type === 'sound') {
+    const b = $('#playThis');
+    if (b) b.onclick = () => playNode(n);
+  }
+  $('#wcidBtn').onclick = () => {
+    const list = $('#txList');
+    list.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    $('#wcidBtn').classList.add('flash');
+    setTimeout(() => $('#wcidBtn').classList.remove('flash'), 950);
+    const cnt = applicableTransforms(n.type).length;
+    $('#wcidSummary').textContent = `${cnt} transformation${cnt === 1 ? '' : 's'} accept type "${meta.label}".`;
+  };
+  $('#txSearch').oninput = e => { txFilter = e.target.value; renderTxList(); };
+
+  renderTxList();
+}
+
+function applicableTransforms(type) {
+  return REG.filter(t => accepts(t, type));
+}
+
+function renderTxList() {
+  const n = getNode(state.selected);
+  const list = $('#txList');
+  if (!n || !list) return;
+  let items = applicableTransforms(n.type);
+  const q = txFilter.trim().toLowerCase();
+  if (q) items = items.filter(t => (t.name + ' ' + (t.info || '') + ' ' + t.cat).toLowerCase().includes(q));
+  if (!items.length) {
+    list.innerHTML = `<div class="hint">No transformations match. This type is often a terminal one — try branching from an earlier node.</div>`;
+    return;
+  }
+  const groups = {};
+  items.forEach(t => { (groups[t.cat || 'Other'] = groups[t.cat || 'Other'] || []).push(t); });
+
+  let html = '';
+  for (const cat of Object.keys(groups).sort()) {
+    html += `<div class="cathead">${esc(cat)}</div>`;
+    for (const t of groups[cat]) {
+      const toMeta = TYPE_META[t.to] || { label: t.to };
+      html += `<div class="tx" data-tid="${t.id}">
+        <div class="txrow">
+          <button class="txmain" data-act="main">
+            <span class="nm">${esc(t.name)}</span>
+            <span class="to">→ ${esc(toMeta.label)}</span>
+          </button>
+          <span class="revpill ${revClass(t.rev)}">${esc(revLabel(t.rev))}</span>
+          <button class="txinfo" data-act="info" title="What does this do?">i</button>
+        </div>
+        <div class="txbody">
+          <div class="txdesc">${esc(t.info || '')}</div>
+          ${t.params ? `<div class="prms">${paramHTML(t)}</div>` : ''}
+          <button class="go" data-act="go">Apply →</button>
+        </div>
+      </div>`;
+    }
+  }
+  list.innerHTML = html;
+}
+
+function paramHTML(t) {
+  return t.params.map(p => {
+    if (p.type === 'select') {
+      return `<label class="prm"><span>${esc(p.label)}</span><select data-key="${esc(p.key)}">${
+        p.options.map(o => `<option value="${esc(o)}"${o === p.def ? ' selected' : ''}>${esc(o)}</option>`).join('')
+      }</select></label>`;
+    }
+    if (p.type === 'number') {
+      return `<label class="prm"><span>${esc(p.label)}</span><input type="number" data-key="${esc(p.key)}" value="${esc(p.def)}"${
+        p.min != null ? ` min="${p.min}"` : ''}${p.max != null ? ` max="${p.max}"` : ''}></label>`;
+    }
+    return `<label class="prm"><span>${esc(p.label)}</span><input type="text" data-key="${esc(p.key)}" value="${esc(p.def)}"></label>`;
+  }).join('');
+}
+
+function readParams(rowEl, t) {
+  const params = {};
+  (t.params || []).forEach(p => {
+    const inp = rowEl.querySelector(`[data-key="${p.key}"]`);
+    params[p.key] = inp ? inp.value : p.def;
+  });
+  return params;
+}
+
+/* delegate inspector clicks */
+$('#inspector').addEventListener('click', e => {
+  const row = e.target.closest('.tx');
+  if (!row) return;
+  const t = byId(row.dataset.tid);
+  if (!t) return;
+  const act = e.target.closest('[data-act]') ? e.target.closest('[data-act]').dataset.act : null;
+
+  if (act === 'info') {
+    row.classList.toggle('open');
+    e.stopPropagation();
+    return;
+  }
+  if (act === 'go') {
+    const n = getNode(state.selected);
+    if (n) applyTransform(n, t, readParams(row, t));
+    return;
+  }
+  if (act === 'main') {
+    const n = getNode(state.selected);
+    if (!n) return;
+    if (t.params && t.params.length) {
+      row.classList.toggle('open');
+    } else {
+      applyTransform(n, t, {});
+    }
+  }
+});
+
+/* =========================================================================
+   7. DRAG / PAN / ZOOM
+   ========================================================================= */
+(function initStage() {
+  const stage = $('#stage');
+  const graph = $('#graph');
+  let drag = null, pan = null;
+
+  stage.addEventListener('pointerdown', e => {
+    if (e.button !== 0) return;
+    const nodeEl = e.target.closest('.node');
+    if (nodeEl) {
+      if (e.target.closest('button')) return;
+      const n = getNode(nodeEl.dataset.id);
+      if (!n) return;
+      selectNode(n.id);
+      drag = { id: n.id, sx: e.clientX, sy: e.clientY, ox: n.x, oy: n.y };
+      nodeEl.classList.add('dragging');
+    } else {
+      pan = { sx: e.clientX, sy: e.clientY, ox: state.view.x, oy: state.view.y };
+      stage.style.cursor = 'grabbing';
+    }
+    document.body.style.userSelect = 'none';
+  });
+
+  window.addEventListener('pointermove', e => {
+    if (drag) {
+      const n = getNode(drag.id);
+      if (!n) return;
+      n.x = drag.ox + (e.clientX - drag.sx) / state.view.s;
+      n.y = drag.oy + (e.clientY - drag.sy) / state.view.s;
+      const el = document.querySelector(`.node[data-id="${n.id}"]`);
+      if (el) { el.style.left = n.x + 'px'; el.style.top = n.y + 'px'; }
+      updateEdges();
+    } else if (pan) {
+      state.view.x = pan.ox + (e.clientX - pan.sx);
+      state.view.y = pan.oy + (e.clientY - pan.sy);
+      applyView();
+    }
+  });
+
+  window.addEventListener('pointerup', () => {
+    if (drag) {
+      const el = document.querySelector(`.node[data-id="${drag.id}"]`);
+      if (el) el.classList.remove('dragging');
+      drag = null;
+      saveSession();
+    }
+    if (pan) { pan = null; stage.style.cursor = ''; }
+    document.body.style.userSelect = '';
+  });
+
+  stage.addEventListener('wheel', e => {
+    e.preventDefault();
+    const rect = stage.getBoundingClientRect();
+    const mx = e.clientX - rect.left, my = e.clientY - rect.top;
+    const old = state.view.s;
+    const next = clamp(old * (e.deltaY < 0 ? 1.1 : 0.9), 0.15, 2.5);
+    state.view.x = mx - (mx - state.view.x) * (next / old);
+    state.view.y = my - (my - state.view.y) * (next / old);
+    state.view.s = next;
+    applyView();
+  }, { passive: false });
+
+  $('#zoomIn').onclick = () => { state.view.s = clamp(state.view.s * 1.15, 0.15, 2.5); applyView(); };
+  $('#zoomOut').onclick = () => { state.view.s = clamp(state.view.s / 1.15, 0.15, 2.5); applyView(); };
+})();
+
+/* =========================================================================
+   8. TYPE DETECTION
+   ========================================================================= */
+function detectType(raw) {
+  const s = String(raw).trim();
+  if (!s) return 'text';
+  if (/^#?[0-9a-f]{6}$/i.test(s) && /[0-9a-f]/i.test(s)) {
+    if (s.startsWith('#') || /^[0-9a-f]{6}$/i.test(s)) {
+      if (s.startsWith('#') || /[a-f]/i.test(s) || /^\d{6}$/.test(s)) {
+        if (s.startsWith('#')) return 'color';
+      }
+    }
+  }
+  if (/^rgb\(\s*\d+\s*,\s*\d+\s*,\s*\d+\s*\)$/i.test(s)) return 'color';
+  if (/^#[0-9a-f]{3}$/i.test(s)) return 'color';
+  if (/^[.\-\s/]+$/.test(s) && /[.\-]/.test(s)) return 'morse';
+  if (/^[01\s]+$/.test(s) && /[01]/.test(s)) return 'binary';
+  if (/^[0-9a-fA-F\s]+$/.test(s) && /[a-fA-F]/.test(s) && s.replace(/\s/g, '').length % 2 === 0) return 'hex';
+  if (/^-?\d+(\.\d+)?$/.test(s)) return 'number';
+  if (/^-?[\d\s,.]+$/.test(s) && /\d/.test(s)) return 'numbers';
+  if (/^(true|false)$/i.test(s)) return 'bool';
+  if (/^(true|false|[01])([\s,]+(true|false|[01]))+$/i.test(s) && /(true|false)/i.test(s)) return 'bool';
+  if (/^[{[]/.test(s)) { try { JSON.parse(s); return 'json'; } catch (e) { /* fall through */ } }
+  if (/[+\-*/^]|x/i.test(s) && /[\dxX]/.test(s) && /^[-+*/^().\dx\s]+$/i.test(s)) return 'expr';
+  return 'text';
+}
+function normalizeValue(v, type) {
+  v = String(v).trim();
+  if (type === 'binary') return v.replace(/\s+/g, ' ').trim();
+  if (type === 'morse') return v.replace(/\s+/g, ' ').trim();
+  if (type === 'numbers') return nums(v).join(' ');
+  if (type === 'number') return String(nums(v)[0] ?? 0);
+  if (type === 'color') { const c = parseColor(v); return rgbToHex(c.r, c.g, c.b); }
+  return v;
+}
+
+/* =========================================================================
+   9. LEFT PANEL WIRING
+   ========================================================================= */
+const seedInput = $('#seedInput');
+const seedType = $('#seedType');
+const detectedEl = $('#detected');
+
+function updateDetected() {
+  const t = seedType.value === 'auto' ? detectType(seedInput.value) : seedType.value;
+  const meta = TYPE_META[t] || { label: t };
+  detectedEl.innerHTML = `detected: <b style="color:${meta.c}">${esc(meta.label)}</b>`;
+}
+seedInput.addEventListener('input', updateDetected);
+seedType.addEventListener('change', updateDetected);
+
+$('#addSeed').onclick = () => {
+  const raw = seedInput.value;
+  if (!raw.trim()) { toast('Type something first'); return; }
+  const type = seedType.value === 'auto' ? detectType(raw) : seedType.value;
+  let value;
+  try { value = normalizeValue(raw, type); }
+  catch (e) { toast(e.message); return; }
+  const meta = TYPE_META[type] || { label: type };
+  const n = addNode({ value, type, label: 'Seed input', rev: 'source' });
+  selectNode(n.id);
+  fitViewSoft();
+};
+
+$('#pickImage').onclick = () => $('#fileInput').click();
+$('#fileInput').onchange = e => {
+  const f = e.target.files && e.target.files[0];
+  if (!f) return;
+  const r = new FileReader();
+  r.onload = () => {
+    const n = addNode({ value: r.result, type: 'image', label: 'Uploaded image', rev: 'source', note: f.name });
+    selectNode(n.id);
+    toast('Image loaded — try Grayscale or ASCII art', true);
+  };
+  r.readAsDataURL(f);
+  e.target.value = '';
+};
+
+function fitViewSoft() {
+  setTimeout(() => {
+    if (state.nodes.length <= 3) fitView();
+    else applyView();
+  }, 30);
+}
+
+/* ---------- generators ---------- */
+const WORDS = ['HELLO','LAB','SIGNAL','CIPHER','ORBIT','PIXEL','QUARK','NOVA','VOLT','ECHO','FLUX','MATRIX','ZENITH','CIPHER'];
+function randInt(a, b) { return a + Math.floor(Math.random() * (b - a + 1)); }
+function pick(arr) { return arr[Math.floor(Math.random() * arr.length)]; }
+
+const GENERATORS = {
+  number() { return String(randInt(1, 999)); },
+  binary() {
+    const n = randInt(8, 32);
+    let s = '';
+    for (let i = 0; i < n; i++) s += Math.random() < 0.5 ? '0' : '1';
+    return s.replace(/(.{8})(?=.)/g, '$1 ');
+  },
+  hex() {
+    const n = randInt(2, 5) * 2;
+    let s = '';
+    for (let i = 0; i < n; i++) s += '0123456789ABCDEF'[randInt(0, 15)];
+    return s.replace(/(.{2})(?=.)/g, '$1 ');
+  },
+  string() {
+    const n = randInt(4, 9);
+    let s = '';
+    for (let i = 0; i < n; i++) s += 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'[randInt(0, 25)];
+    return s;
+  },
+  color() {
+    return '#' + Array.from({ length: 3 }, () => randInt(0, 255).toString(16).padStart(2, '0')).join('').toUpperCase();
+  },
+  morse() {
+    return textToMorse(pick(WORDS));
+  },
+  expr() {
+    const forms = ['x^2', 'x^2-4', 'sin(x)*3', 'x^3/10', 'sqrt(abs(x))*2', 'cos(x)*x', 'x^2-2*x+1'];
+    return pick(forms);
+  },
+  json() {
+    return JSON.stringify({ name: pick(WORDS).toLowerCase(), id: randInt(1, 999), active: Math.random() < 0.5, tags: ['a', 'b'] });
+  },
+};
+
+$$('[data-gen]').forEach(btn => {
+  btn.onclick = () => {
+    const kind = btn.dataset.gen;
+    const v = GENERATORS[kind]();
+    seedInput.value = v;
+    seedType.value = 'auto';
+    updateDetected();
+    const t = detectType(v);
+    toast('Generated ' + (TYPE_META[t] ? TYPE_META[t].label : t), true);
+  };
+});
+
+/* =========================================================================
+   10. SURPRISE ME
+   ========================================================================= */
+async function surpriseMe() {
+  const kinds = Object.keys(GENERATORS);
+  const kind = pick(kinds);
+  let value = GENERATORS[kind]();
+  let type = detectType(value);
+  try { value = normalizeValue(value, type); } catch (e) { type = 'text'; }
+
+  seedInput.value = value;
+  seedType.value = 'auto';
+  updateDetected();
+
+  let node = addNode({ value, type, label: 'Random ' + (TYPE_META[type] ? TYPE_META[type].label : type), rev: 'source' });
+  selectNode(node.id);
+
+  const steps = randInt(2, 4);
+  for (let i = 0; i < steps; i++) {
+    const options = applicableTransforms(node.type).filter(t => {
+      if (t.to === node.type && t.id.includes('invert')) return true;
+      return t.to !== 'sound' || i === steps - 1;
+    });
+    if (!options.length) break;
+    const t = pick(options);
+    const params = {};
+    (t.params || []).forEach(p => params[p.key] = p.def);
+    const next = await applyTransform(node, t, params);
+    if (!next) break;
+    node = next;
+  }
+  setTimeout(fitView, 60);
+  toast('Random chain built — click any node to branch', true);
+}
+
+/* =========================================================================
+   11. PERSISTENCE
+   ========================================================================= */
+const LS_SESSION = 'transformlab.session.v1';
+const LS_SAVED = 'transformlab.saved.v1';
+
+let saveTimer = null;
+function saveSession() {
+  clearTimeout(saveTimer);
+  saveTimer = setTimeout(() => {
+    try {
+      localStorage.setItem(LS_SESSION, JSON.stringify({
+        nodes: state.nodes.map(n => (n.type === 'image' ? Object.assign({}, n, { value: '' }) : n)),
+        view: state.view,
+        seed: seedInput.value,
+        uid: _uid,
+      }));
+    } catch (e) { /* quota — ignore */ }
+  }, 350);
+}
+function loadSession() {
+  try {
+    const raw = localStorage.getItem(LS_SESSION);
+    if (!raw) return false;
+    const data = JSON.parse(raw);
+    if (!data || !Array.isArray(data.nodes) || !data.nodes.length) return false;
+    state.nodes = data.nodes.filter(n => n.type !== 'image' || n.value);
+    state.view = data.view || state.view;
+    _uid = data.uid || (state.nodes.length + 1);
+    if (data.seed) { seedInput.value = data.seed; updateDetected(); }
+    if (!state.nodes.length) return false;
+    state.selected = state.nodes[state.nodes.length - 1].id;
+    return true;
+  } catch (e) { return false; }
+}
+function getSaved() {
+  try { return JSON.parse(localStorage.getItem(LS_SAVED) || '[]'); } catch (e) { return []; }
+}
+function setSaved(arr) {
+  try { localStorage.setItem(LS_SAVED, JSON.stringify(arr)); } catch (e) { toast('Storage full — could not save'); }
+}
+function renderSaved() {
+  const list = $('#savedList');
+  const items = getSaved();
+  if (!items.length) { list.innerHTML = '<div class="hint">Nothing saved yet.</div>'; return; }
+  list.innerHTML = items.map(it => `
+    <div class="saveitem">
+      <div style="flex:1;overflow:hidden">
+        <div class="t" data-open="${it.id}">${esc(it.title)}</div>
+        <div class="d">${esc(it.date)} · ${it.nodes.length} nodes</div>
+      </div>
+      <button class="xbtn" data-del="${it.id}" title="Delete">✕</button>
+    </div>`).join('');
+}
+$('#savedList').addEventListener('click', e => {
+  const open = e.target.closest('[data-open]');
+  const del = e.target.closest('[data-del]');
+  if (open) {
+    const items = getSaved();
+    const it = items.find(x => x.id === open.dataset.open);
+    if (!it) return;
+    pushHistory();
+    state.nodes = it.nodes;
+    _uid = it.uid || (state.nodes.length + 1);
+    state.selected = state.nodes.length ? state.nodes[state.nodes.length - 1].id : null;
+    renderGraph(); renderInspector();
+    setTimeout(fitView, 40);
+    toast('Opened "' + it.title + '"', true);
+  }
+  if (del) {
+    const items = getSaved().filter(x => x.id !== del.dataset.del);
+    setSaved(items);
+    renderSaved();
+  }
+});
+
+/* =========================================================================
+   12. HEADER BUTTONS
+   ========================================================================= */
+$('#btnSurprise').onclick = surpriseMe;
+$('#btnFit').onclick = fitView;
+$('#btnUndo').onclick = undo;
+$('#btnSave').onclick = () => {
+  if (!state.nodes.length) { toast('Nothing to save yet'); return; }
+  const title = prompt('Name this experiment:', 'Experiment ' + new Date().toLocaleTimeString());
+  if (title === null) return;
+  const items = getSaved();
+  items.unshift({
+    id: 'e' + Date.now(),
+    title: (title || 'Untitled').slice(0, 60),
+    date: new Date().toLocaleString(),
+    nodes: state.nodes.map(n => (n.type === 'image' ? Object.assign({}, n, { value: '' }) : n)),
+    uid: _uid,
+  });
+  setSaved(items.slice(0, 40));
+  renderSaved();
+  toast('Saved to this browser', true);
+};
+$('#btnClear').onclick = () => {
+  if (!state.nodes.length) return;
+  if (!confirm('Clear the entire workspace? (Saved experiments are kept.)')) return;
+  pushHistory();
+  state.nodes = [];
+  state.selected = null;
+  state.view = { x: 40, y: 40, s: 1 };
+  applyView();
+  renderGraph();
+  renderInspector();
+  saveSession();
+  toast('Workspace cleared');
+};
+
+/* keyboard shortcuts */
+window.addEventListener('keydown', e => {
+  if (e.target.matches('input, textarea, select')) return;
+  if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'z') { e.preventDefault(); undo(); }
+  if (e.key === 'Delete' || e.key === 'Backspace') {
+    if (state.selected && document.activeElement === document.body) { e.preventDefault(); deleteNode(state.selected); }
+  }
+  if (e.key === 'f' && !e.ctrlKey && !e.metaKey) fitView();
+});
+
+/* =========================================================================
+   13. BOOT
+   ========================================================================= */
+(function boot() {
+  updateDetected();
+  applyView();
+  const restored = loadSession();
+  renderGraph();
+  if (restored) {
+    renderInspector();
+    setTimeout(fitView, 50);
+  } else {
+    // seed a friendly first example
+    const n = addNode({ value: 'HELLO', type: 'text', label: 'Seed input', rev: 'source' });
+    state.selected = n.id;
+    renderGraph();
+    renderInspector();
+    state.history = [];
+    applyView();
+  }
+  renderSaved();
+})();
+</script>
+</body>
+</html>
