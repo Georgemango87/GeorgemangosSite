@@ -1466,18 +1466,18 @@
         </article>
 
         <!-- 14 -->
-        <article class="project-card reveal" data-category="tool" data-project-id="story-weave">
+        <article class="project-card reveal" data-category="tool" data-project-id="measure-craft">
           <div class="card-head">
-            <div class="icon-graphic" style="background: linear-gradient(135deg, #062274, #53067C);">📖</div>
+            <div class="icon-graphic" style="background: linear-gradient(135deg, #14b8a6, #0f766e);">📐</div>
             <div class="card-title">
               <h3>Measure Craft</h3>
               <span class="card-cat">Tool</span>
             </div>
             <button class="star-btn" type="button" data-star="measure-craft" aria-label="Save Measure Craft" aria-pressed="false">☆</button>
           </div>
-          <p>Mess around with custom measurements.</p>
+          <p>A live unit-conversion studio. Convert temperature, length, weight and more — then invent your own units with custom formulas.</p>
           <div class="card-tags">
-            <span>Game</span><span>Building</span>
+            <span>Converter</span><span>Custom Units</span>
           </div>
           <button class="launch-btn" onclick="openGameModal('game14-modal')">▶ Launch</button>
         </article>
@@ -1776,13 +1776,13 @@
     </div>
   </div>
 
-  <!-- GAME 14 MODAL: STORY WEAVE -->
+  <!-- GAME 14 MODAL: MEASURE CRAFT (embedded, no external file needed) -->
   <div id="game14-modal" class="game-modal">
     <div class="game-modal-content"
          style="max-width: 98vw; width: 98vw; height: 94vh; padding: 0;
-                background: #ffffff; overflow: hidden; border-radius: 12px;">
+                background: #f7f6f2; overflow: hidden; border-radius: 12px;">
       <button class="close-modal-btn" type="button" onclick="closeGameModal('game14-modal')">&times;</button>
-      <iframe id="game14-iframe" data-src="MeasureCraft.html" title="Measure Craft"
+      <iframe id="game14-iframe" title="Measure Craft"
               style="width: 100%; height: 100%; border: 0; display: block;"
               allow="clipboard-write"></iframe>
     </div>
@@ -1790,6 +1790,615 @@
 
   <!-- toast host -->
   <div id="toast" class="toast" role="status" aria-live="polite"></div>
+
+  <!-- ==========================================================
+       MEASURECRAFT — embedded app source (game 14)
+       Stored here as inert text, then injected into the modal
+       iframe via srcdoc the first time it is opened. Keeping it
+       in an iframe means its Tailwind CSS / fonts can never leak
+       out and restyle the portfolio.
+       ========================================================== -->
+  <script type="text/html" id="measurecraft-source">
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>MeasureCraft — Custom Conversion Studio</title>
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"><\/script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/mathjs/11.8.0/math.js"><\/script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
+
+        body {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            background-color: #f7f6f2;
+            color: #1a1917;
+        }
+        .code-font {
+            font-family: 'JetBrains Mono', monospace;
+        }
+        ::-webkit-scrollbar {
+            width: 4px;
+            height: 4px;
+        }
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #e2dfd8;
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #c7c4bc;
+        }
+    </style>
+</head>
+<body class="h-dvh w-screen flex items-center justify-center p-0 sm:p-4 overflow-hidden box-border">
+
+    <div class="w-full h-full sm:h-[820px] sm:max-h-[92vh] sm:max-w-4xl lg:max-w-5xl bg-white sm:rounded-2xl shadow-xl border-0 sm:border border-[#e8e5dc] flex flex-col overflow-hidden">
+
+        <header class="bg-[#141413] text-[#f7f6f2] px-4 sm:px-6 py-3 sm:py-4 flex items-center justify-between border-b border-[#262624] shrink-0">
+            <div class="flex items-center gap-2.5">
+                <div class="w-2.5 h-2.5 rounded-full bg-[#d97706]"></div>
+                <div>
+                    <h1 class="text-sm sm:text-base font-bold tracking-tight uppercase">MeasureCraft</h1>
+                    <p class="text-[10px] sm:text-xs text-[#a3a099] leading-none mt-0.5">Conversion Studio</p>
+                </div>
+            </div>
+            <div class="flex items-center gap-2">
+                <button onclick="openManageModal()" class="bg-[#262624] hover:bg-[#333330] text-[#f7f6f2] border border-[#3d3d3a] px-3 py-1.5 sm:px-3.5 sm:py-2 rounded-xl text-xs font-semibold transition flex items-center gap-1.5 cursor-pointer shadow-xs" title="Manage Units">
+                    <i class="fa-solid fa-sliders text-xs text-[#d97706]"></i> <span class="hidden sm:inline">Manage Units</span>
+                </button>
+                <button onclick="openCreateModal()" class="bg-[#141413] hover:bg-[#333330] text-[#f7f6f2] border border-[#d97706] px-3 py-1.5 sm:px-3.5 sm:py-2 rounded-xl text-xs font-semibold transition flex items-center gap-1.5 cursor-pointer shadow-xs">
+                    <i class="fa-solid fa-plus text-xs text-[#d97706]"></i> <span class="hidden sm:inline">New Unit</span>
+                </button>
+            </div>
+        </header>
+
+        <main class="flex-1 p-3 sm:p-6 lg:p-8 flex flex-col lg:flex-row gap-3 sm:gap-6 lg:gap-8 items-stretch overflow-y-auto">
+
+            <div class="w-full lg:w-72 shrink-0 flex flex-col space-y-2 lg:space-y-4">
+                <div>
+                    <div class="text-[10px] uppercase tracking-wider font-bold text-[#78756e] mb-1.5 hidden lg:block">Categories</div>
+                    <div class="flex lg:flex-col gap-1.5 overflow-x-auto pb-1 lg:pb-0 scrollbar-none shrink-0" id="category-tabs">
+                        <button onclick="filterCategory('All')" class="category-btn px-3 py-1.5 sm:px-3.5 sm:py-2 rounded-xl text-xs font-semibold whitespace-nowrap lg:text-left transition cursor-pointer flex items-center justify-between"><span>All</span></button>
+                        <button onclick="filterCategory('Temperature')" class="category-btn px-3 py-1.5 sm:px-3.5 sm:py-2 rounded-xl text-xs font-semibold whitespace-nowrap lg:text-left transition cursor-pointer flex items-center justify-between"><span>Temperature</span></button>
+                        <button onclick="filterCategory('Length')" class="category-btn px-3 py-1.5 sm:px-3.5 sm:py-2 rounded-xl text-xs font-semibold whitespace-nowrap lg:text-left transition cursor-pointer flex items-center justify-between"><span>Length</span></button>
+                        <button onclick="filterCategory('Weight')" class="category-btn px-3 py-1.5 sm:px-3.5 sm:py-2 rounded-xl text-xs font-semibold whitespace-nowrap lg:text-left transition cursor-pointer flex items-center justify-between"><span>Weight</span></button>
+                        <button onclick="filterCategory('Speed')" class="category-btn px-3 py-1.5 sm:px-3.5 sm:py-2 rounded-xl text-xs font-semibold whitespace-nowrap lg:text-left transition cursor-pointer flex items-center justify-between"><span>Speed</span></button>
+                        <button onclick="filterCategory('Volume')" class="category-btn px-3 py-1.5 sm:px-3.5 sm:py-2 rounded-xl text-xs font-semibold whitespace-nowrap lg:text-left transition cursor-pointer flex items-center justify-between"><span>Volume</span></button>
+                        <button onclick="filterCategory('Energy')" class="category-btn px-3 py-1.5 sm:px-3.5 sm:py-2 rounded-xl text-xs font-semibold whitespace-nowrap lg:text-left transition cursor-pointer flex items-center justify-between"><span>Energy</span></button>
+                        <button onclick="filterCategory('Currency')" class="category-btn px-3 py-1.5 sm:px-3.5 sm:py-2 rounded-xl text-xs font-semibold whitespace-nowrap lg:text-left transition cursor-pointer flex items-center justify-between"><span>Currency</span></button>
+                        <button onclick="filterCategory('Time')" class="category-btn px-3 py-1.5 sm:px-3.5 sm:py-2 rounded-xl text-xs font-semibold whitespace-nowrap lg:text-left transition cursor-pointer flex items-center justify-between"><span>Time</span></button>
+                    </div>
+                </div>
+
+                <!-- Desktop Info Card -->
+                <div class="hidden lg:block bg-[#faf9f5] border border-[#e8e5dc] rounded-2xl p-4 text-xs text-[#78756e] space-y-2 mt-auto">
+                    <div class="font-bold text-[#141413] flex items-center gap-1.5">
+                        <i class="fa-solid fa-lightbulb text-[#d97706]"></i> Formula Builder Tip
+                    </div>
+                    <p class="leading-relaxed text-[11px]">
+                        Create custom units by linking them to a base reference unit using mathematical expressions with variable <code class="code-font font-bold text-[#141413]">X</code>. MeasureCraft automatically resolves inverses.
+                    </p>
+                </div>
+            </div>
+
+            <div class="flex-1 w-full bg-[#faf9f5] border border-[#e8e5dc] rounded-2xl p-3 sm:p-5 lg:p-8 shadow-xs flex flex-col justify-center overflow-hidden">
+                <div class="flex items-center justify-between mb-2 sm:mb-4 shrink-0">
+                    <span class="text-[10px] font-bold uppercase tracking-wider text-[#78756e]">Live Converter</span>
+                    <span id="converter-category-badge" class="text-[10px] font-semibold px-2 py-0.5 sm:px-2.5 sm:py-1 bg-[#e8e5dc] text-[#4a4843] rounded-md">Temperature</span>
+                </div>
+
+                <div class="space-y-2 sm:space-y-2.5 relative max-w-xl mx-auto w-full flex flex-col justify-center">
+                    <!-- From Unit Box -->
+                    <div class="bg-white border border-[#e8e5dc] rounded-2xl p-3 sm:p-4 lg:p-5 shadow-2xs hover:border-[#d9d5cb] transition">
+                        <div class="flex justify-between items-center mb-1">
+                            <label class="text-[11px] sm:text-xs font-semibold text-[#78756e]">From</label>
+                            <select id="from-unit-select" onchange="performConversion('from')" class="bg-[#f7f6f2] border border-[#dedcd6] rounded-xl px-2.5 py-1 text-xs font-medium text-[#1a1917] focus:outline-none cursor-pointer max-w-[150px] sm:max-w-[200px]">
+                                <!-- Populated dynamically -->
+                            </select>
+                        </div>
+                        <input type="number" id="from-input" value="25" oninput="performConversion('from')" class="w-full bg-transparent text-xl sm:text-2xl lg:text-3xl font-bold text-[#141413] focus:outline-none code-font mt-0.5">
+                    </div>
+
+                    <!-- Centered Swap Button -->
+                    <div class="flex justify-center -my-3.5 sm:-my-4 z-20 relative">
+                        <button onclick="swapUnits()" class="w-8 h-8 sm:w-9 sm:h-9 lg:w-10 lg:h-10 rounded-full bg-white border border-[#dedcd6] text-[#141413] shadow-md flex items-center justify-center hover:bg-[#f7f6f2] hover:border-[#b5b2a8] active:scale-95 transition cursor-pointer" title="Swap Units">
+                            <i class="fa-solid fa-arrow-up-long text-[9px] sm:text-[10px] mr-[-3px]"></i>
+                            <i class="fa-solid fa-arrow-down-long text-[9px] sm:text-[10px]"></i>
+                        </button>
+                    </div>
+
+                    <!-- To Unit Box -->
+                    <div class="bg-white border border-[#e8e5dc] rounded-2xl p-3 sm:p-4 lg:p-5 shadow-2xs hover:border-[#d9d5cb] transition">
+                        <div class="flex justify-between items-center mb-1">
+                            <label class="text-[11px] sm:text-xs font-semibold text-[#78756e]">To</label>
+                            <select id="to-unit-select" onchange="performConversion('from')" class="bg-[#f7f6f2] border border-[#dedcd6] rounded-xl px-2.5 py-1 text-xs font-medium text-[#1a1917] focus:outline-none cursor-pointer max-w-[150px] sm:max-w-[200px]">
+                                <!-- Populated dynamically -->
+                            </select>
+                        </div>
+                        <input type="number" id="to-input" oninput="performConversion('to')" class="w-full bg-transparent text-xl sm:text-2xl lg:text-3xl font-bold text-[#141413] focus:outline-none code-font mt-0.5">
+                    </div>
+                </div>
+
+                <!-- Currency Notice Footer -->
+                <div id="currency-notice" class="hidden mt-2.5 sm:mt-4 pt-2 border-t border-[#e8e5dc] flex items-center justify-center gap-1.5 text-[10px] sm:text-xs text-[#8c8980] max-w-xl mx-auto w-full shrink-0">
+                    <i class="fa-solid fa-circle-info text-[#d97706]"></i>
+                    <span>Currency values are approximate standard estimates.</span>
+                </div>
+            </div>
+
+        </main>
+    </div>
+
+    <!-- Create/Edit Unit Modal -->
+    <div id="unit-modal" class="fixed inset-0 bg-black/40 backdrop-blur-xs z-50 flex items-center justify-center p-4 hidden">
+        <div class="bg-white w-full max-w-md rounded-2xl p-5 sm:p-6 shadow-2xl border border-[#e8e5dc]">
+            <div class="flex justify-between items-center mb-4">
+                <h3 id="modal-title" class="font-bold text-[#141413] text-sm uppercase tracking-wider">Create Custom Unit</h3>
+                <button onclick="closeModal()" class="w-7 h-7 rounded-full bg-[#f7f6f2] text-[#78756e] hover:bg-[#e8e5dc] flex items-center justify-center transition cursor-pointer"><i class="fa-solid fa-xmark text-sm"></i></button>
+            </div>
+
+            <form id="unit-form" onsubmit="saveUnit(event)" class="space-y-3.5">
+                <input type="hidden" id="unit-id">
+
+                <div>
+                    <label class="block text-[10px] font-bold uppercase tracking-wider text-[#78756e] mb-1">Category</label>
+                    <select id="unit-category" onchange="updateBaseDropdown()" class="w-full bg-[#f7f6f2] border border-[#dedcd6] rounded-xl px-3 py-2 text-xs font-medium text-[#1a1917] focus:outline-none cursor-pointer">
+                        <option value="Temperature">Temperature</option>
+                        <option value="Length">Length</option>
+                        <option value="Weight">Weight</option>
+                        <option value="Speed">Speed</option>
+                        <option value="Volume">Volume</option>
+                        <option value="Energy">Energy</option>
+                        <option value="Currency">Currency</option>
+                        <option value="Time">Time</option>
+                        <option value="Other">Other</option>
+                    </select>
+                </div>
+
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-[10px] font-bold uppercase tracking-wider text-[#78756e] mb-1">Unit Name</label>
+                        <input type="text" id="unit-name" required placeholder="e.g. Fahrenheit" class="w-full bg-[#f7f6f2] border border-[#dedcd6] rounded-xl px-3 py-2 text-xs font-medium text-[#1a1917] focus:outline-none">
+                    </div>
+                    <div>
+                        <label class="block text-[10px] font-bold uppercase tracking-wider text-[#78756e] mb-1">Symbol</label>
+                        <input type="text" id="unit-symbol" required placeholder="e.g. °F" class="w-full bg-[#f7f6f2] border border-[#dedcd6] rounded-xl px-3 py-2 text-xs font-medium text-[#1a1917] focus:outline-none">
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-[10px] font-bold uppercase tracking-wider text-[#78756e] mb-1">Base Reference Unit</label>
+                    <select id="unit-base-select" class="w-full bg-[#f7f6f2] border border-[#dedcd6] rounded-xl px-3 py-2 text-xs font-medium text-[#1a1917] focus:outline-none cursor-pointer">
+                        <!-- Populated dynamically -->
+                    </select>
+                </div>
+
+                <div>
+                    <label class="block text-[10px] font-bold uppercase tracking-wider text-[#78756e] mb-1">Formula from Base (<code class="code-font text-[#141413]">X</code>)</label>
+                    <input type="text" id="unit-formula" required placeholder="e.g. X * 1.8 + 32" class="w-full bg-[#f7f6f2] border border-[#dedcd6] rounded-xl px-3 py-2 text-xs code-font text-[#141413] focus:outline-none">
+                    <p class="text-[10px] text-[#8c8980] mt-1">Example: For Minutes from Seconds, use <code class="code-font">X / 60</code></p>
+                </div>
+
+                <div class="pt-2 flex gap-3">
+                    <button type="button" onclick="closeModal()" class="flex-1 bg-[#f0eee6] hover:bg-[#e8e5dc] text-[#4a4843] font-semibold py-2.5 rounded-xl text-xs transition cursor-pointer">Cancel</button>
+                    <button type="submit" class="flex-1 bg-[#141413] hover:bg-[#333330] text-[#f7f6f2] font-semibold py-2.5 rounded-xl text-xs transition cursor-pointer">Save Unit</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Manage Units Modal -->
+    <div id="manage-modal" class="fixed inset-0 bg-black/40 backdrop-blur-xs z-50 flex items-center justify-center p-4 hidden">
+        <div class="bg-white w-full max-w-lg rounded-2xl p-5 sm:p-6 shadow-2xl border border-[#e8e5dc] flex flex-col max-h-[80vh]">
+            <div class="flex justify-between items-center mb-4">
+                <div>
+                    <h3 class="font-bold text-[#141413] text-sm uppercase tracking-wider">Manage Units</h3>
+                    <p class="text-xs text-[#8c8980] mt-0.5" id="manage-subtitle">All categories</p>
+                </div>
+                <button onclick="closeManageModal()" class="w-7 h-7 rounded-full bg-[#f7f6f2] text-[#78756e] hover:bg-[#e8e5dc] flex items-center justify-center transition cursor-pointer"><i class="fa-solid fa-xmark text-sm"></i></button>
+            </div>
+
+            <div id="manage-units-list" class="flex-1 overflow-y-auto space-y-2.5 pr-1 mb-4">
+                <!-- Populated dynamically -->
+            </div>
+
+            <button onclick="closeManageModal(); openCreateModal();" class="w-full bg-[#141413] hover:bg-[#333330] text-[#f7f6f2] font-semibold py-3 rounded-xl text-xs transition cursor-pointer flex items-center justify-center gap-2 shrink-0 shadow-xs">
+                <i class="fa-solid fa-plus text-xs text-[#d97706]"></i> Add New Custom Unit
+            </button>
+        </div>
+    </div>
+
+    <script>
+        const DEFAULT_UNITS = [
+            // Temperature
+            { id: 't1', name: 'Celsius', symbol: '°C', category: 'Temperature', base: 'Celsius', formula: 'X' },
+            { id: 't2', name: 'Fahrenheit', symbol: '°F', category: 'Temperature', base: 'Celsius', formula: 'X * 9/5 + 32' },
+            { id: 't3', name: 'Kelvin', symbol: 'K', category: 'Temperature', base: 'Celsius', formula: 'X + 273.15' },
+
+            // Length
+            { id: 'l1', name: 'Meters', symbol: 'm', category: 'Length', base: 'Meters', formula: 'X' },
+            { id: 'l2', name: 'Kilometers', symbol: 'km', category: 'Length', base: 'Meters', formula: 'X / 1000' },
+            { id: 'l3', name: 'Miles', symbol: 'mi', category: 'Length', base: 'Meters', formula: 'X / 1609.344' },
+            { id: 'l4', name: 'Feet', symbol: 'ft', category: 'Length', base: 'Meters', formula: 'X * 3.28084' },
+
+            // Weight
+            { id: 'w1', name: 'Grams', symbol: 'g', category: 'Weight', base: 'Grams', formula: 'X' },
+            { id: 'w2', name: 'Kilograms', symbol: 'kg', category: 'Weight', base: 'Grams', formula: 'X / 1000' },
+            { id: 'w3', name: 'Pounds', symbol: 'lb', category: 'Weight', base: 'Grams', formula: 'X / 453.59237' },
+            { id: 'w4', name: 'Ounces', symbol: 'oz', category: 'Weight', base: 'Grams', formula: 'X / 28.3495' },
+
+            // Speed
+            { id: 's1', name: 'Meters/second', symbol: 'm/s', category: 'Speed', base: 'Meters/second', formula: 'X' },
+            { id: 's2', name: 'Kilometers/hour', symbol: 'km/h', category: 'Speed', base: 'Meters/second', formula: 'X * 3.6' },
+            { id: 's3', name: 'Miles/hour', symbol: 'mph', category: 'Speed', base: 'Meters/second', formula: 'X * 2.23694' },
+
+            // Volume
+            { id: 'v1', name: 'Liters', symbol: 'L', category: 'Volume', base: 'Liters', formula: 'X' },
+            { id: 'v2', name: 'Milliliters', symbol: 'mL', category: 'Volume', base: 'Liters', formula: 'X * 1000' },
+            { id: 'v3', name: 'Gallons (US)', symbol: 'gal', category: 'Volume', base: 'Liters', formula: 'X / 3.78541' },
+
+            // Energy
+            { id: 'e1', name: 'Joules', symbol: 'J', category: 'Energy', base: 'Joules', formula: 'X' },
+            { id: 'e2', name: 'Calories', symbol: 'cal', category: 'Energy', base: 'Joules', formula: 'X / 4.184' },
+            { id: 'e3', name: 'Kilowatt-hours', symbol: 'kWh', category: 'Energy', base: 'Joules', formula: 'X / 3600000' },
+
+            // Currency
+            { id: 'c1', name: 'US Dollar', symbol: '$', category: 'Currency', base: 'US Dollar', formula: 'X' },
+            { id: 'c2', name: 'Euro', symbol: '€', category: 'Currency', base: 'US Dollar', formula: 'X * 0.92' },
+            { id: 'c3', name: 'British Pound', symbol: '£', category: 'Currency', base: 'US Dollar', formula: 'X * 0.79' },
+            { id: 'c4', name: 'Japanese Yen', symbol: '¥', category: 'Currency', base: 'US Dollar', formula: 'X * 155.0' },
+
+            // Time
+            { id: 'tm1', name: 'Seconds', symbol: 's', category: 'Time', base: 'Seconds', formula: 'X' },
+            { id: 'tm2', name: 'Minutes', symbol: 'min', category: 'Time', base: 'Seconds', formula: 'X / 60' },
+            { id: 'tm3', name: 'Hours', symbol: 'hr', category: 'Time', base: 'Seconds', formula: 'X / 3600' },
+            { id: 'tm4', name: 'Days', symbol: 'day', category: 'Time', base: 'Seconds', formula: 'X / 86400' },
+            { id: 'tm5', name: 'Weeks', symbol: 'wk', category: 'Time', base: 'Seconds', formula: 'X / 604800' },
+            { id: 'tm6', name: 'Years', symbol: 'yr', category: 'Time', base: 'Seconds', formula: 'X / 31536000' }
+        ];
+
+        const STORAGE_KEY = 'measurecraft_units';
+
+        // localStorage can throw inside sandboxed / srcdoc iframes — stay safe.
+        function loadUnits() {
+            try {
+                const raw = localStorage.getItem(STORAGE_KEY);
+                if (raw) {
+                    const parsed = JSON.parse(raw);
+                    if (Array.isArray(parsed) && parsed.length) return parsed;
+                }
+            } catch (e) { /* storage unavailable — fall back to defaults */ }
+            return DEFAULT_UNITS.map(u => Object.assign({}, u));
+        }
+
+        function saveToStorage() {
+            try { localStorage.setItem(STORAGE_KEY, JSON.stringify(units)); } catch (e) {}
+        }
+
+        let units = loadUnits();
+
+        let currentCategoryFilter = 'Temperature';
+
+        function renderApp() {
+            renderTabs();
+            populateConverterSelects();
+            performConversion('from');
+        }
+
+        function renderTabs() {
+            document.querySelectorAll('.category-btn').forEach(btn => {
+                const catName = btn.querySelector('span') ? btn.querySelector('span').textContent.trim() : btn.textContent.trim();
+                const isActive = (currentCategoryFilter === 'All' && catName === 'All') || (currentCategoryFilter === catName);
+                if (isActive) {
+                    btn.className = 'category-btn px-3 py-1.5 sm:px-3.5 sm:py-2 rounded-xl text-xs font-semibold whitespace-nowrap lg:text-left transition cursor-pointer flex items-center justify-between bg-[#141413] text-[#f7f6f2] shadow-xs';
+                } else {
+                    btn.className = 'category-btn px-3 py-1.5 sm:px-3.5 sm:py-2 rounded-xl text-xs font-semibold whitespace-nowrap lg:text-left transition cursor-pointer flex items-center justify-between bg-[#f0eee6] text-[#615f59] hover:bg-[#e8e5dc]';
+                }
+            });
+            document.getElementById('converter-category-badge').textContent = currentCategoryFilter === 'All' ? 'All Categories' : currentCategoryFilter;
+
+            const currencyNotice = document.getElementById('currency-notice');
+            if (currentCategoryFilter === 'Currency') {
+                currencyNotice.classList.remove('hidden');
+            } else {
+                currencyNotice.classList.add('hidden');
+            }
+        }
+
+        function filterCategory(cat) {
+            currentCategoryFilter = cat;
+            renderTabs();
+            populateConverterSelects();
+            performConversion('from');
+        }
+
+        function populateConverterSelects() {
+            const fromSelect = document.getElementById('from-unit-select');
+            const toSelect = document.getElementById('to-unit-select');
+
+            const availableUnits = currentCategoryFilter === 'All'
+                ? units
+                : units.filter(u => u.category === currentCategoryFilter);
+
+            const currentFrom = fromSelect.value;
+            const currentTo = toSelect.value;
+
+            fromSelect.innerHTML = '';
+            toSelect.innerHTML = '';
+
+            if (availableUnits.length === 0) {
+                fromSelect.innerHTML = '<option value="">No units</option>';
+                toSelect.innerHTML = '<option value="">No units</option>';
+                return;
+            }
+
+            availableUnits.forEach(u => {
+                const opt1 = document.createElement('option');
+                opt1.value = u.id;
+                opt1.textContent = `${u.name} (${u.symbol})`;
+                fromSelect.appendChild(opt1);
+
+                const opt2 = document.createElement('option');
+                opt2.value = u.id;
+                opt2.textContent = `${u.name} (${u.symbol})`;
+                toSelect.appendChild(opt2);
+            });
+
+            if (availableUnits.some(u => u.id === currentFrom)) fromSelect.value = currentFrom;
+            if (availableUnits.some(u => u.id === currentTo)) toSelect.value = currentTo;
+
+            if (fromSelect.value === toSelect.value && availableUnits.length > 1) {
+                toSelect.selectedIndex = (fromSelect.selectedIndex + 1) % availableUnits.length;
+            }
+        }
+
+        function updateBaseDropdown(selectedBaseName = '') {
+            const cat = document.getElementById('unit-category').value;
+            const baseSelect = document.getElementById('unit-base-select');
+
+            const categoryUnits = units.filter(u => u.category === cat);
+
+            baseSelect.innerHTML = '';
+
+            if (categoryUnits.length > 0) {
+                categoryUnits.forEach(u => {
+                    const opt = document.createElement('option');
+                    opt.value = u.name;
+                    opt.textContent = `${u.name} (${u.symbol})`;
+                    baseSelect.appendChild(opt);
+                });
+            } else {
+                let defaultBase = 'Meters';
+                if (cat === 'Temperature') defaultBase = 'Celsius';
+                else if (cat === 'Weight') defaultBase = 'Grams';
+                else if (cat === 'Speed') defaultBase = 'Meters/second';
+                else if (cat === 'Volume') defaultBase = 'Liters';
+                else if (cat === 'Energy') defaultBase = 'Joules';
+                else if (cat === 'Currency') defaultBase = 'US Dollar';
+                else if (cat === 'Time') defaultBase = 'Seconds';
+
+                const opt = document.createElement('option');
+                opt.value = defaultBase;
+                opt.textContent = defaultBase;
+                baseSelect.appendChild(opt);
+            }
+
+            if (selectedBaseName && Array.from(baseSelect.options).some(o => o.value === selectedBaseName)) {
+                baseSelect.value = selectedBaseName;
+            }
+        }
+
+        function openManageModal() {
+            const listEl = document.getElementById('manage-units-list');
+            const subtitleEl = document.getElementById('manage-subtitle');
+
+            subtitleEl.textContent = currentCategoryFilter === 'All' ? 'Showing all categories' : `Category: ${currentCategoryFilter}`;
+
+            const filtered = currentCategoryFilter === 'All'
+                ? units
+                : units.filter(u => u.category === currentCategoryFilter);
+
+            listEl.innerHTML = '';
+
+            if (filtered.length === 0) {
+                listEl.innerHTML = `<div class="text-center py-8 text-xs text-[#8c8980]">No units in this category.</div>`;
+            } else {
+                filtered.forEach(u => {
+                    const card = document.createElement('div');
+                    card.className = 'bg-[#faf9f5] border border-[#e8e5dc] rounded-xl p-3 flex items-center justify-between gap-3 shadow-2xs';
+                    card.innerHTML = `
+                        <div class="flex-1 min-w-0">
+                            <div class="flex items-center gap-2 mb-1">
+                                <span class="font-bold text-[#141413] text-xs truncate">${u.name}</span>
+                                <span class="text-[10px] font-semibold px-1.5 py-0.5 bg-[#e8e5dc] text-[#4a4843] rounded code-font">${u.symbol}</span>
+                                <span class="text-[10px] text-[#8c8980]">(${u.category})</span>
+                            </div>
+                            <div class="text-[11px] code-font text-[#78756e] truncate">${u.formula} <span class="text-[#a3a099]">(base: ${u.base})</span></div>
+                        </div>
+                        <div class="flex items-center gap-1.5">
+                            <button onclick="closeManageModal(); editUnit('${u.id}')" class="w-7 h-7 rounded-lg bg-white border border-[#dedcd6] text-[#78756e] hover:text-[#141413] flex items-center justify-center transition cursor-pointer" title="Edit">
+                                <i class="fa-solid fa-pen text-xs"></i>
+                            </button>
+                            <button onclick="deleteUnit('${u.id}')" class="w-7 h-7 rounded-lg bg-white border border-[#dedcd6] text-[#78756e] hover:text-red-600 flex items-center justify-center transition cursor-pointer" title="Delete">
+                                <i class="fa-solid fa-trash text-xs"></i>
+                            </button>
+                        </div>
+                    `;
+                    listEl.appendChild(card);
+                });
+            }
+
+            document.getElementById('manage-modal').classList.remove('hidden');
+        }
+
+        function closeManageModal() {
+            document.getElementById('manage-modal').classList.add('hidden');
+        }
+
+        function evaluateToBasePath(unitId, val) {
+            const u = units.find(item => item.id === unitId);
+            if (!u) return val;
+            try {
+                if (u.formula.trim() === 'X') return val;
+                let low = -1e9, high = 1e9;
+                for (let i = 0; i < 60; i++) {
+                    let mid = (low + high) / 2;
+                    let res = math.evaluate(u.formula, { X: mid });
+                    if (res < val) low = mid;
+                    else high = mid;
+                }
+                return (low + high) / 2;
+            } catch (e) {
+                return val;
+            }
+        }
+
+        function evaluateFromBasePath(unitId, baseVal) {
+            const u = units.find(item => item.id === unitId);
+            if (!u) return baseVal;
+            try {
+                const compiled = math.compile(u.formula);
+                const res = compiled.evaluate({ X: baseVal });
+                return Number.isFinite(res) ? res : baseVal;
+            } catch (e) {
+                return baseVal;
+            }
+        }
+
+        function performConversion(direction) {
+            const fromId = document.getElementById('from-unit-select').value;
+            const toId = document.getElementById('to-unit-select').value;
+            const fromInput = document.getElementById('from-input');
+            const toInput = document.getElementById('to-input');
+
+            if (!fromId || !toId) return;
+
+            if (direction === 'from') {
+                const val = parseFloat(fromInput.value);
+                if (isNaN(val)) {
+                    toInput.value = '';
+                    return;
+                }
+                const baseVal = evaluateToBasePath(fromId, val);
+                const targetVal = evaluateFromBasePath(toId, baseVal);
+                toInput.value = Number(targetVal.toFixed(6));
+            } else {
+                const val = parseFloat(toInput.value);
+                if (isNaN(val)) {
+                    fromInput.value = '';
+                    return;
+                }
+                const baseVal = evaluateToBasePath(toId, val);
+                const sourceVal = evaluateFromBasePath(fromId, baseVal);
+                fromInput.value = Number(sourceVal.toFixed(6));
+            }
+        }
+
+        function swapUnits() {
+            const fromSelect = document.getElementById('from-unit-select');
+            const toSelect = document.getElementById('to-unit-select');
+            const fromInput = document.getElementById('from-input');
+            const toInput = document.getElementById('to-input');
+
+            // Swap selected units in dropdowns
+            const tempUnit = fromSelect.value;
+            fromSelect.value = toSelect.value;
+            toSelect.value = tempUnit;
+
+            // Swap numerical input values
+            const tempVal = fromInput.value;
+            fromInput.value = toInput.value;
+            toInput.value = tempVal;
+
+            performConversion('from');
+        }
+
+        function openCreateModal() {
+            document.getElementById('modal-title').textContent = 'Create Custom Unit';
+            document.getElementById('unit-form').reset();
+            document.getElementById('unit-id').value = '';
+            if (currentCategoryFilter !== 'All') {
+                document.getElementById('unit-category').value = currentCategoryFilter;
+            }
+            updateBaseDropdown();
+            document.getElementById('unit-modal').classList.remove('hidden');
+        }
+
+        function editUnit(id) {
+            const u = units.find(item => item.id === id);
+            if (!u) return;
+
+            document.getElementById('modal-title').textContent = 'Edit Custom Unit';
+            document.getElementById('unit-id').value = u.id;
+            document.getElementById('unit-category').value = u.category;
+            document.getElementById('unit-name').value = u.name;
+            document.getElementById('unit-symbol').value = u.symbol;
+            updateBaseDropdown(u.base);
+            document.getElementById('unit-formula').value = u.formula;
+
+            document.getElementById('unit-modal').classList.remove('hidden');
+        }
+
+        function closeModal() {
+            document.getElementById('unit-modal').classList.add('hidden');
+        }
+
+        function saveUnit(e) {
+            e.preventDefault();
+            const id = document.getElementById('unit-id').value;
+            const category = document.getElementById('unit-category').value;
+            const name = document.getElementById('unit-name').value.trim();
+            const symbol = document.getElementById('unit-symbol').value.trim();
+            const base = document.getElementById('unit-base-select').value;
+            const formula = document.getElementById('unit-formula').value.trim();
+
+            try {
+                const compiled = math.compile(formula);
+                compiled.evaluate({ X: 10 });
+            } catch (err) {
+                console.error(err);
+                return;
+            }
+
+            if (id) {
+                const index = units.findIndex(u => u.id === id);
+                if (index !== -1) {
+                    units[index] = { id, name, symbol, category, base, formula };
+                }
+            } else {
+                const newUnit = {
+                    id: 'u_' + Date.now(),
+                    name,
+                    symbol,
+                    category,
+                    base,
+                    formula
+                };
+                units.push(newUnit);
+            }
+
+            saveToStorage();
+            closeModal();
+            renderApp();
+        }
+
+        function deleteUnit(id) {
+            units = units.filter(u => u.id !== id);
+            saveToStorage();
+            openManageModal();
+            renderApp();
+        }
+
+        renderApp();
+    <\/script>
+</body>
+</html>
+  </script>
 
   <script>
     /* ==========================================================
@@ -1812,6 +2421,17 @@
       document.body.style.overflow = 'hidden';
 
       const iframe = document.getElementById(modalId.replace('-modal', '-iframe'));
+
+      // Game 14 (MeasureCraft) ships inside this file. Inject its source
+      // into the iframe the first time the modal is opened.
+      if (iframe && iframe.id === 'game14-iframe' && !iframe.srcdoc) {
+        const source = document.getElementById('measurecraft-source');
+        if (source) {
+          // '<\/script>' markers are un-escaped back into real closing tags here.
+          iframe.srcdoc = source.textContent.split('<\\/script>').join('</script>');
+        }
+      }
+
       if (iframe && !iframe.src && iframe.dataset.src) {
         const base = iframe.dataset.src;
         const sep = base.includes('?') ? '&' : '?';
