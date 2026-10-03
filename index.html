@@ -126,7 +126,7 @@
     .nav-links a:hover { color: var(--accent-soft); }
 
     /* ==========================================
-       NAV — AUTH AREA  (new)
+       NAV — AUTH AREA
        ========================================== */
     .nav-auth {
       display: flex;
@@ -553,38 +553,6 @@
       font-weight: 700;
     }
 
-    /* ---- save / favourite star (new) ---- */
-    .star-btn {
-      margin-left: auto;
-      flex: 0 0 auto;
-      width: 34px;
-      height: 34px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      border-radius: 10px;
-      border: 1px solid var(--border);
-      background: rgba(255, 255, 255, 0.03);
-      color: var(--muted);
-      font-size: 1rem;
-      line-height: 1;
-      cursor: pointer;
-      transition: all 0.18s;
-    }
-
-    .star-btn:hover {
-      color: #facc15;
-      border-color: rgba(250, 204, 21, 0.45);
-      background: rgba(250, 204, 21, 0.08);
-    }
-
-    .star-btn.on {
-      color: #facc15;
-      border-color: rgba(250, 204, 21, 0.55);
-      background: rgba(250, 204, 21, 0.12);
-      box-shadow: 0 0 14px rgba(250, 204, 21, 0.2);
-    }
-
     .project-card p {
       margin: 0 0 16px;
       font-size: 0.88rem;
@@ -797,7 +765,7 @@
     .close-modal-btn:hover { background: #c0392b; }
 
     /* ==========================================
-       AUTH MODAL  (new)
+       AUTH MODAL
        ========================================== */
     .auth-content {
       width: min(100%, 430px);
@@ -951,7 +919,7 @@
     }
 
     /* ==========================================
-       TOAST  (new)
+       TOAST
        ========================================== */
     .toast {
       position: fixed;
@@ -1108,7 +1076,7 @@
       <a href="#elsewhere">Elsewhere</a>
     </div>
 
-    <!-- ===== AUTH AREA (new) ===== -->
+    <!-- ===== AUTH AREA ===== -->
     <div class="nav-auth">
       <button class="auth-btn" id="navSignIn" type="button">Sign in</button>
 
@@ -1231,7 +1199,7 @@
       <div class="section-head reveal">
         <span class="eyebrow">Projects</span>
         <h2>Things I've vibe-coded</h2>
-        <p>Click any card to launch it right here. Star a card to save it to your account — it follows you to every device you sign in on.</p>
+        <p>Click any card to launch it right here — everything runs in your browser.</p>
       </div>
 
       <div class="filters reveal">
@@ -1239,7 +1207,6 @@
         <button class="filter-btn" data-filter="game">Games</button>
         <button class="filter-btn" data-filter="tool">Tools</button>
         <button class="filter-btn" data-filter="science">Science &amp; Math</button>
-        <button class="filter-btn" data-filter="saved">★ Saved</button>
       </div>
 
       <div class="project-grid">
@@ -1252,7 +1219,6 @@
               <h3>Color Contexto</h3>
               <span class="card-cat">Game</span>
             </div>
-            <button class="star-btn" type="button" data-star="color-contexto" aria-label="Save Color Contexto" aria-pressed="false">☆</button>
           </div>
           <p>A daily-style colour guessing game. Find the hidden hex colour using RGB distance feedback — closer guesses rank higher.</p>
           <div class="card-tags">
@@ -1269,7 +1235,6 @@
               <h3>Atom Forge</h3>
               <span class="card-cat">Science</span>
             </div>
-            <button class="star-btn" type="button" data-star="atom-forge" aria-label="Save Atom Forge" aria-pressed="false">☆</button>
           </div>
           <p>Build atoms from protons, neutrons and electrons. Watch electron shells fill up and see how elements come together.</p>
           <div class="card-tags">
@@ -1286,7 +1251,6 @@
               <h3>SparkTalk</h3>
               <span class="card-cat">Tool</span>
             </div>
-            <button class="star-btn" type="button" data-star="sparktalk" aria-label="Save SparkTalk" aria-pressed="false">☆</button>
           </div>
           <p>An ice-breaker generator for meetings, classrooms and parties. Random prompts that actually get people talking.</p>
           <div class="card-tags">
@@ -1303,7 +1267,6 @@
               <h3>WebCraft</h3>
               <span class="card-cat">Tool</span>
             </div>
-            <button class="star-btn" type="button" data-star="webcraft" aria-label="Save WebCraft" aria-pressed="false">☆</button>
           </div>
           <p>A live HTML/CSS playground. Write markup on one side, see the rendered page instantly on the other.</p>
           <div class="card-tags">
@@ -1320,7 +1283,6 @@
               <h3>Neural Net</h3>
               <span class="card-cat">Science</span>
             </div>
-            <button class="star-btn" type="button" data-star="neural-net" aria-label="Save Neural Net" aria-pressed="false">☆</button>
           </div>
           <p>A visual neural-network studio. Design layers, tweak weights and watch signals propagate through the grid in real time.</p>
           <div class="card-tags">
@@ -1337,7 +1299,6 @@
               <h3>MathLab</h3>
               <span class="card-cat">Science</span>
             </div>
-            <button class="star-btn" type="button" data-star="mathlab" aria-label="Save MathLab" aria-pressed="false">☆</button>
           </div>
           <p>Plot functions, explore curves and experiment with parameters. A graphing calculator you can actually understand.</p>
           <div class="card-tags">
@@ -1354,7 +1315,6 @@
               <h3>Logic Gates</h3>
               <span class="card-cat">Science</span>
             </div>
-            <button class="star-btn" type="button" data-star="logic-gates" aria-label="Save Logic Gates" aria-pressed="false">☆</button>
           </div>
           <p>Wire up AND, OR, NOT and XOR gates into working circuits. Learn digital logic by building it yourself.</p>
           <div class="card-tags">
@@ -1371,7 +1331,6 @@
               <h3>AI Builder</h3>
               <span class="card-cat">Science</span>
             </div>
-            <button class="star-btn" type="button" data-star="ai-builder" aria-label="Save AI Builder" aria-pressed="false">☆</button>
           </div>
           <p>Assemble an AI pipeline block by block — data in, layers in the middle, predictions out. See how the pieces connect.</p>
           <div class="card-tags">
@@ -1388,7 +1347,6 @@
               <h3>ColorLab</h3>
               <span class="card-cat">Tool</span>
             </div>
-            <button class="star-btn" type="button" data-star="colorlab" aria-label="Save ColorLab" aria-pressed="false">☆</button>
           </div>
           <p>Generate, blend and compare colour palettes. Export swatches for your next design project.</p>
           <div class="card-tags">
@@ -1405,7 +1363,6 @@
               <h3>4D Shape Maker</h3>
               <span class="card-cat">Tool</span>
             </div>
-            <button class="star-btn" type="button" data-star="4d-shape-maker" aria-label="Save 4D Shape Maker" aria-pressed="false">☆</button>
           </div>
           <p>Build and rotate hyper-dimensional shapes. A hands-on way to get a feel for the fourth dimension.</p>
           <div class="card-tags">
@@ -1422,7 +1379,6 @@
               <h3>Font Maker</h3>
               <span class="card-cat">Tool</span>
             </div>
-            <button class="star-btn" type="button" data-star="font-maker" aria-label="Save Font Maker" aria-pressed="false">☆</button>
           </div>
           <p>Draw your own glyphs and turn them into a usable typeface. Typography, from the ground up.</p>
           <div class="card-tags">
@@ -1439,7 +1395,6 @@
               <h3>Brain Trainer</h3>
               <span class="card-cat">Game</span>
             </div>
-            <button class="star-btn" type="button" data-star="brain-trainer" aria-label="Save Brain Trainer" aria-pressed="false">☆</button>
           </div>
           <p>Quick-fire cognitive drills — memory, reaction and pattern recognition. How sharp are you today?</p>
           <div class="card-tags">
@@ -1456,7 +1411,6 @@
               <h3>Story Weave</h3>
               <span class="card-cat">Tool</span>
             </div>
-            <button class="star-btn" type="button" data-star="story-weave" aria-label="Save Story Weave" aria-pressed="false">☆</button>
           </div>
           <p>Build your own stories from scratch like a card game.</p>
           <div class="card-tags">
@@ -1466,18 +1420,17 @@
         </article>
 
         <!-- 14 -->
-        <article class="project-card reveal" data-category="tool" data-project-id="story-weave">
+        <article class="project-card reveal" data-category="tool" data-project-id="measure-craft">
           <div class="card-head">
-            <div class="icon-graphic" style="background: linear-gradient(135deg, #062274, #53067C);">📖</div>
+            <div class="icon-graphic" style="background: linear-gradient(135deg, #fbbf24, #b45309);">📏</div>
             <div class="card-title">
               <h3>Measure Craft</h3>
               <span class="card-cat">Tool</span>
             </div>
-            <button class="star-btn" type="button" data-star="measure-craft" aria-label="Save Measure Craft" aria-pressed="false">☆</button>
           </div>
           <p>Mess around with custom measurements.</p>
           <div class="card-tags">
-            <span>Game</span><span>Building</span>
+            <span>Ruler</span><span>Units</span>
           </div>
           <button class="launch-btn" onclick="openGameModal('game14-modal')">▶ Launch</button>
         </article>
@@ -1562,13 +1515,13 @@
        MODALS
        ========================================== -->
 
-  <!-- ===== AUTH MODAL (new) ===== -->
+  <!-- ===== AUTH MODAL ===== -->
   <div id="auth-modal" class="game-modal">
     <div class="game-modal-content auth-content">
       <button class="close-modal-btn" type="button" onclick="closeGameModal('auth-modal')">&times;</button>
 
       <h2 id="authTitle">Welcome back</h2>
-      <p class="auth-sub" id="authSub">Sign in to sync your saved projects and stats across every device.</p>
+      <p class="auth-sub" id="authSub">Sign in to sync your stats across every device.</p>
 
       <div class="auth-tabs" role="tablist">
         <button class="auth-tab active" type="button" data-tab="signin" role="tab">Sign in</button>
@@ -1605,8 +1558,8 @@
       <button class="auth-link" type="button" id="forgotBtn">Forgot password?</button>
 
       <p class="auth-note" id="authNote">
-        Your saves live in your own account. No ads, no tracking, no spam — just your starred
-        projects and high scores, everywhere you sign in.
+        Your saves live in your own account. No ads, no tracking, no spam — just your
+        game stats, everywhere you sign in.
       </p>
     </div>
   </div>
@@ -1776,7 +1729,7 @@
     </div>
   </div>
 
-  <!-- GAME 14 MODAL: STORY WEAVE -->
+  <!-- GAME 14 MODAL: MEASURE CRAFT -->
   <div id="game14-modal" class="game-modal">
     <div class="game-modal-content"
          style="max-width: 98vw; width: 98vw; height: 94vh; padding: 0;
@@ -1844,7 +1797,7 @@
     });
 
     /* ==========================================================
-       CLOUD — auth + cross-device saves
+       CLOUD — auth + cross-device stats
        ----------------------------------------------------------
        Paste your Firebase web config below. Until you do, the
        site still works — everything just saves to this device.
@@ -2158,8 +2111,8 @@
       nameField.hidden = !signup;
       authTitle.textContent = signup ? 'Create your account' : 'Welcome back';
       authSub.textContent   = signup
-        ? 'One account, every device. Your saves follow you around.'
-        : 'Sign in to sync your saved projects and stats across every device.';
+        ? 'One account, every device. Your stats follow you around.'
+        : 'Sign in to sync your stats across every device.';
       authSubmit.textContent = signup ? 'Create account' : 'Sign in';
       authPassword.setAttribute('autocomplete', signup ? 'new-password' : 'current-password');
       setAuthMsg('', '');
@@ -2204,7 +2157,7 @@
       closeDropdown();
       try {
         await Cloud.signOut();
-        toast('Signed out. Your saves are safe in the cloud.', 'ok');
+        toast('Signed out. Your stats are safe in the cloud.', 'ok');
       } catch (e) {
         toast(e.message, 'error');
       }
@@ -2233,10 +2186,10 @@
       try {
         if (authTab === 'signup') {
           await Cloud.signUp(email, pass, name);
-          toast('Account created — your saves will now sync.', 'ok');
+          toast('Account created — your stats will now sync.', 'ok');
         } else {
           await Cloud.signIn(email, pass);
-          toast('Signed in. Syncing your saves…', 'ok');
+          toast('Signed in. Syncing your stats…', 'ok');
         }
         closeGameModal('auth-modal');
         authForm.reset();
@@ -2293,11 +2246,11 @@
         avatarInitial.textContent = name.charAt(0).toUpperCase();
         ddName.textContent = name;
         ddEmail.textContent = u.email || '';
-        authNote.innerHTML = 'Signed in as <code>' + (u.email || '') + '</code>. Starred projects and stats sync automatically.';
+        authNote.innerHTML = 'Signed in as <code>' + (u.email || '') + '</code>. Game stats sync automatically.';
       } else {
         closeDropdown();
         authNote.innerHTML = Cloud.configured
-          ? 'Your saves live in your own account. No ads, no tracking, no spam — just your starred projects and high scores, everywhere you sign in.'
+          ? 'Your saves live in your own account. No ads, no tracking, no spam — just your game stats, everywhere you sign in.'
           : 'Accounts aren’t configured yet. Add your Firebase keys to the <code>FIREBASE_CONFIG</code> block in this file to enable cross-device sync.';
         googleBtn.disabled = !Cloud.configured;
         forgotBtn.disabled = !Cloud.configured;
@@ -2322,54 +2275,6 @@
     });
 
     /* ==========================================================
-       FAVOURITES (synced)
-       ========================================================== */
-    const favButtons = Array.from(document.querySelectorAll('.star-btn'));
-
-    function getFavourites() {
-      const v = Cloud.get('favorites', []);
-      return Array.isArray(v) ? v : [];
-    }
-
-    function renderStars() {
-      const favs = getFavourites();
-      document.querySelectorAll('.project-card').forEach(card => {
-        const id = card.dataset.projectId;
-        const on = favs.indexOf(id) !== -1;
-        card.classList.toggle('is-saved', on);
-        const btn = card.querySelector('.star-btn');
-        if (btn) {
-          btn.classList.toggle('on', on);
-          btn.textContent = on ? '★' : '☆';
-          btn.setAttribute('aria-pressed', String(on));
-          btn.title = on ? 'Saved to your account' : 'Save to your account';
-        }
-      });
-    }
-
-    favButtons.forEach(btn => {
-      btn.addEventListener('click', (e) => {
-        e.stopPropagation();
-        const id = btn.dataset.star;
-        const favs = getFavourites();
-        const idx = favs.indexOf(id);
-
-        if (idx === -1) {
-          favs.push(id);
-          Cloud.set('favorites', favs);
-          if (Cloud.user) toast('Saved — it’ll follow you to your other devices.', 'ok');
-          else toast('Saved on this device. Sign in to sync across devices.', 'warn');
-        } else {
-          favs.splice(idx, 1);
-          Cloud.set('favorites', favs);
-          toast('Removed from your saved projects.', '');
-        }
-      });
-    });
-
-    Cloud.onData(renderStars);
-
-    /* ==========================================================
        PROJECT FILTERS
        ========================================================== */
     document.querySelectorAll('.filter-btn').forEach(btn => {
@@ -2379,10 +2284,7 @@
 
         const filter = btn.dataset.filter;
         document.querySelectorAll('.project-card').forEach(card => {
-          let show;
-          if (filter === 'all')        show = true;
-          else if (filter === 'saved') show = card.classList.contains('is-saved');
-          else                         show = card.dataset.category === filter;
+          const show = (filter === 'all') || (card.dataset.category === filter);
           card.style.display = show ? '' : 'none';
         });
       });
@@ -2608,7 +2510,6 @@
        BOOT
        ========================================================== */
     Cloud.init().then(() => {
-      renderStars();
       game1_renderStats();
       if (!Cloud.configured) {
         console.log(
