@@ -6,7 +6,6 @@
     <title>MeasureCraft — Custom Conversion Studio</title>
     <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/mathjs/11.8.0/math.js"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
 
@@ -18,26 +17,16 @@
         .code-font {
             font-family: 'JetBrains Mono', monospace;
         }
-        ::-webkit-scrollbar {
-            width: 4px;
-            height: 4px;
-        }
-        ::-webkit-scrollbar-track {
-            background: transparent;
-        }
-        ::-webkit-scrollbar-thumb {
-            background: #e2dfd8;
-            border-radius: 4px;
-        }
-        ::-webkit-scrollbar-thumb:hover {
-            background: #c7c4bc;
-        }
+        ::-webkit-scrollbar { width: 4px; height: 4px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #e2dfd8; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #c7c4bc; }
     </style>
 </head>
 <body class="h-dvh w-screen flex items-center justify-center p-0 sm:p-4 overflow-hidden box-border">
 
     <div class="w-full h-full sm:h-[820px] sm:max-h-[92vh] sm:max-w-4xl lg:max-w-5xl bg-white sm:rounded-2xl shadow-xl border-0 sm:border border-[#e8e5dc] flex flex-col overflow-hidden">
-        
+
         <header class="bg-[#141413] text-[#f7f6f2] px-4 sm:px-6 py-3 sm:py-4 flex items-center justify-between border-b border-[#262624] shrink-0">
             <div class="flex items-center gap-2.5">
                 <div class="w-2.5 h-2.5 rounded-full bg-[#d97706]"></div>
@@ -57,30 +46,24 @@
         </header>
 
         <main class="flex-1 p-3 sm:p-6 lg:p-8 flex flex-col lg:flex-row gap-3 sm:gap-6 lg:gap-8 items-stretch overflow-y-auto">
-            
+
             <div class="w-full lg:w-72 shrink-0 flex flex-col space-y-2 lg:space-y-4">
                 <div>
                     <div class="text-[10px] uppercase tracking-wider font-bold text-[#78756e] mb-1.5 hidden lg:block">Categories</div>
-                    <div class="flex lg:flex-col gap-1.5 overflow-x-auto pb-1 lg:pb-0 scrollbar-none shrink-0" id="category-tabs">
-                        <button onclick="filterCategory('All')" class="category-btn px-3 py-1.5 sm:px-3.5 sm:py-2 rounded-xl text-xs font-semibold whitespace-nowrap lg:text-left transition cursor-pointer flex items-center justify-between"><span>All</span></button>
-                        <button onclick="filterCategory('Temperature')" class="category-btn px-3 py-1.5 sm:px-3.5 sm:py-2 rounded-xl text-xs font-semibold whitespace-nowrap lg:text-left transition cursor-pointer flex items-center justify-between"><span>Temperature</span></button>
-                        <button onclick="filterCategory('Length')" class="category-btn px-3 py-1.5 sm:px-3.5 sm:py-2 rounded-xl text-xs font-semibold whitespace-nowrap lg:text-left transition cursor-pointer flex items-center justify-between"><span>Length</span></button>
-                        <button onclick="filterCategory('Weight')" class="category-btn px-3 py-1.5 sm:px-3.5 sm:py-2 rounded-xl text-xs font-semibold whitespace-nowrap lg:text-left transition cursor-pointer flex items-center justify-between"><span>Weight</span></button>
-                        <button onclick="filterCategory('Speed')" class="category-btn px-3 py-1.5 sm:px-3.5 sm:py-2 rounded-xl text-xs font-semibold whitespace-nowrap lg:text-left transition cursor-pointer flex items-center justify-between"><span>Speed</span></button>
-                        <button onclick="filterCategory('Volume')" class="category-btn px-3 py-1.5 sm:px-3.5 sm:py-2 rounded-xl text-xs font-semibold whitespace-nowrap lg:text-left transition cursor-pointer flex items-center justify-between"><span>Volume</span></button>
-                        <button onclick="filterCategory('Energy')" class="category-btn px-3 py-1.5 sm:px-3.5 sm:py-2 rounded-xl text-xs font-semibold whitespace-nowrap lg:text-left transition cursor-pointer flex items-center justify-between"><span>Energy</span></button>
-                        <button onclick="filterCategory('Currency')" class="category-btn px-3 py-1.5 sm:px-3.5 sm:py-2 rounded-xl text-xs font-semibold whitespace-nowrap lg:text-left transition cursor-pointer flex items-center justify-between"><span>Currency</span></button>
-                        <button onclick="filterCategory('Time')" class="category-btn px-3 py-1.5 sm:px-3.5 sm:py-2 rounded-xl text-xs font-semibold whitespace-nowrap lg:text-left transition cursor-pointer flex items-center justify-between"><span>Time</span></button>
+                    <div class="flex lg:flex-col gap-1.5 overflow-x-auto pb-1 lg:pb-0 shrink-0" id="category-tabs">
+                        <!-- Rendered by JS -->
                     </div>
                 </div>
 
-                <!-- Desktop Info Card -->
                 <div class="hidden lg:block bg-[#faf9f5] border border-[#e8e5dc] rounded-2xl p-4 text-xs text-[#78756e] space-y-2 mt-auto">
                     <div class="font-bold text-[#141413] flex items-center gap-1.5">
                         <i class="fa-solid fa-lightbulb text-[#d97706]"></i> Formula Builder Tip
                     </div>
                     <p class="leading-relaxed text-[11px]">
-                        Create custom units by linking them to a base reference unit using mathematical expressions with variable <code class="code-font font-bold text-[#141413]">X</code>. MeasureCraft automatically resolves inverses.
+                        Every unit is described by a formula that turns a value in its <strong class="text-[#141413]">base unit</strong> into this unit, using the variable <code class="code-font font-bold text-[#141413]">X</code>.
+                    </p>
+                    <p class="leading-relaxed text-[11px]">
+                        Pick <strong class="text-[#141413]">“None — base unit”</strong> to create a brand-new reference point (and a new category if you like). MeasureCraft inverts formulas automatically.
                     </p>
                 </div>
             </div>
@@ -92,18 +75,14 @@
                 </div>
 
                 <div class="space-y-2 sm:space-y-2.5 relative max-w-xl mx-auto w-full flex flex-col justify-center">
-                    <!-- From Unit Box -->
                     <div class="bg-white border border-[#e8e5dc] rounded-2xl p-3 sm:p-4 lg:p-5 shadow-2xs hover:border-[#d9d5cb] transition">
                         <div class="flex justify-between items-center mb-1">
                             <label class="text-[11px] sm:text-xs font-semibold text-[#78756e]">From</label>
-                            <select id="from-unit-select" onchange="performConversion('from')" class="bg-[#f7f6f2] border border-[#dedcd6] rounded-xl px-2.5 py-1 text-xs font-medium text-[#1a1917] focus:outline-none cursor-pointer max-w-[150px] sm:max-w-[200px]">
-                                <!-- Populated dynamically -->
-                            </select>
+                            <select id="from-unit-select" class="bg-[#f7f6f2] border border-[#dedcd6] rounded-xl px-2.5 py-1 text-xs font-medium text-[#1a1917] focus:outline-none cursor-pointer max-w-[150px] sm:max-w-[200px]"></select>
                         </div>
-                        <input type="number" id="from-input" value="25" oninput="performConversion('from')" class="w-full bg-transparent text-xl sm:text-2xl lg:text-3xl font-bold text-[#141413] focus:outline-none code-font mt-0.5">
+                        <input type="number" id="from-input" value="25" inputmode="decimal" class="w-full bg-transparent text-xl sm:text-2xl lg:text-3xl font-bold text-[#141413] focus:outline-none code-font mt-0.5">
                     </div>
 
-                    <!-- Centered Swap Button -->
                     <div class="flex justify-center -my-3.5 sm:-my-4 z-20 relative">
                         <button onclick="swapUnits()" class="w-8 h-8 sm:w-9 sm:h-9 lg:w-10 lg:h-10 rounded-full bg-white border border-[#dedcd6] text-[#141413] shadow-md flex items-center justify-center hover:bg-[#f7f6f2] hover:border-[#b5b2a8] active:scale-95 transition cursor-pointer" title="Swap Units">
                             <i class="fa-solid fa-arrow-up-long text-[9px] sm:text-[10px] mr-[-3px]"></i>
@@ -111,19 +90,17 @@
                         </button>
                     </div>
 
-                    <!-- To Unit Box -->
                     <div class="bg-white border border-[#e8e5dc] rounded-2xl p-3 sm:p-4 lg:p-5 shadow-2xs hover:border-[#d9d5cb] transition">
                         <div class="flex justify-between items-center mb-1">
                             <label class="text-[11px] sm:text-xs font-semibold text-[#78756e]">To</label>
-                            <select id="to-unit-select" onchange="performConversion('from')" class="bg-[#f7f6f2] border border-[#dedcd6] rounded-xl px-2.5 py-1 text-xs font-medium text-[#1a1917] focus:outline-none cursor-pointer max-w-[150px] sm:max-w-[200px]">
-                                <!-- Populated dynamically -->
-                            </select>
+                            <select id="to-unit-select" class="bg-[#f7f6f2] border border-[#dedcd6] rounded-xl px-2.5 py-1 text-xs font-medium text-[#1a1917] focus:outline-none cursor-pointer max-w-[150px] sm:max-w-[200px]"></select>
                         </div>
-                        <input type="number" id="to-input" oninput="performConversion('to')" class="w-full bg-transparent text-xl sm:text-2xl lg:text-3xl font-bold text-[#141413] focus:outline-none code-font mt-0.5">
+                        <input type="number" id="to-input" inputmode="decimal" class="w-full bg-transparent text-xl sm:text-2xl lg:text-3xl font-bold text-[#141413] focus:outline-none code-font mt-0.5">
                     </div>
                 </div>
 
-                <!-- Currency Notice Footer -->
+                <div id="converter-notice" class="hidden mt-2.5 sm:mt-4 max-w-xl mx-auto w-full text-[10px] sm:text-xs font-medium text-red-600 text-center"></div>
+
                 <div id="currency-notice" class="hidden mt-2.5 sm:mt-4 pt-2 border-t border-[#e8e5dc] flex items-center justify-center gap-1.5 text-[10px] sm:text-xs text-[#8c8980] max-w-xl mx-auto w-full shrink-0">
                     <i class="fa-solid fa-circle-info text-[#d97706]"></i>
                     <span>Currency values are approximate standard estimates.</span>
@@ -135,53 +112,46 @@
 
     <!-- Create/Edit Unit Modal -->
     <div id="unit-modal" class="fixed inset-0 bg-black/40 backdrop-blur-xs z-50 flex items-center justify-center p-4 hidden">
-        <div class="bg-white w-full max-w-md rounded-2xl p-5 sm:p-6 shadow-2xl border border-[#e8e5dc]">
+        <div class="bg-white w-full max-w-md rounded-2xl p-5 sm:p-6 shadow-2xl border border-[#e8e5dc] max-h-[92vh] overflow-y-auto">
             <div class="flex justify-between items-center mb-4">
                 <h3 id="modal-title" class="font-bold text-[#141413] text-sm uppercase tracking-wider">Create Custom Unit</h3>
                 <button onclick="closeModal()" class="w-7 h-7 rounded-full bg-[#f7f6f2] text-[#78756e] hover:bg-[#e8e5dc] flex items-center justify-center transition cursor-pointer"><i class="fa-solid fa-xmark text-sm"></i></button>
             </div>
 
-            <form id="unit-form" onsubmit="saveUnit(event)" class="space-y-3.5">
+            <form id="unit-form" class="space-y-3.5" novalidate>
                 <input type="hidden" id="unit-id">
-                
+
                 <div>
                     <label class="block text-[10px] font-bold uppercase tracking-wider text-[#78756e] mb-1">Category</label>
-                    <select id="unit-category" onchange="updateBaseDropdown()" class="w-full bg-[#f7f6f2] border border-[#dedcd6] rounded-xl px-3 py-2 text-xs font-medium text-[#1a1917] focus:outline-none cursor-pointer">
-                        <option value="Temperature">Temperature</option>
-                        <option value="Length">Length</option>
-                        <option value="Weight">Weight</option>
-                        <option value="Speed">Speed</option>
-                        <option value="Volume">Volume</option>
-                        <option value="Energy">Energy</option>
-                        <option value="Currency">Currency</option>
-                        <option value="Time">Time</option>
-                        <option value="Other">Other</option>
-                    </select>
+                    <input type="text" id="unit-category" list="category-options" autocomplete="off" placeholder="e.g. Temperature" class="w-full bg-[#f7f6f2] border border-[#dedcd6] rounded-xl px-3 py-2 text-xs font-medium text-[#1a1917] focus:outline-none">
+                    <datalist id="category-options"></datalist>
+                    <p class="text-[10px] text-[#8c8980] mt-1">Type a new name to create a brand-new category.</p>
                 </div>
 
                 <div class="grid grid-cols-2 gap-3">
                     <div>
                         <label class="block text-[10px] font-bold uppercase tracking-wider text-[#78756e] mb-1">Unit Name</label>
-                        <input type="text" id="unit-name" required placeholder="e.g. Fahrenheit" class="w-full bg-[#f7f6f2] border border-[#dedcd6] rounded-xl px-3 py-2 text-xs font-medium text-[#1a1917] focus:outline-none">
+                        <input type="text" id="unit-name" placeholder="e.g. Fahrenheit" class="w-full bg-[#f7f6f2] border border-[#dedcd6] rounded-xl px-3 py-2 text-xs font-medium text-[#1a1917] focus:outline-none">
                     </div>
                     <div>
                         <label class="block text-[10px] font-bold uppercase tracking-wider text-[#78756e] mb-1">Symbol</label>
-                        <input type="text" id="unit-symbol" required placeholder="e.g. °F" class="w-full bg-[#f7f6f2] border border-[#dedcd6] rounded-xl px-3 py-2 text-xs font-medium text-[#1a1917] focus:outline-none">
+                        <input type="text" id="unit-symbol" placeholder="e.g. °F" class="w-full bg-[#f7f6f2] border border-[#dedcd6] rounded-xl px-3 py-2 text-xs font-medium text-[#1a1917] focus:outline-none">
                     </div>
                 </div>
 
                 <div>
                     <label class="block text-[10px] font-bold uppercase tracking-wider text-[#78756e] mb-1">Base Reference Unit</label>
-                    <select id="unit-base-select" class="w-full bg-[#f7f6f2] border border-[#dedcd6] rounded-xl px-3 py-2 text-xs font-medium text-[#1a1917] focus:outline-none cursor-pointer">
-                        <!-- Populated dynamically -->
-                    </select>
+                    <select id="unit-base-select" onchange="onBaseChange()" class="w-full bg-[#f7f6f2] border border-[#dedcd6] rounded-xl px-3 py-2 text-xs font-medium text-[#1a1917] focus:outline-none cursor-pointer"></select>
+                    <p class="text-[10px] text-[#8c8980] mt-1" id="base-help"></p>
                 </div>
 
                 <div>
                     <label class="block text-[10px] font-bold uppercase tracking-wider text-[#78756e] mb-1">Formula from Base (<code class="code-font text-[#141413]">X</code>)</label>
-                    <input type="text" id="unit-formula" required placeholder="e.g. X * 1.8 + 32" class="w-full bg-[#f7f6f2] border border-[#dedcd6] rounded-xl px-3 py-2 text-xs code-font text-[#141413] focus:outline-none">
-                    <p class="text-[10px] text-[#8c8980] mt-1">Example: For Minutes from Seconds, use <code class="code-font">X / 60</code></p>
+                    <input type="text" id="unit-formula" placeholder="e.g. X * 1.8 + 32" class="w-full bg-[#f7f6f2] border border-[#dedcd6] rounded-xl px-3 py-2 text-xs code-font text-[#141413] focus:outline-none">
+                    <p class="text-[10px] text-[#8c8980] mt-1" id="formula-help">Example: for Minutes from Seconds use <code class="code-font">X / 60</code></p>
                 </div>
+
+                <div id="unit-error" class="hidden text-[11px] font-medium text-red-700 bg-red-50 border border-red-200 rounded-xl px-3 py-2 leading-relaxed"></div>
 
                 <div class="pt-2 flex gap-3">
                     <button type="button" onclick="closeModal()" class="flex-1 bg-[#f0eee6] hover:bg-[#e8e5dc] text-[#4a4843] font-semibold py-2.5 rounded-xl text-xs transition cursor-pointer">Cancel</button>
@@ -202,9 +172,7 @@
                 <button onclick="closeManageModal()" class="w-7 h-7 rounded-full bg-[#f7f6f2] text-[#78756e] hover:bg-[#e8e5dc] flex items-center justify-center transition cursor-pointer"><i class="fa-solid fa-xmark text-sm"></i></button>
             </div>
 
-            <div id="manage-units-list" class="flex-1 overflow-y-auto space-y-2.5 pr-1 mb-4">
-                <!-- Populated dynamically -->
-            </div>
+            <div id="manage-units-list" class="flex-1 overflow-y-auto space-y-2.5 pr-1 mb-4"></div>
 
             <button onclick="closeManageModal(); openCreateModal();" class="w-full bg-[#141413] hover:bg-[#333330] text-[#f7f6f2] font-semibold py-3 rounded-xl text-xs transition cursor-pointer flex items-center justify-center gap-2 shrink-0 shadow-xs">
                 <i class="fa-solid fa-plus text-xs text-[#d97706]"></i> Add New Custom Unit
@@ -212,372 +180,1006 @@
         </div>
     </div>
 
-    <script>
-        let units = JSON.parse(localStorage.getItem('measurecraft_units')) || [
-            // Temperature
-            { id: 't1', name: 'Celsius', symbol: '°C', category: 'Temperature', base: 'Celsius', formula: 'X' },
-            { id: 't2', name: 'Fahrenheit', symbol: '°F', category: 'Temperature', base: 'Celsius', formula: 'X * 9/5 + 32' },
-            { id: 't3', name: 'Kelvin', symbol: 'K', category: 'Temperature', base: 'Celsius', formula: 'X + 273.15' },
-            
-            // Length
-            { id: 'l1', name: 'Meters', symbol: 'm', category: 'Length', base: 'Meters', formula: 'X' },
-            { id: 'l2', name: 'Kilometers', symbol: 'km', category: 'Length', base: 'Meters', formula: 'X / 1000' },
-            { id: 'l3', name: 'Miles', symbol: 'mi', category: 'Length', base: 'Meters', formula: 'X / 1609.344' },
-            { id: 'l4', name: 'Feet', symbol: 'ft', category: 'Length', base: 'Meters', formula: 'X * 3.28084' },
+    <!-- Toast -->
+    <div id="toast" class="fixed bottom-5 left-1/2 z-[60] px-4 py-2.5 rounded-xl text-xs font-semibold shadow-lg bg-[#141413] text-[#f7f6f2] pointer-events-none max-w-[90vw] text-center"
+         style="opacity:0; transform:translate(-50%, 10px); transition:opacity .22s ease, transform .22s ease;"></div>
 
-            // Weight
-            { id: 'w1', name: 'Grams', symbol: 'g', category: 'Weight', base: 'Grams', formula: 'X' },
-            { id: 'w2', name: 'Kilograms', symbol: 'kg', category: 'Weight', base: 'Grams', formula: 'X / 1000' },
-            { id: 'w3', name: 'Pounds', symbol: 'lb', category: 'Weight', base: 'Grams', formula: 'X / 453.59237' },
-            { id: 'w4', name: 'Ounces', symbol: 'oz', category: 'Weight', base: 'Grams', formula: 'X / 28.3495' },
+<script>
+/* =========================================================================
+   MeasureCraft
+   ========================================================================= */
 
-            // Speed
-            { id: 's1', name: 'Meters/second', symbol: 'm/s', category: 'Speed', base: 'Meters/second', formula: 'X' },
-            { id: 's2', name: 'Kilometers/hour', symbol: 'km/h', category: 'Speed', base: 'Meters/second', formula: 'X * 3.6' },
-            { id: 's3', name: 'Miles/hour', symbol: 'mph', category: 'Speed', base: 'Meters/second', formula: 'X * 2.23694' },
-
-            // Volume
-            { id: 'v1', name: 'Liters', symbol: 'L', category: 'Volume', base: 'Liters', formula: 'X' },
-            { id: 'v2', name: 'Milliliters', symbol: 'mL', category: 'Volume', base: 'Liters', formula: 'X * 1000' },
-            { id: 'v3', name: 'Gallons (US)', symbol: 'gal', category: 'Volume', base: 'Liters', formula: 'X / 3.78541' },
-
-            // Energy
-            { id: 'e1', name: 'Joules', symbol: 'J', category: 'Energy', base: 'Joules', formula: 'X' },
-            { id: 'e2', name: 'Calories', symbol: 'cal', category: 'Energy', base: 'Joules', formula: 'X / 4.184' },
-            { id: 'e3', name: 'Kilowatt-hours', symbol: 'kWh', category: 'Energy', base: 'Joules', formula: 'X / 3600000' },
-
-            // Currency
-            { id: 'c1', name: 'US Dollar', symbol: '$', category: 'Currency', base: 'US Dollar', formula: 'X' },
-            { id: 'c2', name: 'Euro', symbol: '€', category: 'Currency', base: 'US Dollar', formula: 'X * 0.92' },
-            { id: 'c3', name: 'British Pound', symbol: '£', category: 'Currency', base: 'US Dollar', formula: 'X * 0.79' },
-            { id: 'c4', name: 'Japanese Yen', symbol: '¥', category: 'Currency', base: 'US Dollar', formula: 'X * 155.0' },
-
-            // Time
-            { id: 'tm1', name: 'Seconds', symbol: 's', category: 'Time', base: 'Seconds', formula: 'X' },
-            { id: 'tm2', name: 'Minutes', symbol: 'min', category: 'Time', base: 'Seconds', formula: 'X / 60' },
-            { id: 'tm3', name: 'Hours', symbol: 'hr', category: 'Time', base: 'Seconds', formula: 'X / 3600' },
-            { id: 'tm4', name: 'Days', symbol: 'day', category: 'Time', base: 'Seconds', formula: 'X / 86400' },
-            { id: 'tm5', name: 'Weeks', symbol: 'wk', category: 'Time', base: 'Seconds', formula: 'X / 604800' },
-            { id: 'tm6', name: 'Years', symbol: 'yr', category: 'Time', base: 'Seconds', formula: 'X / 31536000' }
-        ];
-
-        let currentCategoryFilter = 'Temperature';
-
-        function saveToStorage() {
-            localStorage.setItem('measurecraft_units', JSON.stringify(units));
+/* ------------------------------------------------------------------ *
+ * 1. Storage — never throws (sandboxed iframes / private mode safe)
+ * ------------------------------------------------------------------ */
+const Store = (() => {
+    let usable = true;
+    const mem = new Map();
+    try {
+        window.localStorage.setItem('__mc_probe__', '1');
+        window.localStorage.removeItem('__mc_probe__');
+    } catch (e) {
+        usable = false;
+    }
+    return {
+        get(key) {
+            if (usable) {
+                try { return window.localStorage.getItem(key); }
+                catch (e) { usable = false; }
+            }
+            return mem.has(key) ? mem.get(key) : null;
+        },
+        set(key, value) {
+            mem.set(key, value);
+            if (!usable) return false;
+            try { window.localStorage.setItem(key, value); return true; }
+            catch (e) { usable = false; return false; }
         }
+    };
+})();
 
-        function renderApp() {
-            renderTabs();
-            populateConverterSelects();
-            performConversion('from');
-        }
+/* ------------------------------------------------------------------ *
+ * 2. Formula engine — tokenizer, parser, evaluator, numeric inverter
+ * ------------------------------------------------------------------ */
+const Formula = (() => {
 
-        function renderTabs() {
-            document.querySelectorAll('.category-btn').forEach(btn => {
-                const catName = btn.querySelector('span') ? btn.querySelector('span').textContent.trim() : btn.textContent.trim();
-                const isActive = (currentCategoryFilter === 'All' && catName === 'All') || (currentCategoryFilter === catName);
-                if (isActive) {
-                    btn.className = 'category-btn px-3 py-1.5 sm:px-3.5 sm:py-2 rounded-xl text-xs font-semibold whitespace-nowrap lg:text-left transition cursor-pointer flex items-center justify-between bg-[#141413] text-[#f7f6f2] shadow-xs';
-                } else {
-                    btn.className = 'category-btn px-3 py-1.5 sm:px-3.5 sm:py-2 rounded-xl text-xs font-semibold whitespace-nowrap lg:text-left transition cursor-pointer flex items-center justify-between bg-[#f0eee6] text-[#615f59] hover:bg-[#e8e5dc]';
+    const FUNCS = {
+        abs:   a => Math.abs(a[0]),
+        sqrt:  a => Math.sqrt(a[0]),
+        cbrt:  a => Math.cbrt(a[0]),
+        exp:   a => Math.exp(a[0]),
+        ln:    a => Math.log(a[0]),
+        log:   a => Math.log(a[0]),
+        log10: a => Math.log10(a[0]),
+        log2:  a => Math.log2(a[0]),
+        sin:   a => Math.sin(a[0]),
+        cos:   a => Math.cos(a[0]),
+        tan:   a => Math.tan(a[0]),
+        asin:  a => Math.asin(a[0]),
+        acos:  a => Math.acos(a[0]),
+        atan:  a => Math.atan(a[0]),
+        round: a => { const d = a.length > 1 ? a[1] : 0; const f = Math.pow(10, d); return Math.round(a[0] * f) / f; },
+        floor: a => Math.floor(a[0]),
+        ceil:  a => Math.ceil(a[0]),
+        sign:  a => Math.sign(a[0]),
+        min:   a => Math.min.apply(null, a),
+        max:   a => Math.max.apply(null, a),
+        pow:   a => Math.pow(a[0], a[1])
+    };
+
+    function normalize(src) {
+        return String(src)
+            .replace(/×/g, '*')
+            .replace(/÷/g, '/')
+            .replace(/[−–—]/g, '-')
+            .replace(/°/g, '');   // a stray degree sign should not break parsing
+    }
+
+    function tokenize(src) {
+        const tokens = [];
+        let i = 0;
+        while (i < src.length) {
+            const c = src[i];
+
+            if (/\s/.test(c)) { i++; continue; }
+
+            if (/[0-9.]/.test(c)) {
+                let j = i;
+                while (j < src.length && /[0-9.]/.test(src[j])) j++;
+                if (src[j] === 'e' || src[j] === 'E') {
+                    let k = j + 1;
+                    if (src[k] === '+' || src[k] === '-') k++;
+                    if (/[0-9]/.test(src[k] || '')) {
+                        while (k < src.length && /[0-9]/.test(src[k])) k++;
+                        j = k;
+                    }
                 }
-            });
-            document.getElementById('converter-category-badge').textContent = currentCategoryFilter === 'All' ? 'All Categories' : currentCategoryFilter;
-            
-            const currencyNotice = document.getElementById('currency-notice');
-            if (currentCategoryFilter === 'Currency') {
-                currencyNotice.classList.remove('hidden');
-            } else {
-                currencyNotice.classList.add('hidden');
+                const raw = src.slice(i, j);
+                const num = parseFloat(raw);
+                if (!isFinite(num)) throw new Error('"' + raw + '" is not a valid number.');
+                tokens.push({ t: 'num', v: num });
+                i = j;
+                continue;
+            }
+
+            if (/[A-Za-z_]/.test(c)) {
+                let j = i;
+                while (j < src.length && /[A-Za-z0-9_]/.test(src[j])) j++;
+                tokens.push({ t: 'name', v: src.slice(i, j) });
+                i = j;
+                continue;
+            }
+
+            if ('+-*/^%(),'.indexOf(c) !== -1) { tokens.push({ t: 'op', v: c }); i++; continue; }
+
+            throw new Error('Unexpected character "' + c + '" in the formula.');
+        }
+        return tokens;
+    }
+
+    function parse(tokens) {
+        let pos = 0;
+        const peek = () => tokens[pos];
+        const next = () => tokens[pos++];
+
+        function expect(v) {
+            const tk = next();
+            if (!tk || tk.v !== v) throw new Error('Expected "' + v + '" in the formula.');
+        }
+
+        function parseExpr() {
+            let node = parseTerm();
+            while (peek() && peek().t === 'op' && (peek().v === '+' || peek().v === '-')) {
+                const op = next().v;
+                node = { type: 'bin', op: op, left: node, right: parseTerm() };
+            }
+            return node;
+        }
+
+        function parseTerm() {
+            let node = parseUnary();
+            for (;;) {
+                const tk = peek();
+                if (!tk) break;
+                if (tk.t === 'op' && (tk.v === '*' || tk.v === '/' || tk.v === '%')) {
+                    const op = next().v;
+                    node = { type: 'bin', op: op, left: node, right: parseUnary() };
+                    continue;
+                }
+                // implicit multiplication: 2X, 3(X+1), X(X+1)
+                if (tk.t === 'num' || tk.t === 'name' || (tk.t === 'op' && tk.v === '(')) {
+                    node = { type: 'bin', op: '*', left: node, right: parseUnary() };
+                    continue;
+                }
+                break;
+            }
+            return node;
+        }
+
+        function parseUnary() {
+            const tk = peek();
+            if (tk && tk.t === 'op' && (tk.v === '-' || tk.v === '+')) {
+                next();
+                const arg = parseUnary();
+                return tk.v === '-' ? { type: 'neg', arg: arg } : arg;
+            }
+            return parsePower();
+        }
+
+        function parsePower() {
+            const base = parsePrimary();
+            const tk = peek();
+            if (tk && tk.t === 'op' && tk.v === '^') {
+                next();
+                return { type: 'bin', op: '^', left: base, right: parseUnary() };
+            }
+            return base;
+        }
+
+        function parsePrimary() {
+            const tk = next();
+            if (!tk) throw new Error('The formula ends unexpectedly.');
+
+            if (tk.t === 'num') return { type: 'num', v: tk.v };
+
+            if (tk.t === 'name') {
+                if (peek() && peek().t === 'op' && peek().v === '(') {
+                    next();
+                    const args = [];
+                    if (!(peek() && peek().t === 'op' && peek().v === ')')) {
+                        args.push(parseExpr());
+                        while (peek() && peek().t === 'op' && peek().v === ',') {
+                            next();
+                            args.push(parseExpr());
+                        }
+                    }
+                    expect(')');
+                    return { type: 'call', name: tk.v, args: args };
+                }
+                return { type: 'var', name: tk.v };
+            }
+
+            if (tk.t === 'op' && tk.v === '(') {
+                const node = parseExpr();
+                expect(')');
+                return node;
+            }
+
+            throw new Error('Unexpected "' + tk.v + '" in the formula.');
+        }
+
+        const ast = parseExpr();
+        if (pos < tokens.length) throw new Error('Unexpected "' + tokens[pos].v + '" in the formula.');
+        return ast;
+    }
+
+    function evaluate(node, x) {
+        switch (node.type) {
+            case 'num':
+                return node.v;
+
+            case 'var': {
+                const n = node.name;
+                if (n === 'X' || n === 'x') return x;
+                if (n === 'pi' || n === 'PI' || n === 'Pi') return Math.PI;
+                if (n === 'e' || n === 'E') return Math.E;
+                throw new Error('Unknown symbol "' + n + '" — use X for the base value.');
+            }
+
+            case 'neg':
+                return -evaluate(node.arg, x);
+
+            case 'bin': {
+                const a = evaluate(node.left, x);
+                const b = evaluate(node.right, x);
+                switch (node.op) {
+                    case '+': return a + b;
+                    case '-': return a - b;
+                    case '*': return a * b;
+                    case '/': return a / b;
+                    case '%': return a % b;
+                    case '^': return Math.pow(a, b);
+                }
+                throw new Error('Unknown operator "' + node.op + '".');
+            }
+
+            case 'call': {
+                const fn = FUNCS[node.name.toLowerCase()];
+                if (!fn) throw new Error('Unknown function "' + node.name + '".');
+                if (node.args.length === 0) throw new Error('"' + node.name + '" needs an argument.');
+                return fn(node.args.map(a => evaluate(a, x)));
+            }
+        }
+        throw new Error('Malformed formula.');
+    }
+
+    /** Compile a formula string into a fast (x) => number function. Throws with a friendly message. */
+    function compile(src) {
+        if (typeof src !== 'string' || !src.trim()) throw new Error('The formula is empty.');
+        const ast = parse(tokenize(normalize(src)));
+        const fn = x => evaluate(ast, x);
+        const probe = fn(1);
+        if (typeof probe !== 'number' || Number.isNaN(probe)) {
+            throw new Error('The formula did not produce a number.');
+        }
+        return fn;
+    }
+
+    /**
+     * Numeric inverse of a compiled formula: find X such that fn(X) === target.
+     * Fast analytic path for linear formulas, bracketed bisection otherwise.
+     */
+    function invert(fn, target) {
+        let f0, f1, f2;
+        try { f0 = fn(0); f1 = fn(1); f2 = fn(2); }
+        catch (e) { f0 = f1 = f2 = NaN; }
+
+        if (isFinite(f0) && isFinite(f1) && isFinite(f2)) {
+            const d1 = f1 - f0;
+            const d2 = f2 - f1;
+            const scale = Math.max(1, Math.abs(d1), Math.abs(d2));
+            if (Math.abs(d1 - d2) <= 1e-9 * scale) {          // linear
+                if (Math.abs(d1) < 1e-12) {                   // constant
+                    if (Math.abs(f0 - target) <= 1e-9) return 0;
+                    throw new Error('This formula always produces the same value, so it cannot be reversed.');
+                }
+                return (target - f0) / d1;
             }
         }
 
-        function filterCategory(cat) {
-            currentCategoryFilter = cat;
-            renderTabs();
-            populateConverterSelects();
-            performConversion('from');
+        const g = x => {
+            try {
+                const y = fn(x);
+                return isFinite(y) ? y - target : NaN;
+            } catch (e) { return NaN; }
+        };
+
+        const probes = [];
+        for (let e = 9; e >= 0; e--) probes.push(-Math.pow(10, e));
+        probes.push(0);
+        for (let e = 0; e <= 9; e++) probes.push(Math.pow(10, e));
+        [0.001, 0.01, 0.1, 1, 10, 100].forEach(v => { probes.push(-v); probes.push(v); });
+        probes.sort((a, b) => a - b);
+
+        let lo = null, hi = null;
+        let prevX = null, prevG = null;
+
+        for (let i = 0; i < probes.length; i++) {
+            const x = probes[i];
+            const gx = g(x);
+            if (!isFinite(gx)) { prevX = null; prevG = null; continue; }
+            if (gx === 0) return x;
+            if (prevG !== null && (prevG < 0) !== (gx < 0)) { lo = prevX; hi = x; break; }
+            prevX = x;
+            prevG = gx;
         }
 
-        function populateConverterSelects() {
-            const fromSelect = document.getElementById('from-unit-select');
-            const toSelect = document.getElementById('to-unit-select');
-            
-            const availableUnits = currentCategoryFilter === 'All' 
-                ? units 
-                : units.filter(u => u.category === currentCategoryFilter);
-
-            const currentFrom = fromSelect.value;
-            const currentTo = toSelect.value;
-
-            fromSelect.innerHTML = '';
-            toSelect.innerHTML = '';
-
-            if (availableUnits.length === 0) {
-                fromSelect.innerHTML = '<option value="">No units</option>';
-                toSelect.innerHTML = '<option value="">No units</option>';
-                return;
-            }
-
-            availableUnits.forEach(u => {
-                const opt1 = document.createElement('option');
-                opt1.value = u.id;
-                opt1.textContent = `${u.name} (${u.symbol})`;
-                fromSelect.appendChild(opt1);
-
-                const opt2 = document.createElement('option');
-                opt2.value = u.id;
-                opt2.textContent = `${u.name} (${u.symbol})`;
-                toSelect.appendChild(opt2);
-            });
-
-            if (availableUnits.some(u => u.id === currentFrom)) fromSelect.value = currentFrom;
-            if (availableUnits.some(u => u.id === currentTo)) toSelect.value = currentTo;
-            
-            if (fromSelect.value === toSelect.value && availableUnits.length > 1) {
-                toSelect.selectedIndex = (fromSelect.selectedIndex + 1) % availableUnits.length;
-            }
+        if (lo === null) {
+            throw new Error('This formula cannot be reversed for the value ' + target + '.');
         }
 
-        function updateBaseDropdown(selectedBaseName = '') {
-            const cat = document.getElementById('unit-category').value;
-            const baseSelect = document.getElementById('unit-base-select');
-            
-            const categoryUnits = units.filter(u => u.category === cat);
-            
-            baseSelect.innerHTML = '';
-            
-            if (categoryUnits.length > 0) {
-                categoryUnits.forEach(u => {
-                    const opt = document.createElement('option');
-                    opt.value = u.name;
-                    opt.textContent = `${u.name} (${u.symbol})`;
-                    baseSelect.appendChild(opt);
-                });
-            } else {
-                let defaultBase = 'Meters';
-                if (cat === 'Temperature') defaultBase = 'Celsius';
-                else if (cat === 'Weight') defaultBase = 'Grams';
-                else if (cat === 'Speed') defaultBase = 'Meters/second';
-                else if (cat === 'Volume') defaultBase = 'Liters';
-                else if (cat === 'Energy') defaultBase = 'Joules';
-                else if (cat === 'Currency') defaultBase = 'US Dollar';
-                else if (cat === 'Time') defaultBase = 'Seconds';
-                
+        const sLo = g(lo) < 0;
+        for (let i = 0; i < 120; i++) {
+            const mid = (lo + hi) / 2;
+            const gm = g(mid);
+            if (!isFinite(gm)) break;
+            if ((gm < 0) === sLo) lo = mid; else hi = mid;
+        }
+        return (lo + hi) / 2;
+    }
+
+    return { compile: compile, invert: invert };
+})();
+
+/* ------------------------------------------------------------------ *
+ * 3. Data model
+ * ------------------------------------------------------------------ */
+const STORAGE_KEY = 'measurecraft_units';
+
+const DEFAULT_UNITS = [
+    // Temperature  (Celsius is the reference / base unit)
+    { id: 't1', name: 'Celsius',    symbol: '°C',  category: 'Temperature', base: '',          formula: 'X' },
+    { id: 't2', name: 'Fahrenheit', symbol: '°F',  category: 'Temperature', base: 'Celsius',   formula: 'X * 9/5 + 32' },
+    { id: 't3', name: 'Kelvin',     symbol: 'K',   category: 'Temperature', base: 'Celsius',   formula: 'X + 273.15' },
+
+    // Length
+    { id: 'l1', name: 'Meters',     symbol: 'm',   category: 'Length', base: '',        formula: 'X' },
+    { id: 'l2', name: 'Kilometers', symbol: 'km',  category: 'Length', base: 'Meters',  formula: 'X / 1000' },
+    { id: 'l3', name: 'Miles',      symbol: 'mi',  category: 'Length', base: 'Meters',  formula: 'X / 1609.344' },
+    { id: 'l4', name: 'Feet',       symbol: 'ft',  category: 'Length', base: 'Meters',  formula: 'X * 3.28084' },
+
+    // Weight
+    { id: 'w1', name: 'Grams',      symbol: 'g',   category: 'Weight', base: '',       formula: 'X' },
+    { id: 'w2', name: 'Kilograms',  symbol: 'kg',  category: 'Weight', base: 'Grams',  formula: 'X / 1000' },
+    { id: 'w3', name: 'Pounds',     symbol: 'lb',  category: 'Weight', base: 'Grams',  formula: 'X / 453.59237' },
+    { id: 'w4', name: 'Ounces',     symbol: 'oz',  category: 'Weight', base: 'Grams',  formula: 'X / 28.3495' },
+
+    // Speed
+    { id: 's1', name: 'Meters/second',   symbol: 'm/s', category: 'Speed', base: '',               formula: 'X' },
+    { id: 's2', name: 'Kilometers/hour', symbol: 'km/h',category: 'Speed', base: 'Meters/second',  formula: 'X * 3.6' },
+    { id: 's3', name: 'Miles/hour',      symbol: 'mph', category: 'Speed', base: 'Meters/second',  formula: 'X * 2.23694' },
+
+    // Volume
+    { id: 'v1', name: 'Liters',        symbol: 'L',   category: 'Volume', base: '',        formula: 'X' },
+    { id: 'v2', name: 'Milliliters',   symbol: 'mL',  category: 'Volume', base: 'Liters',  formula: 'X * 1000' },
+    { id: 'v3', name: 'Gallons (US)',  symbol: 'gal', category: 'Volume', base: 'Liters',  formula: 'X / 3.78541' },
+
+    // Energy
+    { id: 'e1', name: 'Joules',         symbol: 'J',   category: 'Energy', base: '',        formula: 'X' },
+    { id: 'e2', name: 'Calories',       symbol: 'cal', category: 'Energy', base: 'Joules',  formula: 'X / 4.184' },
+    { id: 'e3', name: 'Kilowatt-hours', symbol: 'kWh', category: 'Energy', base: 'Joules',  formula: 'X / 3600000' },
+
+    // Currency
+    { id: 'c1', name: 'US Dollar',     symbol: '$', category: 'Currency', base: '',           formula: 'X' },
+    { id: 'c2', name: 'Euro',          symbol: '€', category: 'Currency', base: 'US Dollar',  formula: 'X * 0.92' },
+    { id: 'c3', name: 'British Pound', symbol: '£', category: 'Currency', base: 'US Dollar',  formula: 'X * 0.79' },
+    { id: 'c4', name: 'Japanese Yen',  symbol: '¥', category: 'Currency', base: 'US Dollar',  formula: 'X * 155.0' },
+
+    // Time
+    { id: 'tm1', name: 'Seconds', symbol: 's',   category: 'Time', base: '',        formula: 'X' },
+    { id: 'tm2', name: 'Minutes', symbol: 'min', category: 'Time', base: 'Seconds', formula: 'X / 60' },
+    { id: 'tm3', name: 'Hours',   symbol: 'hr',  category: 'Time', base: 'Seconds', formula: 'X / 3600' },
+    { id: 'tm4', name: 'Days',    symbol: 'day', category: 'Time', base: 'Seconds', formula: 'X / 86400' },
+    { id: 'tm5', name: 'Weeks',   symbol: 'wk',  category: 'Time', base: 'Seconds', formula: 'X / 604800' },
+    { id: 'tm6', name: 'Years',   symbol: 'yr',  category: 'Time', base: 'Seconds', formula: 'X / 31536000' }
+];
+
+const PREFERRED_ORDER = ['Temperature', 'Length', 'Weight', 'Speed', 'Volume', 'Energy', 'Currency', 'Time'];
+
+let units = loadUnits();
+let currentCategoryFilter = 'Temperature';
+
+function loadUnits() {
+    const raw = Store.get(STORAGE_KEY);
+    if (raw) {
+        try {
+            const parsed = JSON.parse(raw);
+            if (Array.isArray(parsed) && parsed.length) {
+                return parsed
+                    .filter(u => u && u.name)
+                    .map(u => ({
+                        id: u.id || ('u_' + Math.random().toString(36).slice(2, 10)),
+                        name: String(u.name),
+                        symbol: String(u.symbol || ''),
+                        category: String(u.category || 'Other'),
+                        base: String(u.base || ''),
+                        formula: String(u.formula || 'X')
+                    }));
+            }
+        } catch (e) { /* corrupted — fall through to defaults */ }
+    }
+    return DEFAULT_UNITS.map(u => Object.assign({}, u));
+}
+
+function saveUnits() {
+    return Store.set(STORAGE_KEY, JSON.stringify(units));
+}
+
+/* ------------------------------------------------------------------ *
+ * 4. Unit graph helpers
+ * ------------------------------------------------------------------ */
+function isRootUnit(u) {
+    return !u.base || u.base === u.name;
+}
+
+function findBaseUnit(u) {
+    if (isRootUnit(u)) return null;
+    return units.find(x => x.category === u.category && x.name === u.base) || null;
+}
+
+function rootOf(u) {
+    let cur = u;
+    const seen = new Set([u.id]);
+    while (!isRootUnit(cur)) {
+        const parent = findBaseUnit(cur);
+        if (!parent || seen.has(parent.id)) return cur;
+        seen.add(parent.id);
+        cur = parent;
+    }
+    return cur;
+}
+
+const formulaCache = new Map();
+
+function getFn(u) {
+    const key = u.id + '::' + u.formula;
+    const hit = formulaCache.get(key);
+    if (hit) return hit;
+    const fn = Formula.compile(u.formula || 'X');
+    formulaCache.set(key, fn);
+    return fn;
+}
+
+/** unit value -> value in the category's reference (root) unit */
+function toRootValue(u, value, depth) {
+    depth = depth || 0;
+    if (depth > 24) throw new Error('Base chain is too deep — check for a circular reference.');
+    if (isRootUnit(u)) return value;
+    const parent = findBaseUnit(u);
+    if (!parent) return value;                       // orphaned -> treat as its own reference
+    const pv = (u.formula.trim().toLowerCase() === 'x') ? value : Formula.invert(getFn(u), value);
+    return toRootValue(parent, pv, depth + 1);
+}
+
+/** value in the category's reference (root) unit -> value in this unit */
+function fromRootValue(u, rootValue, depth) {
+    depth = depth || 0;
+    if (depth > 24) throw new Error('Base chain is too deep — check for a circular reference.');
+    if (isRootUnit(u)) return rootValue;
+    const parent = findBaseUnit(u);
+    const pv = parent ? fromRootValue(parent, rootValue, depth + 1) : rootValue;
+    return getFn(u)(pv);
+}
+
+function convertValue(fromUnit, toUnit, value) {
+    if (!fromUnit || !toUnit) throw new Error('Pick two units first.');
+    if (fromUnit.id === toUnit.id) return value;
+
+    const a = rootOf(fromUnit);
+    const b = rootOf(toUnit);
+    if (a.id !== b.id) {
+        throw new Error('“' + fromUnit.name + '” and “' + toUnit.name + '” belong to different base systems (' + a.name + ' vs ' + b.name + ') and cannot be converted.');
+    }
+    return fromRootValue(toUnit, toRootValue(fromUnit, value));
+}
+
+/* ------------------------------------------------------------------ *
+ * 5. Small utilities
+ * ------------------------------------------------------------------ */
+function escapeHtml(s) {
+    return String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+}
+
+function formatNumber(v) {
+    if (!isFinite(v)) return '';
+    if (v === 0) return '0';
+    const abs = Math.abs(v);
+    if (abs >= 1e12 || abs < 1e-6) {
+        return v.toExponential(6).replace(/\.?0+e/, 'e');
+    }
+    return String(Number(v.toFixed(6)));
+}
+
+let toastTimer = null;
+function toast(message, kind) {
+    const el = document.getElementById('toast');
+    el.textContent = message;
+    el.style.background = kind === 'err' ? '#dc2626' : (kind === 'warn' ? '#b45309' : '#141413');
+    el.style.opacity = '1';
+    el.style.transform = 'translate(-50%, 0)';
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => {
+        el.style.opacity = '0';
+        el.style.transform = 'translate(-50%, 10px)';
+    }, 2800);
+}
+
+/* ------------------------------------------------------------------ *
+ * 6. Rendering
+ * ------------------------------------------------------------------ */
+function allCategories() {
+    const found = Array.from(new Set(units.map(u => u.category)));
+    const preferred = PREFERRED_ORDER.filter(c => found.indexOf(c) !== -1);
+    const rest = found.filter(c => PREFERRED_ORDER.indexOf(c) === -1).sort();
+    return preferred.concat(rest);
+}
+
+function renderApp() {
+    renderTabs();
+    renderCategoryDatalist();
+    populateConverterSelects();
+    performConversion('from');
+}
+
+function renderTabs() {
+    const container = document.getElementById('category-tabs');
+    const cats = ['All'].concat(allCategories());
+
+    if (cats.indexOf(currentCategoryFilter) === -1) currentCategoryFilter = 'All';
+
+    container.innerHTML = '';
+    cats.forEach(cat => {
+        const active = currentCategoryFilter === cat;
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'category-btn px-3 py-1.5 sm:px-3.5 sm:py-2 rounded-xl text-xs font-semibold whitespace-nowrap lg:text-left transition cursor-pointer flex items-center justify-between ' +
+            (active
+                ? 'bg-[#141413] text-[#f7f6f2] shadow-xs'
+                : 'bg-[#f0eee6] text-[#615f59] hover:bg-[#e8e5dc]');
+        btn.innerHTML = '<span>' + escapeHtml(cat) + '</span>';
+        btn.addEventListener('click', () => filterCategory(cat));
+        container.appendChild(btn);
+    });
+
+    document.getElementById('converter-category-badge').textContent =
+        currentCategoryFilter === 'All' ? 'All Categories' : currentCategoryFilter;
+
+    document.getElementById('currency-notice').classList.toggle('hidden', currentCategoryFilter !== 'Currency');
+}
+
+function renderCategoryDatalist() {
+    const dl = document.getElementById('category-options');
+    dl.innerHTML = '';
+    allCategories().forEach(cat => {
+        const opt = document.createElement('option');
+        opt.value = cat;
+        dl.appendChild(opt);
+    });
+}
+
+function filterCategory(cat) {
+    currentCategoryFilter = cat;
+    renderTabs();
+    populateConverterSelects();
+    performConversion('from');
+}
+
+function populateConverterSelects() {
+    const fromSelect = document.getElementById('from-unit-select');
+    const toSelect = document.getElementById('to-unit-select');
+
+    const available = currentCategoryFilter === 'All'
+        ? units.slice()
+        : units.filter(u => u.category === currentCategoryFilter);
+
+    const prevFrom = fromSelect.value;
+    const prevTo = toSelect.value;
+
+    fromSelect.innerHTML = '';
+    toSelect.innerHTML = '';
+
+    if (!available.length) {
+        fromSelect.innerHTML = '<option value="">No units</option>';
+        toSelect.innerHTML = '<option value="">No units</option>';
+        return;
+    }
+
+    const groups = new Map();
+    available.forEach(u => {
+        if (!groups.has(u.category)) groups.set(u.category, []);
+        groups.get(u.category).push(u);
+    });
+
+    const build = select => {
+        groups.forEach((list, cat) => {
+            let parent = select;
+            if (groups.size > 1) {
+                const og = document.createElement('optgroup');
+                og.label = cat;
+                select.appendChild(og);
+                parent = og;
+            }
+            list.forEach(u => {
                 const opt = document.createElement('option');
-                opt.value = defaultBase;
-                opt.textContent = defaultBase;
-                baseSelect.appendChild(opt);
-            }
+                opt.value = u.id;
+                opt.textContent = u.name + ' (' + u.symbol + ')';
+                parent.appendChild(opt);
+            });
+        });
+    };
 
-            if (selectedBaseName && Array.from(baseSelect.options).some(o => o.value === selectedBaseName)) {
-                baseSelect.value = selectedBaseName;
-            }
+    build(fromSelect);
+    build(toSelect);
+
+    if (available.some(u => u.id === prevFrom)) fromSelect.value = prevFrom;
+    if (available.some(u => u.id === prevTo)) toSelect.value = prevTo;
+
+    if (fromSelect.value === toSelect.value && toSelect.options.length > 1) {
+        toSelect.selectedIndex = (fromSelect.selectedIndex + 1) % toSelect.options.length;
+    }
+}
+
+/* ------------------------------------------------------------------ *
+ * 7. Conversion UI
+ * ------------------------------------------------------------------ */
+function performConversion(direction) {
+    const fromInput = document.getElementById('from-input');
+    const toInput = document.getElementById('to-input');
+    const notice = document.getElementById('converter-notice');
+
+    notice.classList.add('hidden');
+    notice.textContent = '';
+
+    const fromUnit = units.find(u => u.id === document.getElementById('from-unit-select').value);
+    const toUnit = units.find(u => u.id === document.getElementById('to-unit-select').value);
+    if (!fromUnit || !toUnit) return;
+
+    const srcEl = direction === 'from' ? fromInput : toInput;
+    const dstEl = direction === 'from' ? toInput : fromInput;
+    const srcUnit = direction === 'from' ? fromUnit : toUnit;
+    const dstUnit = direction === 'from' ? toUnit : fromUnit;
+
+    const raw = srcEl.value.trim();
+    if (raw === '' || isNaN(parseFloat(raw))) { dstEl.value = ''; return; }
+    const value = parseFloat(raw);
+
+    try {
+        dstEl.value = formatNumber(convertValue(srcUnit, dstUnit, value));
+    } catch (err) {
+        dstEl.value = '';
+        notice.textContent = err.message;
+        notice.classList.remove('hidden');
+    }
+}
+
+function swapUnits() {
+    const fromSelect = document.getElementById('from-unit-select');
+    const toSelect = document.getElementById('to-unit-select');
+    const fromInput = document.getElementById('from-input');
+    const toInput = document.getElementById('to-input');
+
+    const tmpUnit = fromSelect.value;
+    fromSelect.value = toSelect.value;
+    toSelect.value = tmpUnit;
+
+    const tmpVal = fromInput.value;
+    fromInput.value = toInput.value;
+    toInput.value = tmpVal;
+
+    performConversion('from');
+}
+
+/* ------------------------------------------------------------------ *
+ * 8. Create / Edit modal
+ * ------------------------------------------------------------------ */
+function openCreateModal() {
+    document.getElementById('modal-title').textContent = 'Create Custom Unit';
+    document.getElementById('unit-form').reset();
+    document.getElementById('unit-id').value = '';
+    document.getElementById('unit-error').classList.add('hidden');
+
+    const catInput = document.getElementById('unit-category');
+    catInput.value = currentCategoryFilter === 'All' ? '' : currentCategoryFilter;
+
+    updateBaseDropdown('');
+    document.getElementById('unit-modal').classList.remove('hidden');
+    setTimeout(() => catInput.focus(), 30);
+}
+
+function editUnit(id) {
+    const u = units.find(x => x.id === id);
+    if (!u) return;
+
+    document.getElementById('modal-title').textContent = 'Edit Custom Unit';
+    document.getElementById('unit-id').value = u.id;
+    document.getElementById('unit-category').value = u.category;
+    document.getElementById('unit-name').value = u.name;
+    document.getElementById('unit-symbol').value = u.symbol;
+    document.getElementById('unit-error').classList.add('hidden');
+
+    updateBaseDropdown(isRootUnit(u) ? '__root__' : u.base);
+    document.getElementById('unit-formula').value = u.formula || 'X';
+    onBaseChange();
+
+    document.getElementById('unit-modal').classList.remove('hidden');
+}
+
+function closeModal() {
+    document.getElementById('unit-modal').classList.add('hidden');
+}
+
+function updateBaseDropdown(selectedBase) {
+    const category = document.getElementById('unit-category').value.trim();
+    const editingId = document.getElementById('unit-id').value;
+    const baseSelect = document.getElementById('unit-base-select');
+
+    baseSelect.innerHTML = '';
+
+    const rootOpt = document.createElement('option');
+    rootOpt.value = '__root__';
+    rootOpt.textContent = 'None — this is the base unit';
+    baseSelect.appendChild(rootOpt);
+
+    const candidates = units.filter(u =>
+        u.category === category &&
+        u.id !== editingId
+    );
+
+    candidates.forEach(u => {
+        const opt = document.createElement('option');
+        opt.value = u.name;
+        opt.textContent = u.name + ' (' + u.symbol + ')' + (isRootUnit(u) ? ' — base' : '');
+        baseSelect.appendChild(opt);
+    });
+
+    if (selectedBase && Array.from(baseSelect.options).some(o => o.value === selectedBase)) {
+        baseSelect.value = selectedBase;
+    } else {
+        baseSelect.value = '__root__';
+    }
+
+    document.getElementById('base-help').textContent = category
+        ? (candidates.length
+            ? 'Link this unit to an existing unit in “' + category + '”, or make it a new base unit.'
+            : 'No other units in “' + category + '” yet — this unit will become its reference point.')
+        : 'Enter a category first.';
+
+    onBaseChange();
+}
+
+function onBaseChange() {
+    const baseSelect = document.getElementById('unit-base-select');
+    const formulaInput = document.getElementById('unit-formula');
+    const help = document.getElementById('formula-help');
+    const isRoot = baseSelect.value === '__root__';
+
+    if (isRoot) {
+        formulaInput.value = 'X';
+        formulaInput.disabled = true;
+        formulaInput.classList.add('opacity-50', 'cursor-not-allowed');
+        help.innerHTML = 'Base units define the reference point for their category — the formula is always <code class="code-font">X</code>.';
+    } else {
+        formulaInput.disabled = false;
+        formulaInput.classList.remove('opacity-50', 'cursor-not-allowed');
+        if (!formulaInput.value.trim()) formulaInput.value = 'X';
+        help.innerHTML = 'X = a value in <strong>' + escapeHtml(baseSelect.value) + '</strong>. Example: <code class="code-font">X * 1.8 + 32</code>';
+    }
+}
+
+/* ------------------------------------------------------------------ *
+ * 9. Save / delete
+ * ------------------------------------------------------------------ */
+function saveUnit(event) {
+    if (event) event.preventDefault();
+
+    const errEl = document.getElementById('unit-error');
+    const fail = msg => {
+        errEl.textContent = msg;
+        errEl.classList.remove('hidden');
+        errEl.scrollIntoView({ block: 'nearest' });
+    };
+    errEl.classList.add('hidden');
+    errEl.textContent = '';
+
+    const id = document.getElementById('unit-id').value;
+    const category = document.getElementById('unit-category').value.trim();
+    const name = document.getElementById('unit-name').value.trim();
+    const symbol = document.getElementById('unit-symbol').value.trim();
+    const baseValue = document.getElementById('unit-base-select').value;
+    let formula = document.getElementById('unit-formula').value.trim();
+
+    if (!category) return fail('Please enter a category.');
+    if (!name) return fail('Please enter a unit name.');
+    if (!symbol) return fail('Please enter a symbol.');
+
+    const duplicate = units.find(u =>
+        u.id !== id &&
+        u.category.toLowerCase() === category.toLowerCase() &&
+        u.name.toLowerCase() === name.toLowerCase()
+    );
+    if (duplicate) {
+        return fail('“' + name + '” already exists in ' + category + '. Unit names must be unique inside a category, because other units refer to them by name.');
+    }
+
+    let base = '';
+    if (baseValue === '__root__') {
+        base = '';
+        formula = 'X';
+    } else {
+        base = baseValue;
+        if (!formula) return fail('Please enter a formula, or pick “None — this is the base unit”.');
+    }
+
+    let fn;
+    try {
+        fn = Formula.compile(formula);
+    } catch (err) {
+        return fail('Formula error: ' + err.message);
+    }
+
+    if (base) {
+        try {
+            const probe = fn(2);
+            if (!isFinite(probe)) throw new Error('non-finite');
+            const back = Formula.invert(fn, probe);
+            if (!isFinite(back)) throw new Error('non-invertible');
+        } catch (err) {
+            return fail('This formula cannot be reversed, so converting other units into “' + name + '” would fail. Try a formula that increases steadily, such as X * 2 + 5.');
         }
+    }
 
-        function openManageModal() {
-            const listEl = document.getElementById('manage-units-list');
-            const subtitleEl = document.getElementById('manage-subtitle');
-            
-            subtitleEl.textContent = currentCategoryFilter === 'All' ? 'Showing all categories' : `Category: ${currentCategoryFilter}`;
-            
-            const filtered = currentCategoryFilter === 'All' 
-                ? units 
-                : units.filter(u => u.category === currentCategoryFilter);
+    const oldUnit = id ? units.find(u => u.id === id) : null;
 
-            listEl.innerHTML = '';
+    if (id) {
+        const index = units.findIndex(u => u.id === id);
+        if (index === -1) return fail('That unit no longer exists.');
+        units[index] = { id: id, name: name, symbol: symbol, category: category, base: base, formula: formula };
+    } else {
+        units.push({
+            id: 'u_' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6),
+            name: name,
+            symbol: symbol,
+            category: category,
+            base: base,
+            formula: formula
+        });
+    }
 
-            if (filtered.length === 0) {
-                listEl.innerHTML = `<div class="text-center py-8 text-xs text-[#8c8980]">No units in this category.</div>`;
-            } else {
-                filtered.forEach(u => {
-                    const card = document.createElement('div');
-                    card.className = 'bg-[#faf9f5] border border-[#e8e5dc] rounded-xl p-3 flex items-center justify-between gap-3 shadow-2xs';
-                    card.innerHTML = `
-                        <div class="flex-1 min-w-0">
-                            <div class="flex items-center gap-2 mb-1">
-                                <span class="font-bold text-[#141413] text-xs truncate">${u.name}</span>
-                                <span class="text-[10px] font-semibold px-1.5 py-0.5 bg-[#e8e5dc] text-[#4a4843] rounded code-font">${u.symbol}</span>
-                                <span class="text-[10px] text-[#8c8980]">(${u.category})</span>
-                            </div>
-                            <div class="text-[11px] code-font text-[#78756e] truncate">${u.formula} <span class="text-[#a3a099]">(base: ${u.base})</span></div>
-                        </div>
-                        <div class="flex items-center gap-1.5">
-                            <button onclick="closeManageModal(); editUnit('${u.id}')" class="w-7 h-7 rounded-lg bg-white border border-[#dedcd6] text-[#78756e] hover:text-[#141413] flex items-center justify-center transition cursor-pointer" title="Edit">
-                                <i class="fa-solid fa-pen text-xs"></i>
-                            </button>
-                            <button onclick="deleteUnit('${u.id}')" class="w-7 h-7 rounded-lg bg-white border border-[#dedcd6] text-[#78756e] hover:text-red-600 flex items-center justify-center transition cursor-pointer" title="Delete">
-                                <i class="fa-solid fa-trash text-xs"></i>
-                            </button>
-                        </div>
-                    `;
-                    listEl.appendChild(card);
-                });
-            }
+    // Keep units that pointed at a renamed unit pointing at it.
+    if (oldUnit && oldUnit.name !== name && oldUnit.category === category) {
+        units.forEach(u => {
+            if (u.category === category && u.base === oldUnit.name) u.base = name;
+        });
+    }
 
-            document.getElementById('manage-modal').classList.remove('hidden');
-        }
+    const persisted = saveUnits();
+    closeModal();
 
-        function closeManageModal() {
-            document.getElementById('manage-modal').classList.add('hidden');
-        }
+    if (currentCategoryFilter !== 'All') currentCategoryFilter = category;
+    renderApp();
 
-        function evaluateToBasePath(unitId, val) {
-            const u = units.find(item => item.id === unitId);
-            if (!u) return val;
-            try {
-                if (u.formula.trim() === 'X') return val;
-                let low = -1e9, high = 1e9;
-                for (let i = 0; i < 60; i++) {
-                    let mid = (low + high) / 2;
-                    let res = math.evaluate(u.formula, { X: mid });
-                    if (res < val) low = mid;
-                    else high = mid;
-                }
-                return (low + high) / 2;
-            } catch (e) {
-                return val;
-            }
-        }
+    if (persisted) {
+        toast('“' + name + '” saved.');
+    } else {
+        toast('“' + name + '” saved for this session only — browser storage is blocked.', 'warn');
+    }
+}
 
-        function evaluateFromBasePath(unitId, baseVal) {
-            const u = units.find(item => item.id === unitId);
-            if (!u) return baseVal;
-            try {
-                const compiled = math.compile(u.formula);
-                const res = compiled.evaluate({ X: baseVal });
-                return Number.isFinite(res) ? res : baseVal;
-            } catch (e) {
-                return baseVal;
-            }
-        }
+function deleteUnit(id) {
+    const u = units.find(x => x.id === id);
+    if (!u) return;
 
-        function performConversion(direction) {
-            const fromId = document.getElementById('from-unit-select').value;
-            const toId = document.getElementById('to-unit-select').value;
-            const fromInput = document.getElementById('from-input');
-            const toInput = document.getElementById('to-input');
+    const dependents = units.filter(x => x.id !== id && x.category === u.category && x.base === u.name);
+    if (dependents.length) {
+        toast('Can’t delete “' + u.name + '” — ' + dependents.length + ' unit(s) use it as their base.', 'err');
+        return;
+    }
 
-            if (!fromId || !toId) return;
+    if (!window.confirm('Delete “' + u.name + '”?')) return;
 
-            if (direction === 'from') {
-                const val = parseFloat(fromInput.value);
-                if (isNaN(val)) {
-                    toInput.value = '';
-                    return;
-                }
-                const baseVal = evaluateToBasePath(fromId, val);
-                const targetVal = evaluateFromBasePath(toId, baseVal);
-                toInput.value = Number(targetVal.toFixed(6));
-            } else {
-                const val = parseFloat(toInput.value);
-                if (isNaN(val)) {
-                    fromInput.value = '';
-                    return;
-                }
-                const baseVal = evaluateToBasePath(toId, val);
-                const sourceVal = evaluateFromBasePath(fromId, baseVal);
-                fromInput.value = Number(sourceVal.toFixed(6));
-            }
-        }
+    units = units.filter(x => x.id !== id);
+    saveUnits();
+    renderApp();
+    openManageModal();
+    toast('“' + u.name + '” deleted.');
+}
 
-        function swapUnits() {
-            const fromSelect = document.getElementById('from-unit-select');
-            const toSelect = document.getElementById('to-unit-select');
-            const fromInput = document.getElementById('from-input');
-            const toInput = document.getElementById('to-input');
+/* ------------------------------------------------------------------ *
+ * 10. Manage modal
+ * ------------------------------------------------------------------ */
+function openManageModal() {
+    const listEl = document.getElementById('manage-units-list');
 
-            // Swap selected units in dropdowns
-            const tempUnit = fromSelect.value;
-            fromSelect.value = toSelect.value;
-            toSelect.value = tempUnit;
+    document.getElementById('manage-subtitle').textContent =
+        currentCategoryFilter === 'All' ? 'Showing all categories' : 'Category: ' + currentCategoryFilter;
 
-            // Swap numerical input values
-            const tempVal = fromInput.value;
-            fromInput.value = toInput.value;
-            toInput.value = tempVal;
+    const filtered = currentCategoryFilter === 'All'
+        ? units
+        : units.filter(u => u.category === currentCategoryFilter);
 
-            performConversion('from');
-        }
+    listEl.innerHTML = '';
 
-        function openCreateModal() {
-            document.getElementById('modal-title').textContent = 'Create Custom Unit';
-            document.getElementById('unit-form').reset();
-            document.getElementById('unit-id').value = '';
-            if (currentCategoryFilter !== 'All') {
-                document.getElementById('unit-category').value = currentCategoryFilter;
-            }
-            updateBaseDropdown();
-            document.getElementById('unit-modal').classList.remove('hidden');
-        }
+    if (!filtered.length) {
+        listEl.innerHTML = '<div class="text-center py-8 text-xs text-[#8c8980]">No units in this category yet.</div>';
+    } else {
+        filtered.forEach(u => {
+            const isBase = isRootUnit(u);
+            const card = document.createElement('div');
+            card.className = 'bg-[#faf9f5] border border-[#e8e5dc] rounded-xl p-3 flex items-center justify-between gap-3 shadow-2xs';
 
-        function editUnit(id) {
-            const u = units.find(item => item.id === id);
-            if (!u) return;
+            const detail = isBase
+                ? '<span class="text-[#b45309]">reference unit for this category</span>'
+                : escapeHtml(u.formula) + ' <span class="text-[#a3a099]">(base: ' + escapeHtml(u.base) + ')</span>';
 
-            document.getElementById('modal-title').textContent = 'Edit Custom Unit';
-            document.getElementById('unit-id').value = u.id;
-            document.getElementById('unit-category').value = u.category;
-            document.getElementById('unit-name').value = u.name;
-            document.getElementById('unit-symbol').value = u.symbol;
-            updateBaseDropdown(u.base);
-            document.getElementById('unit-formula').value = u.formula;
+            card.innerHTML =
+                '<div class="flex-1 min-w-0">' +
+                    '<div class="flex items-center gap-2 mb-1 flex-wrap">' +
+                        '<span class="font-bold text-[#141413] text-xs truncate">' + escapeHtml(u.name) + '</span>' +
+                        '<span class="text-[10px] font-semibold px-1.5 py-0.5 bg-[#e8e5dc] text-[#4a4843] rounded code-font">' + escapeHtml(u.symbol) + '</span>' +
+                        '<span class="text-[10px] text-[#8c8980]">(' + escapeHtml(u.category) + ')</span>' +
+                        (isBase ? '<span class="text-[10px] font-bold px-1.5 py-0.5 bg-[#fdf0dd] text-[#b45309] rounded">BASE</span>' : '') +
+                    '</div>' +
+                    '<div class="text-[11px] code-font text-[#78756e] truncate">' + detail + '</div>' +
+                '</div>' +
+                '<div class="flex items-center gap-1.5">' +
+                    '<button data-action="edit" data-id="' + escapeHtml(u.id) + '" class="w-7 h-7 rounded-lg bg-white border border-[#dedcd6] text-[#78756e] hover:text-[#141413] flex items-center justify-center transition cursor-pointer" title="Edit">' +
+                        '<i class="fa-solid fa-pen text-xs"></i>' +
+                    '</button>' +
+                    '<button data-action="delete" data-id="' + escapeHtml(u.id) + '" class="w-7 h-7 rounded-lg bg-white border border-[#dedcd6] text-[#78756e] hover:text-red-600 flex items-center justify-center transition cursor-pointer" title="Delete">' +
+                        '<i class="fa-solid fa-trash text-xs"></i>' +
+                    '</button>' +
+                '</div>';
 
-            document.getElementById('unit-modal').classList.remove('hidden');
-        }
+            listEl.appendChild(card);
+        });
+    }
 
-        function closeModal() {
-            document.getElementById('unit-modal').classList.add('hidden');
-        }
+    document.getElementById('manage-modal').classList.remove('hidden');
+}
 
-        function saveUnit(e) {
-            e.preventDefault();
-            const id = document.getElementById('unit-id').value;
-            const category = document.getElementById('unit-category').value;
-            const name = document.getElementById('unit-name').value.trim();
-            const symbol = document.getElementById('unit-symbol').value.trim();
-            const base = document.getElementById('unit-base-select').value;
-            const formula = document.getElementById('unit-formula').value.trim();
+function closeManageModal() {
+    document.getElementById('manage-modal').classList.add('hidden');
+}
 
-            try {
-                const compiled = math.compile(formula);
-                compiled.evaluate({ X: 10 });
-            } catch (err) {
-                console.error(err);
-                return;
-            }
+/* ------------------------------------------------------------------ *
+ * 11. Wiring
+ * ------------------------------------------------------------------ */
+document.getElementById('from-unit-select').addEventListener('change', () => performConversion('from'));
+document.getElementById('to-unit-select').addEventListener('change', () => performConversion('from'));
+document.getElementById('from-input').addEventListener('input', () => performConversion('from'));
+document.getElementById('to-input').addEventListener('input', () => performConversion('to'));
 
-            if (id) {
-                const index = units.findIndex(u => u.id === id);
-                if (index !== -1) {
-                    units[index] = { id, name, symbol, category, base, formula };
-                }
-            } else {
-                const newUnit = {
-                    id: 'u_' + Date.now(),
-                    name,
-                    symbol,
-                    category,
-                    base,
-                    formula
-                };
-                units.push(newUnit);
-            }
+document.getElementById('unit-category').addEventListener('input', () => updateBaseDropdown(''));
+document.getElementById('unit-form').addEventListener('submit', saveUnit);
 
-            saveToStorage();
+document.getElementById('manage-units-list').addEventListener('click', e => {
+    const btn = e.target.closest('button[data-action]');
+    if (!btn) return;
+    const id = btn.getAttribute('data-id');
+    if (btn.getAttribute('data-action') === 'edit') {
+        closeManageModal();
+        editUnit(id);
+    } else {
+        deleteUnit(id);
+    }
+});
+
+// Escape closes any open modal
+document.addEventListener('keydown', e => {
+    if (e.key !== 'Escape') return;
+    closeModal();
+    closeManageModal();
+});
+
+// Click on the dark backdrop closes the modal
+['unit-modal', 'manage-modal'].forEach(mid => {
+    document.getElementById(mid).addEventListener('mousedown', e => {
+        if (e.target.id === mid) {
             closeModal();
-            renderApp();
+            closeManageModal();
         }
+    });
+});
 
-        function deleteUnit(id) {
-            units = units.filter(u => u.id !== id);
-            saveToStorage();
-            openManageModal();
-            renderApp();
-        }
+/* ------------------------------------------------------------------ *
+ * 12. Go
+ * ------------------------------------------------------------------ */
+if (!Store.set(STORAGE_KEY, JSON.stringify(units))) {
+    // storage unavailable — the session still works, just isn't persisted
+    setTimeout(() => toast('Browser storage is unavailable — changes last for this session only.', 'warn'), 600);
+}
 
-        renderApp();
-    </script>
+renderApp();
+</script>
 </body>
 </html>
