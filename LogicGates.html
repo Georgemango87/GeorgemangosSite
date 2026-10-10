@@ -48,7 +48,7 @@ onAuthStateChanged(fbAuth, user => {
     window.collabUser = {
       uid:         user.uid,
       name:        user.displayName || user.email?.split('@')[0] || 'User',
-      color:       localStorage.getItem('logic_sim_cursor_color') || '#22d3ee',
+      color:       localStorage.getItem('logic_sim_color_' + user.uid) || '#22d3ee',
       photoURL:    user.photoURL || null
     };
     localStorage.setItem('logic_sim_uid', user.uid);
@@ -64,8 +64,8 @@ onAuthStateChanged(fbAuth, user => {
 <style>
   /* ══ COLLAB ══ */
 #remote-cursors{position:absolute;top:0;left:0;right:0;bottom:0;pointer-events:none;z-index:900;overflow:hidden}
-.remote-cursor{position:absolute;top:0;left:0;pointer-events:none;will-change:transform;transition:transform .06s linear}
-.remote-cursor svg{display:block;filter:drop-shadow(0 2px 4px rgba(0,0,0,.4))}
+.remote-cursor{position:absolute;top:0;left:0;width:20px;height:24px;pointer-events:none;will-change:transform;transition:transform .06s linear}
+.remote-cursor svg{display:block;width:20px;height:24px;filter:drop-shadow(0 2px 4px rgba(0,0,0,.4))}
 .remote-cursor .rc-label{position:absolute;left:15px;top:16px;padding:2px 8px;border-radius:10px;font-size:10px;font-weight:bold;color:#fff;white-space:nowrap;box-shadow:0 2px 6px rgba(0,0,0,.4);text-shadow:0 1px 2px rgba(0,0,0,.35)}
 #share-modal{position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:4500;display:none;align-items:center;justify-content:center}
 #share-modal .modal-box{background:var(--toolbar-bg);color:var(--text-color);padding:20px;border-radius:10px;max-width:400px;width:92%;box-shadow:0 8px 30px rgba(0,0,0,.35);border:1px solid var(--border-color)}
@@ -268,6 +268,41 @@ body.debug-mode .pixel-square .port{opacity:.72}
 #debug-tooltip .dbg-line.dbg-lo{color:#9ca3af}
 #debug-tooltip .dbg-err{color:#f87171;font-weight:bold;white-space:nowrap}
 #debug-tooltip .dbg-pin-hint{color:#6b7280;font-size:9px;margin-top:5px;font-style:italic;border-top:1px solid #374151;padding-top:4px}
+/* ══ REMOTE GHOST GATES ══ */
+.remote-ghost{position:absolute;top:0;left:0;pointer-events:none;will-change:transform;
+    transition:transform .06s linear;transform-origin:0 0;opacity:.75;
+    background:var(--gate-bg);border:2px dashed var(--gate-color,#007bff);border-radius:6px;
+    box-shadow:0 4px 10px rgba(0,0,0,.2);width:140px;height:auto;min-width:140px}
+.remote-ghost .gate-header{background:var(--gate-color,#007bff);color:#fff;padding:4px 6px;
+    font-size:10px;display:flex;justify-content:space-between;align-items:center;
+    border-top-left-radius:4px;border-top-right-radius:4px;gap:4px;min-height:26px}
+.remote-ghost .gate-body{background:var(--gate-bg);border-bottom-left-radius:6px;
+    border-bottom-right-radius:6px;padding:6px;display:flex;flex-direction:column;gap:4px;
+    color:var(--text-color)}
+.remote-ghost.ghost-pixel{width:40px!important;height:40px!important;border-radius:0!important;
+    border:none!important;background:transparent!important;box-shadow:none!important}
+.remote-ghost.ghost-pixel .gate-header{display:none}
+.remote-ghost.ghost-pixel .gate-body{padding:0!important;background:transparent!important;
+    border-radius:0!important;height:100%;display:flex;align-items:center;justify-content:center;
+    border:none!important}
+    /* ══ REMOTE INTERACTIONS ══ */
+.gate.remote-dragging{outline:2px dashed #0ea5e9;outline-offset:2px}
+.remote-wire{stroke:#0ea5e9;stroke-width:3;fill:none;stroke-dasharray:6,5;stroke-linecap:round;opacity:.85;pointer-events:none}
+.remote-ghost{position:absolute;top:0;left:0;pointer-events:none;will-change:transform;
+    transition:transform .06s linear;transform-origin:0 0;opacity:.75;
+    background:var(--gate-bg);border:2px dashed var(--gate-color,#007bff);border-radius:6px;
+    box-shadow:0 4px 10px rgba(0,0,0,.2);width:140px;height:auto;min-width:140px}
+.remote-ghost .gate-header{background:var(--gate-color,#007bff);color:#fff;padding:4px 6px;
+    font-size:10px;display:flex;justify-content:space-between;align-items:center;
+    border-top-left-radius:4px;border-top-right-radius:4px;gap:4px;min-height:26px}
+.remote-ghost .gate-body{background:var(--gate-bg);border-bottom-left-radius:6px;
+    border-bottom-right-radius:6px;padding:6px;display:flex;flex-direction:column;gap:4px;
+    color:var(--text-color)}
+.remote-ghost.ghost-pixel{width:40px!important;height:40px!important;border-radius:0!important;
+    border:none!important;background:transparent!important;box-shadow:none!important}
+.remote-ghost.ghost-pixel .gate-header{display:none}
+.remote-ghost.ghost-pixel .gate-body{padding:0!important;background:transparent!important;
+    border-radius:0!important;height:100%;display:flex;align-items:center;justify-content:center}
 </style>
 </head>
 <body>
@@ -333,6 +368,7 @@ body.debug-mode .pixel-square .port{opacity:.72}
         <svg id="wires"><path id="temp-wire" d="" stroke="#e83e8c" stroke-width="3" stroke-dasharray="5,5" fill="none" visibility="hidden" /></svg>
     </div>
     <div id="selection-box"></div>
+    <div id="remote-cursors"></div>
 </div>
 
 <div id="ghost-gate"></div>
@@ -400,8 +436,6 @@ body.debug-mode .pixel-square .port{opacity:.72}
         </div>
     </div>
 </div>
-
-<div id="remote-cursors"></div>
 
 <div id="share-modal" onclick="closeShareModalOutside(event)">
     <div class="modal-box" onclick="event.stopPropagation()">
@@ -960,6 +994,27 @@ function startGhostDrag(e,type,sourceFolder){
     ghostGate.style.display='block';
     const cx=e.clientX||(e.touches&&e.touches[0].clientX)||0,cy=e.clientY||(e.touches&&e.touches[0].clientY)||0;
     updateGhostPosition(cx,cy,w,typeof h==='number'?h:70);
+    collabSend({
+        t:'ghost-start',
+        html: ghostGate.innerHTML,
+        color: gc,
+        w: w,
+        h: (typeof h === 'number' ? h : 70),
+        isPixel: (type === 'SCREEN'),
+        x: parseFloat(ghostGate.dataset.canvasX) || 0,
+        y: parseFloat(ghostGate.dataset.canvasY) || 0
+    });
+
+    // ── Broadcast ghost start ──
+    collabSend({
+        t: 'ghost-start',
+        html: ghostGate.innerHTML,
+        color: gc,
+        w: w,
+        h: (typeof h === 'number' ? h : 70),
+        type: type,
+        isPixel: (type === 'SCREEN')
+    });
 }
 function updateGhostPosition(cx,cy,w,h){
     if(!ghostType)return;
@@ -970,6 +1025,7 @@ function updateGhostPosition(cx,cy,w,h){
     ghostGate.style.top=(cY*zoom+panY+r.top)+'px';
     ghostGate.style.transform=`scale(${zoom})`;
     ghostGate.dataset.canvasX=cX;ghostGate.dataset.canvasY=cY;
+    collabGhostTick(cX, cY);
 }
 
 window.addEventListener('mousemove',e=>{
@@ -1027,6 +1083,7 @@ window.addEventListener('mousemove',e=>{
 function handleEnd(cx,cy){
     if(isPanning)saveToLocalStorage();isPanning=false;
     if(ghostType){
+        collabSend({ t: 'ghost-end' });
         ghostGate.style.display='none';
         clearFolderDragHover();
         const target=document.elementFromPoint(cx,cy);
@@ -1301,6 +1358,7 @@ function attachPortHandlers(el,which){
                 if(!didDrag&&(Math.abs(cx-sx)>6||Math.abs(cy-sy)>6)){
                     didDrag=true;
                     setDragState({compId:cid,portIndex:pidx,el:portEl,which});
+                    if(isMain) collabSend({ t:'wire-drag-start', compId:cid, fromPort:pidx });
                     const tw=isMain?document.getElementById('temp-wire'):ensureModalTempWire();
                     if(tw)tw.setAttribute('visibility','visible');
                     if(isMain)updateTempWire(cx,cy);else updateModalTempWire(cx,cy);
@@ -1308,7 +1366,10 @@ function attachPortHandlers(el,which){
                     if(ps){if(isMain)exitWirePouring();else exitModalWirePouring()}
                     portEl.classList.remove('pour-selected');
                 }
-                if(didDrag){if(isMain)updateTempWire(cx,cy);else updateModalTempWire(cx,cy)}
+                if(didDrag){
+                    if(isMain) handleMove(cx, cy);
+                    else       updateModalTempWire(cx, cy);
+                }
                 ev.stopPropagation();
             };
 
@@ -1342,7 +1403,8 @@ function attachPortHandlers(el,which){
                             connectModalWire(ds.compId,ds.portIndex,tc,tp);
                         }
                     }
-                    if(isMain)resetWiring();else resetModalWiring();
+                    if(isMain){ collabSend({ t:'wire-drag-end' }); resetWiring(); }
+                    else resetModalWiring();
                 }
                 document.removeEventListener('mousemove',onMove);
                 document.removeEventListener('mouseup',onUp);
@@ -1538,6 +1600,7 @@ function startDragGate(e,id){
     gateGrabOffsetX=(cx-r.left-panX)/zoom-comp.x;
     gateGrabOffsetY=(cy-r.top-panY)/zoom-comp.y;
     activeComp=comp;isDraggingGate=true;
+    collabSend({ t:'gate-drag-start', compId:id, offsetX:gateGrabOffsetX, offsetY:gateGrabOffsetY });
     if(selectedIds.size>1&&selectedIds.has(id)){
         groupDragStartPositions=new Map();
         selectedIds.forEach(sid=>{const sc=components.find(c=>c.id===sid);if(sc)groupDragStartPositions.set(sid,{x:sc.x,y:sc.y})});
@@ -1570,6 +1633,7 @@ window.addEventListener('mousemove',e=>{if(isDraggingGate)moveDraggedGate(e.clie
 window.addEventListener('touchmove',e=>{if(!isDraggingGate||e.touches.length!==1)return;moveDraggedGate(e.touches[0].clientX,e.touches[0].clientY)},{passive:false});
 function finishGateDrag(){
     if(!isDraggingGate)return;
+    collabSend({ t:'gate-drag-end' });
     if(activeComp){
         activeComp.x=snapValue(activeComp.x);
         activeComp.y=snapValue(activeComp.y);
@@ -3524,44 +3588,49 @@ window.addEventListener('load',()=>{
 });
 
 /* ═══════════════════════════════════════════════════════════════
-   COLLABORATION  ·  local accounts + P2P rooms + live cursors
+   COLLABORATION  ·  Firebase auth + P2P rooms + live cursors,
+                    ghost gates, and live interaction previews
    ═══════════════════════════════════════════════════════════════ */
-const PEER_PREFIX      = 'lgsim-v1-';
-const CURSOR_SEND_MS   = 55;
-const CURSOR_TIMEOUT_MS= 15000;
-const STATE_DEBOUNCE_MS= 120;
+const PEER_PREFIX       = 'lgsim-v1-';
+const CURSOR_SEND_MS    = 55;
+const CURSOR_TIMEOUT_MS = 15000;
+const STATE_DEBOUNCE_MS = 120;
+const GHOST_SEND_MS     = 40;
 
-let collabPeer      = null;
-let collabConns     = [];        // host: array of DataConnections
-let collabHostConn  = null;      // guest: connection to host
-let collabIsHost    = false;
-let collabRoomCode  = '';
-let applyingRemote  = false;
+let collabPeer          = null;
+let collabConns         = [];
+let collabHostConn      = null;
+let collabIsHost        = false;
+let collabRoomCode      = '';
+let applyingRemote      = false;
 let stateBroadcastTimer = null;
-let lastCursorSent  = 0;
-const remoteCursors = new Map();
+let lastCursorSent      = 0;
+let lastGhostSent       = 0;
 
-/* ── Firebase-backed auth ───────────────────────────────────── */
-let authTab = 'google';
+const remoteCursors   = new Map();  // peerId -> { x, y, name, color, lastSeen, el }
+const remoteGhosts    = new Map();  // peerId -> { html, color, w, h, x, y, isPixel, lastSeen, el }
+const remoteGateDrags = new Map();  // peerId -> { compId, offsetX, offsetY }
+const remoteWireDrags = new Map();  // peerId -> { compId, fromPort }
+
+let authTab     = 'google';
 let emailSignUp = false;
 
-function setAuthTab(t) {
-  authTab = t;
-  document.getElementById('tab-google').classList.toggle('active', t === 'google');
-  document.getElementById('tab-email').classList.toggle('active', t === 'email');
-  document.getElementById('share-google-panel').style.display = t === 'google' ? 'block' : 'none';
-  document.getElementById('share-email-panel').style.display  = t === 'email'  ? 'block' : 'none';
-  setAuthStatus('');
+/* ── Auth ────────────────────────────────────────────────────── */
+function setAuthTab(t){
+    authTab = t;
+    document.getElementById('tab-google').classList.toggle('active', t === 'google');
+    document.getElementById('tab-email').classList.toggle('active',  t === 'email');
+    document.getElementById('share-google-panel').style.display = t === 'google' ? 'block' : 'none';
+    document.getElementById('share-email-panel').style.display  = t === 'email'  ? 'block' : 'none';
+    setAuthStatus('');
 }
-
-function setAuthStatus(msg, kind) {
-  const el = document.getElementById('share-auth-status');
-  if (!el) return;
-  el.textContent = msg || '';
-  el.style.cssText = 'font-size:11px;margin-top:10px;min-height:14px;' +
-    (kind === 'err' ? 'color:#dc3545;' : kind === 'ok' ? 'color:#16a34a;' : 'opacity:.7;');
+function setAuthStatus(msg, kind){
+    const el = document.getElementById('share-auth-status');
+    if (!el) return;
+    el.textContent = msg || '';
+    el.style.cssText = 'font-size:11px;margin-top:10px;min-height:14px;' +
+        (kind === 'err' ? 'color:#dc3545;' : kind === 'ok' ? 'color:#16a34a;' : 'opacity:.7;');
 }
-
 function toggleEmailMode(e){
     e.preventDefault();
     emailSignUp = !emailSignUp;
@@ -3573,141 +3642,127 @@ function toggleEmailMode(e){
         emailSignUp ? 'Already have an account? Sign in' : 'New here? Create account';
     setAuthStatus('');
 }
-
-async function signInWithGoogle() {
-  if (!window.fbAuth) {
-    setAuthStatus('Firebase is still loading. Try again in a moment.', 'err');
-    return;
-  }
-  try {
-    setAuthStatus('Opening Google sign-in…');
-    const provider = new window.fbGoogleProvider();
-    provider.addScope('profile');
-    provider.addScope('email');
-    const result = await window.fbSignInWithPopup(window.fbAuth, provider);
-    // onAuthStateChanged will handle the rest
-    showToast(`Signed in as ${escapeHtml(result.user.displayName || result.user.email)}`, 'success', 1500);
-    renderShareModal();
-  } catch (err) {
-    if (err.code === 'auth/popup-closed-by-user') {
-      setAuthStatus('Sign-in popup was closed.', 'err');
-    } else if (err.code === 'auth/unauthorized-domain') {
-      setAuthStatus('This domain is not authorised in Firebase. Add georgemango87.github.io to Authorized domains.', 'err');
-    } else {
-      setAuthStatus('Sign-in failed: ' + (err.message || err.code), 'err');
+async function signInWithGoogle(){
+    if (!window.fbAuth) { setAuthStatus('Firebase is still loading. Try again in a moment.', 'err'); return; }
+    try {
+        setAuthStatus('Opening Google sign-in…');
+        const provider = new window.fbGoogleProvider();
+        provider.addScope('profile');
+        provider.addScope('email');
+        const result = await window.fbSignInWithPopup(window.fbAuth, provider);
+        showToast(`Signed in as ${escapeHtml(result.user.displayName || result.user.email)}`, 'success', 1500);
+        renderShareModal();
+    } catch (err) {
+        if (err.code === 'auth/popup-closed-by-user') {
+            setAuthStatus('Sign-in popup was closed.', 'err');
+        } else if (err.code === 'auth/unauthorized-domain') {
+            setAuthStatus('This domain is not authorised in Firebase. Add georgemango87.github.io to Authorized domains.', 'err');
+        } else {
+            setAuthStatus('Sign-in failed: ' + (err.message || err.code), 'err');
+        }
     }
-  }
 }
-
-async function doEmailAuth() {
-  if (!window.fbAuth) {
-    setAuthStatus('Firebase is still loading. Try again in a moment.', 'err');
-    return;
-  }
-  const email = (document.getElementById('share-email').value || '').trim();
-  const pass  = document.getElementById('share-password').value || '';
-  const name  = (document.getElementById('share-displayname').value || '').trim();
-
-  if (!email || !email.includes('@')) { setAuthStatus('Enter a valid email address.', 'err'); return; }
-  if (!pass || pass.length < 6)      { setAuthStatus('Password must be at least 6 characters.', 'err'); return; }
-
-  const isSignUp = emailSignUp;
-
-  try {
-    setAuthStatus('Working…');
-    let cred;
-    if (isSignUp) {
-      cred = await window.fbCreateEmail(window.fbAuth, email, pass);
-      if (name) {
-        await window.fbUpdateProfile(cred.user, { displayName: name });
-      }
-      showToast('Account created — you are signed in.', 'success', 1800);
-    } else {
-      cred = await window.fbSignInEmail(window.fbAuth, email, pass);
-      showToast(`Signed in as ${escapeHtml(cred.user.email)}`, 'success', 1500);
+async function doEmailAuth(){
+    if (!window.fbAuth) { setAuthStatus('Firebase is still loading. Try again in a moment.', 'err'); return; }
+    const email = (document.getElementById('share-email').value || '').trim();
+    const pass  = document.getElementById('share-password').value || '';
+    const name  = (document.getElementById('share-displayname').value || '').trim();
+    if (!email || !email.includes('@')) { setAuthStatus('Enter a valid email address.', 'err'); return; }
+    if (!pass || pass.length < 6)       { setAuthStatus('Password must be at least 6 characters.', 'err'); return; }
+    const isSignUp = emailSignUp;
+    try {
+        setAuthStatus('Working…');
+        let cred;
+        if (isSignUp) {
+            cred = await window.fbCreateEmail(window.fbAuth, email, pass);
+            if (name) await window.fbUpdateProfile(cred.user, { displayName: name });
+            showToast('Account created — you are signed in.', 'success', 1800);
+        } else {
+            cred = await window.fbSignInEmail(window.fbAuth, email, pass);
+            showToast(`Signed in as ${escapeHtml(cred.user.email)}`, 'success', 1500);
+        }
+        renderShareModal();
+    } catch (err) {
+        const map = {
+            'auth/user-not-found':       'No account with that email. Click "Create account" below.',
+            'auth/wrong-password':       'Incorrect password.',
+            'auth/invalid-credential':   'Incorrect email or password.',
+            'auth/email-already-in-use': 'That email is already registered. Sign in instead.',
+            'auth/weak-password':        'Password is too weak — use at least 6 characters.',
+            'auth/too-many-requests':    'Too many attempts. Wait a minute and try again.'
+        };
+        setAuthStatus(map[err.code] || ('Error: ' + (err.message || err.code)), 'err');
     }
+}
+async function signOutCollab(){
+    leaveRoom();
+    if (window.fbAuth && window.fbSignOut) {
+        try { await window.fbSignOut(window.fbAuth); } catch (_) {}
+    }
+    window.collabUser = null;
     renderShareModal();
-  } catch (err) {
-    const map = {
-      'auth/user-not-found':    'No account with that email. Click "Create account" below.',
-      'auth/wrong-password':    'Incorrect password.',
-      'auth/invalid-credential':'Incorrect email or password.',
-      'auth/email-already-in-use':'That email is already registered. Sign in instead.',
-      'auth/weak-password':     'Password is too weak — use at least 6 characters.',
-      'auth/too-many-requests':  'Too many attempts. Wait a minute and try again.'
-    };
-    setAuthStatus(map[err.code] || ('Error: ' + (err.message || err.code)), 'err');
-  }
+    showToast('Signed out.', 'info', 1200);
 }
 
-async function signOutCollab() {
-  leaveRoom();
-  if (window.fbAuth && window.fbSignOut) {
-    try { await window.fbSignOut(window.fbAuth); } catch (_) {}
-  }
-  window.collabUser = null;
-  renderShareModal();
-  showToast('Signed out.', 'info', 1200);
-}
-
-/* ── modal ──────────────────────────────────────────────────── */
+/* ── Modal ───────────────────────────────────────────────────── */
 function openShareModal(){
     document.getElementById('share-modal').style.display = 'flex';
     renderShareModal();
 }
 function closeShareModal(){ document.getElementById('share-modal').style.display = 'none'; }
-function closeShareModalOutside(e){ if(e.target.id === 'share-modal') closeShareModal(); }
+function closeShareModalOutside(e){ if (e.target.id === 'share-modal') closeShareModal(); }
 
-function renderShareModal() {
-  const authView = document.getElementById('share-auth-view');
-  const roomView = document.getElementById('share-room-view');
-  if (!authView || !roomView) return;
+function renderShareModal(){
+    const authView = document.getElementById('share-auth-view');
+    const roomView = document.getElementById('share-room-view');
+    if (!authView || !roomView) return;
 
-  const u = window.collabUser;
-  if (u) {
-    authView.style.display = 'none';
-    roomView.style.display = 'block';
+    const u = window.collabUser;
+    if (u) {
+        authView.style.display = 'none';
+        roomView.style.display = 'block';
 
-    document.getElementById('share-user-badge').innerHTML =
-      `${u.photoURL
-          ? `<img src="${u.photoURL}" style="width:20px;height:20px;border-radius:50%;object-fit:cover;">`
-          : `<span class="dot" style="background:${u.color}"></span>`}
-       <strong>${escapeHtml(u.name)}</strong>
-       <span style="opacity:.6;margin-left:auto;font-size:10px;">uid: ${escapeHtml(u.uid.slice(0,6))}…</span>`;
+        document.getElementById('share-user-badge').innerHTML =
+          `${u.photoURL
+              ? `<img src="${u.photoURL}" style="width:20px;height:20px;border-radius:50%;object-fit:cover;">`
+              : `<span class="dot" style="background:${u.color}"></span>`}
+           <strong>${escapeHtml(u.name)}</strong>
+           <label style="margin-left:auto;display:flex;align-items:center;gap:6px;cursor:pointer;font-size:10px;opacity:.85;">
+             <span>Cursor&nbsp;color</span>
+             <input type="color" id="share-user-color" value="${u.color}"
+                    onchange="changeUserColor(this.value)"
+                    style="width:28px;height:22px;padding:1px;border:1px solid var(--border-color);border-radius:3px;background:transparent;cursor:pointer;">
+           </label>`;
 
-    // Show the "Host a room" button only when not already in a room
-    document.getElementById('share-host-panel').style.display =
-        collabRoomCode ? 'none' : 'block';
+        document.getElementById('share-host-panel').style.display = collabRoomCode ? 'none' : 'block';
 
-    // Show / hide the room-code box
-    const codeBox = document.getElementById('share-room-code-box');
-    if (collabRoomCode) {
-      codeBox.style.display = 'flex';
-      document.getElementById('share-room-code-text').textContent = collabRoomCode;
+        const codeBox = document.getElementById('share-room-code-box');
+        if (collabRoomCode) {
+            codeBox.style.display = 'flex';
+            document.getElementById('share-room-code-text').textContent = collabRoomCode;
+        } else {
+            codeBox.style.display = 'none';
+        }
+        updatePeerList();
     } else {
-      codeBox.style.display = 'none';
+        authView.style.display = 'block';
+        roomView.style.display = 'none';
+        setAuthTab(authTab);
     }
-
-    updatePeerList();
-  } else {
-    authView.style.display = 'block';
-    roomView.style.display = 'none';
-    setAuthTab(authTab);
-  }
-  updateShareButton();
+    updateShareButton();
 }
 
 function setShareStatus(msg, kind){
     const el = document.getElementById('share-status');
-    if(!el) return;
+    if (!el) return;
     el.textContent = msg || '';
     el.className = kind || '';
     el.style.display = msg ? 'block' : 'none';
 }
 function updatePeerList(){
     const el = document.getElementById('share-peers');
-    if(!el) return;
-    if(!remoteCursors.size){ el.innerHTML = ''; return; }
+    if (!el) return;
+    if (!remoteCursors.size) { el.innerHTML = ''; return; }
     el.innerHTML = '<div style="opacity:.6;margin-bottom:4px;">In this room:</div>' +
         [...remoteCursors.entries()].map(([id, rc]) =>
             `<div class="peer"><span class="dot" style="background:${rc.color}"></span>${escapeHtml(rc.name)}</div>`
@@ -3715,8 +3770,8 @@ function updatePeerList(){
 }
 function updateShareButton(){
     const b = document.getElementById('share-btn');
-    if(!b) return;
-    if(collabRoomCode){
+    if (!b) return;
+    if (collabRoomCode) {
         b.textContent = (collabIsHost ? '🟢 ' : '🔵 ') + collabRoomCode;
         b.style.background = collabIsHost ? '#16a34a' : '#2563eb';
     } else {
@@ -3724,53 +3779,64 @@ function updateShareButton(){
         b.style.background = '#0ea5e9';
     }
 }
+function changeUserColor(color){
+    if (!window.collabUser) return;
+    if (!/^#[0-9a-fA-F]{6}$/.test(color)) return;
+    window.collabUser.color = color;
+    localStorage.setItem('logic_sim_color_' + window.collabUser.uid, color);
+    const badge = document.getElementById('share-user-badge');
+    if (badge) { const dot = badge.querySelector('.dot'); if (dot) dot.style.background = color; }
+    collabSend({ t: 'user-color', color });
+    showToast('Cursor color updated', 'success', 1000);
+}
 
-/* ── room codes & peer lifecycle ────────────────────────────── */
+/* ── Room lifecycle ──────────────────────────────────────────── */
 function genRoomCode(){
     const A = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
     let s = '';
-    for(let i = 0; i < 6; i++) s += A[Math.floor(Math.random() * A.length)];
+    for (let i = 0; i < 6; i++) s += A[Math.floor(Math.random() * A.length)];
     return s;
 }
 function collabConnected(){
     return collabIsHost ? collabConns.some(c => c.open) : !!(collabHostConn && collabHostConn.open);
 }
 function collabSend(msg){
-    if(!collabPeer) return;
+    if (!collabPeer) return;
     msg.from = collabPeer.id;
-    if(collabIsHost){ broadcastToConns(msg, null); }
-    else if(collabHostConn && collabHostConn.open){
-        try{ collabHostConn.send(msg); }catch(_){}
+    if (collabIsHost) broadcastToConns(msg, null);
+    else if (collabHostConn && collabHostConn.open) {
+        try { collabHostConn.send(msg); } catch (_) {}
     }
 }
 function broadcastToConns(msg, except){
-    for(const c of collabConns){
-        if(c === except || !c.open) continue;
-        try{ c.send(msg); }catch(_){}
+    for (const c of collabConns) {
+        if (c === except || !c.open) continue;
+        try { c.send(msg); } catch (_) {}
     }
 }
 function destroyPeer(){
-    try{ if(collabPeer) collabPeer.destroy(); }catch(_){}
+    try { if (collabPeer) collabPeer.destroy(); } catch (_) {}
     collabPeer = null; collabConns = []; collabHostConn = null;
     clearRemoteCursors();
+    clearRemoteGhosts();
+    remoteGateDrags.clear();
+    for (const id of remoteWireDrags.keys()) removeRemoteWirePath(id);
+    remoteWireDrags.clear();
 }
-
 function hostRoom(){
-    if(!collabUser) return;
+    if (!collabUser) return;
     destroyPeer();
     collabIsHost = true;
     collabRoomCode = genRoomCode();
     setShareStatus('Starting host…');
 
     collabPeer = new Peer(PEER_PREFIX + collabRoomCode, { debug: 1 });
-
     collabPeer.on('open', () => {
         setShareStatus(`Hosting room ${collabRoomCode}. Share this code with friends.`, 'ok');
         renderShareModal();
         updateShareButton();
         showToast(`Room ${collabRoomCode} hosted`, 'success', 2200);
     });
-
     collabPeer.on('connection', conn => {
         collabConns.push(conn);
         conn.on('open', () => {
@@ -3778,21 +3844,21 @@ function hostRoom(){
             conn.send({ t: 'state', state: buildFullState(), from: collabPeer.id });
         });
         conn.on('data', msg => handleHostMessage(conn, msg));
-        conn.on('close', () => {
+        const drop = () => {
             collabConns = collabConns.filter(c => c !== conn);
             removeRemoteCursor(conn.peer);
+            removeRemoteGhost(conn.peer);
+            remoteGateDrags.delete(conn.peer);
+            remoteWireDrags.delete(conn.peer);
+            removeRemoteWirePath(conn.peer);
             updatePeerList();
-        });
-        conn.on('error', () => {
-            collabConns = collabConns.filter(c => c !== conn);
-            removeRemoteCursor(conn.peer);
-            updatePeerList();
-        });
+        };
+        conn.on('close', drop);
+        conn.on('error', drop);
     });
-
     collabPeer.on('error', err => {
         const t = err && err.type;
-        if(t === 'unavailable-id'){
+        if (t === 'unavailable-id') {
             destroyPeer();
             collabIsHost = true;
             collabRoomCode = genRoomCode();
@@ -3804,29 +3870,25 @@ function hostRoom(){
         updateShareButton();
     });
 }
-
 function joinRoom(){
-    if(!collabUser) return;
+    if (!collabUser) return;
     const code = (document.getElementById('share-room-input').value || '').trim().toUpperCase();
-    if(!code || code.length < 4){ setShareStatus('Enter a valid room code.', 'err'); return; }
+    if (!code || code.length < 4) { setShareStatus('Enter a valid room code.', 'err'); return; }
     destroyPeer();
     collabIsHost = false;
     collabRoomCode = code;
     setShareStatus('Connecting to ' + code + '…');
 
     collabPeer = new Peer({ debug: 1 });
-
     collabPeer.on('open', () => {
         const conn = collabPeer.connect(PEER_PREFIX + code, { reliable: true });
         collabHostConn = conn;
-
         const bail = setTimeout(() => {
-            if(!conn.open){
+            if (!conn.open) {
                 setShareStatus('Could not reach that room. Check the code.', 'err');
                 updateShareButton();
             }
         }, 8000);
-
         conn.on('open', () => {
             clearTimeout(bail);
             conn.send({ t: 'hello', user: collabUser, from: collabPeer.id });
@@ -3842,6 +3904,10 @@ function joinRoom(){
             setShareStatus('Host disconnected.', 'err');
             collabHostConn = null;
             clearRemoteCursors();
+            clearRemoteGhosts();
+            remoteGateDrags.clear();
+            for (const id of remoteWireDrags.keys()) removeRemoteWirePath(id);
+            remoteWireDrags.clear();
             updateShareButton();
             updatePeerList();
         });
@@ -3850,22 +3916,15 @@ function joinRoom(){
             setShareStatus('Connection error: ' + (err.message || 'unknown'), 'err');
         });
     });
-
     collabPeer.on('error', err => {
         const t = err && err.type;
-        if(t === 'peer-unavailable'){
-            setShareStatus(`Room "${code}" not found.`, 'err');
-        } else {
-            setShareStatus('Connection error: ' + (err.message || t || 'unknown'), 'err');
-        }
+        if (t === 'peer-unavailable') setShareStatus(`Room "${code}" not found.`, 'err');
+        else setShareStatus('Connection error: ' + (err.message || t || 'unknown'), 'err');
         updateShareButton();
     });
 }
-
 function leaveRoom(){
-    if(collabPeer){
-        try{ collabSend({ t: 'bye', from: collabPeer.id }); }catch(_){}
-    }
+    if (collabPeer) { try { collabSend({ t: 'bye', from: collabPeer.id }); } catch (_) {} }
     destroyPeer();
     collabRoomCode = '';
     collabIsHost = false;
@@ -3874,30 +3933,28 @@ function leaveRoom(){
     updateShareButton();
 }
 function copyRoomCode(){
-    if(!collabRoomCode) return;
+    if (!collabRoomCode) return;
     navigator.clipboard?.writeText(collabRoomCode).then(
         () => showToast('Room code copied', 'success', 1200),
         () => showToast('Copy failed — code: ' + collabRoomCode, 'info', 2500)
     );
 }
 
-/* ── message handling ───────────────────────────────────────── */
+/* ── Message handling ────────────────────────────────────────── */
 function handleHostMessage(conn, msg){
-    if(!msg || typeof msg !== 'object') return;
-    switch(msg.t){
+    if (!msg || typeof msg !== 'object') return;
+    switch (msg.t) {
         case 'hello': {
             const u = msg.user || {};
             remoteCursors.set(conn.peer, {
-                x: 0, y: 0, name: u.name || 'Guest',
-                color: u.color || '#22d3ee', lastSeen: Date.now()
+                x: 0, y: 0, name: u.name || 'Guest', color: u.color || '#22d3ee', lastSeen: Date.now()
             });
             ensureRemoteCursorEl(conn.peer);
             updatePeerList();
             broadcastToConns(msg, conn);
-            // tell the newcomer about everyone already here
-            for(const [pid, rc] of remoteCursors){
-                if(pid === conn.peer) continue;
-                try{ conn.send({ t: 'cursor', x: rc.x, y: rc.y, user: { name: rc.name, color: rc.color }, from: pid }); }catch(_){}
+            for (const [pid, rc] of remoteCursors) {
+                if (pid === conn.peer) continue;
+                try { conn.send({ t: 'cursor', x: rc.x, y: rc.y, user: { name: rc.name, color: rc.color }, from: pid }); } catch (_) {}
             }
             break;
         }
@@ -3905,11 +3962,64 @@ function handleHostMessage(conn, msg){
             const u = msg.user || {};
             const rc = remoteCursors.get(conn.peer) || {};
             rc.x = msg.x; rc.y = msg.y; rc.lastSeen = Date.now();
-            if(u.name)  rc.name  = u.name;
-            if(u.color) rc.color = u.color;
+            if (u.name)  rc.name  = u.name;
+            if (u.color) rc.color = u.color;
             remoteCursors.set(conn.peer, rc);
             ensureRemoteCursorEl(conn.peer);
             placeRemoteCursor(conn.peer);
+            applyRemoteInteraction(conn.peer, msg.x, msg.y);
+            broadcastToConns(msg, conn);
+            break;
+        }
+        case 'user-color': {
+            const rc = remoteCursors.get(conn.peer);
+            if (rc) { rc.color = msg.color; retintRemoteCursor(conn.peer); }
+            broadcastToConns(msg, conn);
+            break;
+        }
+        case 'ghost-start': {
+            const rg = remoteGhosts.get(conn.peer) || {};
+            rg.html = msg.html; rg.color = msg.color; rg.w = msg.w; rg.h = msg.h;
+            rg.isPixel = msg.isPixel; rg.x = msg.x; rg.y = msg.y; rg.lastSeen = Date.now();
+            rg.el && rg.el.remove();
+            remoteGhosts.set(conn.peer, rg);
+            ensureRemoteGhostEl(conn.peer);
+            broadcastToConns(msg, conn);
+            break;
+        }
+        case 'ghost-move': {
+            const rg = remoteGhosts.get(conn.peer);
+            if (rg) { rg.x = msg.x; rg.y = msg.y; rg.lastSeen = Date.now(); placeRemoteGhost(conn.peer); }
+            broadcastToConns(msg, conn);
+            break;
+        }
+        case 'ghost-end': {
+            removeRemoteGhost(conn.peer);
+            broadcastToConns(msg, conn);
+            break;
+        }
+        case 'gate-drag-start': {
+            remoteGateDrags.set(conn.peer, { compId: msg.compId, offsetX: msg.offsetX, offsetY: msg.offsetY });
+            const el = document.getElementById(`comp-${msg.compId}`);
+            if (el) el.classList.add('remote-dragging');
+            broadcastToConns(msg, conn);
+            break;
+        }
+        case 'gate-drag-end': {
+            const gd = remoteGateDrags.get(conn.peer);
+            if (gd) { const el = document.getElementById(`comp-${gd.compId}`); if (el) el.classList.remove('remote-dragging'); }
+            remoteGateDrags.delete(conn.peer);
+            broadcastToConns(msg, conn);
+            break;
+        }
+        case 'wire-drag-start': {
+            remoteWireDrags.set(conn.peer, { compId: msg.compId, fromPort: msg.fromPort });
+            broadcastToConns(msg, conn);
+            break;
+        }
+        case 'wire-drag-end': {
+            remoteWireDrags.delete(conn.peer);
+            removeRemoteWirePath(conn.peer);
             broadcastToConns(msg, conn);
             break;
         }
@@ -3919,11 +4029,15 @@ function handleHostMessage(conn, msg){
             break;
         }
         case 'request-state': {
-            try{ conn.send({ t: 'state', state: buildFullState(), from: collabPeer.id }); }catch(_){}
+            try { conn.send({ t: 'state', state: buildFullState(), from: collabPeer.id }); } catch (_) {}
             break;
         }
         case 'bye': {
             removeRemoteCursor(conn.peer);
+            removeRemoteGhost(conn.peer);
+            remoteGateDrags.delete(conn.peer);
+            remoteWireDrags.delete(conn.peer);
+            removeRemoteWirePath(conn.peer);
             broadcastToConns(msg, conn);
             updatePeerList();
             break;
@@ -3931,27 +4045,72 @@ function handleHostMessage(conn, msg){
     }
 }
 function handleGuestMessage(msg){
-    if(!msg || typeof msg !== 'object') return;
-    switch(msg.t){
+    if (!msg || typeof msg !== 'object') return;
+    const P = msg.from;
+    switch (msg.t) {
         case 'hello': {
             const u = msg.user || {};
-            remoteCursors.set(msg.from, {
-                x: 0, y: 0, name: u.name || 'Guest',
-                color: u.color || '#22d3ee', lastSeen: Date.now()
+            remoteCursors.set(P, {
+                x: 0, y: 0, name: u.name || 'Guest', color: u.color || '#22d3ee', lastSeen: Date.now()
             });
-            ensureRemoteCursorEl(msg.from);
+            ensureRemoteCursorEl(P);
             updatePeerList();
             break;
         }
         case 'cursor': {
             const u = msg.user || {};
-            const rc = remoteCursors.get(msg.from) || {};
+            const rc = remoteCursors.get(P) || {};
             rc.x = msg.x; rc.y = msg.y; rc.lastSeen = Date.now();
-            if(u.name)  rc.name  = u.name;
-            if(u.color) rc.color = u.color;
-            remoteCursors.set(msg.from, rc);
-            ensureRemoteCursorEl(msg.from);
-            placeRemoteCursor(msg.from);
+            if (u.name)  rc.name  = u.name;
+            if (u.color) rc.color = u.color;
+            remoteCursors.set(P, rc);
+            ensureRemoteCursorEl(P);
+            placeRemoteCursor(P);
+            applyRemoteInteraction(P, msg.x, msg.y);
+            break;
+        }
+        case 'user-color': {
+            const rc = remoteCursors.get(P);
+            if (rc) { rc.color = msg.color; retintRemoteCursor(P); }
+            break;
+        }
+        case 'ghost-start': {
+            const rg = remoteGhosts.get(P) || {};
+            rg.html = msg.html; rg.color = msg.color; rg.w = msg.w; rg.h = msg.h;
+            rg.isPixel = msg.isPixel; rg.x = msg.x; rg.y = msg.y; rg.lastSeen = Date.now();
+            rg.el && rg.el.remove();
+            remoteGhosts.set(P, rg);
+            ensureRemoteGhostEl(P);
+            break;
+        }
+        case 'ghost-move': {
+            const rg = remoteGhosts.get(P);
+            if (rg) { rg.x = msg.x; rg.y = msg.y; rg.lastSeen = Date.now(); placeRemoteGhost(P); }
+            break;
+        }
+        case 'ghost-end': {
+            removeRemoteGhost(P);
+            break;
+        }
+        case 'gate-drag-start': {
+            remoteGateDrags.set(P, { compId: msg.compId, offsetX: msg.offsetX, offsetY: msg.offsetY });
+            const el = document.getElementById(`comp-${msg.compId}`);
+            if (el) el.classList.add('remote-dragging');
+            break;
+        }
+        case 'gate-drag-end': {
+            const gd = remoteGateDrags.get(P);
+            if (gd) { const el = document.getElementById(`comp-${gd.compId}`); if (el) el.classList.remove('remote-dragging'); }
+            remoteGateDrags.delete(P);
+            break;
+        }
+        case 'wire-drag-start': {
+            remoteWireDrags.set(P, { compId: msg.compId, fromPort: msg.fromPort });
+            break;
+        }
+        case 'wire-drag-end': {
+            remoteWireDrags.delete(P);
+            removeRemoteWirePath(P);
             break;
         }
         case 'state': {
@@ -3959,24 +4118,28 @@ function handleGuestMessage(msg){
             break;
         }
         case 'bye': {
-            removeRemoteCursor(msg.from);
+            removeRemoteCursor(P);
+            removeRemoteGhost(P);
+            remoteGateDrags.delete(P);
+            remoteWireDrags.delete(P);
+            removeRemoteWirePath(P);
             updatePeerList();
             break;
         }
     }
 }
 
-/* ── cursors ────────────────────────────────────────────────── */
+/* ── Cursors ─────────────────────────────────────────────────── */
 function ensureRemoteCursorEl(peerId){
     const rc = remoteCursors.get(peerId);
-    if(!rc) return;
-    if(rc.el && rc.el.parentElement) return;
+    if (!rc) return;
+    if (rc.el && rc.el.parentElement) { retintRemoteCursor(peerId); return; }
     const layer = document.getElementById('remote-cursors');
-    if(!layer) return;
+    if (!layer) return;
     const el = document.createElement('div');
     el.className = 'remote-cursor';
     el.innerHTML =
-        `<svg width="20" height="24" viewBox="0 0 20 24">
+        `<svg width="20" height="24" viewBox="0 0 20 24" xmlns="http://www.w3.org/2000/svg">
            <path d="M2 2 L2 20 L7 15 L10.5 22 L13.5 20.5 L10 13.5 L17 13.5 Z"
                  fill="${rc.color}" stroke="#fff" stroke-width="1.5" stroke-linejoin="round"/>
          </svg>
@@ -3985,29 +4148,37 @@ function ensureRemoteCursorEl(peerId){
     rc.el = el;
     placeRemoteCursor(peerId);
 }
+function retintRemoteCursor(peerId){
+    const rc = remoteCursors.get(peerId);
+    if (!rc || !rc.el) return;
+    const path = rc.el.querySelector('svg path');
+    if (path) path.setAttribute('fill', rc.color);
+    const lbl = rc.el.querySelector('.rc-label');
+    if (lbl) lbl.style.background = rc.color;
+}
 function placeRemoteCursor(peerId){
     const rc = remoteCursors.get(peerId);
-    if(!rc || !rc.el) return;
+    if (!rc || !rc.el) return;
     rc.el.style.transform = `translate(${panX + rc.x * zoom}px, ${panY + rc.y * zoom}px)`;
 }
 function repositionRemoteCursors(){
-    if(!remoteCursors.size) return;
-    for(const id of remoteCursors.keys()) placeRemoteCursor(id);
+    for (const id of remoteCursors.keys()) placeRemoteCursor(id);
+    for (const id of remoteGhosts.keys())  placeRemoteGhost(id);
 }
 function removeRemoteCursor(peerId){
     const rc = remoteCursors.get(peerId);
-    if(rc && rc.el) rc.el.remove();
+    if (rc && rc.el) rc.el.remove();
     remoteCursors.delete(peerId);
 }
 function clearRemoteCursors(){
-    for(const rc of remoteCursors.values()) if(rc.el) rc.el.remove();
+    for (const rc of remoteCursors.values()) if (rc.el) rc.el.remove();
     remoteCursors.clear();
     updatePeerList();
 }
 function collabCursorTick(){
-    if(!collabConnected()) return;
+    if (!collabConnected()) return;
     const now = performance.now();
-    if(now - lastCursorSent < CURSOR_SEND_MS) return;
+    if (now - lastCursorSent < CURSOR_SEND_MS) return;
     lastCursorSent = now;
     collabSend({
         t: 'cursor',
@@ -4017,39 +4188,114 @@ function collabCursorTick(){
     });
 }
 
-/* ── state sync ─────────────────────────────────────────────── */
+/* ── Ghosts ──────────────────────────────────────────────────── */
+function collabGhostTick(x, y){
+    if (!collabConnected()) return;
+    const now = performance.now();
+    if (now - lastGhostSent < GHOST_SEND_MS) return;
+    lastGhostSent = now;
+    collabSend({ t: 'ghost-move', x: Math.round(x), y: Math.round(y) });
+}
+function ensureRemoteGhostEl(peerId){
+    const rg = remoteGhosts.get(peerId);
+    if (!rg) return;
+    if (rg.el && rg.el.parentElement) return;
+    const layer = document.getElementById('remote-cursors');
+    if (!layer) return;
+    const el = document.createElement('div');
+    el.className = 'remote-ghost' + (rg.isPixel ? ' ghost-pixel' : '');
+    el.style.setProperty('--gate-color', rg.color || '#6f42c1');
+    el.style.width = (rg.w || 140) + 'px';
+    el.style.height = (typeof rg.h === 'number' ? rg.h + 'px' : 'auto');
+    el.innerHTML = rg.html || '';
+    layer.appendChild(el);
+    rg.el = el;
+    placeRemoteGhost(peerId);
+}
+function placeRemoteGhost(peerId){
+    const rg = remoteGhosts.get(peerId);
+    if (!rg || !rg.el) return;
+    rg.el.style.transform =
+        `translate(${panX + rg.x * zoom}px, ${panY + rg.y * zoom}px) scale(${zoom})`;
+}
+function removeRemoteGhost(peerId){
+    const rg = remoteGhosts.get(peerId);
+    if (rg && rg.el) rg.el.remove();
+    remoteGhosts.delete(peerId);
+}
+function clearRemoteGhosts(){
+    for (const rg of remoteGhosts.values()) if (rg.el) rg.el.remove();
+    remoteGhosts.clear();
+}
+
+/* ── Interaction previews ────────────────────────────────────── */
+function applyRemoteInteraction(peerId, x, y){
+    const gd = remoteGateDrags.get(peerId);
+    if (gd) {
+        const comp = components.find(c => c.id === gd.compId);
+        if (comp) {
+            comp.x = x - gd.offsetX;
+            comp.y = y - gd.offsetY;
+            const el = compEls.get(comp.id);
+            if (el) { el.style.left = comp.x + 'px'; el.style.top = comp.y + 'px'; }
+            markPortPositionsDirty(comp.id);
+            drawWires();
+        }
+    }
+    const wd = remoteWireDrags.get(peerId);
+    if (wd) updateRemoteWirePath(peerId, wd, x, y);
+}
+function updateRemoteWirePath(peerId, wd, x, y){
+    let path = document.getElementById(`remote-wire-${peerId}`);
+    if (!path) {
+        path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+        path.setAttribute('id', `remote-wire-${peerId}`);
+        path.setAttribute('class', 'remote-wire');
+        svgWires.appendChild(path);
+    }
+    const from = portPositions[`${wd.compId}-out-${wd.fromPort}`];
+    if (!from) return;
+    const dx = Math.abs(x - from.x) * 0.5;
+    path.setAttribute('d', `M ${from.x} ${from.y} C ${from.x+dx} ${from.y}, ${x-dx} ${y}, ${x} ${y}`);
+}
+function removeRemoteWirePath(peerId){
+    const p = document.getElementById(`remote-wire-${peerId}`);
+    if (p) p.remove();
+}
+
+/* ── State sync ──────────────────────────────────────────────── */
 function collabBroadcastState(){
-    if(!collabConnected()) return;
+    if (!collabConnected()) return;
     clearTimeout(stateBroadcastTimer);
     stateBroadcastTimer = setTimeout(() => {
         collabSend({ t: 'state', state: buildFullState() });
     }, STATE_DEBOUNCE_MS);
 }
 function applyRemoteState(s){
-    if(!s || !Array.isArray(s.components) || !Array.isArray(s.wires)) return;
+    if (!s || !Array.isArray(s.components) || !Array.isArray(s.wires)) return;
     applyingRemote = true;
-    try{
-        for(const el of compEls.values()) el.remove();
+    try {
+        for (const el of compEls.values()) el.remove();
         compEls.clear(); compPortEls.clear(); dirtyPortComponents.clear();
-        for(const [, p] of wirePaths) p.remove();
+        for (const [, p] of wirePaths) p.remove();
         wirePaths.clear();
         portPositions = {}; portPositionsDirty = true;
 
-        components        = s.components;
-        wires             = s.wires;
-        savedCustomGates  = s.savedCustomGates || {};
-        savedFolders      = s.savedFolders || {};
-        nextId            = s.nextId || 1;
+        components       = s.components;
+        wires            = s.wires;
+        savedCustomGates = s.savedCustomGates || {};
+        savedFolders     = s.savedFolders || {};
+        nextId           = s.nextId || 1;
         adoptWireIds();
 
         Object.keys(savedCustomGates).forEach(n => {
-            if(!savedCustomGates[n].name) savedCustomGates[n].name = n;
+            if (!savedCustomGates[n].name) savedCustomGates[n].name = n;
             normalizeCustomGateDef(savedCustomGates[n]);
         });
         components.forEach(comp => {
-            if(comp.isCustom && comp.type && savedCustomGates[comp.type]) comp.def = savedCustomGates[comp.type];
-            if(comp.subComps) comp.subComps.forEach(sc => {
-                if(sc.isCustom) expandNestedCustomGate(sc, 0);
+            if (comp.isCustom && comp.type && savedCustomGates[comp.type]) comp.def = savedCustomGates[comp.type];
+            if (comp.subComps) comp.subComps.forEach(sc => {
+                if (sc.isCustom) expandNestedCustomGate(sc, 0);
                 else initComponentInputs(sc);
             });
             initComponentInputs(comp);
@@ -4066,39 +4312,40 @@ function applyRemoteState(s){
     }
 }
 
-/* ── housekeeping ───────────────────────────────────────────── */
+/* ── Housekeeping ────────────────────────────────────────────── */
 setInterval(() => {
-    if(!remoteCursors.size) return;
+    if (!remoteCursors.size && !remoteGhosts.size) return;
     const cutoff = Date.now() - CURSOR_TIMEOUT_MS;
     let changed = false;
-    for(const [id, rc] of remoteCursors){
-        if(rc.lastSeen < cutoff){ removeRemoteCursor(id); changed = true; }
-    }
-    if(changed) updatePeerList();
+    for (const [id, rc] of remoteCursors) if (rc.lastSeen < cutoff) { removeRemoteCursor(id); changed = true; }
+    for (const [id, rg] of remoteGhosts)  if (rg.lastSeen < cutoff) removeRemoteGhost(id);
+    if (changed) updatePeerList();
 }, 4000);
 
 window.addEventListener('beforeunload', () => {
-    if(collabPeer){
-        try{ collabSend({ t: 'bye', from: collabPeer.id }); }catch(_){}
-        try{ collabPeer.destroy(); }catch(_){}
+    if (collabPeer) {
+        try { collabSend({ t: 'bye', from: collabPeer.id }); } catch (_) {}
+        try { collabPeer.destroy(); } catch (_) {}
     }
 });
 
-/* ── boot ───────────────────────────────────────────────────── */
+/* ── Boot ────────────────────────────────────────────────────── */
 window.addEventListener('load', () => {
     updateShareButton();
     renderShareModal();
 });
 
-window.openShareModal   = openShareModal;
-window.closeShareModal  = closeShareModal;
+window.openShareModal         = openShareModal;
+window.closeShareModal        = closeShareModal;
 window.closeShareModalOutside = closeShareModalOutside;
-window.setAuthTab       = setAuthTab;
-window.hostRoom         = hostRoom;
-window.joinRoom         = joinRoom;
-window.leaveRoom        = leaveRoom;
-window.copyRoomCode     = copyRoomCode;
-window.signOutCollab    = signOutCollab;
+window.setAuthTab             = setAuthTab;
+window.toggleEmailMode        = toggleEmailMode;
+window.hostRoom               = hostRoom;
+window.joinRoom               = joinRoom;
+window.leaveRoom              = leaveRoom;
+window.copyRoomCode           = copyRoomCode;
+window.signOutCollab          = signOutCollab;
+window.changeUserColor        = changeUserColor;
 
 </script>
 </body>
