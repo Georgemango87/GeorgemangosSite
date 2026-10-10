@@ -4,7 +4,41 @@
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
 <title>Logic Gate Simulator – High Performance</title>
+<script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"></script>
 <style>
+  /* ══ COLLAB ══ */
+#remote-cursors{position:absolute;top:0;left:0;right:0;bottom:0;pointer-events:none;z-index:900;overflow:hidden}
+.remote-cursor{position:absolute;top:0;left:0;pointer-events:none;will-change:transform;transition:transform .06s linear}
+.remote-cursor svg{display:block;filter:drop-shadow(0 2px 4px rgba(0,0,0,.4))}
+.remote-cursor .rc-label{position:absolute;left:15px;top:16px;padding:2px 8px;border-radius:10px;font-size:10px;font-weight:bold;color:#fff;white-space:nowrap;box-shadow:0 2px 6px rgba(0,0,0,.4);text-shadow:0 1px 2px rgba(0,0,0,.35)}
+#share-modal{position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:4500;display:none;align-items:center;justify-content:center}
+#share-modal .modal-box{background:var(--toolbar-bg);color:var(--text-color);padding:20px;border-radius:10px;max-width:400px;width:92%;box-shadow:0 8px 30px rgba(0,0,0,.35);border:1px solid var(--border-color)}
+#share-modal h3{margin:0 0 6px 0;font-size:15px}
+#share-modal .sub{font-size:10px;opacity:.65;margin:0 0 14px 0;line-height:1.5}
+#share-modal label{display:block;font-size:11px;margin:10px 0 4px;opacity:.85}
+#share-modal input[type=text],#share-modal input[type=password]{width:100%;padding:7px;border:1px solid var(--border-color);border-radius:4px;background:var(--bg-color);color:var(--text-color);font-size:13px;font-family:inherit;outline:none}
+#share-modal input[type=color]{width:100%;height:32px;border:1px solid var(--border-color);border-radius:4px;padding:2px;background:var(--bg-color);cursor:pointer}
+#share-modal .row{display:flex;gap:8px;align-items:center}
+#share-modal .row>*{flex:1}
+#share-modal .btn-row{display:flex;gap:8px;justify-content:flex-end;margin-top:16px}
+#share-modal button{padding:6px 16px;border:none;border-radius:4px;cursor:pointer;font-weight:bold;font-size:11px;color:#fff}
+#share-modal .btn-cancel{background:#6c757d}
+#share-modal .btn-primary{background:#007bff}
+#share-modal .btn-danger{background:#dc3545}
+#share-user-badge{display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:6px;background:var(--bg-color);border:1px solid var(--border-color);font-size:11px;margin-bottom:14px}
+#share-user-badge .dot{width:12px;height:12px;border-radius:50%;flex-shrink:0;border:2px solid rgba(255,255,255,.6)}
+#share-room-code-box{display:flex;gap:6px;align-items:center;margin:8px 0;padding:10px;border-radius:6px;background:var(--bg-color);border:1px dashed var(--border-color)}
+#share-room-code-box code{flex:1;font-size:16px;font-weight:bold;letter-spacing:2px;font-family:ui-monospace,Menlo,Consolas,monospace}
+#share-status{font-size:11px;padding:8px 10px;border-radius:5px;background:rgba(127,127,127,.12);margin-top:12px;line-height:1.5}
+#share-status.err{background:rgba(220,53,69,.14);color:#dc3545}
+#share-status.ok{background:rgba(40,167,69,.14);color:#16a34a}
+#share-peers{margin-top:10px;font-size:11px}
+#share-peers .peer{display:flex;align-items:center;gap:7px;padding:4px 0}
+#share-peers .peer .dot{width:9px;height:9px;border-radius:50%;flex-shrink:0}
+#share-sep{text-align:center;font-size:10px;opacity:.5;margin:14px 0 4px;position:relative}
+.share-tab{display:flex;gap:0;margin-bottom:12px;border-bottom:1px solid var(--border-color)}
+.share-tab button{flex:1;background:transparent!important;color:var(--text-color)!important;opacity:.55;border-radius:0;padding:8px 4px!important;border-bottom:2px solid transparent!important}
+.share-tab button.active{opacity:1;border-bottom-color:#007bff!important}
 :root{--bg-color:#f0f2f5;--toolbar-bg:#fff;--text-color:#1f2937;--border-color:#ddd;--gate-bg:#fff;--gate-header:#333;--dot-color:#d1d5db;--pixel-off:#2d2d2d;--pixel-on:#39ff14}
 body.dark-theme{--bg-color:#1e1e24;--toolbar-bg:#282830;--text-color:#f3f4f6;--border-color:#3f3f46;--gate-bg:#2d3748;--gate-header:#1a202c;--dot-color:rgba(255,255,255,0.15);--pixel-off:#1a1a1a}
 *{box-sizing:border-box}
@@ -229,6 +263,9 @@ body.debug-mode .pixel-square .port{opacity:.72}
         <button id="undo-btn" onclick="undo()" style="background:#6c757d;">↩ Undo</button>
         <button id="redo-btn" onclick="redo()" style="background:#6c757d;">↪ Redo</button>
     </div>
+        <div class="toolbar-group" style="border-left:2px solid var(--border-color);padding-left:5px;">
+        <button id="share-btn" onclick="openShareModal()" style="background:#0ea5e9;">🌐 Share</button>
+    </div>
     <div class="toolbar-group" style="border-left:2px solid var(--border-color);padding-left:5px;">
         <span id="pour-indicator">🔌 Pour mode <button class="pour-exit-btn" onclick="exitWirePouring()">✕</button></span>
     </div>
@@ -308,6 +345,65 @@ body.debug-mode .pixel-square .port{opacity:.72}
     </div>
 </div>
 
+<div id="remote-cursors"></div>
+
+<div id="share-modal" onclick="closeShareModalOutside(event)">
+    <div class="modal-box" onclick="event.stopPropagation()">
+        <h3>🌐 Collaborate</h3>
+        <p class="sub">Local account (stored in this browser) + peer-to-peer rooms. No server, no upload.</p>
+
+        <div id="share-auth-view">
+            <div class="share-tab">
+                <button id="tab-signin" class="active" onclick="setAuthTab('in')">Sign in</button>
+                <button id="tab-signup" onclick="setAuthTab('up')">Create account</button>
+            </div>
+            <label>Username</label>
+            <input type="text" id="share-username" placeholder="e.g. ada" autocomplete="username" maxlength="24" />
+            <label>Password</label>
+            <input type="password" id="share-password" placeholder="••••••" autocomplete="current-password" />
+            <div id="share-auth-color-row" style="display:none;">
+                <label>Cursor color</label>
+                <input type="color" id="share-color" value="#22d3ee" />
+            </div>
+            <div id="share-auth-status"></div>
+            <div class="btn-row">
+                <button class="btn-cancel" onclick="closeShareModal()">Cancel</button>
+                <button class="btn-primary" id="share-auth-action" onclick="doAuth()">Sign in</button>
+            </div>
+        </div>
+
+        <div id="share-room-view" style="display:none;">
+            <div id="share-user-badge"></div>
+
+            <div id="share-host-panel">
+                <button class="btn-primary" style="width:100%;" onclick="hostRoom()">🎧 Host a room</button>
+            </div>
+
+            <div id="share-sep">— or join an existing room —</div>
+
+            <div class="row">
+                <input type="text" id="share-room-input" placeholder="ROOM CODE" maxlength="8"
+                       style="text-transform:uppercase;letter-spacing:2px;font-family:ui-monospace,Menlo,monospace;font-weight:bold;text-align:center;" />
+                <button class="btn-primary" style="flex:0 0 auto;" onclick="joinRoom()">Join</button>
+            </div>
+
+            <div id="share-room-code-box" style="display:none;">
+                <code id="share-room-code-text"></code>
+                <button class="btn-cancel" style="flex:0 0 auto;" onclick="copyRoomCode()">Copy</button>
+            </div>
+
+            <div id="share-status"></div>
+            <div id="share-peers"></div>
+
+            <div class="btn-row">
+                <button class="btn-danger" onclick="leaveRoom()">Leave room</button>
+                <button class="btn-cancel" onclick="signOutCollab()">Sign out</button>
+                <button class="btn-primary" onclick="closeShareModal()">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+
 <div id="toast-container"></div>
 
 <div class="instructions" id="instructions-box">
@@ -322,7 +418,8 @@ body.debug-mode .pixel-square .port{opacity:.72}
     • <strong>Click a wire</strong> to select (yellow) • <strong>double-click</strong> or <strong>right-click</strong> a wire to delete it.<br />
     • <strong>Ctrl+C / Ctrl+V</strong> to copy &amp; paste selected gates.<br />
     • <strong>Undo/Redo</strong>: Ctrl+Z / Ctrl+Shift+Z.<br />
-    • <strong>Debug mode</strong>: press <strong>D</strong>. Hover gates/wires to inspect; click a gate body or wire to pin; <strong>Esc</strong> to unpin.
+    • <strong>Debug mode</strong>: press <strong>D</strong>. Hover gates/wires to inspect; click a gate body or wire to pin; <strong>Esc</strong> to unpin.<br />
+    • <strong>Collab</strong>: click <strong>🌐 Share</strong> to sign in, host a room, or join one — you'll see everyone's live cursor.
 </div>
 
 <script>
@@ -553,6 +650,7 @@ function pushSnapshotNow(){
     updateUndoRedoButtons();
     saveToLocalStorage();
     lastSaveTime=Date.now();
+        if(!applyingRemote) collabBroadcastState();
 }
 function forceSaveState(){
     if(isUndoRedo)return;
@@ -655,7 +753,7 @@ function updateModalGridBackground(){
     applyDotStyle(vp,modalZoom);
 }
 
-function updateTransform(){canvas.style.transform=`translate(${panX}px,${panY}px) scale(${zoom})`;updateGridBackground()}
+function updateTransform(){canvas.style.transform=`translate(${panX}px,${panY}px) scale(${zoom})`;updateGridBackground();repositionRemoteCursors()}
 function applyZoom(nz,ox,oy){nz=Math.max(.1,Math.min(5,nz));const r=viewport.getBoundingClientRect();const mx=ox-r.left,my=oy-r.top;panX=mx-(mx-panX)*(nz/zoom);panY=my-(my-panY)*(nz/zoom);zoom=nz;updateTransform();if(zoomThrottleTimer)cancelAnimationFrame(zoomThrottleTimer);zoomThrottleTimer=requestAnimationFrame(()=>{zoomThrottleTimer=null;markPortPositionsDirty();drawWires();saveToLocalStorage()})}
 function startPan(e){if(e.target.closest('.gate')||e.target.closest('.custom-container-wrapper')||e.target.closest('#toolbar'))return;if(e.shiftKey){startBoxSelect(e);e.stopPropagation();return}if(!e.shiftKey){if(selectedIds.size)clearSelection();if(selectedWireIds.size)clearWireSelection()}isPanning=true;startPanX=e.clientX-panX;startPanY=e.clientY-panY;e.stopPropagation()}
 function startTouchPanZoom(e){if(e.target.closest('.gate')||e.target.closest('.custom-container-wrapper')||e.target.closest('#toolbar'))return;if(e.touches.length===2){initialPinchDistance=Math.hypot(e.touches[0].clientX-e.touches[1].clientX,e.touches[0].clientY-e.touches[1].clientY);initialZoom=zoom;isPanning=false}else if(e.touches.length===1){isPanning=true;startPanX=e.touches[0].clientX-panX;startPanY=e.touches[0].clientY-panY}e.stopPropagation()}
@@ -836,6 +934,7 @@ function handleMove(cx,cy){
         updateFolderDragHover(cx,cy);
     }
     if(draggingWire)updateTempWire(cx,cy);
+        collabCursorTick();
 }
 window.addEventListener('mouseup',e=>{if(isBoxSelecting)finishBoxSelect(e.clientX,e.clientY);handleEnd(e.clientX,e.clientY)});
 window.addEventListener('touchend',e=>{initialPinchDistance=null;if(e.changedTouches.length)handleEnd(e.changedTouches[0].clientX,e.changedTouches[0].clientY)});
@@ -3346,6 +3445,535 @@ window.addEventListener('load',()=>{
     if(localStorage.getItem('debug_mode')==='1')setDebugMode(true);else setDebugMode(false);
     console.log('✅ Logic Sim loaded.');
 });
+
+/* ═══════════════════════════════════════════════════════════════
+   COLLABORATION  ·  local accounts + P2P rooms + live cursors
+   ═══════════════════════════════════════════════════════════════ */
+const PEER_PREFIX      = 'lgsim-v1-';
+const CURSOR_SEND_MS   = 55;
+const CURSOR_TIMEOUT_MS= 15000;
+const STATE_DEBOUNCE_MS= 120;
+
+let collabPeer      = null;
+let collabConns     = [];        // host: array of DataConnections
+let collabHostConn  = null;      // guest: connection to host
+let collabIsHost    = false;
+let collabRoomCode  = '';
+let collabUser      = null;      // { name, color }
+let applyingRemote  = false;
+let stateBroadcastTimer = null;
+let lastCursorSent  = 0;
+const remoteCursors = new Map();
+
+/* ── accounts (browser-local) ───────────────────────────────── */
+function simpleHash(s){
+    let h = 5381;
+    for (let i = 0; i < s.length; i++) h = (((h << 5) + h) ^ s.charCodeAt(i)) >>> 0;
+    return h.toString(36);
+}
+function getAccounts(){ try{ return JSON.parse(localStorage.getItem('logic_sim_accounts')||'{}'); }catch(_){ return {}; } }
+function saveAccounts(a){ localStorage.setItem('logic_sim_accounts', JSON.stringify(a)); }
+function getSession(){ return localStorage.getItem('logic_sim_session') || ''; }
+function setSession(u){ u ? localStorage.setItem('logic_sim_session', u) : localStorage.removeItem('logic_sim_session'); }
+
+function loadCollabUser(){
+    const sess = getSession();
+    if(!sess) return;
+    const acc = getAccounts()[sess];
+    if(!acc) return;
+    collabUser = { name: sess, color: acc.color || '#22d3ee' };
+}
+
+let authTab = 'in';
+function setAuthTab(t){
+    authTab = t;
+    document.getElementById('tab-signin').classList.toggle('active', t === 'in');
+    document.getElementById('tab-signup').classList.toggle('active', t === 'up');
+    document.getElementById('share-auth-color-row').style.display = t === 'up' ? 'block' : 'none';
+    document.getElementById('share-auth-action').textContent = t === 'in' ? 'Sign in' : 'Create account';
+    setAuthStatus('');
+}
+function setAuthStatus(msg, kind){
+    const el = document.getElementById('share-auth-status');
+    if(!el) return;
+    el.textContent = msg || '';
+    el.className = kind || '';
+    el.style.cssText = 'font-size:11px;margin-top:10px;min-height:14px;' +
+        (kind === 'err' ? 'color:#dc3545;' : kind === 'ok' ? 'color:#16a34a;' : 'opacity:.7;');
+}
+function doAuth(){
+    const u = (document.getElementById('share-username').value || '').trim();
+    const p = document.getElementById('share-password').value || '';
+    if(!u || u.length < 2){ setAuthStatus('Username must be at least 2 characters.', 'err'); return; }
+    if(!p || p.length < 3){ setAuthStatus('Password must be at least 3 characters.', 'err'); return; }
+    const accounts = getAccounts();
+    const hash = simpleHash(p);
+    if(authTab === 'up'){
+        if(accounts[u]){ setAuthStatus('That username is already taken.', 'err'); return; }
+        const color = document.getElementById('share-color').value || '#22d3ee';
+        accounts[u] = { hash, color, created: Date.now() };
+        saveAccounts(accounts);
+        setSession(u);
+        collabUser = { name: u, color };
+        showToast(`Welcome, ${escapeHtml(u)}!`, 'success', 1800);
+    } else {
+        const acc = accounts[u];
+        if(!acc){ setAuthStatus('No account with that username. Try "Create account".', 'err'); return; }
+        if(acc.hash !== hash){ setAuthStatus('Incorrect password.', 'err'); return; }
+        setSession(u);
+        collabUser = { name: u, color: acc.color || '#22d3ee' };
+        showToast(`Signed in as ${escapeHtml(u)}`, 'success', 1500);
+    }
+    renderShareModal();
+}
+function signOutCollab(){
+    leaveRoom();
+    setSession('');
+    collabUser = null;
+    renderShareModal();
+    showToast('Signed out.', 'info', 1200);
+}
+
+/* ── modal ──────────────────────────────────────────────────── */
+function openShareModal(){
+    document.getElementById('share-modal').style.display = 'flex';
+    renderShareModal();
+}
+function closeShareModal(){ document.getElementById('share-modal').style.display = 'none'; }
+function closeShareModalOutside(e){ if(e.target.id === 'share-modal') closeShareModal(); }
+
+function renderShareModal(){
+    const authView = document.getElementById('share-auth-view');
+    const roomView = document.getElementById('share-room-view');
+    if(!authView || !roomView) return;
+    if(collabUser){
+        authView.style.display = 'none';
+        roomView.style.display = 'block';
+        document.getElementById('share-user-badge').innerHTML =
+            `<span class="dot" style="background:${collabUser.color}"></span>
+             <strong>${escapeHtml(collabUser.name)}</strong>
+             <span style="opacity:.6;margin-left:auto;font-size:10px;">signed in</span>`;
+        document.getElementById('share-host-panel').style.display = collabRoomCode ? 'none' : 'block';
+        const codeBox = document.getElementById('share-room-code-box');
+        if(collabRoomCode){
+            codeBox.style.display = 'flex';
+            document.getElementById('share-room-code-text').textContent = collabRoomCode;
+        } else codeBox.style.display = 'none';
+        updatePeerList();
+    } else {
+        authView.style.display = 'block';
+        roomView.style.display = 'none';
+        setAuthTab(authTab);
+        setTimeout(() => document.getElementById('share-username')?.focus(), 60);
+    }
+    updateShareButton();
+}
+
+function setShareStatus(msg, kind){
+    const el = document.getElementById('share-status');
+    if(!el) return;
+    el.textContent = msg || '';
+    el.className = kind || '';
+    el.style.display = msg ? 'block' : 'none';
+}
+function updatePeerList(){
+    const el = document.getElementById('share-peers');
+    if(!el) return;
+    if(!remoteCursors.size){ el.innerHTML = ''; return; }
+    el.innerHTML = '<div style="opacity:.6;margin-bottom:4px;">In this room:</div>' +
+        [...remoteCursors.entries()].map(([id, rc]) =>
+            `<div class="peer"><span class="dot" style="background:${rc.color}"></span>${escapeHtml(rc.name)}</div>`
+        ).join('');
+}
+function updateShareButton(){
+    const b = document.getElementById('share-btn');
+    if(!b) return;
+    if(collabRoomCode){
+        b.textContent = (collabIsHost ? '🟢 ' : '🔵 ') + collabRoomCode;
+        b.style.background = collabIsHost ? '#16a34a' : '#2563eb';
+    } else {
+        b.textContent = '🌐 Share';
+        b.style.background = '#0ea5e9';
+    }
+}
+
+/* ── room codes & peer lifecycle ────────────────────────────── */
+function genRoomCode(){
+    const A = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+    let s = '';
+    for(let i = 0; i < 6; i++) s += A[Math.floor(Math.random() * A.length)];
+    return s;
+}
+function collabConnected(){
+    return collabIsHost ? collabConns.some(c => c.open) : !!(collabHostConn && collabHostConn.open);
+}
+function collabSend(msg){
+    if(!collabPeer) return;
+    msg.from = collabPeer.id;
+    if(collabIsHost){ broadcastToConns(msg, null); }
+    else if(collabHostConn && collabHostConn.open){
+        try{ collabHostConn.send(msg); }catch(_){}
+    }
+}
+function broadcastToConns(msg, except){
+    for(const c of collabConns){
+        if(c === except || !c.open) continue;
+        try{ c.send(msg); }catch(_){}
+    }
+}
+function destroyPeer(){
+    try{ if(collabPeer) collabPeer.destroy(); }catch(_){}
+    collabPeer = null; collabConns = []; collabHostConn = null;
+    clearRemoteCursors();
+}
+
+function hostRoom(){
+    if(!collabUser) return;
+    destroyPeer();
+    collabIsHost = true;
+    collabRoomCode = genRoomCode();
+    setShareStatus('Starting host…');
+
+    collabPeer = new Peer(PEER_PREFIX + collabRoomCode, { debug: 1 });
+
+    collabPeer.on('open', () => {
+        setShareStatus(`Hosting room ${collabRoomCode}. Share this code with friends.`, 'ok');
+        renderShareModal();
+        updateShareButton();
+        showToast(`Room ${collabRoomCode} hosted`, 'success', 2200);
+    });
+
+    collabPeer.on('connection', conn => {
+        collabConns.push(conn);
+        conn.on('open', () => {
+            conn.send({ t: 'hello', user: collabUser, from: collabPeer.id });
+            conn.send({ t: 'state', state: buildFullState(), from: collabPeer.id });
+        });
+        conn.on('data', msg => handleHostMessage(conn, msg));
+        conn.on('close', () => {
+            collabConns = collabConns.filter(c => c !== conn);
+            removeRemoteCursor(conn.peer);
+            updatePeerList();
+        });
+        conn.on('error', () => {
+            collabConns = collabConns.filter(c => c !== conn);
+            removeRemoteCursor(conn.peer);
+            updatePeerList();
+        });
+    });
+
+    collabPeer.on('error', err => {
+        const t = err && err.type;
+        if(t === 'unavailable-id'){
+            destroyPeer();
+            collabIsHost = true;
+            collabRoomCode = genRoomCode();
+            setShareStatus('Code collision — retrying with a new code…');
+            setTimeout(hostRoom, 250);
+            return;
+        }
+        setShareStatus('Connection error: ' + (err.message || t || 'unknown'), 'err');
+        updateShareButton();
+    });
+}
+
+function joinRoom(){
+    if(!collabUser) return;
+    const code = (document.getElementById('share-room-input').value || '').trim().toUpperCase();
+    if(!code || code.length < 4){ setShareStatus('Enter a valid room code.', 'err'); return; }
+    destroyPeer();
+    collabIsHost = false;
+    collabRoomCode = code;
+    setShareStatus('Connecting to ' + code + '…');
+
+    collabPeer = new Peer({ debug: 1 });
+
+    collabPeer.on('open', () => {
+        const conn = collabPeer.connect(PEER_PREFIX + code, { reliable: true });
+        collabHostConn = conn;
+
+        const bail = setTimeout(() => {
+            if(!conn.open){
+                setShareStatus('Could not reach that room. Check the code.', 'err');
+                updateShareButton();
+            }
+        }, 8000);
+
+        conn.on('open', () => {
+            clearTimeout(bail);
+            conn.send({ t: 'hello', user: collabUser, from: collabPeer.id });
+            conn.send({ t: 'request-state', from: collabPeer.id });
+            setShareStatus(`Connected to room ${code}.`, 'ok');
+            renderShareModal();
+            updateShareButton();
+            showToast(`Joined room ${code}`, 'success', 2000);
+        });
+        conn.on('data', msg => handleGuestMessage(msg));
+        conn.on('close', () => {
+            clearTimeout(bail);
+            setShareStatus('Host disconnected.', 'err');
+            collabHostConn = null;
+            clearRemoteCursors();
+            updateShareButton();
+            updatePeerList();
+        });
+        conn.on('error', err => {
+            clearTimeout(bail);
+            setShareStatus('Connection error: ' + (err.message || 'unknown'), 'err');
+        });
+    });
+
+    collabPeer.on('error', err => {
+        const t = err && err.type;
+        if(t === 'peer-unavailable'){
+            setShareStatus(`Room "${code}" not found.`, 'err');
+        } else {
+            setShareStatus('Connection error: ' + (err.message || t || 'unknown'), 'err');
+        }
+        updateShareButton();
+    });
+}
+
+function leaveRoom(){
+    if(collabPeer){
+        try{ collabSend({ t: 'bye', from: collabPeer.id }); }catch(_){}
+    }
+    destroyPeer();
+    collabRoomCode = '';
+    collabIsHost = false;
+    setShareStatus('');
+    updatePeerList();
+    updateShareButton();
+}
+function copyRoomCode(){
+    if(!collabRoomCode) return;
+    navigator.clipboard?.writeText(collabRoomCode).then(
+        () => showToast('Room code copied', 'success', 1200),
+        () => showToast('Copy failed — code: ' + collabRoomCode, 'info', 2500)
+    );
+}
+
+/* ── message handling ───────────────────────────────────────── */
+function handleHostMessage(conn, msg){
+    if(!msg || typeof msg !== 'object') return;
+    switch(msg.t){
+        case 'hello': {
+            const u = msg.user || {};
+            remoteCursors.set(conn.peer, {
+                x: 0, y: 0, name: u.name || 'Guest',
+                color: u.color || '#22d3ee', lastSeen: Date.now()
+            });
+            ensureRemoteCursorEl(conn.peer);
+            updatePeerList();
+            broadcastToConns(msg, conn);
+            // tell the newcomer about everyone already here
+            for(const [pid, rc] of remoteCursors){
+                if(pid === conn.peer) continue;
+                try{ conn.send({ t: 'cursor', x: rc.x, y: rc.y, user: { name: rc.name, color: rc.color }, from: pid }); }catch(_){}
+            }
+            break;
+        }
+        case 'cursor': {
+            const u = msg.user || {};
+            const rc = remoteCursors.get(conn.peer) || {};
+            rc.x = msg.x; rc.y = msg.y; rc.lastSeen = Date.now();
+            if(u.name)  rc.name  = u.name;
+            if(u.color) rc.color = u.color;
+            remoteCursors.set(conn.peer, rc);
+            ensureRemoteCursorEl(conn.peer);
+            placeRemoteCursor(conn.peer);
+            broadcastToConns(msg, conn);
+            break;
+        }
+        case 'state': {
+            applyRemoteState(msg.state);
+            broadcastToConns(msg, conn);
+            break;
+        }
+        case 'request-state': {
+            try{ conn.send({ t: 'state', state: buildFullState(), from: collabPeer.id }); }catch(_){}
+            break;
+        }
+        case 'bye': {
+            removeRemoteCursor(conn.peer);
+            broadcastToConns(msg, conn);
+            updatePeerList();
+            break;
+        }
+    }
+}
+function handleGuestMessage(msg){
+    if(!msg || typeof msg !== 'object') return;
+    switch(msg.t){
+        case 'hello': {
+            const u = msg.user || {};
+            remoteCursors.set(msg.from, {
+                x: 0, y: 0, name: u.name || 'Guest',
+                color: u.color || '#22d3ee', lastSeen: Date.now()
+            });
+            ensureRemoteCursorEl(msg.from);
+            updatePeerList();
+            break;
+        }
+        case 'cursor': {
+            const u = msg.user || {};
+            const rc = remoteCursors.get(msg.from) || {};
+            rc.x = msg.x; rc.y = msg.y; rc.lastSeen = Date.now();
+            if(u.name)  rc.name  = u.name;
+            if(u.color) rc.color = u.color;
+            remoteCursors.set(msg.from, rc);
+            ensureRemoteCursorEl(msg.from);
+            placeRemoteCursor(msg.from);
+            break;
+        }
+        case 'state': {
+            applyRemoteState(msg.state);
+            break;
+        }
+        case 'bye': {
+            removeRemoteCursor(msg.from);
+            updatePeerList();
+            break;
+        }
+    }
+}
+
+/* ── cursors ────────────────────────────────────────────────── */
+function ensureRemoteCursorEl(peerId){
+    const rc = remoteCursors.get(peerId);
+    if(!rc) return;
+    if(rc.el && rc.el.parentElement) return;
+    const layer = document.getElementById('remote-cursors');
+    if(!layer) return;
+    const el = document.createElement('div');
+    el.className = 'remote-cursor';
+    el.innerHTML =
+        `<svg width="20" height="24" viewBox="0 0 20 24">
+           <path d="M2 2 L2 20 L7 15 L10.5 22 L13.5 20.5 L10 13.5 L17 13.5 Z"
+                 fill="${rc.color}" stroke="#fff" stroke-width="1.5" stroke-linejoin="round"/>
+         </svg>
+         <span class="rc-label" style="background:${rc.color}">${escapeHtml(rc.name)}</span>`;
+    layer.appendChild(el);
+    rc.el = el;
+    placeRemoteCursor(peerId);
+}
+function placeRemoteCursor(peerId){
+    const rc = remoteCursors.get(peerId);
+    if(!rc || !rc.el) return;
+    rc.el.style.transform = `translate(${panX + rc.x * zoom}px, ${panY + rc.y * zoom}px)`;
+}
+function repositionRemoteCursors(){
+    if(!remoteCursors.size) return;
+    for(const id of remoteCursors.keys()) placeRemoteCursor(id);
+}
+function removeRemoteCursor(peerId){
+    const rc = remoteCursors.get(peerId);
+    if(rc && rc.el) rc.el.remove();
+    remoteCursors.delete(peerId);
+}
+function clearRemoteCursors(){
+    for(const rc of remoteCursors.values()) if(rc.el) rc.el.remove();
+    remoteCursors.clear();
+    updatePeerList();
+}
+function collabCursorTick(){
+    if(!collabConnected()) return;
+    const now = performance.now();
+    if(now - lastCursorSent < CURSOR_SEND_MS) return;
+    lastCursorSent = now;
+    collabSend({
+        t: 'cursor',
+        x: Math.round(cursorCanvasX),
+        y: Math.round(cursorCanvasY),
+        user: collabUser
+    });
+}
+
+/* ── state sync ─────────────────────────────────────────────── */
+function collabBroadcastState(){
+    if(!collabConnected()) return;
+    clearTimeout(stateBroadcastTimer);
+    stateBroadcastTimer = setTimeout(() => {
+        collabSend({ t: 'state', state: buildFullState() });
+    }, STATE_DEBOUNCE_MS);
+}
+function applyRemoteState(s){
+    if(!s || !Array.isArray(s.components) || !Array.isArray(s.wires)) return;
+    applyingRemote = true;
+    try{
+        for(const el of compEls.values()) el.remove();
+        compEls.clear(); compPortEls.clear(); dirtyPortComponents.clear();
+        for(const [, p] of wirePaths) p.remove();
+        wirePaths.clear();
+        portPositions = {}; portPositionsDirty = true;
+
+        components        = s.components;
+        wires             = s.wires;
+        savedCustomGates  = s.savedCustomGates || {};
+        savedFolders      = s.savedFolders || {};
+        nextId            = s.nextId || 1;
+        adoptWireIds();
+
+        Object.keys(savedCustomGates).forEach(n => {
+            if(!savedCustomGates[n].name) savedCustomGates[n].name = n;
+            normalizeCustomGateDef(savedCustomGates[n]);
+        });
+        components.forEach(comp => {
+            if(comp.isCustom && comp.type && savedCustomGates[comp.type]) comp.def = savedCustomGates[comp.type];
+            if(comp.subComps) comp.subComps.forEach(sc => {
+                if(sc.isCustom) expandNestedCustomGate(sc, 0);
+                else initComponentInputs(sc);
+            });
+            initComponentInputs(comp);
+        });
+
+        selectedIds.clear(); selectedWireIds.clear(); resetSelectionSourceIndex();
+        updateCustomGatesToolbar();
+        components.forEach(c => renderComponent(c));
+        markPortPositionsDirty();
+        drawWires();
+        runSimulation();
+    } finally {
+        applyingRemote = false;
+    }
+}
+
+/* ── housekeeping ───────────────────────────────────────────── */
+setInterval(() => {
+    if(!remoteCursors.size) return;
+    const cutoff = Date.now() - CURSOR_TIMEOUT_MS;
+    let changed = false;
+    for(const [id, rc] of remoteCursors){
+        if(rc.lastSeen < cutoff){ removeRemoteCursor(id); changed = true; }
+    }
+    if(changed) updatePeerList();
+}, 4000);
+
+window.addEventListener('beforeunload', () => {
+    if(collabPeer){
+        try{ collabSend({ t: 'bye', from: collabPeer.id }); }catch(_){}
+        try{ collabPeer.destroy(); }catch(_){}
+    }
+});
+
+/* ── boot ───────────────────────────────────────────────────── */
+window.addEventListener('load', () => {
+    loadCollabUser();
+    updateShareButton();
+    renderShareModal();
+});
+
+window.openShareModal   = openShareModal;
+window.closeShareModal  = closeShareModal;
+window.closeShareModalOutside = closeShareModalOutside;
+window.doAuth           = doAuth;
+window.setAuthTab       = setAuthTab;
+window.hostRoom         = hostRoom;
+window.joinRoom         = joinRoom;
+window.leaveRoom        = leaveRoom;
+window.copyRoomCode     = copyRoomCode;
+window.signOutCollab    = signOutCollab;
+
 </script>
 </body>
 </html>
