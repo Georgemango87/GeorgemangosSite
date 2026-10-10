@@ -431,12 +431,20 @@ body.debug-mode .pixel-square .port{opacity:.72}
         <input type="email" id="share-email" placeholder="you@example.com" autocomplete="email" />
         <label>Password</label>
         <input type="password" id="share-password" placeholder="••••••" autocomplete="current-password" />
-        <label>Display name <span style="opacity:.5;">(only for new accounts)</span></label>
-        <input type="text" id="share-displayname" placeholder="e.g. Ada" maxlength="24" />
+        <div id="share-displayname-row" style="display:none;">
+            <label>Display name</label>
+            <input type="text" id="share-displayname" placeholder="e.g. Ada" maxlength="24" />
+        </div>
         <div id="share-auth-status"></div>
         <div class="btn-row">
             <button class="btn-cancel" onclick="closeShareModal()">Cancel</button>
             <button class="btn-primary" id="share-email-action" onclick="doEmailAuth()">Sign in</button>
+        </div>
+        <div style="text-align:center;margin-top:12px;font-size:11px;">
+            <a href="#" id="share-email-toggle" onclick="toggleEmailMode(event)"
+               style="color:#007bff;text-decoration:none;">
+                New here? Create account
+            </a>
         </div>
     </div>
 </div>
@@ -3528,7 +3536,6 @@ let collabConns     = [];        // host: array of DataConnections
 let collabHostConn  = null;      // guest: connection to host
 let collabIsHost    = false;
 let collabRoomCode  = '';
-let collabUser      = null;      // { name, color }
 let applyingRemote  = false;
 let stateBroadcastTimer = null;
 let lastCursorSent  = 0;
@@ -3536,6 +3543,7 @@ const remoteCursors = new Map();
 
 /* ── Firebase-backed auth ───────────────────────────────────── */
 let authTab = 'google';
+let emailSignUp = false;
 
 function setAuthTab(t) {
   authTab = t;
@@ -3552,6 +3560,18 @@ function setAuthStatus(msg, kind) {
   el.textContent = msg || '';
   el.style.cssText = 'font-size:11px;margin-top:10px;min-height:14px;' +
     (kind === 'err' ? 'color:#dc3545;' : kind === 'ok' ? 'color:#16a34a;' : 'opacity:.7;');
+}
+
+function toggleEmailMode(e){
+    e.preventDefault();
+    emailSignUp = !emailSignUp;
+    document.getElementById('share-email-action').textContent =
+        emailSignUp ? 'Create account' : 'Sign in';
+    document.getElementById('share-displayname-row').style.display =
+        emailSignUp ? 'block' : 'none';
+    document.getElementById('share-email-toggle').textContent =
+        emailSignUp ? 'Already have an account? Sign in' : 'New here? Create account';
+    setAuthStatus('');
 }
 
 async function signInWithGoogle() {
@@ -3591,7 +3611,7 @@ async function doEmailAuth() {
   if (!email || !email.includes('@')) { setAuthStatus('Enter a valid email address.', 'err'); return; }
   if (!pass || pass.length < 6)      { setAuthStatus('Password must be at least 6 characters.', 'err'); return; }
 
-  const isSignUp = authTab === 'email' && document.getElementById('share-email-action').textContent === 'Create account';
+  const isSignUp = emailSignUp;
 
   try {
     setAuthStatus('Working…');
@@ -3647,13 +3667,28 @@ function renderShareModal() {
   if (u) {
     authView.style.display = 'none';
     roomView.style.display = 'block';
+
     document.getElementById('share-user-badge').innerHTML =
       `${u.photoURL
           ? `<img src="${u.photoURL}" style="width:20px;height:20px;border-radius:50%;object-fit:cover;">`
           : `<span class="dot" style="background:${u.color}"></span>`}
        <strong>${escapeHtml(u.name)}</strong>
        <span style="opacity:.6;margin-left:auto;font-size:10px;">uid: ${escapeHtml(u.uid.slice(0,6))}…</span>`;
-    // ... rest of the existing room-view logic
+
+    // Show the "Host a room" button only when not already in a room
+    document.getElementById('share-host-panel').style.display =
+        collabRoomCode ? 'none' : 'block';
+
+    // Show / hide the room-code box
+    const codeBox = document.getElementById('share-room-code-box');
+    if (collabRoomCode) {
+      codeBox.style.display = 'flex';
+      document.getElementById('share-room-code-text').textContent = collabRoomCode;
+    } else {
+      codeBox.style.display = 'none';
+    }
+
+    updatePeerList();
   } else {
     authView.style.display = 'block';
     roomView.style.display = 'none';
@@ -4051,7 +4086,6 @@ window.addEventListener('beforeunload', () => {
 
 /* ── boot ───────────────────────────────────────────────────── */
 window.addEventListener('load', () => {
-    loadCollabUser();
     updateShareButton();
     renderShareModal();
 });
@@ -4059,7 +4093,6 @@ window.addEventListener('load', () => {
 window.openShareModal   = openShareModal;
 window.closeShareModal  = closeShareModal;
 window.closeShareModalOutside = closeShareModalOutside;
-window.doAuth           = doAuth;
 window.setAuthTab       = setAuthTab;
 window.hostRoom         = hostRoom;
 window.joinRoom         = joinRoom;
