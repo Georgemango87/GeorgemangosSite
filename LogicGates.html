@@ -17,7 +17,7 @@ import {
   signOut
 } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
 
-import { getDatabase, ref, onValue, set, remove, onDisconnect }
+import { getDatabase, ref, onValue, set, update, remove, onDisconnect }
     from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js';
 
 // ═══════════════════════════════════════════════════════════════
@@ -38,7 +38,7 @@ const fbRtdb = getDatabase(fbApp);
 
 // Expose to the rest of the page (your main script is not a module)
 window.fbAuth = fbAuth;
-window.fbRtdbApi = { db: fbRtdb, ref, onValue, set, remove, onDisconnect };
+window.fbRtdbApi = { db: fbRtdb, ref, onValue, set, update, remove, onDisconnect };
 window.fbSignInWithPopup = signInWithPopup;
 window.fbGoogleProvider  = GoogleAuthProvider;
 window.fbSignInEmail     = signInWithEmailAndPassword;
@@ -765,7 +765,7 @@ function pushSnapshotNow(){
     updateUndoRedoButtons();
     saveToLocalStorage();
     lastSaveTime=Date.now();
-        if(!applyingRemote) collabBroadcastState();
+    collabBroadcastState();
 }
 function forceSaveState(){
     if(isUndoRedo)return;
@@ -781,7 +781,19 @@ function forceSaveState(){
     }
     pushSnapshotNow();
 }
-function restoreState(s){isUndoRedo=true;for(const el of compEls.values())el.remove();compEls.clear();compPortEls.clear();dirtyPortComponents.clear();portPositionsDirty=true;customContainers.forEach(c=>{const el=document.getElementById(`container-${c.id}`);if(el)el.remove()});components=s.components;wires=s.wires;customContainers=s.customContainers;savedCustomGates=s.savedCustomGates;savedFolders=s.savedFolders||{};adoptWireIds();selectedWireIds.clear();updateCustomGatesToolbar();components.forEach(c=>renderComponent(c));customContainers.forEach(c=>renderCustomContainer(c));drawWires();runSimulation();isUndoRedo=false;markPortPositionsDirty();updateUndoRedoButtons()}
+function restoreState(s){
+    isUndoRedo=true;
+    for(const el of compEls.values())el.remove();
+    compEls.clear();compPortEls.clear();dirtyPortComponents.clear();portPositionsDirty=true;
+    customContainers.forEach(c=>{const el=document.getElementById(`container-${c.id}`);if(el)el.remove()});
+    components=s.components;wires=s.wires;customContainers=s.customContainers;
+    savedCustomGates=s.savedCustomGates;savedFolders=s.savedFolders||{};
+    adoptWireIds();selectedWireIds.clear();updateCustomGatesToolbar();
+    components.forEach(c=>renderComponent(c));
+    customContainers.forEach(c=>renderCustomContainer(c));
+    drawWires();runSimulation();isUndoRedo=false;markPortPositionsDirty();updateUndoRedoButtons();
+    collabBroadcastState();
+}
 function undo(){
     if(pendingSnapshotTimer){clearTimeout(pendingSnapshotTimer);pendingSnapshotTimer=null;pushSnapshotNow()}
     if(undoStack.length<2)return;
@@ -3606,11 +3618,18 @@ let stateBroadcastTimer = null;
 let peerWriteTimer      = null;
 let lastPeerSnapshot    = { x: -1, y: -1, hadGhost: false, hadInteraction: false };
 
-let peerRef  = null;
-let peersRef = null;
-let stateRef = null;
+let peerRef   = null;
+let peersRef  = null;
 let peersUnsub = null;
-let stateUnsub = null;
+const baseUnsubs = [];
+
+let roomBase = null;
+let lastSyncedCompJson  = '';
+let lastSyncedWireJson  = '';
+let lastSyncedCgJson    = '';
+let lastSyncedFoldersJson = '';
+let lastSyncedNextId    = 0;
+let lastSyncedNextWireId = 0;
 
 const remoteCursors   = new Map();
 const remoteGhosts    = new Map();
@@ -3829,17 +3848,22 @@ function copyRoomCode(){
 function joinFirebaseRoom(code){
     collabRoomCode = code.toUpperCase();
     const uid = window.collabUser.uid;
-    const { ref, onValue, set, onDisconnect } = window.fbRtdbApi;
-    const basePath = `${FIREBASE_ROOT}/${collabRoomCode}`;
+    const { ref, onValue, onDisconnect } = window.fbRtdbApi;
+    const db = window.fbRtdbApi.db;
+    roomBase = `${FIREBASE_ROOT}/${collabRoomCode}`;
 
-    peersRef = ref(window.fbRtdbApi.db, `${basePath}/peers`);
-    stateRef = ref(window.fbRtdbApi.db, `${basePath}/state`);
-    peerRef  = ref(window.fbRtdbApi.db, `${basePath}/peers/${uid}`);
+    peersRef = ref(db, `${roomBase}/peers`);
+    peerRef  = ref(db, `${roomBase}/peers/${uid}`);
 
-    // Automatic cleanup on disconnect (tab close, network drop, etc.)
+    // Reset the local sync baselines so the first push writes everything
+    lastSyncedCompJson = '';
+    lastSyncedWireJson = '';
+    lastSyncedCgJson = '';
+    lastSyncedFoldersJson = '';
+    lastSyncedNextId = 0;
+    lastSyncedNextWireId = 0;
+
     onDisconnect(peerRef).remove();
-
-    // Initial empty write so peers see us immediately
     flushPeerState(true);
 
     peersUnsub = onValue(peersRef, snap => {
@@ -3865,10 +3889,36 @@ function joinFirebaseRoom(code){
         updatePeerList();
     });
 
-    stateUnsub = onValue(stateRef, snap => {
-        const s = snap.val();
-        if(s && s.by && s.by !== uid) applyRemoteState(s.payload);
-    });
+    // ── Granular tree subscriptions ──
+    baseUnsubs.push(onValue(ref(db, `${roomBase}/components`), snap => {
+        syncComponentsFromRemote(snap.val() || {});
+    }));
+    baseUnsubs.push(onValue(ref(db, `${roomBase}/wires`), snap => {
+        syncWiresFromRemote(snap.val() || {});
+    }));
+    baseUnsubs.push(onValue(ref(db, `${roomBase}/savedCustomGates`), snap => {
+        savedCustomGates = snap.val() || {};
+        Object.keys(savedCustomGates).forEach(n => {
+            if(!savedCustomGates[n].name) savedCustomGates[n].name = n;
+            normalizeCustomGateDef(savedCustomGates[n]);
+        });
+        components.forEach(c => {
+            if(c.isCustom && c.type && savedCustomGates[c.type]) c.def = savedCustomGates[c.type];
+        });
+        updateCustomGatesToolbar();
+    }));
+    baseUnsubs.push(onValue(ref(db, `${roomBase}/savedFolders`), snap => {
+        savedFolders = snap.val() || {};
+        updateCustomGatesToolbar();
+    }));
+    baseUnsubs.push(onValue(ref(db, `${roomBase}/meta/nextId`), snap => {
+        const v = snap.val();
+        if(typeof v === 'number' && v > nextId) nextId = v;
+    }));
+    baseUnsubs.push(onValue(ref(db, `${roomBase}/meta/nextWireId`), snap => {
+        const v = snap.val();
+        if(typeof v === 'number' && v > nextWireId) nextWireId = v;
+    }));
 
     startPeerWriter();
 
@@ -3881,14 +3931,14 @@ function joinFirebaseRoom(code){
 function leaveFirebaseRoom(){
     stopPeerWriter();
     if(peersUnsub){ try{ peersUnsub(); }catch(_){} peersUnsub = null; }
-    if(stateUnsub){ try{ stateUnsub(); }catch(_){} stateUnsub = null; }
+    for(const u of baseUnsubs.splice(0)){ try{ u(); }catch(_){} }
     if(peerRef){
         try{ window.fbRtdbApi.onDisconnect(peerRef).cancel(); }catch(_){}
         try{ window.fbRtdbApi.remove(peerRef); }catch(_){}
         peerRef = null;
     }
     peersRef = null;
-    stateRef = null;
+    roomBase = null;
     collabRoomCode = '';
     clearRemoteCursors();
     clearRemoteGhosts();
@@ -4130,54 +4180,158 @@ function removeRemoteWirePath(peerId){
     if(p) p.remove();
 }
 
-/* ── State broadcast ─────────────────────────────────────────── */
-function collabBroadcastState(){
-    if(!stateRef || !window.collabUser) return;
-    clearTimeout(stateBroadcastTimer);
-    stateBroadcastTimer = setTimeout(() => {
-        const { set } = window.fbRtdbApi;
-        set(stateRef, { by: window.collabUser.uid, payload: buildFullState() }).catch(() => {});
-    }, STATE_DEBOUNCE_MS);
+/* ── Granular state broadcast ────────────────────────────────── */
+function serializeComp(c){
+    const cl = JSON.parse(JSON.stringify(c));
+    delete cl.def;
+    return cl;
 }
-function applyRemoteState(s){
-    if(!s || !Array.isArray(s.components) || !Array.isArray(s.wires)) return;
+function sortedCompJson(arr){
+    return JSON.stringify([...arr].sort((a,b)=>a.id-b.id).map(serializeComp));
+}
+function sortedWireJson(arr){
+    return JSON.stringify([...arr].sort((a,b)=>a.id-b.id));
+}
+
+function collabBroadcastState(){
+    if(!roomBase || !window.collabUser) return;
+    clearTimeout(stateBroadcastTimer);
+    stateBroadcastTimer = setTimeout(collabPushDiff, STATE_DEBOUNCE_MS);
+}
+
+function collabPushDiff(){
+    if(!roomBase || !window.collabUser || applyingRemote) return;
+    const { ref, update } = window.fbRtdbApi;
+    const db = window.fbRtdbApi.db;
+    const updates = {};
+
+    // Components — add / change / remove
+    const curCompJson = sortedCompJson(components);
+    if(curCompJson !== lastSyncedCompJson){
+        const prevArr = lastSyncedCompJson ? JSON.parse(lastSyncedCompJson) : [];
+        const prevById = new Map(prevArr.map(c => [c.id, c]));
+        const curIds = new Set(components.map(c => c.id));
+        for(const c of components){
+            const ser = serializeComp(c);
+            const prev = prevById.get(c.id);
+            if(!prev || JSON.stringify(prev) !== JSON.stringify(ser)){
+                updates[`components/${c.id}`] = ser;
+            }
+        }
+        for(const pc of prevArr){
+            if(!curIds.has(pc.id)) updates[`components/${pc.id}`] = null;
+        }
+        lastSyncedCompJson = curCompJson;
+    }
+
+    // Wires
+    const curWireJson = sortedWireJson(wires);
+    if(curWireJson !== lastSyncedWireJson){
+        const prevArr = lastSyncedWireJson ? JSON.parse(lastSyncedWireJson) : [];
+        const prevById = new Map(prevArr.map(w => [w.id, w]));
+        const curIds = new Set(wires.map(w => w.id));
+        for(const w of wires){
+            const prev = prevById.get(w.id);
+            if(!prev || JSON.stringify(prev) !== JSON.stringify(w)){
+                updates[`wires/${w.id}`] = w;
+            }
+        }
+        for(const pw of prevArr){
+            if(!curIds.has(pw.id)) updates[`wires/${pw.id}`] = null;
+        }
+        lastSyncedWireJson = curWireJson;
+    }
+
+    // Custom gates & folders (full replace on change)
+    const curCgJson = JSON.stringify(savedCustomGates);
+    if(curCgJson !== lastSyncedCgJson){
+        updates['savedCustomGates'] = savedCustomGates;
+        lastSyncedCgJson = curCgJson;
+    }
+    const curFoldersJson = JSON.stringify(savedFolders);
+    if(curFoldersJson !== lastSyncedFoldersJson){
+        updates['savedFolders'] = savedFolders;
+        lastSyncedFoldersJson = curFoldersJson;
+    }
+
+    // Counters
+    if(nextId !== lastSyncedNextId){ updates['meta/nextId'] = nextId; lastSyncedNextId = nextId; }
+    if(nextWireId !== lastSyncedNextWireId){ updates['meta/nextWireId'] = nextWireId; lastSyncedNextWireId = nextWireId; }
+
+    if(Object.keys(updates).length === 0) return;
+    update(ref(db, roomBase), updates).catch(() => {});
+}
+
+function syncComponentsFromRemote(remoteById){
     applyingRemote = true;
-    try {
-        for(const el of compEls.values()) el.remove();
-        compEls.clear(); compPortEls.clear(); dirtyPortComponents.clear();
-        for(const [, p] of wirePaths) p.remove();
-        wirePaths.clear();
-        portPositions = {}; portPositionsDirty = true;
+    try{
+        const incomingIds = new Set();
+        for(const idStr in remoteById){
+            const id = parseInt(idStr);
+            if(isNaN(id)) continue;
+            incomingIds.add(id);
+            const remote = remoteById[idStr];
+            remote.id = id;
+            if(remote.isCustom && remote.type && savedCustomGates[remote.type]){
+                remote.def = savedCustomGates[remote.type];
+            }
+            if(remote.subComps){
+                remote.subComps.forEach(sc => {
+                    if(sc.isCustom) expandNestedCustomGate(sc, 0);
+                    else initComponentInputs(sc);
+                });
+            }
+            initComponentInputs(remote);
 
-        components       = s.components;
-        wires            = s.wires;
-        savedCustomGates = s.savedCustomGates || {};
-        savedFolders     = s.savedFolders || {};
-        nextId           = s.nextId || 1;
-        adoptWireIds();
-
-        Object.keys(savedCustomGates).forEach(n => {
-            if(!savedCustomGates[n].name) savedCustomGates[n].name = n;
-            normalizeCustomGateDef(savedCustomGates[n]);
-        });
-        components.forEach(comp => {
-            if(comp.isCustom && comp.type && savedCustomGates[comp.type]) comp.def = savedCustomGates[comp.type];
-            if(comp.subComps) comp.subComps.forEach(sc => {
-                if(sc.isCustom) expandNestedCustomGate(sc, 0);
-                else initComponentInputs(sc);
-            });
-            initComponentInputs(comp);
-        });
-
-        selectedIds.clear(); selectedWireIds.clear(); resetSelectionSourceIndex();
-        updateCustomGatesToolbar();
-        components.forEach(c => renderComponent(c));
+            const idx = components.findIndex(c => c.id === id);
+            if(idx === -1){
+                components.push(remote);
+                renderComponent(remote);
+            } else {
+                const oldEl = compEls.get(id);
+                if(oldEl){ oldEl.remove(); compEls.delete(id); compPortEls.delete(id); }
+                components[idx] = remote;
+                renderComponent(remote);
+            }
+        }
+        // Purge locals that no longer exist on the server
+        for(const c of components.slice()){
+            if(!incomingIds.has(c.id)) removeComponent(c.id, true);
+        }
         markPortPositionsDirty();
         drawWires();
         runSimulation();
     } finally {
         applyingRemote = false;
     }
+    // Realign our baseline so we don't echo the peer's data back
+    lastSyncedCompJson = sortedCompJson(components);
+}
+
+function syncWiresFromRemote(remoteById){
+    applyingRemote = true;
+    try{
+        const incomingIds = new Set();
+        const fresh = [];
+        for(const idStr in remoteById){
+            const id = parseInt(idStr);
+            if(isNaN(id)) continue;
+            incomingIds.add(id);
+            const w = remoteById[idStr];
+            w.id = id;
+            fresh.push(w);
+        }
+        wires = fresh;
+        adoptWireIds();
+        for(const [, p] of wirePaths) p.remove();
+        wirePaths.clear();
+        markPortPositionsDirty();
+        drawWires();
+        runSimulation();
+    } finally {
+        applyingRemote = false;
+    }
+    lastSyncedWireJson = sortedWireJson(wires);
 }
 
 /* ── Housekeeping ────────────────────────────────────────────── */
