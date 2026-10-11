@@ -3596,6 +3596,19 @@ const CURSOR_SEND_MS    = 55;
 const CURSOR_TIMEOUT_MS = 15000;
 const STATE_DEBOUNCE_MS = 120;
 const GHOST_SEND_MS     = 40;
+const ICE_SERVERS = [
+    { urls: 'stun:stun.l.google.com:19302' },
+    { urls: 'stun:stun1.l.google.com:19302' },
+    {
+        urls: [
+            'turn:openrelay.metered.ca:80',
+            'turn:openrelay.metered.ca:443',
+            'turn:openrelay.metered.ca:443?transport=tcp'
+        ],
+        username: 'openrelayproject',
+        credential: 'openrelayproject'
+    }
+];
 
 let collabPeer          = null;
 let collabConns         = [];
@@ -3830,7 +3843,10 @@ function hostRoom(){
     collabRoomCode = genRoomCode();
     setShareStatus('Starting host…');
 
-    collabPeer = new Peer(PEER_PREFIX + collabRoomCode, { debug: 1 });
+    collabPeer = new Peer(PEER_PREFIX + collabRoomCode, {
+      debug: 1,
+      config: { iceServers: ICE_SERVERS }
+    });
     collabPeer.on('open', () => {
         setShareStatus(`Hosting room ${collabRoomCode}. Share this code with friends.`, 'ok');
         renderShareModal();
@@ -3879,7 +3895,7 @@ function joinRoom(){
     collabRoomCode = code;
     setShareStatus('Connecting to ' + code + '…');
 
-    collabPeer = new Peer({ debug: 1 });
+    collabPeer = new Peer({ debug: 1, config: { iceServers: ICE_SERVERS } });
     collabPeer.on('open', () => {
         const conn = collabPeer.connect(PEER_PREFIX + code, { reliable: true });
         collabHostConn = conn;
