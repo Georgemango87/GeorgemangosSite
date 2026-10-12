@@ -4,20 +4,33 @@
     <meta charset="UTF-8">
     <!-- Updated viewport tag to stop mobile zoom/double-tap zoom -->
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="theme-color" content="#f7f8fa">
     <title>SparkTalk - Ice Breakers</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
     <link rel="icon" type="image/png" sizes="512x512" href="/face.png">
     <style>
         :root {
-            --bg-color: #0f172a;
-            --card-bg: #1e293b;
-            --text-color: #f8fafc;
-            --accent-color: #6366f1;
-            --accent-hover: #4f46e5;
-            --muted-text: #94a3b8;
+            --bg-color: #f7f8fa;
+            --surface: #ffffff;
+            --surface-2: #fbfcfd;
+            --surface-3: #f2f4f8;
+            --card-bg: #ffffff;
+            --border: #e3e6eb;
+            --border-strong: #d2d8e0;
+            --text-color: #14181f;
+            --muted-text: #5b6472;
+            --muted-2: #78818f;
+            --accent-color: #1f3a63;
+            --accent-hover: #16294a;
+            --accent-soft: #3b5b8c;
+            --accent-tint: #eef1f6;
+            --font-serif: "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, "Times New Roman", serif;
+            --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Inter, Helvetica, Arial, sans-serif;
+            --shadow-sm: 0 1px 2px rgba(20, 24, 31, 0.05);
+            --shadow-md: 0 6px 20px rgba(20, 24, 31, 0.08);
         }
 
-        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Inter', sans-serif; }
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: var(--font-sans); }
 
         body {
             background-color: var(--bg-color);
@@ -30,15 +43,16 @@
             align-items: center;
             justify-content: space-between;
             padding: 2rem;
+            -webkit-font-smoothing: antialiased;
         }
 
         header { text-align: center; margin-bottom: 1.5rem; }
         header h1 {
+            font-family: var(--font-serif);
             font-size: 2.5rem;
-            font-weight: 700;
-            background: linear-gradient(to right, #818cf8, #c084fc);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
+            font-weight: 600;
+            letter-spacing: -0.015em;
+            color: var(--accent-color);
             margin-bottom: 0.5rem;
         }
         header p { color: var(--muted-text); font-size: 1rem; }
@@ -54,8 +68,8 @@
 
         .card {
             background-color: var(--card-bg);
-            border: 1px solid #334155;
-            border-radius: 16px;
+            border: 1px solid var(--border);
+            border-radius: 14px;
             padding: 3rem 2rem;
             width: 100%;
             min-height: 220px;
@@ -64,7 +78,7 @@
             justify-content: center;
             align-items: center;
             text-align: center;
-            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.3);
+            box-shadow: var(--shadow-md);
             position: relative;
         }
 
@@ -72,37 +86,75 @@
             position: absolute;
             top: 1.2rem;
             right: 1.5rem;
-            font-size: 0.75rem;
-            color: var(--muted-text);
+            font-family: var(--font-serif);
+            font-size: 0.72rem;
+            font-weight: 600;
+            letter-spacing: 0.14em;
+            text-transform: uppercase;
+            color: var(--muted-2);
         }
 
-        #starter-text { font-size: 1.3rem; line-height: 1.6; font-weight: 500; }
+        #starter-text {
+            font-family: var(--font-serif);
+            font-size: 1.35rem;
+            line-height: 1.6;
+            font-weight: 500;
+            color: var(--text-color);
+        }
 
-        .controls { display: flex; gap: 1rem; width: 100%; flex-wrap: wrap; }
+        .controls { display: flex; gap: 0.75rem; width: 100%; flex-wrap: wrap; }
         .btn {
-            background-color: var(--card-bg);
-            border: 1px solid #334155;
+            background-color: var(--surface);
+            border: 1px solid var(--border-strong);
             color: var(--text-color);
             padding: 0.9rem 1.2rem;
             font-size: 0.95rem;
             font-weight: 600;
-            border-radius: 12px;
+            border-radius: 9px;
             cursor: pointer;
-            transition: all 0.2s ease;
+            transition: background 0.16s ease, border-color 0.16s ease, color 0.16s ease, transform 0.12s ease;
             flex-grow: 1;
+            font-family: inherit;
+            box-shadow: var(--shadow-sm);
         }
-        .btn:hover { background-color: #334155; }
+        .btn:hover {
+            background-color: var(--accent-tint);
+            border-color: var(--accent-soft);
+            color: var(--accent-color);
+        }
+        .btn:active { transform: translateY(1px); }
+        .btn:focus-visible {
+            outline: none;
+            border-color: var(--accent-soft);
+            box-shadow: 0 0 0 3px rgba(31, 58, 99, 0.14);
+        }
         .next-btn {
             background-color: var(--accent-color);
-            border: none;
-            color: white;
+            border: 1px solid var(--accent-color);
+            color: #ffffff;
             flex-grow: 2;
-            box-shadow: 0 4px 12px rgba(99, 102, 241, 0.4);
+            box-shadow: var(--shadow-sm);
         }
-        .next-btn:hover { background-color: var(--accent-hover); }
-        .next-btn:active { transform: scale(0.98); }
+        .next-btn:hover {
+            background-color: var(--accent-hover);
+            border-color: var(--accent-hover);
+            color: #ffffff;
+        }
+        .next-btn:active { transform: translateY(1px); }
+        .next-btn:focus-visible {
+            border-color: var(--accent-hover);
+            box-shadow: 0 0 0 3px rgba(31, 58, 99, 0.22);
+        }
 
-        footer { margin-top: 2rem; color: var(--muted-text); font-size: 0.8rem; text-align: center; }
+        footer { margin-top: 2rem; color: var(--muted-2); font-size: 0.8rem; text-align: center; }
+
+        @media (max-width: 520px) {
+            body { padding: 1.25rem; }
+            header h1 { font-size: 2rem; }
+            .card { padding: 2.25rem 1.5rem; min-height: 190px; }
+            #starter-text { font-size: 1.15rem; }
+            .btn { padding: 0.85rem 1rem; font-size: 0.9rem; }
+        }
     </style>
 </head>
 <body>
