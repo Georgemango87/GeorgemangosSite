@@ -83,7 +83,7 @@ onAuthStateChanged(fbAuth, user => {
 #share-modal .btn-row{display:flex;gap:8px;justify-content:flex-end;margin-top:16px}
 #share-modal button{padding:6px 16px;border:none;border-radius:4px;cursor:pointer;font-weight:bold;font-size:11px;color:#fff}
 #share-modal .btn-cancel{background:#6c757d}
-#share-modal .btn-primary{background:#007bff}
+#share-modal .btn-primary{background:var(--accent)}
 #share-modal .btn-danger{background:#dc3545}
 #share-user-badge{display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:6px;background:var(--bg-color);border:1px solid var(--border-color);font-size:11px;margin-bottom:14px}
 #share-user-badge .dot{width:12px;height:12px;border-radius:50%;flex-shrink:0;border:2px solid rgba(255,255,255,.6)}
@@ -98,14 +98,52 @@ onAuthStateChanged(fbAuth, user => {
 #share-sep{text-align:center;font-size:10px;opacity:.5;margin:14px 0 4px;position:relative}
 .share-tab{display:flex;gap:0;margin-bottom:12px;border-bottom:1px solid var(--border-color)}
 .share-tab button{flex:1;background:transparent!important;color:var(--text-color)!important;opacity:.55;border-radius:0;padding:8px 4px!important;border-bottom:2px solid transparent!important}
-.share-tab button.active{opacity:1;border-bottom-color:#007bff!important}
-:root{--bg-color:#f0f2f5;--toolbar-bg:#fff;--text-color:#1f2937;--border-color:#ddd;--gate-bg:#fff;--gate-header:#333;--dot-color:#d1d5db;--pixel-off:#2d2d2d;--pixel-on:#39ff14}
-body.dark-theme{--bg-color:#1e1e24;--toolbar-bg:#282830;--text-color:#f3f4f6;--border-color:#3f3f46;--gate-bg:#2d3748;--gate-header:#1a202c;--dot-color:rgba(255,255,255,0.15);--pixel-off:#1a1a1a}
+.share-tab button.active{opacity:1;border-bottom-color:var(--accent)!important}
+:root{
+  --bg-color:#f7f8fa;
+  --toolbar-bg:#ffffff;
+  --text-color:#14181f;
+  --border-color:#e3e6eb;
+  --border-strong:#d2d8e0;
+  --gate-bg:#ffffff;
+  --gate-header:#1f3a63;
+  --dot-color:rgba(31,58,99,0.14);
+  --pixel-off:#0a0f1c;
+  --pixel-on:#22c55e;
+  --accent:#1f3a63;
+  --accent-2:#16294a;
+  --accent-soft:#3b5b8c;
+  --accent-tint:#eef1f6;
+  --muted:#5b6472;
+  --muted-2:#78818f;
+  --danger:#b91c1c;
+  --good:#15803d;
+  --font-serif:"Iowan Old Style","Palatino Linotype",Palatino,Georgia,"Times New Roman",serif;
+}
+body.dark-theme{
+  --bg-color:#0e1422;
+  --toolbar-bg:#131a2b;
+  --text-color:#dbe4f7;
+  --border-color:#253053;
+  --border-strong:#334066;
+  --gate-bg:#182137;
+  --gate-header:#8fa6d8;
+  --dot-color:rgba(143,166,216,0.10);
+  --pixel-off:#050912;
+  --accent:#4d70db;
+  --accent-2:#3a56a0;
+  --accent-soft:#8fa6d8;
+  --accent-tint:#1a2338;
+  --muted:#8b96b8;
+  --muted-2:#5a6b95;
+}
 *{box-sizing:border-box}
-body{font-family:system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;margin:0;padding:0;background-color:var(--bg-color);color:var(--text-color);overflow:hidden;user-select:none;-webkit-user-select:none;touch-action:none;transition:background-color .2s,color .2s}
+body{font-family:system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;margin:0;padding:0;background-color:var(--bg-color);color:var(--text-color);overflow:hidden;user-select:none;-webkit-user-select:none;touch-action:none;transition:background-color .2s,color .2s;-webkit-font-smoothing:antialiased}
+#toolbar .brand-title{font-family:var(--font-serif);font-weight:600;letter-spacing:-.005em;color:var(--accent)}
 #toolbar{background:var(--toolbar-bg);padding:4px 8px;box-shadow:0 2px 5px rgba(0,0,0,.1);display:flex;flex-wrap:wrap;gap:4px;align-items:center;position:absolute;top:0;left:0;right:0;z-index:10;border-bottom:1px solid var(--border-color);max-height:58px;overflow-y:auto;font-size:11px}
-button,.tool-btn{padding:4px 7px;background:#007bff;color:#fff;border:none;border-radius:3px;cursor:pointer;font-weight:bold;font-size:11px;flex-shrink:0;pointer-events:auto!important;transition:background .1s}
-button:hover,.tool-btn:hover{background:#0056b3}
+button,.tool-btn{padding:4px 8px;background:var(--accent);color:#fff;border:none;border-radius:4px;cursor:pointer;font-weight:600;font-size:11px;flex-shrink:0;pointer-events:auto!important;transition:background .14s,transform .1s}
+button:hover,.tool-btn:hover{background:var(--accent-2)}
+button:active{transform:translateY(1px)}
 .tool-btn{cursor:grab;touch-action:none;display:inline-flex;align-items:center;gap:3px}
 .tool-btn:active{cursor:grabbing}
 .toolbar-group{display:flex;gap:3px;align-items:center;border-left:2px solid var(--border-color);padding-left:5px;flex-shrink:0}
@@ -121,36 +159,36 @@ button:hover,.tool-btn:hover{background:#0056b3}
 svg{position:absolute;top:0;left:0;width:100%;height:100%;pointer-events:all;overflow:visible;z-index:1}
 .gate{position:absolute;--gate-color:var(--gate-header);background:var(--gate-bg);border:2px solid var(--gate-color);border-radius:6px;box-shadow:0 4px 6px rgba(0,0,0,.1);cursor:move;z-index:3;touch-action:none;pointer-events:auto;transition:border-color .15s,box-shadow .15s;width:140px;height:auto;min-width:140px;will-change:transform,left,top}
 .gate.powered{border-color:var(--gate-color);box-shadow:0 0 10px color-mix(in srgb,var(--gate-color) 55%,transparent)}
-.gate.selected{outline:3px solid #ffc107;outline-offset:2px;box-shadow:0 0 0 3px rgba(255,193,7,.35),0 4px 6px rgba(0,0,0,.1)}
+.gate.selected{outline:3px solid #1f3a63;outline-offset:2px;box-shadow:0 0 0 3px rgba(31,58,99,.20),0 4px 6px rgba(0,0,0,.1)}
 .gate-header{background:var(--gate-color);color:#fff;padding:4px 6px;font-size:10px;display:flex;justify-content:space-between;align-items:center;border-top-left-radius:4px;border-top-right-radius:4px;position:relative;gap:4px;min-height:26px}
 .delete-btn{background:transparent;border:none;color:#ff6b6b;font-weight:bold;cursor:pointer;padding:1px 4px;font-size:14px;line-height:1;border-radius:3px;z-index:4;pointer-events:auto;flex-shrink:0;position:relative}
 .delete-btn:hover{background:rgba(255,0,0,.2);color:#f00}
 .gate-body{padding:6px;display:flex;flex-direction:column;gap:4px;color:var(--text-color)}
 .port-label-input{background:rgba(0,0,0,.25);color:#fff;border:1px solid rgba(255,255,255,.4);border-radius:3px;padding:1px 4px;font-size:10px;width:50px;outline:none;cursor:text;pointer-events:auto}
 .port-label-input:focus{border-color:#fff;background:rgba(0,0,0,.4)}
-.port{width:14px;height:14px;background:#007bff;border-radius:50%;cursor:crosshair;position:relative;z-index:4;border:2px solid #fff;pointer-events:auto;touch-action:none;flex-shrink:0;display:flex;align-items:center;justify-content:center;transition:background .1s,transform .1s,box-shadow .1s}
-.port.output{background:#e83e8c}
-.port.active-port{background:#28a745!important;box-shadow:0 0 6px #28a745}
-.port.pour-selected{background:#ff6b00!important;box-shadow:0 0 16px #ff6b00,0 0 32px rgba(255,107,0,.4);transform:scale(1.25);border-color:#fff;animation:pourPulse .8s ease-in-out infinite alternate}
+.port{width:14px;height:14px;background:#e83e8c;border-radius:50%;cursor:crosshair;position:relative;z-index:4;border:2px solid #fff;pointer-events:auto;touch-action:none;flex-shrink:0;display:flex;align-items:center;justify-content:center;transition:background .1s,transform .1s,box-shadow .1s}
+.port.output{background:#3b5b8c}
+.port.active-port{background:#15803d!important;box-shadow:0 0 6px #15803d}
+.port.pour-selected{background:#b45309!important;box-shadow:0 0 16px #b45309,0 0 32px rgba(180,83,9,.30);transform:scale(1.25);border-color:#fff;animation:pourPulse .8s ease-in-out infinite alternate}
 @keyframes pourPulse{0%{box-shadow:0 0 12px #ff6b00,0 0 24px rgba(255,107,0,.3)}100%{box-shadow:0 0 24px #ff6b00,0 0 48px rgba(255,107,0,.5)}}
 .port:hover{transform:scale(1.15)}
 .port.pour-selected:hover{transform:scale(1.25)}
-.switch-btn{padding:3px 6px;font-size:10px;background:#dc3545;color:#fff;border:none;border-radius:3px;cursor:pointer;z-index:4;position:relative;pointer-events:auto;touch-action:manipulation;transition:background .1s;min-width:32px;text-align:center}
+.switch-btn{padding:3px 6px;font-size:10px;background:#b91c1c;color:#fff;border:none;border-radius:3px;cursor:pointer;z-index:4;position:relative;pointer-events:auto;touch-action:manipulation;transition:background .1s;min-width:32px;text-align:center}
 .switch-btn.active{background:#28a745}
-.push-btn{padding:3px 6px;font-size:10px;background:#6c5ce7;color:#fff;border:none;border-radius:3px;cursor:pointer;z-index:4;position:relative;pointer-events:auto;touch-action:manipulation;transition:background .08s,transform .08s;min-width:32px;text-align:center;user-select:none;-webkit-user-select:none}
-.push-btn:active,.push-btn.pressed{background:#a29bfe;transform:scale(.92)}
+.push-btn{padding:3px 6px;font-size:10px;background:#3d4653;color:#fff;border:none;border-radius:3px;cursor:pointer;z-index:4;position:relative;pointer-events:auto;touch-action:manipulation;transition:background .08s,transform .08s;min-width:32px;text-align:center;user-select:none;-webkit-user-select:none}
+.push-btn:active,.push-btn.pressed{background:#5b6472;transform:scale(.92)}
 .push-btn.active{background:#28a745}
 .delay-input{width:58px;background:rgba(0,0,0,.2);color:var(--text-color);border:1px solid var(--border-color);border-radius:3px;padding:1px 4px;font-size:10px;text-align:center;z-index:4;pointer-events:auto}
 .bulb{width:16px;height:16px;border-radius:50%;background:#ddd;border:2px solid #555;flex-shrink:0;transition:background .1s,box-shadow .1s}
-.bulb.on{background:#ffc107;box-shadow:0 0 10px #ffc107;border-color:#d39e00}
+.bulb.on{background:#d97706;box-shadow:0 0 10px #d97706;border-color:#b45309}
 .pulse-led{width:10px;height:10px;border-radius:50%;background:#3f3f46;border:2px solid #555;flex-shrink:0;transition:background .06s,box-shadow .06s}
-.pulse-led.on{background:#f43f5e;box-shadow:0 0 10px #f43f5e;border-color:#f43f5e}
+.pulse-led.on{background:#b91c1c;box-shadow:0 0 10px #b91c1c;border-color:#b91c1c}
 .color-picker-input{width:26px;height:20px;padding:1px;border:1px solid rgba(255,255,255,.4);border-radius:3px;background:transparent;cursor:pointer;z-index:4;pointer-events:auto;flex-shrink:0}
 .gate-pixel{border-radius:0!important;border:none!important;background:transparent!important;box-shadow:none!important;cursor:move;margin:0!important;padding:0!important;position:absolute;z-index:3;width:40px!important;height:40px!important;min-width:40px!important;min-height:40px!important}
 .gate-pixel .gate-body{padding:0!important;margin:0!important;background:transparent!important;display:flex;align-items:center;justify-content:center;border-radius:0!important;width:100%;height:100%;position:relative;border:none!important}
 .gate-pixel .gate-header{display:none!important}
 .gate-pixel.powered{border:none!important;box-shadow:none!important;background:transparent!important}
-.gate-pixel.selected{outline:3px solid #ffc107;outline-offset:3px}
+.gate-pixel.selected{outline:3px solid #1f3a63;outline-offset:3px}
 .pixel-square{width:100%;height:100%;background:var(--pixel-off);border:none!important;border-radius:0!important;position:relative;transition:background .05s,box-shadow .05s;flex-shrink:0;cursor:move;margin:0!important;padding:0!important;outline:none!important;box-sizing:border-box!important}
 .pixel-square.on{background:var(--pixel-on);box-shadow:0 0 12px var(--pixel-on)}
 .pixel-square .port{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%) scale(.7);width:14px;height:14px;border-radius:50%;background:rgba(0,123,255,.9);border:2px solid #fff;cursor:crosshair;z-index:5;opacity:0;pointer-events:none;transition:opacity .12s,transform .12s}
@@ -164,12 +202,12 @@ svg{position:absolute;top:0;left:0;width:100%;height:100%;pointer-events:all;ove
 .instructions{position:absolute;bottom:10px;left:10px;background:var(--toolbar-bg);color:var(--text-color);padding:8px 12px;border-radius:4px;font-size:10px;pointer-events:auto;box-shadow:0 2px 4px rgba(0,0,0,.1);z-index:10;border:1px solid var(--border-color);max-width:calc(100vw - 20px);opacity:.85;transition:opacity .2s,transform .2s,max-height .2s;line-height:1.5;padding-right:28px}
 .instructions.hidden{opacity:0;transform:translateY(-10px);pointer-events:none;max-height:0;padding:0 12px;overflow:hidden;border-color:transparent}
 .instructions-close{position:absolute;top:4px;right:4px;background:transparent;border:none;color:var(--text-color);font-size:16px;cursor:pointer;line-height:1;padding:0 4px;border-radius:3px;opacity:.5;pointer-events:auto}
-.wire-path{stroke:#666;stroke-width:3.5;fill:none;cursor:pointer;pointer-events:stroke;stroke-linecap:round;transition:stroke .15s,stroke-width .15s}
-.wire-path.powered{stroke:#28a745}
-.wire-path:hover{stroke:#3b82f6;stroke-width:4.5}
+.wire-path{stroke:#8b93a7;stroke-width:3.5;fill:none;cursor:pointer;pointer-events:stroke;stroke-linecap:round;transition:stroke .15s,stroke-width .15s}
+.wire-path.powered{stroke:#15803d}
+.wire-path:hover{stroke:#1f3a63;stroke-width:4.5}
 .wire-path.powered:hover{stroke:#22c55e;stroke-width:4.5}
-.wire-path.selected{stroke:#ffc107!important;stroke-width:5}
-.wire-path.selected:hover{stroke:#ffc107!important}
+.wire-path.selected{stroke:#1f3a63!important;stroke-width:5}
+.wire-path.selected:hover{stroke:#1f3a63!important}
 #ghost-gate{position:absolute;background:var(--gate-bg);border:2px dashed var(--gate-color,#007bff);border-radius:6px;opacity:.9;pointer-events:none;display:none;z-index:1000;box-shadow:0 4px 10px rgba(0,0,0,.15);transform-origin:0 0;width:140px;height:auto;min-width:140px}
 #ghost-gate .gate-header{background:var(--gate-color,#007bff);color:#fff;padding:4px 6px;font-size:10px;display:flex;justify-content:space-between;align-items:center;border-top-left-radius:4px;border-top-right-radius:4px;gap:4px;min-height:26px}
 #ghost-gate .gate-body{background:var(--gate-bg);border-bottom-left-radius:6px;border-bottom-right-radius:6px;padding:6px;display:flex;flex-direction:column;gap:4px;color:var(--text-color)}
@@ -186,8 +224,8 @@ svg{position:absolute;top:0;left:0;width:100%;height:100%;pointer-events:all;ove
 .io-port-row{display:flex;align-items:center;gap:4px;justify-content:space-between}
 .io-port-row .io-label{font-size:9px;opacity:.8;min-width:18px}
 #toast-container{position:fixed;bottom:50px;right:14px;z-index:9999;display:flex;flex-direction:column;gap:6px;max-width:280px}
-.toast{background:var(--toolbar-bg);color:var(--text-color);padding:10px 14px;border-radius:6px;box-shadow:0 4px 12px rgba(0,0,0,.2);border-left:4px solid #007bff;font-size:11px;animation:slideIn .25s ease-out;cursor:pointer}
-.toast.success{border-left-color:#28a745}.toast.error{border-left-color:#dc3545}.toast.info{border-left-color:#17a2b8}
+.toast{background:var(--toolbar-bg);color:var(--text-color);padding:10px 14px;border-radius:6px;box-shadow:0 4px 12px rgba(0,0,0,.2);border-left:4px solid #1f3a63;font-size:11px;animation:slideIn .25s ease-out;cursor:pointer}
+.toast.success{border-left-color:#15803d}.toast.error{border-left-color:#b91c1c}.toast.info{border-left-color:#0f766e}
 .toast .toast-close{float:right;margin-left:10px;cursor:pointer;opacity:.6}
 @keyframes slideIn{from{opacity:0;transform:translateX(30px)}to{opacity:1;transform:translateX(0)}}
 #confirm-modal,#prompt-modal,#ic-modal,#folder-modal{position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.5);z-index:3000;display:none;align-items:center;justify-content:center}
@@ -196,16 +234,16 @@ svg{position:absolute;top:0;left:0;width:100%;height:100%;pointer-events:all;ove
 #confirm-modal .modal-box .btn-row,#prompt-modal .modal-box .btn-row,#folder-modal .modal-box .btn-row{display:flex;gap:8px;justify-content:flex-end;margin-top:14px}
 #confirm-modal .modal-box .btn-row button,#prompt-modal .modal-box .btn-row button,#folder-modal .modal-box .btn-row button{padding:5px 16px;border:none;border-radius:4px;cursor:pointer;font-weight:bold;font-size:11px}
 #confirm-modal .modal-box .btn-row .btn-cancel,#prompt-modal .modal-box .btn-row .btn-cancel,#folder-modal .modal-box .btn-row .btn-cancel{background:#6c757d;color:#fff}
-#confirm-modal .modal-box .btn-row .btn-confirm{background:#dc3545;color:#fff}
-#prompt-modal .modal-box .btn-row .btn-confirm{background:#007bff;color:#fff}
-#folder-modal .modal-box .btn-row .btn-confirm{background:#007bff;color:#fff}
+#confirm-modal .modal-box .btn-row .btn-confirm{background:#b91c1c;color:#fff}
+#prompt-modal .modal-box .btn-row .btn-confirm{background:#1f3a63;color:#fff}
+#folder-modal .modal-box .btn-row .btn-confirm{background:#1f3a63;color:#fff}
 #prompt-input{background:var(--bg-color);color:var(--text-color)}
 #folder-modal .modal-box label{display:block;font-size:11px;margin-bottom:4px;margin-top:10px;opacity:.85}
 #folder-modal .modal-box input[type=text]{width:100%;padding:6px;border:1px solid var(--border-color);border-radius:4px;font-size:13px;background:var(--bg-color);color:var(--text-color);font-family:inherit;outline:none}
 #folder-modal .modal-box input[type=color]{width:100%;height:32px;border:1px solid var(--border-color);border-radius:4px;padding:2px;background:var(--bg-color);cursor:pointer}
 #file-input{display:none}
 #selection-box{position:absolute;border:1.5px dashed #ffc107;background:rgba(255,193,7,.12);z-index:500;pointer-events:none;display:none}
-#pour-indicator{display:none;background:#ff6b00;color:#fff;padding:2px 8px;border-radius:12px;font-size:10px;font-weight:bold;margin-left:4px;animation:pourPulse .8s ease-in-out infinite alternate;white-space:nowrap;align-items:center;gap:5px}
+#pour-indicator{display:none;background:#b45309;color:#fff;padding:2px 8px;border-radius:12px;font-size:10px;font-weight:bold;margin-left:4px;animation:pourPulse .8s ease-in-out infinite alternate;white-space:nowrap;align-items:center;gap:5px}
 #pour-indicator.active{display:inline-flex}
 #pour-indicator .pour-exit-btn{background:rgba(255,255,255,.2);border:none;color:#fff;border-radius:10px;padding:0 5px;cursor:pointer;font-size:10px;font-weight:bold;line-height:16px}
 .gate-updating{animation:gatePulse .5s ease 2}
@@ -239,7 +277,7 @@ svg{position:absolute;top:0;left:0;width:100%;height:100%;pointer-events:all;ove
 #custom-gate-modal .modal-content .btn-row{display:flex;gap:8px;justify-content:flex-end;margin-top:10px;flex-shrink:0}
 #custom-gate-modal .modal-content .btn-row button{padding:5px 16px;border:none;border-radius:4px;cursor:pointer;font-weight:bold;font-size:11px}
 #custom-gate-modal .modal-content .btn-row .btn-cancel{background:#6c757d;color:#fff}
-#custom-gate-modal .modal-content .btn-row .btn-confirm{background:#28a745;color:#fff}
+#custom-gate-modal .modal-content .btn-row .btn-confirm{background:#15803d;color:#fff}
 #confirm-modal, #prompt-modal, #folder-modal { z-index: 4000 !important; }
 
 .gate-folder-btn{gap:5px;position:relative;transition:background .1s,outline .1s}
@@ -247,7 +285,7 @@ svg{position:absolute;top:0;left:0;width:100%;height:100%;pointer-events:all;ove
 .gate-folder-btn.active{outline:2px solid #ffc107;outline-offset:1px;filter:brightness(1.15)}
 .gate-folder-btn.drag-over{outline:3px dashed #ffc107;outline-offset:2px;filter:brightness(1.25)}
 .folder-count{background:rgba(0,0,0,.35);border-radius:8px;padding:0 5px;font-size:9px;line-height:14px;font-weight:bold}
-.folder-add-btn{background:#475569!important}
+.folder-add-btn{background:#3d4653!important}
 .folder-add-btn:hover{background:#334155!important}
 #gate-folder-dropdown{position:fixed;z-index:2600;background:var(--toolbar-bg);color:var(--text-color);border:1px solid var(--border-color);border-radius:6px;box-shadow:0 8px 24px rgba(0,0,0,.28);padding:4px;min-width:150px;max-height:60vh;overflow-y:auto;display:flex;flex-direction:column;gap:2px}
 .gate-folder-item{display:flex;align-items:center;gap:7px;padding:5px 9px;border-radius:4px;cursor:grab;font-size:11px;white-space:nowrap;color:var(--text-color)}
@@ -312,54 +350,54 @@ body.debug-mode .pixel-square .port{opacity:.72}
 <body>
 
 <div id="toolbar">
-    <div style="font-weight:bold;font-size:12px;">Logic Sim</div>
+    <div class="brand-title" style="font-size:13px;">Logic Sim</div>
     <div class="toolbar-group">
-        <div class="tool-btn" style="background:#2563eb;" onmousedown="startGhostDrag(event,'INPUT')" ontouchstart="startGhostDrag(event,'INPUT')">Toggle</div>
-        <div class="tool-btn" style="background:#6c5ce7;" onmousedown="startGhostDrag(event,'PUSH')" ontouchstart="startGhostDrag(event,'PUSH')">Push</div>
-        <div class="tool-btn" style="background:#f59e0b;" onmousedown="startGhostDrag(event,'OUTPUT')" ontouchstart="startGhostDrag(event,'OUTPUT')">Output</div>
+        <div class="tool-btn" style="background:#1f3a63;" onmousedown="startGhostDrag(event,'INPUT')" ontouchstart="startGhostDrag(event,'INPUT')">Toggle</div>
+        <div class="tool-btn" style="background:#3d4653;" onmousedown="startGhostDrag(event,'PUSH')" ontouchstart="startGhostDrag(event,'PUSH')">Push</div>
+        <div class="tool-btn" style="background:#b45309;" onmousedown="startGhostDrag(event,'OUTPUT')" ontouchstart="startGhostDrag(event,'OUTPUT')">Output</div>
     </div>
     <div class="toolbar-group">
-        <div class="tool-btn" style="background:#16a34a;" onmousedown="startGhostDrag(event,'AND')" ontouchstart="startGhostDrag(event,'AND')">AND</div>
-        <div class="tool-btn" style="background:#8b5cf6;" onmousedown="startGhostDrag(event,'OR')" ontouchstart="startGhostDrag(event,'OR')">OR</div>
-        <div class="tool-btn" style="background:#ec4899;" onmousedown="startGhostDrag(event,'XOR')" ontouchstart="startGhostDrag(event,'XOR')">XOR</div>
-        <div class="tool-btn" style="background:#ef4444;" onmousedown="startGhostDrag(event,'NOT')" ontouchstart="startGhostDrag(event,'NOT')">NOT</div>
-        <div class="tool-btn" style="background:#0f766e;" onmousedown="startGhostDrag(event,'NAND')" ontouchstart="startGhostDrag(event,'NAND')">NAND</div>
-        <div class="tool-btn" style="background:#7c3aed;" onmousedown="startGhostDrag(event,'NOR')" ontouchstart="startGhostDrag(event,'NOR')">NOR</div>
-        <div class="tool-btn" style="background:#0891b2;" onmousedown="startGhostDrag(event,'XNOR')" ontouchstart="startGhostDrag(event,'XNOR')">XNOR</div>
-        <div class="tool-btn" style="background:#64748b;" onmousedown="startGhostDrag(event,'DELAY')" ontouchstart="startGhostDrag(event,'DELAY')">DELAY</div>
+        <div class="tool-btn" style="background:#15803d;" onmousedown="startGhostDrag(event,'AND')" ontouchstart="startGhostDrag(event,'AND')">AND</div>
+        <div class="tool-btn" style="background:#0f766e;" onmousedown="startGhostDrag(event,'OR')" ontouchstart="startGhostDrag(event,'OR')">OR</div>
+        <div class="tool-btn" style="background:#6d28d9;" onmousedown="startGhostDrag(event,'XOR')" ontouchstart="startGhostDrag(event,'XOR')">XOR</div>
+        <div class="tool-btn" style="background:#b91c1c;" onmousedown="startGhostDrag(event,'NOT')" ontouchstart="startGhostDrag(event,'NOT')">NOT</div>
+        <div class="tool-btn" style="background:#134e4a;" onmousedown="startGhostDrag(event,'NAND')" ontouchstart="startGhostDrag(event,'NAND')">NAND</div>
+        <div class="tool-btn" style="background:#3730a3;" onmousedown="startGhostDrag(event,'NOR')" ontouchstart="startGhostDrag(event,'NOR')">NOR</div>
+        <div class="tool-btn" style="background:#0369a1;" onmousedown="startGhostDrag(event,'XNOR')" ontouchstart="startGhostDrag(event,'XNOR')">XNOR</div>
+        <div class="tool-btn" style="background:#3d4653;" onmousedown="startGhostDrag(event,'DELAY')" ontouchstart="startGhostDrag(event,'DELAY')">DELAY</div>
         <div class="tool-btn" style="background:#0d9488;" onmousedown="startGhostDrag(event,'CLOCK')" ontouchstart="startGhostDrag(event,'CLOCK')">CLOCK</div>
-        <div class="tool-btn" style="background:#f43f5e;" onmousedown="startGhostDrag(event,'PULSE')" ontouchstart="startGhostDrag(event,'PULSE')">PULSE</div>
+        <div class="tool-btn" style="background:#be123c;" onmousedown="startGhostDrag(event,'PULSE')" ontouchstart="startGhostDrag(event,'PULSE')">PULSE</div>
     </div>
     <div class="toolbar-group" style="border-left:2px solid var(--border-color);padding-left:5px;">
         <div class="tool-btn" style="background:#d97706;" onmousedown="startGhostDrag(event,'SCREEN')" ontouchstart="startGhostDrag(event,'SCREEN')">Pixel</div>
-        <div class="tool-btn" style="background:#db2777;" onmousedown="startGhostDrag(event,'COLOR')" ontouchstart="startGhostDrag(event,'COLOR')">Color</div>
+        <div class="tool-btn" style="background:#9d174d;" onmousedown="startGhostDrag(event,'COLOR')" ontouchstart="startGhostDrag(event,'COLOR')">Color</div>
     </div>
     <div class="toolbar-group" style="border-left:2px solid var(--border-color);padding-left:5px;">
         <div class="tool-btn" style="background:#8b5cf6;" onclick="openCustomGateModal(null, false)">⚙️ Custom Gate</div>
     </div>
     <div class="toolbar-group" id="custom-gates-toolbar"></div>
     <div class="toolbar-group">
-        <button id="pause-btn" onclick="togglePause()" style="background:#d97706;">Pause</button>
-        <button onclick="stepSimulation()" style="background:#2563eb;">Step</button>
+        <button id="pause-btn" onclick="togglePause()" style="background:#1f3a63;">Pause</button>
+        <button onclick="stepSimulation()" style="background:#3b5b8c;">Step</button>
         <label style="font-size:10px;cursor:pointer;white-space:nowrap;"><input type="checkbox" id="snapCheck" checked /> Snap</label>
-        <button onclick="resetView()" style="background:#4b5563;">Reset</button>
-        <button onclick="toggleTheme()" style="background:#6366f1;">Theme</button>
-        <button onclick="clearAll()" style="background:#dc3545;">Clear</button>
-        <button id="debug-btn" onclick="toggleDebugMode()" style="background:#7c3aed;" title="Toggle Debug Mode (D)">🐞 Debug</button>
-        <button onclick="toggleInstructions()" style="background:#8b5cf6;">Tips</button>
-        <button id="toast-btn" onclick="toggleToasts()" style="background:#8b5cf6;" title="Toggle notifications">🔔</button>
+        <button onclick="resetView()" style="background:#3d4653;">Reset</button>
+        <button onclick="toggleTheme()" style="background:#3b5b8c;">Theme</button>
+        <button onclick="clearAll()" style="background:#b91c1c;">Clear</button>
+        <button id="debug-btn" onclick="toggleDebugMode()" style="background:#1f3a63;" title="Toggle Debug Mode (D)">🐞 Debug</button>
+        <button onclick="toggleInstructions()" style="background:#3d4653;">Tips</button>
+        <button id="toast-btn" onclick="toggleToasts()" style="background:#3d4653;" title="Toggle notifications">🔔</button>
     </div>
     <div class="toolbar-group">
-        <button onclick="exportCircuit()" style="background:#28a745;">⬇ Export</button>
-        <button onclick="document.getElementById('file-input').click()" style="background:#17a2b8;">⬆ Import</button>
+        <button onclick="exportCircuit()" style="background:#15803d;">⬇ Export</button>
+        <button onclick="document.getElementById('file-input').click()" style="background:#0f766e;">⬆ Import</button>
         <input type="file" id="file-input" accept=".json" onchange="importCircuit(event)" />
     </div>
     <div class="toolbar-group">
-        <button id="undo-btn" onclick="undo()" style="background:#6c757d;">↩ Undo</button>
-        <button id="redo-btn" onclick="redo()" style="background:#6c757d;">↪ Redo</button>
+        <button id="undo-btn" onclick="undo()" style="background:#3d4653;">↩ Undo</button>
+        <button id="redo-btn" onclick="redo()" style="background:#3d4653;">↪ Redo</button>
     </div>
         <div class="toolbar-group" style="border-left:2px solid var(--border-color);padding-left:5px;">
-        <button id="share-btn" onclick="openShareModal()" style="background:#0ea5e9;">🌐 Share</button>
+        <button id="share-btn" onclick="openShareModal()" style="background:#1f3a63;">🌐 Share</button>
     </div>
     <div class="toolbar-group" style="border-left:2px solid var(--border-color);padding-left:5px;">
         <span id="pour-indicator">🔌 Pour mode <button class="pour-exit-btn" onclick="exitWirePouring()">✕</button></span>
@@ -369,7 +407,7 @@ body.debug-mode .pixel-square .port{opacity:.72}
 <div id="viewport" onmousedown="startPan(event)" ontouchstart="startTouchPanZoom(event)" onwheel="handleZoom(event)">
     <div id="canvas">
         <div id="grid-bg" onmousedown="startPan(event)" ontouchstart="startTouchPanZoom(event)"></div>
-        <svg id="wires"><path id="temp-wire" d="" stroke="#e83e8c" stroke-width="3" stroke-dasharray="5,5" fill="none" visibility="hidden" /></svg>
+        <svg id="wires"><path id="temp-wire" d="" stroke="#3b5b8c" stroke-width="3" stroke-dasharray="5,5" fill="none" visibility="hidden" /></svg>
     </div>
     <div id="selection-box"></div>
     <div id="remote-cursors"></div>
@@ -407,7 +445,7 @@ body.debug-mode .pixel-square .port{opacity:.72}
         <label>Name</label>
         <input type="text" id="folder-name-input" placeholder="e.g. Arithmetic" autocomplete="off" />
         <label>Color</label>
-        <input type="color" id="folder-color-input" value="#475569" />
+        <input type="color" id="folder-color-input" value="#3d4653" />
         <div class="btn-row"><button class="btn-cancel" onclick="closeFolderDialog(false)">Cancel</button><button class="btn-confirm" onclick="closeFolderDialog(true)">OK</button></div>
     </div>
 </div>
@@ -429,7 +467,7 @@ body.debug-mode .pixel-square .port{opacity:.72}
             </div>
             <div class="cg-info">
                 <div><label>Gate Name:</label><input type="text" id="custom-gate-name-input" placeholder="Enter gate name"></div>
-                <div><label>Gate Color:</label><input type="color" id="custom-gate-color-input" value="#6f42c1"></div>
+                <div><label>Gate Color:</label><input type="color" id="custom-gate-color-input" value="#1f3a63"></div>
                 <div><label>Folder (optional):</label><input type="text" id="custom-gate-folder-input" list="custom-gate-folder-list" placeholder="(none)" autocomplete="off"><datalist id="custom-gate-folder-list"></datalist></div>
             </div>
         </div>
@@ -597,9 +635,9 @@ const MAX_HISTORY=100;let isUndoRedo=false,lastSaveTime=0;
 const SNAPSHOT_COALESCE_MS=350;
 let pendingSnapshotTimer=null;
 
-const GATE_COLORS={INPUT:'#2563eb',PUSH:'#6c5ce7',OUTPUT:'#f59e0b',AND:'#16a34a',OR:'#8b5cf6',XOR:'#ec4899',NOT:'#ef4444',NAND:'#0f766e',NOR:'#7c3aed',XNOR:'#0891b2',DELAY:'#64748b',CLOCK:'#0d9488',PULSE:'#f43f5e',SCREEN:'#d97706',COLOR:'#db2777'};
-function getGateColor(c){if(c.isCustom)return(c.def&&c.def.color)||'#6f42c1';return GATE_COLORS[c.type]||'#007bff'}
-function getGateColorByName(t,d){if(d&&d.color)return d.color;return GATE_COLORS[t]||'#6f42c1'}
+const GATE_COLORS={INPUT:'#1f3a63',PUSH:'#3d4653',OUTPUT:'#b45309',AND:'#15803d',OR:'#0f766e',XOR:'#6d28d9',NOT:'#b91c1c',NAND:'#134e4a',NOR:'#3730a3',XNOR:'#0369a1',DELAY:'#3d4653',CLOCK:'#0d9488',PULSE:'#be123c',SCREEN:'#d97706',COLOR:'#9d174d'};
+function getGateColor(c){if(c.isCustom)return(c.def&&c.def.color)||'#1f3a63';return GATE_COLORS[c.type]||'#007bff'}
+function getGateColorByName(t,d){if(d&&d.color)return d.color;return GATE_COLORS[t]||'#1f3a63'}
 
 const SNAP=20;
 function snapValue(v){if(!document.getElementById('snapCheck').checked)return v;return Math.round(v/SNAP)*SNAP}
@@ -687,7 +725,7 @@ function openFolderDialog(existingName,existingColor){
     document.getElementById('folder-modal-title').textContent=existingName?'Edit Folder':'New Folder';
     document.getElementById('folder-modal-message').textContent=existingName?'Change the folder\'s name or color.':'Choose a name and color for the folder.';
     document.getElementById('folder-name-input').value=existingName||'';
-    document.getElementById('folder-color-input').value=existingColor||'#475569';
+    document.getElementById('folder-color-input').value=existingColor||'#3d4653';
     modal.style.display='flex';
     return new Promise(r=>{
         folderDialogResolve=r;
@@ -716,7 +754,7 @@ async function createNewFolder(){
     showToast(`Folder "${res.name}" created.`,'success',1500);
 }
 async function editFolder(oldName){
-    const cur=savedFolders[oldName]||{name:oldName,color:'#475569'};
+    const cur=savedFolders[oldName]||{name:oldName,color:'#3d4653'};
     const res=await openFolderDialog(cur.name,cur.color);
     if(!res)return;
     if(!res.name){showToast('Please enter a folder name.','error');return}
@@ -736,7 +774,7 @@ async function editFolder(oldName){
 function moveGateToFolder(gateName,folderName){
     const def=savedCustomGates[gateName];if(!def)return;
     const target=(folderName||'').trim();
-    if(target&&!savedFolders[target])savedFolders[target]={name:target,color:'#475569'};
+    if(target&&!savedFolders[target])savedFolders[target]={name:target,color:'#3d4653'};
     if((def.folder||'')===target)return;
     def.folder=target;
     forceSaveState();updateCustomGatesToolbar();
@@ -978,9 +1016,9 @@ function pasteAtCursor(){
 
 function startGhostDrag(e,type,sourceFolder){
     e.preventDefault();ghostType=type;ghostSourceFolder=sourceFolder||'';
-    let ht=type,bc='',w=140,h='auto',gc='#6f42c1';
+    let ht=type,bc='',w=140,h='auto',gc='#1f3a63';
     if(savedCustomGates[type]){
-        const d=savedCustomGates[type];gc=d.color||'#6f42c1';
+        const d=savedCustomGates[type];gc=d.color||'#1f3a63';
         let rows='';const ml=Math.max((d.inputInitials||[]).length,(d.outputInitials||[]).length);
         for(let i=0;i<ml;i++){
             const ii=(d.inputInitials||[])[i]||'',oi=(d.outputInitials||[])[i]||'';
@@ -991,7 +1029,7 @@ function startGhostDrag(e,type,sourceFolder){
         bc=rows||'<span style="font-size:9px;opacity:.6;">(no ports)</span>';
         h=Math.max(50,ml*22+12);
     }else{
-        gc=GATE_COLORS[type]||'#6f42c1';
+        gc=GATE_COLORS[type]||'#1f3a63';
         if(type==='INPUT'){ht='Toggle';bc=`<div style="display:flex;justify-content:space-between;align-items:center;"><button class="switch-btn">OFF</button><div class="port output"></div></div>`}
         else if(type==='PUSH'){ht='Push';bc=`<div style="display:flex;justify-content:space-between;align-items:center;"><button class="push-btn">PRESS</button><div class="port output"></div></div>`}
         else if(type==='OUTPUT'){bc=`<div style="display:flex;justify-content:space-between;align-items:center;"><div class="port"></div><div class="bulb"></div></div>`}
@@ -1262,7 +1300,7 @@ function spawnComponentAt(type,x,y){
         delayMs:type==='DELAY'?150:undefined,delayQueue:type==='DELAY'?new Array(3).fill(0):undefined,
         pulseCounter:type==='PULSE'?0:undefined,pulsePrevInput:type==='PULSE'?0:undefined,
         clockMs:type==='CLOCK'?250:undefined,clockCounter:type==='CLOCK'?0:undefined,
-        pixelColor:type==='COLOR'?'#39ff14':undefined,
+        pixelColor:type==='COLOR'?'#22c55e':undefined,
         pixelWidth:type==='SCREEN'?40:undefined,pixelHeight:type==='SCREEN'?40:undefined};
     initComponentInputs(comp);
     components.push(comp);renderComponent(comp);forceSaveState();runSimulation();
@@ -1478,7 +1516,7 @@ function ensureModalTempWire(){
         const svg=document.getElementById('custom-gate-modal-wires');if(!svg)return null;
         tw=document.createElementNS('http://www.w3.org/2000/svg','path');
         tw.setAttribute('id','modal-temp-wire');tw.setAttribute('d','');tw.setAttribute('visibility','hidden');
-        tw.setAttribute('stroke','#e83e8c');tw.setAttribute('stroke-width','3');tw.setAttribute('fill','none');tw.setAttribute('stroke-dasharray','5,5');
+        tw.setAttribute('stroke','#3b5b8c');tw.setAttribute('stroke-width','3');tw.setAttribute('fill','none');tw.setAttribute('stroke-dasharray','5,5');
         svg.appendChild(tw);
     }
     return tw;
@@ -2137,7 +2175,7 @@ function drawWires(){
         wireDrawPending=false;updatePortPositions();
         if(!svgWires||!document.body.contains(svgWires)){svgWires=document.getElementById('wires');if(!svgWires)return}
         let tw=document.getElementById('temp-wire');
-        if(!tw){tw=document.createElementNS('http://www.w3.org/2000/svg','path');tw.setAttribute('id','temp-wire');tw.setAttribute('d','');tw.setAttribute('stroke','#e83e8c');tw.setAttribute('stroke-width','3');tw.setAttribute('stroke-dasharray','5,5');tw.setAttribute('fill','none');tw.setAttribute('visibility','hidden');svgWires.appendChild(tw)}
+        if(!tw){tw=document.createElementNS('http://www.w3.org/2000/svg','path');tw.setAttribute('id','temp-wire');tw.setAttribute('d','');tw.setAttribute('stroke','#3b5b8c');tw.setAttribute('stroke-width','3');tw.setAttribute('stroke-dasharray','5,5');tw.setAttribute('fill','none');tw.setAttribute('visibility','hidden');svgWires.appendChild(tw)}
         const seen=new Set();
         for(let i=0;i<wires.length;i++){
             const w=wires[i];const wid=`wire-${w.id}`;seen.add(wid);
@@ -2365,7 +2403,7 @@ function updateDebugHover(){
 
 function escapeHtml(s){return String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
 function gateNameComparator(a,b){return a.localeCompare(b,undefined,{numeric:true,sensitivity:'base'})}
-function getFolderColor(name){return (savedFolders[name]&&savedFolders[name].color)||'#475569'}
+function getFolderColor(name){return (savedFolders[name]&&savedFolders[name].color)||'#3d4653'}
 
 function getGateFolders(){
     const map=new Map();
@@ -2408,7 +2446,7 @@ function toggleGateFolder(folderName,btnEl){
         it.className='gate-folder-item';
         it.dataset.gateName=n;
         it.title='Drag onto canvas to place • drag onto another folder to move • drag onto toolbar to make loose • right-click to edit';
-        it.innerHTML=`<span class="gf-dot" style="background:${def.color||'#6f42c1'}"></span><span class="gf-name">${escapeHtml(n)}</span>`;
+        it.innerHTML=`<span class="gf-dot" style="background:${def.color||'#1f3a63'}"></span><span class="gf-name">${escapeHtml(n)}</span>`;
         const start=e=>{
             if(e.button!==undefined&&e.button!==0)return;
             e.preventDefault();e.stopPropagation();
@@ -2477,7 +2515,7 @@ function updateCustomGatesToolbar(){
 
     const addBtn=document.createElement('div');
     addBtn.className='tool-btn folder-add-btn';
-    addBtn.style.background='#475569';
+    addBtn.style.background='#3d4653';
     addBtn.title='Create a new folder';
     addBtn.innerHTML='<span style="font-size:11px;">📁</span><span>+</span>';
     addBtn.addEventListener('mousedown',e=>{e.preventDefault();e.stopPropagation()});
@@ -2512,7 +2550,7 @@ function updateCustomGatesToolbar(){
         const def=savedCustomGates[name];
         const b=document.createElement('div');
         b.className='tool-btn';
-        b.style.background=def.color||'#6f42c1';
+        b.style.background=def.color||'#1f3a63';
         b.textContent=name;
         b.dataset.gateName=name;
         b.title='Drag onto the canvas • drag onto a folder to add it • right-click to edit';
@@ -2608,7 +2646,7 @@ function mergeImportedState(state){
     }
     const importedFolders=state.savedFolders||{};
     for(const[name,def]of Object.entries(importedFolders)){
-        if(!savedFolders[name])savedFolders[name]={name,color:def.color||'#475569'};
+        if(!savedFolders[name])savedFolders[name]={name,color:def.color||'#3d4653'};
     }
     (state.components || []).forEach(comp => {
         if(comp.isCustom && comp.type && Array.isArray(comp.subComps) && comp.subComps.length > 0){
@@ -2618,7 +2656,7 @@ function mergeImportedState(state){
                 const outs = comp.subComps.filter(c => c.type === 'OUTPUT');
                 savedCustomGates[comp.type] = {
                     name: comp.type,
-                    color: (ex && ex.color) || (comp.def && comp.def.color) || '#6f42c1',
+                    color: (ex && ex.color) || (comp.def && comp.def.color) || '#1f3a63',
                     folder: (ex && ex.folder) || '',
                     inputsCount:  (ex && ex.inputsCount)  || ins.length,
                     outputsCount: (ex && ex.outputsCount) || outs.length,
@@ -2646,7 +2684,7 @@ function mergeImportedState(state){
     });
     Object.keys(savedCustomGates).forEach(n=>{
         const f=(savedCustomGates[n].folder||'').trim();
-        if(f&&!savedFolders[f])savedFolders[f]={name:f,color:'#475569'};
+        if(f&&!savedFolders[f])savedFolders[f]={name:f,color:'#3d4653'};
     });
     (state.components||[]).forEach(c=>{idMap[c.id]=nextId++});
     const nc=(state.components||[]).map(comp=>{
@@ -2672,7 +2710,7 @@ function mergeImportedState(state){
 function normalizeCustomGateDef(def){
     if(!def) return def;
     def.name    = def.name    || def.gateName  || def.title || 'Unnamed';
-    def.color   = def.color   || def.gateColor || '#6f42c1';
+    def.color   = def.color   || def.gateColor || '#1f3a63';
     def.folder  = (typeof def.folder === 'string') ? def.folder : '';
     if(!Array.isArray(def.innerComps)){
         if(Array.isArray(def.innerComponents))      def.innerComps = def.innerComponents;
@@ -2742,7 +2780,7 @@ function loadFromLocalStorage(){
         }
         Object.keys(savedCustomGates).forEach(n=>{
             const f=(savedCustomGates[n].folder||'').trim();
-            if(f&&!savedFolders[f])savedFolders[f]={name:f,color:'#475569'};
+            if(f&&!savedFolders[f])savedFolders[f]={name:f,color:'#3d4653'};
         });
         components.forEach(comp => {
             if(comp.isCustom && comp.type && Array.isArray(comp.subComps) && comp.subComps.length > 0){
@@ -2752,7 +2790,7 @@ function loadFromLocalStorage(){
                     const outs = comp.subComps.filter(c => c.type === 'OUTPUT');
                     savedCustomGates[comp.type] = {
                         name: comp.type,
-                        color: (ex && ex.color) || (comp.def && comp.def.color) || '#6f42c1',
+                        color: (ex && ex.color) || (comp.def && comp.def.color) || '#1f3a63',
                         folder: (ex && ex.folder) || '',
                         inputsCount:  (ex && ex.inputsCount)  || ins.length,
                         outputsCount: (ex && ex.outputsCount) || outs.length,
@@ -2779,7 +2817,7 @@ function loadFromLocalStorage(){
         });
         Object.keys(savedCustomGates).forEach(n=>{
             const f=(savedCustomGates[n].folder||'').trim();
-            if(f&&!savedFolders[f])savedFolders[f]={name:f,color:'#475569'};
+            if(f&&!savedFolders[f])savedFolders[f]={name:f,color:'#3d4653'};
         });
         components.forEach(comp=>{
             if(comp.isCustom&&comp.type&&savedCustomGates[comp.type])comp.def=savedCustomGates[comp.type];
@@ -2840,7 +2878,7 @@ function openCustomGateModal(gateType,isEditing){
         const def=savedCustomGates[gateType];
         titleText.textContent=`Edit Custom Gate: ${gateType}`;
         nameInput.value=def.name||gateType;
-        colorInput.value=def.color||'#6f42c1';
+        colorInput.value=def.color||'#1f3a63';
         if(folderInput)folderInput.value=def.folder||'';
         loadDefIntoModal(def, gateType);
         customGateModalIsEditing=true;customGateModalEditingType=gateType;
@@ -2848,7 +2886,7 @@ function openCustomGateModal(gateType,isEditing){
         const selectedSources=getOrderedSelectedSources();
         titleText.textContent='Create Custom Gate';
         nameInput.value='';
-        colorInput.value='#6f42c1';
+        colorInput.value='#1f3a63';
         if(folderInput)folderInput.value='';
         if(selectedSources.length>0)loadSelectionIntoModal();
         customGateModalIsEditing=false;customGateModalEditingType=null;
@@ -2866,7 +2904,7 @@ function closeCustomGateModal(result){
         const ci=document.getElementById('custom-gate-color-input');
         const fi=document.getElementById('custom-gate-folder-input');
         const gn=(ni.value||'').trim();
-        const gc=ci.value||'#6f42c1';
+        const gc=ci.value||'#1f3a63';
         const gf=fi?(fi.value||'').trim():'';
         if(!gn){showToast('Please enter a gate name.','error');return}
         const ok=buildGateFromModal(gn,gc,gf);
@@ -2956,7 +2994,7 @@ function setupModalToolbar(){
         .forEach(n=>ordered.push({name:n,folder:''}));
     ordered.forEach(({name,folder})=>{
         const def=savedCustomGates[name];
-        const b=document.createElement('div');b.className='tool-btn';b.style.background=def.color||'#6f42c1';
+        const b=document.createElement('div');b.className='tool-btn';b.style.background=def.color||'#1f3a63';
         b.textContent=name;
         b.title=folder?`Folder: ${folder}`:'';
         b.onmousedown=e=>startModalGhostDrag(e,name);b.ontouchstart=e=>startModalGhostDrag(e,name);tb.appendChild(b);
@@ -3153,7 +3191,7 @@ function startModalGhostDrag(e,type){
     const g=document.getElementById('custom-gate-modal-ghost-gate');if(!g)return;
     let ht=type,bc='',w=140,h='auto',gc=getGateColorByName(type,null),isPixel=false;
     if(savedCustomGates[type]){
-        const d=savedCustomGates[type];gc=d.color||'#6f42c1';
+        const d=savedCustomGates[type];gc=d.color||'#1f3a63';
         const il=d.inputInitials||[],ol=d.outputInitials||[],ml=Math.max(il.length,ol.length);
         let rows='';
         for(let i=0;i<ml;i++){
@@ -3171,7 +3209,7 @@ function startModalGhostDrag(e,type){
     else if(type==='DELAY'){bc=`<div style="display:flex;justify-content:space-between;align-items:center;gap:3px;"><div class="port"></div><span style="font-size:9px;">150ms</span><div class="port output"></div></div>`}
     else if(type==='PULSE'){bc=`<div style="display:flex;justify-content:space-between;align-items:center;gap:3px;"><div class="port"></div><span style="font-size:9px;font-weight:bold;">PULSE</span><span style="font-size:9px;">1-shot</span><div class="port output"></div></div>`}
     else if(type==='CLOCK'){bc=`<div style="display:flex;justify-content:space-between;align-items:center;gap:3px;"><div class="port"></div><span style="font-size:9px;">⏱</span><input type="number" value="250" style="width:58px;font-size:10px;" disabled><span style="font-size:8px;opacity:.6;">ms</span><div class="port output"></div></div>`}
-    else if(type==='COLOR'){bc=`<div style="display:flex;justify-content:space-between;align-items:center;gap:3px;"><div class="port"></div><input type="color" value="#39ff14" disabled style="width:26px;height:20px;padding:1px;border-radius:3px;background:transparent;"><div class="port output"></div></div>`}
+    else if(type==='COLOR'){bc=`<div style="display:flex;justify-content:space-between;align-items:center;gap:3px;"><div class="port"></div><input type="color" value="#22c55e" disabled style="width:26px;height:20px;padding:1px;border-radius:3px;background:transparent;"><div class="port output"></div></div>`}
     else if(type==='SCREEN'){bc=`<div style="width:40px;height:40px;background:var(--pixel-off);position:relative;"><div class="port" style="position:absolute;left:50%;top:50%;transform:translate(-50%,-50%) scale(.7);width:12px;height:12px;border-radius:50%;background:#007bff;border:2px solid #fff;opacity:.5;"></div></div>`;w=40;h=40;isPixel=true}
     else{bc=`<div style="display:flex;justify-content:space-between;align-items:center;"><div><div class="port" style="margin-bottom:3px;"></div><div class="port"></div></div><span style="font-size:10px;font-weight:bold;">${type}</span><div class="port output"></div></div>`}
     g.style.setProperty('--gate-color',gc);g.style.width=w+'px';
@@ -3200,7 +3238,7 @@ function spawnModalComponentAt(type,x,y){
         delayMs:type==='DELAY'?150:undefined,delayQueue:type==='DELAY'?new Array(3).fill(0):undefined,
         pulseCounter:type==='PULSE'?0:undefined,pulsePrevInput:type==='PULSE'?0:undefined,
         clockMs:type==='CLOCK'?250:undefined,clockCounter:type==='CLOCK'?0:undefined,
-        pixelColor:type==='COLOR'?'#39ff14':undefined,
+        pixelColor:type==='COLOR'?'#22c55e':undefined,
         pixelWidth:type==='SCREEN'?40:undefined,pixelHeight:type==='SCREEN'?40:undefined};
     if(savedCustomGates[type]){
         const def=savedCustomGates[type];comp.isCustom=true;comp.def=def;comp._defName=type;
@@ -3221,7 +3259,7 @@ function spawnModalComponentAt(type,x,y){
 }
 function renderModalComponent(comp){
     const el=document.createElement('div');el.className='gate';el.id=`modal-comp-${comp.id}`;
-    el.style.setProperty('--gate-color',comp.isCustom&&comp.def?(comp.def.color||'#6f42c1'):getGateColorByName(comp.type,null));
+    el.style.setProperty('--gate-color',comp.isCustom&&comp.def?(comp.def.color||'#1f3a63'):getGateColorByName(comp.type,null));
     if(comp.type==='SCREEN'){
         el.classList.add('gate-pixel');const w=comp.pixelWidth||40,h=comp.pixelHeight||40;
         el.style.width=w+'px';el.style.height=h+'px';el.style.minWidth=w+'px';el.style.minHeight=h+'px';
@@ -3523,7 +3561,7 @@ function buildGateFromModal(gateName,gateColor,gateFolder){
         innerComps:storedInnerComps,
         innerWires:innerWires.map(w=>({fromComp:w.fromComp,fromPort:w.fromPort,toComp:w.toComp,toPort:w.toPort}))
     };
-    if(newDef.folder&&!savedFolders[newDef.folder])savedFolders[newDef.folder]={name:newDef.folder,color:'#475569'};
+    if(newDef.folder&&!savedFolders[newDef.folder])savedFolders[newDef.folder]={name:newDef.folder,color:'#3d4653'};
     if(customGateModalIsEditing&&customGateModalEditingType){
         const oldName=customGateModalEditingType;
         if(gateName!==oldName){
@@ -3973,7 +4011,7 @@ function flushPeerState(force){
     if(ghostType && ghostGate && ghostGate.style.display === 'block'){
         payload.ghost = {
             html:    ghostGate.innerHTML,
-            color:   ghostGate.style.getPropertyValue('--gate-color') || '#6f42c1',
+            color:   ghostGate.style.getPropertyValue('--gate-color') || '#1f3a63',
             w:       parseFloat(ghostGate.style.width) || 140,
             h:       ghostGate.style.height === 'auto' ? 70 : (parseFloat(ghostGate.style.height) || 70),
             isPixel: ghostGate.classList.contains('ghost-pixel'),
@@ -4139,7 +4177,7 @@ function ensureRemoteGhostEl(peerId){
     if(!layer) return;
     const el = document.createElement('div');
     el.className = 'remote-ghost' + (rg.isPixel ? ' ghost-pixel' : '');
-    el.style.setProperty('--gate-color', rg.color || '#6f42c1');
+    el.style.setProperty('--gate-color', rg.color || '#1f3a63');
     el.style.width = (rg.w || 140) + 'px';
     el.style.height = (typeof rg.h === 'number' ? rg.h + 'px' : 'auto');
     el.innerHTML = rg.html || '';
