@@ -3,240 +3,321 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta name="theme-color" content="#070911">
+<meta name="theme-color" content="#f7f8fa">
 <title>Atom Forge — Custom Matter Sandbox</title>
 <link rel="icon" type="image/png" sizes="512x512" href="/face.png">
 <style>
+  :root{
+    --bg:#f7f8fa;
+    --surface:#ffffff;
+    --surface-2:#fbfcfd;
+    --surface-3:#f2f4f8;
+    --border:#e3e6eb;
+    --border-strong:#d2d8e0;
+    --text:#14181f;
+    --muted:#5b6472;
+    --muted-2:#78818f;
+    --accent:#1f3a63;
+    --accent-2:#16294a;
+    --accent-soft:#3b5b8c;
+    --accent-tint:#eef1f6;
+    --danger:#b91c1c;
+    --danger-border:#e3c4c4;
+    --danger-tint:#fdf2f2;
+    --warn:#b45309;
+    --warn-border:#e8d0a0;
+    --warn-tint:#fdf6e8;
+    --good:#15803d;
+    --good-border:#b9d7c4;
+    --good-tint:#f1f7f3;
+    --font-serif:"Iowan Old Style","Palatino Linotype",Palatino,Georgia,"Times New Roman",serif;
+    --font-sans:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    --radius:10px;
+    --shadow-sm:0 1px 2px rgba(20,24,31,0.05);
+    --shadow-md:0 6px 20px rgba(20,24,31,0.08);
+    --viewport:#0a0f1c;
+    --viewport-border:#1c2540;
+  }
   *{box-sizing:border-box}
   html{height:100%}
-  body{margin:0;font-family:'Inter',system-ui,-apple-system,'Segoe UI',sans-serif;
-    background:#070911;color:#dbe4f7;overflow:hidden;
+  body{margin:0;font-family:var(--font-sans);
+    background:var(--bg);color:var(--text);overflow:hidden;
     display:flex;flex-direction:column;height:100vh;height:100dvh;
+    -webkit-font-smoothing:antialiased;
     padding-bottom:env(safe-area-inset-bottom)}
   button,.chip,.pitem,.tab{-webkit-tap-highlight-color:transparent}
-  #tabs{flex:0 0 auto;display:flex;gap:8px;padding:8px 14px;background:#0d1019;
-    border-bottom:1px solid #1b2236;align-items:center}
-  .tab{background:#141a2b;border:1px solid #253052;color:#8496c0;padding:8px 20px;
-    border-radius:9px;cursor:pointer;font-size:13.5px;letter-spacing:.4px;font-weight:600;
-    transition:.18s;font-family:inherit}
-  .tab:hover{background:#1a2338;color:#b6c6ea}
-  .tab.active{background:linear-gradient(180deg,#2f4a94,#1c2a55);color:#dbe8ff;
-    border-color:#4d70db;box-shadow:0 0 16px #2c47a066}
-  #brand{margin-left:auto;font-size:12px;color:#4c5a7d;letter-spacing:2px;font-weight:700}
+
+  #tabs{flex:0 0 auto;display:flex;gap:8px;padding:10px 16px;background:var(--surface);
+    border-bottom:1px solid var(--border);align-items:center}
+  .tab{background:var(--surface-3);border:1px solid var(--border);color:var(--muted);
+    padding:8px 20px;border-radius:8px;cursor:pointer;font-size:13.5px;letter-spacing:.3px;
+    font-weight:600;transition:.16s;font-family:inherit}
+  .tab:hover{background:var(--accent-tint);color:var(--accent);border-color:var(--border-strong)}
+  .tab.active{background:var(--accent);color:#fff;border-color:var(--accent);
+    box-shadow:var(--shadow-sm)}
+  #brand{margin-left:auto;font-family:var(--font-serif);font-size:13px;color:var(--muted-2);
+    letter-spacing:2.5px;font-weight:600}
+
   .screen-host{flex:1 1 auto;min-height:0;position:relative;overflow:hidden}
   .screen{position:absolute;inset:0;display:none;overflow:hidden}
   .screen.active{display:flex}
+
   .atom-left{flex:1;display:flex;flex-direction:column;align-items:center;
     position:relative;padding:6px 10px 4px;min-width:0;min-height:0;overflow:hidden}
   .canvas-wrap{flex:1 1 auto;min-height:0;min-width:0;width:100%;
     display:flex;align-items:center;justify-content:center;overflow:hidden}
-  #atomCanvas{display:block;border-radius:16px;background:#080a12;box-shadow:0 0 30px #0009}
+  #atomCanvas{display:block;border-radius:12px;background:var(--viewport);
+    box-shadow:0 0 0 1px var(--border),0 6px 28px rgba(20,24,31,0.10)}
+
   .hint-wrap{height:30px;display:flex;align-items:center;justify-content:center;flex:0 0 auto}
-  .hint{font-size:12.5px;padding:6px 18px;border-radius:20px;background:#111a30;
-    border:1px solid #24325a;color:#8fa6d8;opacity:0;transition:opacity .25s;
-    white-space:nowrap;pointer-events:none;font-weight:600;letter-spacing:.3px}
+  .hint{font-size:12.5px;padding:6px 18px;border-radius:20px;background:var(--surface);
+    border:1px solid var(--border);color:var(--muted);opacity:0;transition:opacity .25s;
+    white-space:nowrap;pointer-events:none;font-weight:600;letter-spacing:.3px;
+    box-shadow:var(--shadow-sm)}
   .hint.show{opacity:1}
-  .hint.err{border-color:#7a2b3a;color:#ff9aa8;background:#2a0f16}
-  .hint.ok{border-color:#2b6b4a;color:#8bffc0;background:#0c2118}
+  .hint.err{border-color:var(--danger-border);color:var(--danger);background:var(--danger-tint)}
+  .hint.ok{border-color:var(--good-border);color:var(--good);background:var(--good-tint)}
+
   .qty-row{display:flex;align-items:center;gap:7px;justify-content:center;
     padding:1px 0 6px;flex:0 0 auto;flex-wrap:wrap}
-  .qty-label{font-size:10.5px;font-weight:800;text-transform:uppercase;
-    letter-spacing:1.6px;color:#5d6c92;padding-right:2px}
-  .qbtn{width:28px;height:28px;border-radius:8px;background:#141a2b;border:1px solid #243052;
-    color:#9fb0d6;font-size:15px;font-weight:800;cursor:pointer;font-family:inherit;
-    display:flex;align-items:center;justify-content:center;transition:.13s;line-height:1;padding:0}
-  .qbtn:hover{background:#212b4b;color:#cfdcff}
+  .qty-label{font-family:var(--font-serif);font-size:10.5px;font-weight:600;
+    text-transform:uppercase;letter-spacing:1.8px;color:var(--muted-2);padding-right:2px}
+  .qbtn{width:28px;height:28px;border-radius:7px;background:var(--surface);
+    border:1px solid var(--border-strong);color:var(--muted);font-size:15px;font-weight:800;
+    cursor:pointer;font-family:inherit;display:flex;align-items:center;justify-content:center;
+    transition:.13s;line-height:1;padding:0}
+  .qbtn:hover{background:var(--accent-tint);color:var(--accent);border-color:var(--accent-soft)}
   .qbtn:active{transform:scale(.93)}
-  #qtyInput{width:74px;height:28px;text-align:center;background:#0f1524;
-    border:1px solid #202b46;color:#e2ecff;border-radius:8px;font-size:14px;font-weight:800;
-    font-family:inherit;outline:none;font-variant-numeric:tabular-nums;-moz-appearance:textfield}
+  #qtyInput{width:74px;height:28px;text-align:center;background:var(--surface);
+    border:1px solid var(--border-strong);color:var(--text);border-radius:7px;
+    font-size:14px;font-weight:800;font-family:inherit;outline:none;
+    font-variant-numeric:tabular-nums;-moz-appearance:textfield}
   #qtyInput::-webkit-outer-spin-button,#qtyInput::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}
-  #qtyInput:focus{border-color:#3a56a0;box-shadow:0 0 0 2px #1e3a7a55}
+  #qtyInput:focus{border-color:var(--accent-soft);box-shadow:0 0 0 3px rgba(31,58,99,0.10)}
   .qpresets{display:flex;gap:5px;margin-left:4px}
-  .qpreset{padding:5px 10px;border-radius:7px;background:#111726;border:1px solid #1e2840;
-    color:#7d8fb8;font-size:11.5px;font-weight:700;cursor:pointer;font-family:inherit;transition:.13s}
-  .qpreset:hover{background:#1a2338;color:#b6c6ea}
-  .qpreset.sel{background:#233059;border-color:#3f5cb0;color:#dbe8ff}
+  .qpreset{padding:5px 10px;border-radius:6px;background:var(--surface);
+    border:1px solid var(--border);color:var(--muted);font-size:11.5px;font-weight:700;
+    cursor:pointer;font-family:inherit;transition:.13s}
+  .qpreset:hover{background:var(--accent-tint);color:var(--accent);border-color:var(--border-strong)}
+  .qpreset.sel{background:var(--accent);border-color:var(--accent);color:#fff}
+
   .chips{display:flex;gap:9px;align-items:center;flex-wrap:wrap;
     justify-content:center;padding:0 10px 2px;flex:0 0 auto}
   .chip{padding:8px 12px 8px 16px;border-radius:24px;cursor:pointer;user-select:none;
-    font-weight:700;font-size:13px;border:1px solid rgba(255,255,255,.16);
-    transition:.12s;letter-spacing:.3px;font-family:inherit;
-    display:flex;align-items:center;gap:9px}
-  .chip:hover{transform:translateY(-1px)}
-  .chip:active{transform:scale(.95)}
-  .chip.p{background:linear-gradient(180deg,#ff7070,#c33535);color:#fff;box-shadow:0 4px 16px #ff3b3b44}
-  .chip.n{background:linear-gradient(180deg,#9fa9c0,#5a6478);color:#fff;box-shadow:0 4px 16px #8b96ad33}
-  .chip.e{background:linear-gradient(180deg,#6ce2ff,#1d9ccd);color:#02222e;box-shadow:0 4px 16px #35c8ff44}
+    font-weight:700;font-size:13px;border:1px solid;transition:.13s;letter-spacing:.3px;
+    font-family:inherit;display:flex;align-items:center;gap:9px}
+  .chip:hover{transform:translateY(-1px);box-shadow:var(--shadow-sm)}
+  .chip:active{transform:scale(.96)}
+  .chip.p{background:var(--danger-tint);color:#9a2a2a;border-color:var(--danger-border)}
+  .chip.n{background:var(--surface-3);color:#4a5262;border-color:var(--border-strong)}
+  .chip.e{background:#eff6fb;color:#1e5f7a;border-color:#c5d8e6}
   .chip-count{min-width:26px;height:21px;padding:0 7px;border-radius:11px;
-    background:rgba(0,0,0,.32);display:flex;align-items:center;justify-content:center;
+    background:rgba(20,24,31,0.06);display:flex;align-items:center;justify-content:center;
     font-size:12.5px;font-weight:800;font-variant-numeric:tabular-nums}
-  .chip.e .chip-count{background:rgba(255,255,255,.55);color:#02222e}
+  .chip.p .chip-count{background:rgba(154,42,42,0.10);color:#9a2a2a}
+  .chip.n .chip-count{background:rgba(74,82,98,0.10);color:#4a5262}
+  .chip.e .chip-count{background:rgba(30,95,122,0.10);color:#1e5f7a}
   .chip.flash{animation:pop .22s ease}
-  @keyframes pop{0%{transform:scale(1)}45%{transform:scale(1.13)}100%{transform:scale(1)}}
-  .btn{background:#18203a;border:1px solid #2a3659;color:#9fb0d6;padding:9px 15px;
-    border-radius:9px;cursor:pointer;font-size:13px;font-weight:600;font-family:inherit;transition:.15s}
-  .btn:hover{background:#212b4b;color:#cfdcff}
-  .btn.primary{background:linear-gradient(180deg,#3b6be0,#2547a8);border-color:#5b86f5;
-    color:#fff;box-shadow:0 0 18px #2f52c055}
-  .btn.primary:hover{background:linear-gradient(180deg,#4a7bf0,#2d54c0)}
-  #chipModeBtn.on-remove{background:linear-gradient(180deg,#7a2b3a,#4a1622);
-    border-color:#a03a4e;color:#ffd0d8}
-  .clicknote{font-size:11px;color:#4e5d80;letter-spacing:.3px;padding:4px 0 2px;
-    text-align:center;line-height:1.6;flex:0 0 auto}
-  .clicknote b{color:#8ea3d0}
-  .props{width:390px;min-width:390px;background:#0b0e18;border-left:1px solid #1a2136;
+  @keyframes pop{0%{transform:scale(1)}45%{transform:scale(1.10)}100%{transform:scale(1)}}
+
+  .btn{background:var(--surface);border:1px solid var(--border-strong);color:var(--text);
+    padding:9px 15px;border-radius:8px;cursor:pointer;font-size:13px;font-weight:600;
+    font-family:inherit;transition:.15s}
+  .btn:hover{background:var(--accent-tint);border-color:var(--accent-soft);color:var(--accent)}
+  .btn.primary{background:var(--accent);border-color:var(--accent);color:#fff;
+    box-shadow:var(--shadow-sm)}
+  .btn.primary:hover{background:var(--accent-2);border-color:var(--accent-2)}
+  #chipModeBtn.on-remove{background:var(--danger-tint);border-color:var(--danger-border);color:var(--danger)}
+  #chipModeBtn.on-remove:hover{background:#fbe6e6;color:var(--danger)}
+
+  .clicknote{font-size:11px;color:var(--muted-2);letter-spacing:.3px;padding:5px 0 3px;
+    text-align:center;line-height:1.7;flex:0 0 auto}
+  .clicknote b{color:var(--muted)}
+
+  .props{width:390px;min-width:390px;background:var(--surface);border-left:1px solid var(--border);
     display:flex;flex-direction:column;min-height:0}
-  .props-head{padding:12px 14px 8px;border-bottom:1px solid #161d30;flex:0 0 auto}
-  .atom-title{font-size:22px;font-weight:800;letter-spacing:.5px;color:#eaf1ff}
-  .atom-sub{font-size:11.5px;color:#5d6c92;margin-top:3px;letter-spacing:.4px}
-  .swatchbig{width:100%;height:6px;border-radius:3px;margin-top:9px}
-  #propSearch,#cmSearch{width:100%;margin-top:9px;background:#0f1524;border:1px solid #202b46;
-    color:#c6d3ee;padding:8px 12px;border-radius:8px;font-size:12.5px;outline:none;font-family:inherit}
-  #propSearch:focus,#cmSearch:focus{border-color:#3a56a0}
-  #propList,#cmPropList{flex:1 1 auto;overflow-y:auto;padding:6px 10px 24px;min-height:0}
+  .props-head{padding:14px 16px 10px;border-bottom:1px solid var(--border);flex:0 0 auto}
+  .atom-title{font-family:var(--font-serif);font-size:22px;font-weight:600;
+    letter-spacing:-0.01em;color:var(--text)}
+  .atom-sub{font-size:11.5px;color:var(--muted);margin-top:4px;letter-spacing:.2px}
+  .swatchbig{width:100%;height:6px;border-radius:3px;margin-top:10px;
+    box-shadow:inset 0 0 0 1px var(--border)}
+  #propSearch,#cmSearch{width:100%;margin-top:10px;background:var(--surface-3);
+    border:1px solid var(--border);color:var(--text);padding:8px 12px;border-radius:8px;
+    font-size:12.5px;outline:none;font-family:inherit;transition:.15s}
+  #propSearch:focus,#cmSearch:focus{border-color:var(--accent-soft);
+    box-shadow:0 0 0 3px rgba(31,58,99,0.10);background:var(--surface)}
+  #propList,#cmPropList{flex:1 1 auto;overflow-y:auto;padding:6px 12px 24px;min-height:0}
   #propList::-webkit-scrollbar,#cmPropList::-webkit-scrollbar{width:9px}
-  #propList::-webkit-scrollbar-thumb,#cmPropList::-webkit-scrollbar-thumb{background:#1d2740;border-radius:6px}
-  .cat{font-size:10.5px;letter-spacing:2px;text-transform:uppercase;color:#48598a;
-    margin:14px 0 6px 4px;font-weight:800}
-  .prow{display:flex;justify-content:space-between;gap:10px;padding:4.5px 8px;border-radius:6px;font-size:12.5px}
-  .prow:nth-child(even){background:#0d1220}
-  .pk{color:#8b9cc4;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-  .pv{color:#e2ecff;font-variant-numeric:tabular-nums;font-weight:600;text-align:right;white-space:nowrap}
-  .pv em{color:#5a6b95;font-style:normal;font-size:10.5px;font-weight:500}
-  .empty{color:#4b5878;font-size:13px;padding:40px 20px;text-align:center;line-height:1.7}
-  .cm-left{flex:1;display:flex;flex-direction:column;padding:14px 18px 12px;min-width:0;min-height:0;overflow:hidden}
-  .cm-header{flex:0 0 auto;margin-bottom:10px}
-  .cm-title{font-size:20px;font-weight:800;color:#eaf1ff;letter-spacing:.5px;margin:0}
-  .cm-sub{font-size:11.5px;color:#5d6c92;margin-top:3px}
-  .recipe-bar{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px;flex:0 0 auto}
-  .recipe{padding:7px 12px;border-radius:8px;background:#131a2e;border:1px solid #253052;
-    color:#a9b8dc;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;transition:.13s}
-  .recipe:hover{background:#1b2544;color:#dae4ff;border-color:#3f5cb0}
-  .recipe:disabled{opacity:.32;cursor:not-allowed}
-  .recipe:disabled:hover{background:#131a2e;color:#a9b8dc;border-color:#253052}
-  .formula-box{flex:0 0 auto;background:linear-gradient(180deg,#0f1729,#0a0f1e);
-    border:1px solid #1c2844;border-radius:12px;padding:14px 20px;text-align:center;
-    margin-bottom:12px;min-height:76px;display:flex;flex-direction:column;align-items:center;justify-content:center}
-  .formula-label{font-size:10px;letter-spacing:2.5px;text-transform:uppercase;
-    color:#4d5c80;font-weight:800;margin-bottom:5px}
-  .formula-value{font-size:32px;font-weight:800;color:#eaf1ff;letter-spacing:1px;
-    font-variant-numeric:tabular-nums;line-height:1.1;text-shadow:0 0 20px rgba(120,160,255,.28)}
-  .formula-empty{font-size:14px;color:#4b5878;font-style:italic;font-weight:600}
+  #propList::-webkit-scrollbar-thumb,#cmPropList::-webkit-scrollbar-thumb{
+    background:var(--border-strong);border-radius:6px}
+  .cat{font-family:var(--font-serif);font-size:11px;letter-spacing:2px;text-transform:uppercase;
+    color:var(--muted-2);margin:16px 0 6px 4px;font-weight:600}
+  .prow{display:flex;justify-content:space-between;gap:10px;padding:5px 8px;
+    border-radius:5px;font-size:12.5px}
+  .prow:nth-child(even){background:var(--surface-3)}
+  .pk{color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .pv{color:var(--text);font-variant-numeric:tabular-nums;font-weight:600;
+    text-align:right;white-space:nowrap}
+  .pv em{color:var(--muted-2);font-style:normal;font-size:10.5px;font-weight:500}
+  .empty{color:var(--muted-2);font-size:13px;padding:40px 20px;text-align:center;line-height:1.7}
+  .empty b{color:var(--muted);font-weight:700}
+
+  .cm-left{flex:1;display:flex;flex-direction:column;padding:16px 20px 14px;
+    min-width:0;min-height:0;overflow:hidden}
+  .cm-header{flex:0 0 auto;margin-bottom:12px}
+  .cm-title{font-family:var(--font-serif);font-size:20px;font-weight:600;color:var(--text);
+    letter-spacing:-0.01em;margin:0}
+  .cm-sub{font-size:11.5px;color:var(--muted);margin-top:4px}
+  .recipe-bar{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:14px;flex:0 0 auto}
+  .recipe{padding:7px 12px;border-radius:7px;background:var(--surface);
+    border:1px solid var(--border);color:var(--muted);font-size:12px;font-weight:600;
+    cursor:pointer;font-family:inherit;transition:.13s}
+  .recipe:hover{background:var(--accent-tint);color:var(--accent);border-color:var(--accent-soft)}
+  .recipe:disabled{opacity:.4;cursor:not-allowed}
+  .recipe:disabled:hover{background:var(--surface);color:var(--muted);border-color:var(--border)}
+  .formula-box{flex:0 0 auto;background:var(--surface-3);
+    border:1px solid var(--border);border-radius:10px;padding:16px 20px;text-align:center;
+    margin-bottom:14px;min-height:76px;display:flex;flex-direction:column;
+    align-items:center;justify-content:center}
+  .formula-label{font-family:var(--font-serif);font-size:10px;letter-spacing:2.5px;
+    text-transform:uppercase;color:var(--muted-2);font-weight:600;margin-bottom:6px}
+  .formula-value{font-family:var(--font-serif);font-size:32px;font-weight:600;
+    color:var(--accent);letter-spacing:.5px;font-variant-numeric:tabular-nums;line-height:1.1}
+  .formula-empty{font-family:var(--font-sans);font-size:14px;color:var(--muted-2);
+    font-style:italic;font-weight:500}
   .cm-elements{flex:1 1 auto;min-height:0;overflow-y:auto;
-    display:flex;flex-direction:column;gap:5px;margin-bottom:10px;padding-right:4px}
+    display:flex;flex-direction:column;gap:5px;margin-bottom:12px;padding-right:4px}
   .cm-elements::-webkit-scrollbar{width:8px}
-  .cm-elements::-webkit-scrollbar-thumb{background:#1d2740;border-radius:6px}
-  .cm-el{display:flex;align-items:center;gap:10px;padding:7px 10px;border-radius:9px;
-    background:#0e1524;border:1px solid #1a2338;transition:.13s}
-  .cm-el.active{border-color:#3f5cb0;background:#141c34}
+  .cm-elements::-webkit-scrollbar-thumb{background:var(--border-strong);border-radius:6px}
+  .cm-el{display:flex;align-items:center;gap:10px;padding:8px 12px;border-radius:8px;
+    background:var(--surface);border:1px solid var(--border);transition:.13s}
+  .cm-el.active{border-color:var(--accent-soft);background:var(--accent-tint)}
   .cm-el-swatch{width:26px;height:26px;border-radius:6px;flex:none;
-    box-shadow:0 0 10px #000a,inset 0 0 0 1px rgba(255,255,255,.1)}
+    box-shadow:inset 0 0 0 1px rgba(20,24,31,0.10)}
   .cm-el-info{flex:1;min-width:0}
-  .cm-el-name{font-size:13px;font-weight:700;color:#dbe4f7;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-  .cm-el-sub{font-size:10.5px;color:#5d6c92;margin-top:1px}
-  .cm-el-count{display:flex;align-items:center;gap:4px;background:#0a0f1c;
-    border-radius:8px;padding:2px;border:1px solid #1c2844}
-  .cm-el-count button{width:24px;height:24px;border-radius:6px;background:#141a2b;
-    border:1px solid #243052;color:#9fb0d6;font-size:14px;font-weight:800;
+  .cm-el-name{font-size:13px;font-weight:600;color:var(--text);overflow:hidden;
+    text-overflow:ellipsis;white-space:nowrap}
+  .cm-el-sub{font-size:10.5px;color:var(--muted-2);margin-top:1px}
+  .cm-el-count{display:flex;align-items:center;gap:4px;background:var(--surface-3);
+    border-radius:7px;padding:2px;border:1px solid var(--border)}
+  .cm-el-count button{width:24px;height:24px;border-radius:5px;background:var(--surface);
+    border:1px solid var(--border);color:var(--muted);font-size:14px;font-weight:800;
     cursor:pointer;font-family:inherit;transition:.13s;
     display:flex;align-items:center;justify-content:center;line-height:1;padding:0}
-  .cm-el-count button:hover{background:#212b4b;color:#cfdcff}
+  .cm-el-count button:hover{background:var(--accent-tint);color:var(--accent);
+    border-color:var(--accent-soft)}
   .cm-el-count button:active{transform:scale(.92)}
-  .cm-el-count button:disabled{opacity:.3;cursor:not-allowed}
+  .cm-el-count button:disabled{opacity:.4;cursor:not-allowed;background:var(--surface-3);
+    color:var(--muted-2);border-color:var(--border)}
   .cm-el-count-num{min-width:26px;text-align:center;font-size:14px;font-weight:800;
-    color:#e2ecff;font-variant-numeric:tabular-nums;padding:0 4px}
-  .cm-el-count-num.zero{color:#3d4a68}
-  .cm-empty{color:#4b5878;font-size:12.5px;padding:30px 20px;text-align:center;
-    line-height:1.7;background:#0a0f1c;border-radius:10px;border:1px dashed #1c2844}
-  .cm-actions{display:flex;gap:8px;flex:0 0 auto;padding-top:10px;border-top:1px solid #141a2b}
+    color:var(--text);font-variant-numeric:tabular-nums;padding:0 4px}
+  .cm-el-count-num.zero{color:var(--muted-2)}
+  .cm-empty{color:var(--muted-2);font-size:12.5px;padding:30px 20px;text-align:center;
+    line-height:1.7;background:var(--surface-3);border-radius:10px;
+    border:1px dashed var(--border-strong)}
+  .cm-empty b{color:var(--muted);font-weight:700}
+  .cm-actions{display:flex;gap:8px;flex:0 0 auto;padding-top:12px;border-top:1px solid var(--border)}
   .cm-actions .btn{flex:1}
+
   #sandbox{flex-direction:row}
-  .sb-side{width:280px;min-width:280px;background:#0b0e18;border-right:1px solid #1a2136;
-    display:flex;flex-direction:column;min-height:0;overflow-y:auto;overflow-x:hidden}
+  .sb-side{width:280px;min-width:280px;background:var(--surface);
+    border-right:1px solid var(--border);display:flex;flex-direction:column;
+    min-height:0;overflow-y:auto;overflow-x:hidden}
   .sb-side::-webkit-scrollbar{width:8px}
-  .sb-side::-webkit-scrollbar-thumb{background:#1d2740;border-radius:6px}
-  .sb-side h3{font-size:10.5px;letter-spacing:2px;text-transform:uppercase;color:#48598a;
-    margin:12px 14px 6px;font-weight:800;flex:0 0 auto}
-  #palette{flex:1 1 auto;overflow-y:auto;padding:0 10px 8px;min-height:70px}
+  .sb-side::-webkit-scrollbar-thumb{background:var(--border-strong);border-radius:6px}
+  .sb-side h3{font-family:var(--font-serif);font-size:11px;letter-spacing:2px;
+    text-transform:uppercase;color:var(--muted-2);margin:14px 16px 8px;font-weight:600;
+    flex:0 0 auto}
+  #palette{flex:1 1 auto;overflow-y:auto;padding:0 12px 8px;min-height:70px}
   #palette::-webkit-scrollbar{width:9px}
-  #palette::-webkit-scrollbar-thumb{background:#1d2740;border-radius:6px}
-  .pitem{display:flex;align-items:center;gap:8px;padding:6px 6px 6px 10px;border-radius:8px;
-    cursor:pointer;font-size:12.5px;color:#a9b8dc;border:1px solid transparent;
-    margin-bottom:3px;transition:.12s}
-  .pitem:hover{background:#141b2e;color:#dae4ff}
-  .pitem.sel{background:#1b2749;border-color:#3f5cb0;color:#e7efff}
-  .swatch{width:15px;height:15px;border-radius:4px;flex:none;box-shadow:0 0 8px #0008}
+  #palette::-webkit-scrollbar-thumb{background:var(--border-strong);border-radius:6px}
+  .pitem{display:flex;align-items:center;gap:8px;padding:7px 8px 7px 10px;
+    border-radius:7px;cursor:pointer;font-size:12.5px;color:var(--muted);
+    border:1px solid transparent;margin-bottom:3px;transition:.12s}
+  .pitem:hover{background:var(--surface-3);color:var(--text)}
+  .pitem.sel{background:var(--accent-tint);border-color:var(--accent-soft);color:var(--accent)}
+  .swatch{width:15px;height:15px;border-radius:4px;flex:none;
+    box-shadow:inset 0 0 0 1px rgba(20,24,31,0.12)}
   .pname{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
   .phase-badge{font-size:9.5px;font-weight:800;letter-spacing:.6px;padding:2px 7px;
-    border-radius:5px;text-transform:uppercase;flex:none}
-  .phase-solid{background:#22304f;color:#8fa8dd}
-  .phase-liquid{background:#123a48;color:#6fd0e8}
-  .phase-gas{background:#342a4a;color:#c79aec}
-  .pdel{width:20px;height:20px;border-radius:5px;background:#22141a;border:1px solid #3d2029;
-    color:#a06570;font-size:11px;font-weight:800;cursor:pointer;
-    display:flex;align-items:center;justify-content:center;padding:0;flex:none;
-    transition:.13s;font-family:inherit;line-height:1}
-  .pdel:hover{background:#4a1c26;border-color:#7a2b3a;color:#ff9aa8}
+    border-radius:5px;text-transform:uppercase;flex:none;border:1px solid transparent}
+  .phase-solid{background:var(--surface-3);color:#4a5262;border-color:var(--border)}
+  .phase-liquid{background:#e5f0f7;color:#1e5f7a;border-color:#c5d8e6}
+  .phase-gas{background:#efe9f6;color:#5a3d8e;border-color:#ddd0ee}
+  .pdel{width:20px;height:20px;border-radius:5px;background:var(--surface);
+    border:1px solid var(--border);color:var(--muted-2);font-size:11px;font-weight:800;
+    cursor:pointer;display:flex;align-items:center;justify-content:center;padding:0;
+    flex:none;transition:.13s;font-family:inherit;line-height:1}
+  .pdel:hover{background:var(--danger-tint);border-color:var(--danger-border);color:var(--danger)}
   .pdel:active{transform:scale(.9)}
-  .sb-controls{flex:0 0 auto;border-top:1px solid #141a2b;padding-top:2px}
-  .time-row{display:flex;gap:8px;padding:0 12px 6px;align-items:center}
-  .playbtn{width:40px;height:40px;border-radius:10px;flex:none;
-    background:linear-gradient(180deg,#2b5bd6,#1e3f9e);border:1px solid #4d74d6;
+
+  .sb-controls{flex:0 0 auto;border-top:1px solid var(--border);padding-top:2px}
+  .time-row{display:flex;gap:10px;padding:0 14px 8px;align-items:center}
+  .playbtn{width:40px;height:40px;border-radius:9px;flex:none;
+    background:var(--accent);border:1px solid var(--accent);
     color:#fff;cursor:pointer;font-size:15px;font-weight:800;
     display:flex;align-items:center;justify-content:center;font-family:inherit;
-    transition:.13s;line-height:1;padding:0;box-shadow:0 0 12px #2c47a044}
-  .playbtn:hover{background:linear-gradient(180deg,#3a6ce8,#2649b0)}
-  .playbtn:active{transform:scale(.94)}
-  .playbtn.paused{background:linear-gradient(180deg,#8a5a20,#5e3c12);border-color:#b07a2c;
-    box-shadow:0 0 12px #7a4a1055}
-  .time-meta{flex:1;display:flex;flex-direction:column;gap:1px;min-width:0}
-  .time-lbl{font-size:10px;color:#5d6c92;letter-spacing:1.5px;text-transform:uppercase;font-weight:800}
-  .time-val{font-size:15px;font-weight:800;color:#e2ecff;font-variant-numeric:tabular-nums;letter-spacing:.4px}
-  .slider{margin:0 14px 7px;font-size:11px;color:#63739b;letter-spacing:.3px}
-  .slider input{width:100%;accent-color:#4a6bd6;margin-top:3px}
-  .tools{display:flex;gap:6px;padding:0 12px 8px;flex-wrap:wrap}
-  .tool{flex:1 1 46%;background:#141a2b;border:1px solid #243052;color:#8fa0c8;
-    padding:8px 6px;border-radius:8px;cursor:pointer;font-size:11.5px;font-weight:600;
-    font-family:inherit;transition:.13s}
-  .tool:hover{background:#2a1a22;color:#ff9fa8;border-color:#6a2a3a}
-  .tool.warn:hover{background:#3a1c14;color:#ffc08a;border-color:#7a4020}
-  .tool.active{background:#1d2b4d;border-color:#3f5cb0;color:#dbe8ff}
-  .tool.active:hover{background:#24345c;color:#eaf1ff;border-color:#4d70db}
-  .sb-hint{padding:6px 14px 12px;font-size:11px;color:#4d5c80;line-height:1.8;letter-spacing:.2px}
-  .sb-hint b{color:#7d8fb8;font-weight:700}
+    transition:.13s;line-height:1;padding:0;box-shadow:var(--shadow-sm)}
+  .playbtn:hover{background:var(--accent-2);border-color:var(--accent-2)}
+  .playbtn:active{transform:scale(.95)}
+  .playbtn.paused{background:var(--surface);border-color:var(--border-strong);
+    color:var(--muted);box-shadow:none}
+  .playbtn.paused:hover{background:var(--accent-tint);color:var(--accent);
+    border-color:var(--accent-soft)}
+  .time-meta{flex:1;display:flex;flex-direction:column;gap:2px;min-width:0}
+  .time-lbl{font-family:var(--font-serif);font-size:10px;color:var(--muted-2);
+    letter-spacing:1.8px;text-transform:uppercase;font-weight:600}
+  .time-val{font-size:15px;font-weight:800;color:var(--text);
+    font-variant-numeric:tabular-nums;letter-spacing:.4px}
+  .slider{margin:0 16px 8px;font-size:11px;color:var(--muted);letter-spacing:.3px}
+  .slider input{width:100%;accent-color:var(--accent);margin-top:4px}
+  .tools{display:flex;gap:6px;padding:0 14px 10px;flex-wrap:wrap}
+  .tool{flex:1 1 46%;background:var(--surface);border:1px solid var(--border);
+    color:var(--muted);padding:8px 6px;border-radius:7px;cursor:pointer;font-size:11.5px;
+    font-weight:600;font-family:inherit;transition:.13s}
+  .tool:hover{background:var(--danger-tint);color:var(--danger);border-color:var(--danger-border)}
+  .tool.warn:hover{background:var(--warn-tint);color:var(--warn);border-color:var(--warn-border)}
+  .tool.active{background:var(--accent-tint);border-color:var(--accent-soft);color:var(--accent)}
+  .tool.active:hover{background:var(--accent-tint);color:var(--accent);border-color:var(--accent-soft)}
+  .sb-hint{padding:8px 16px 14px;font-size:11px;color:var(--muted-2);line-height:1.85;
+    letter-spacing:.2px}
+  .sb-hint b{color:var(--muted);font-weight:700}
+
   .sb-main{flex:1;display:flex;align-items:center;justify-content:center;
-    padding:12px;min-width:0;min-height:0;background:#05070d}
+    padding:16px;min-width:0;min-height:0;background:var(--surface-3)}
   .sim-wrap{width:100%;height:100%;min-width:0;min-height:0;
     display:flex;align-items:center;justify-content:center;overflow:hidden}
-  #simCanvas{display:block;image-rendering:pixelated;border-radius:12px;cursor:crosshair;
-    box-shadow:0 0 0 1px #1c2540,0 0 50px #000c;touch-action:none}
+  #simCanvas{display:block;image-rendering:pixelated;border-radius:10px;cursor:crosshair;
+    box-shadow:0 0 0 1px var(--border),0 6px 28px rgba(20,24,31,0.10);touch-action:none}
+
   .toast{position:fixed;bottom:26px;left:50%;transform:translateX(-50%) translateY(20px);
-    background:#12203a;border:1px solid #2f57a8;color:#cfe1ff;padding:11px 24px;
-    border-radius:12px;font-size:13px;font-weight:600;opacity:0;transition:.3s;
-    pointer-events:none;z-index:9998;box-shadow:0 8px 30px #000a;max-width:92vw;text-align:center}
+    background:var(--surface);border:1px solid var(--border-strong);color:var(--text);
+    padding:11px 24px;border-radius:10px;font-size:13px;font-weight:600;opacity:0;
+    transition:.26s;pointer-events:none;z-index:9998;box-shadow:var(--shadow-md);
+    max-width:92vw;text-align:center}
   .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
-  .toast.warn{border-color:#7a4020;color:#ffd0a8;background:#2a1a0a}
-  .toast.good{border-color:#2b6b4a;color:#8bffc0;background:#0c2118}
-  .toast.rx{border-color:#7a4a10;color:#ffdc9a;background:#2a1c08}
+  .toast.warn{border-left:3px solid var(--warn)}
+  .toast.good{border-left:3px solid var(--good)}
+  .toast.rx{border-left:3px solid #b45309}
 
   /* ================= RESPONSIVE / MOBILE ================= */
   .mobile-only{display:none !important}
 
   @media (max-width:900px){
-    #tabs{padding:6px 8px;gap:6px;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none}
+    #tabs{padding:8px 10px;gap:6px;overflow-x:auto;-webkit-overflow-scrolling:touch;
+      scrollbar-width:none}
     #tabs::-webkit-scrollbar{display:none}
     .tab{padding:8px 12px;font-size:12px;white-space:nowrap;flex:0 0 auto}
     #brand{display:none}
 
     .screen.active{flex-direction:column}
 
-    /* Atom lab */
     .atom-left{padding:2px 6px 4px}
     .props{
       width:100%;min-width:0;flex:0 0 auto;
       max-height:38vh;
-      border-left:none;border-top:1px solid #1a2136;
+      border-left:none;border-top:1px solid var(--border);
     }
     .props-head{padding:10px 12px 8px}
     .atom-title{font-size:17px}
@@ -256,21 +337,19 @@
     .btn{padding:9px 12px;font-size:12.5px}
     .clicknote{font-size:10.5px;padding:3px 6px 4px}
 
-    /* Compound lab */
-    .cm-left{padding:10px 12px 8px;overflow-y:auto}
+    .cm-left{padding:12px 14px 10px;overflow-y:auto}
     .cm-title{font-size:18px}
-    .formula-box{padding:10px 14px;min-height:62px;margin-bottom:9px}
+    .formula-box{padding:12px 16px;min-height:62px;margin-bottom:10px}
     .formula-value{font-size:24px}
     .cm-elements{flex:0 0 auto;max-height:34vh}
     .cm-el{padding:8px 10px}
     .cm-el-count button{width:30px;height:30px;font-size:16px}
 
-    /* Sandbox */
     #sandbox{flex-direction:column}
-    .sb-main{order:1;flex:1 1 auto;min-height:32vh;padding:6px}
+    .sb-main{order:1;flex:1 1 auto;min-height:32vh;padding:8px}
     .sb-side{
       order:2;width:100%;min-width:0;max-height:48vh;
-      border-right:none;border-top:1px solid #1a2136;
+      border-right:none;border-top:1px solid var(--border);
     }
     #palette{flex:0 1 auto;min-height:72px;max-height:24vh}
     .sb-hint{font-size:10.5px;padding:6px 12px 10px}
@@ -285,7 +364,7 @@
     .tab{padding:7px 9px;font-size:11px}
     .chip{font-size:11.5px;padding:7px 9px 7px 11px;gap:6px}
     .chip-count{min-width:22px;height:19px;font-size:11.5px}
-    .qty-label{font-size:9.5px;letter-spacing:1px}
+    .qty-label{font-size:9.5px;letter-spacing:1.2px}
     .formula-value{font-size:20px}
     .props{max-height:42vh}
   }
@@ -337,7 +416,7 @@
     <div class="props-head">
       <div class="atom-title" id="atomTitle">Empty Space</div>
       <div class="atom-sub" id="atomSub">Click the chips to build an atom →</div>
-      <div class="swatchbig" id="atomSwatch" style="background:#1a2136"></div>
+      <div class="swatchbig" id="atomSwatch" style="background:#e3e6eb"></div>
       <input id="propSearch" placeholder="Filter 113 properties…">
     </div>
     <div id="propList"></div>
@@ -365,7 +444,7 @@
     <div class="props-head">
       <div class="atom-title" id="cmTitle">No Compound</div>
       <div class="atom-sub" id="cmSub">Pick a recipe or add elements below →</div>
-      <div class="swatchbig" id="cmSwatch" style="background:#1a2136"></div>
+      <div class="swatchbig" id="cmSwatch" style="background:#e3e6eb"></div>
       <input id="cmSearch" placeholder="Filter properties…">
     </div>
     <div id="cmPropList"></div>
@@ -447,7 +526,6 @@ const ELEMENT_NAMES = ("Hydrogen Helium Lithium Beryllium Boron Carbon Nitrogen 
 "Caesium Barium Lanthanum Cerium Praseodymium Neodymium Promethium Samarium Europium Gadolinium Terbium Dysprosium Holmium Erbium Thulium Ytterbium Lutetium Hafnium Tantalum Tungsten Rhenium Osmium Iridium Platinum Gold Mercury Thallium Lead Bismuth Polonium Astatine Radon " +
 "Francium Radium Actinium Thorium Protactinium Uranium Neptunium Plutonium Americium Curium Berkelium Californium Einsteinium Fermium Mendelevium Nobelium Lawrencium Rutherfordium Dubnium Seaborgium Bohrium Hassium Meitnerium Darmstadtium Roentgenium Copernicium Nihonium Flerovium Moscovium Livermorium Tennessine Oganesson").split(" ");
 
-/* Real physical data for Z = 1..103 */
 const ELEMENT_PHYS = [
   null,
   [14.01,20.28,0.00008988],[0.95,4.22,0.0001785],[453.65,1615,0.534],[1560,2742,1.85],
@@ -539,14 +617,7 @@ const REACTIVITY_OVERRIDE = {
   29:15,47:12,79:10,78:15,46:15,44:22,45:20
 };
 
-/* ============================================================
-   REACTIONS TABLE — element + element → compound
-   Key is "minZ:maxZ".  parts = balanced formula.
-   minTemp = heat threshold (0 = spontaneous at room temp).
-   releaseHeat = heat dumped into both cells when firing.
-============================================================ */
 const REACTIONS = {
-  /* Hydrogen */
   "1:6":  {parts:[{Z:1,c:4},{Z:6,c:1}],formula:"CH₄",name:"Methane",minTemp:2.4,releaseHeat:0.6},
   "1:7":  {parts:[{Z:1,c:3},{Z:7,c:1}],formula:"NH₃",name:"Ammonia",minTemp:2.0,releaseHeat:0.6},
   "1:8":  {parts:[{Z:1,c:2},{Z:8,c:1}],formula:"H₂O",name:"Water",minTemp:1.6,releaseHeat:1.8},
@@ -556,16 +627,13 @@ const REACTIONS = {
   "1:17": {parts:[{Z:1,c:1},{Z:17,c:1}],formula:"HCl",name:"Hydrogen Chloride",minTemp:1.1,releaseHeat:1.0},
   "1:35": {parts:[{Z:1,c:1},{Z:35,c:1}],formula:"HBr",name:"Hydrogen Bromide",minTemp:1.3,releaseHeat:0.8},
   "1:53": {parts:[{Z:1,c:1},{Z:53,c:1}],formula:"HI",name:"Hydrogen Iodide",minTemp:1.7,releaseHeat:0.5},
-  /* Carbon */
   "6:8":  {parts:[{Z:6,c:1},{Z:8,c:2}],formula:"CO₂",name:"Carbon Dioxide",minTemp:1.5,releaseHeat:1.8},
   "6:14": {parts:[{Z:6,c:1},{Z:14,c:1}],formula:"SiC",name:"Silicon Carbide",minTemp:2.5,releaseHeat:0.6},
   "6:16": {parts:[{Z:6,c:1},{Z:16,c:2}],formula:"CS₂",name:"Carbon Disulfide",minTemp:2.2,releaseHeat:0.7},
   "6:17": {parts:[{Z:6,c:1},{Z:17,c:4}],formula:"CCl₄",name:"Carbon Tetrachloride",minTemp:2.4,releaseHeat:0.4},
-  /* Nitrogen */
   "3:7":  {parts:[{Z:3,c:3},{Z:7,c:1}],formula:"Li₃N",name:"Lithium Nitride",minTemp:0.4,releaseHeat:1.4},
   "7:8":  {parts:[{Z:7,c:1},{Z:8,c:1}],formula:"NO",name:"Nitrogen Monoxide",minTemp:2.5,releaseHeat:0.7},
   "7:12": {parts:[{Z:7,c:2},{Z:12,c:3}],formula:"Mg₃N₂",name:"Magnesium Nitride",minTemp:1.1,releaseHeat:1.0},
-  /* Oxygen — metals */
   "8:11": {parts:[{Z:8,c:1},{Z:11,c:2}],formula:"Na₂O",name:"Sodium Oxide",minTemp:0.4,releaseHeat:1.4},
   "8:12": {parts:[{Z:8,c:1},{Z:12,c:1}],formula:"MgO",name:"Magnesium Oxide",minTemp:1.0,releaseHeat:2.0},
   "8:13": {parts:[{Z:8,c:3},{Z:13,c:2}],formula:"Al₂O₃",name:"Aluminium Oxide",minTemp:0.8,releaseHeat:2.0},
@@ -582,11 +650,9 @@ const REACTIONS = {
   "8:30": {parts:[{Z:8,c:1},{Z:30,c:1}],formula:"ZnO",name:"Zinc Oxide",minTemp:0.8,releaseHeat:1.4},
   "8:50": {parts:[{Z:8,c:2},{Z:50,c:1}],formula:"SnO₂",name:"Tin(IV) Oxide",minTemp:1.1,releaseHeat:1.0},
   "8:82": {parts:[{Z:8,c:1},{Z:82,c:1}],formula:"PbO",name:"Lead(II) Oxide",minTemp:0.9,releaseHeat:1.0},
-  /* Oxygen — nonmetals */
   "8:14": {parts:[{Z:8,c:2},{Z:14,c:1}],formula:"SiO₂",name:"Silicon Dioxide",minTemp:1.1,releaseHeat:1.3},
   "8:15": {parts:[{Z:8,c:5},{Z:15,c:2}],formula:"P₂O₅",name:"Phosphorus Pentoxide",minTemp:1.0,releaseHeat:1.5},
   "8:16": {parts:[{Z:8,c:2},{Z:16,c:1}],formula:"SO₂",name:"Sulfur Dioxide",minTemp:0.8,releaseHeat:1.3},
-  /* Sulfur */
   "11:16":{parts:[{Z:11,c:2},{Z:16,c:1}],formula:"Na₂S",name:"Sodium Sulfide",minTemp:0.4,releaseHeat:1.4},
   "13:16":{parts:[{Z:13,c:2},{Z:16,c:3}],formula:"Al₂S₃",name:"Aluminium Sulfide",minTemp:0.8,releaseHeat:1.5},
   "16:20":{parts:[{Z:16,c:1},{Z:20,c:1}],formula:"CaS",name:"Calcium Sulfide",minTemp:1.0,releaseHeat:1.3},
@@ -603,7 +669,6 @@ const REACTIONS = {
   "16:56":{parts:[{Z:16,c:1},{Z:56,c:1}],formula:"BaS",name:"Barium Sulfide",minTemp:0.8,releaseHeat:1.1},
   "16:80":{parts:[{Z:16,c:1},{Z:80,c:1}],formula:"HgS",name:"Mercury(II) Sulfide",minTemp:0.6,releaseHeat:0.6},
   "16:82":{parts:[{Z:16,c:1},{Z:82,c:1}],formula:"PbS",name:"Lead(II) Sulfide",minTemp:0.7,releaseHeat:0.8},
-  /* Chlorine */
   "11:17":{parts:[{Z:11,c:1},{Z:17,c:1}],formula:"NaCl",name:"Sodium Chloride",minTemp:0.15,releaseHeat:1.8},
   "12:17":{parts:[{Z:12,c:1},{Z:17,c:2}],formula:"MgCl₂",name:"Magnesium Chloride",minTemp:0.4,releaseHeat:1.5},
   "13:17":{parts:[{Z:13,c:1},{Z:17,c:3}],formula:"AlCl₃",name:"Aluminium Chloride",minTemp:0.4,releaseHeat:1.3},
@@ -616,21 +681,15 @@ const REACTIONS = {
   "17:50":{parts:[{Z:17,c:4},{Z:50,c:1}],formula:"SnCl₄",name:"Tin(IV) Chloride",minTemp:0.5,releaseHeat:0.9},
   "17:79":{parts:[{Z:17,c:3},{Z:79,c:1}],formula:"AuCl₃",name:"Gold(III) Chloride",minTemp:0.5,releaseHeat:1.0},
   "17:80":{parts:[{Z:17,c:2},{Z:80,c:1}],formula:"HgCl₂",name:"Mercury(II) Chloride",minTemp:0.4,releaseHeat:0.8},
-  /* Fluorine */
   "3:9":  {parts:[{Z:3,c:1},{Z:9,c:1}],formula:"LiF",name:"Lithium Fluoride",minTemp:0.05,releaseHeat:2.8},
   "9:11": {parts:[{Z:9,c:1},{Z:11,c:1}],formula:"NaF",name:"Sodium Fluoride",minTemp:0.05,releaseHeat:2.5},
   "9:20": {parts:[{Z:9,c:2},{Z:20,c:1}],formula:"CaF₂",name:"Calcium Fluoride",minTemp:0.05,releaseHeat:2.5},
-  /* Other halides */
   "11:35":{parts:[{Z:11,c:1},{Z:35,c:1}],formula:"NaBr",name:"Sodium Bromide",minTemp:0.4,releaseHeat:1.2},
   "19:53":{parts:[{Z:19,c:1},{Z:53,c:1}],formula:"KI",name:"Potassium Iodide",minTemp:0.5,releaseHeat:0.8},
   "14:17":{parts:[{Z:14,c:1},{Z:17,c:4}],formula:"SiCl₄",name:"Silicon Tetrachloride",minTemp:1.0,releaseHeat:0.9},
   "15:17":{parts:[{Z:15,c:1},{Z:17,c:3}],formula:"PCl₃",name:"Phosphorus Trichloride",minTemp:0.4,releaseHeat:1.0}
 };
 
-/* ============================================================
-   Generic fallback: metal + non-metal → ionic compound
-   Uses common oxidation states.
-============================================================ */
 const METAL_OXIDATION = {
   3:1,4:2,11:1,12:2,13:3,19:1,20:2,21:3,22:4,23:5,24:3,25:2,26:3,27:2,28:2,
   29:2,30:2,31:3,37:1,38:2,39:3,40:4,41:5,42:6,43:7,44:3,45:3,46:2,47:1,
@@ -1172,7 +1231,7 @@ function nucleonPts(count) {
 
 function drawAtom(ts) {
   const ctx = atomCtx;
-  ctx.fillStyle = "#080a12"; ctx.fillRect(0, 0, AC, AC);
+  ctx.fillStyle = "#0a0f1c"; ctx.fillRect(0, 0, AC, AC);
   const shells = electronConfig(atom.e);
   let maxShell = 0;
   for (let i = 0; i < 7; i++) if (shells[i] > 0) maxShell = i;
@@ -1184,12 +1243,12 @@ function drawAtom(ts) {
   ctx.translate(ACX, ACY); ctx.scale(scale, scale);
   const dropR = Math.max(92, nucR * 1.55 + 34);
   ctx.beginPath(); ctx.arc(0, 0, dropR, 0, Math.PI * 2);
-  ctx.strokeStyle = "rgba(255,110,110,0.13)";
+  ctx.strokeStyle = "rgba(200,120,120,0.16)";
   ctx.setLineDash([7, 9]); ctx.lineWidth = 2; ctx.stroke(); ctx.setLineDash([]);
   for (let s = 0; s < nShells; s++) {
     const R = nucR + 46 + s * 48;
     ctx.beginPath(); ctx.arc(0, 0, R, 0, Math.PI * 2);
-    ctx.strokeStyle = s <= maxShell ? "rgba(95,155,255,0.24)" : "rgba(95,155,255,0.07)";
+    ctx.strokeStyle = s <= maxShell ? "rgba(150,180,220,0.26)" : "rgba(150,180,220,0.08)";
     ctx.lineWidth = 1.5; ctx.stroke();
   }
   for (let s = 0; s < 7; s++) {
@@ -1201,7 +1260,7 @@ function drawAtom(ts) {
       const a = spin + k * Math.PI * 2 / shown;
       const x = Math.cos(a) * R, y = Math.sin(a) * R;
       ctx.beginPath(); ctx.arc(x, y, 5.5, 0, Math.PI * 2);
-      ctx.fillStyle = "#5fe0ff"; ctx.shadowColor = "#3ec8ff"; ctx.shadowBlur = 14;
+      ctx.fillStyle = "#6fc7e6"; ctx.shadowColor = "#4aa8c9"; ctx.shadowBlur = 10;
       ctx.fill(); ctx.shadowBlur = 0;
     }
   }
@@ -1209,13 +1268,13 @@ function drawAtom(ts) {
   for (let i = 0; i < atom.nucleons.length; i++) {
     const t = atom.nucleons[i];
     ctx.beginPath(); ctx.arc(pts[i][0], pts[i][1], 8.5, 0, Math.PI * 2);
-    ctx.fillStyle = t === "p" ? "#ff5f5f" : "#9aa4bb";
-    ctx.shadowColor = t === "p" ? "#ff3b3b" : "#7b869c"; ctx.shadowBlur = 9;
+    ctx.fillStyle = t === "p" ? "#d97575" : "#a0a8b8";
+    ctx.shadowColor = t === "p" ? "#b3564c" : "#7b869c"; ctx.shadowBlur = 7;
     ctx.fill(); ctx.shadowBlur = 0;
   }
   if (atom.nucleons.length === 0) {
     ctx.beginPath(); ctx.arc(0, 0, 26, 0, Math.PI * 2);
-    ctx.strokeStyle = "rgba(255,120,120,0.25)"; ctx.lineWidth = 1.5; ctx.stroke();
+    ctx.strokeStyle = "rgba(200,120,120,0.30)"; ctx.lineWidth = 1.5; ctx.stroke();
   }
   ctx.restore();
 }
@@ -1245,7 +1304,7 @@ function refreshAtom() {
   if (!currentProps) {
     title.textContent = "Empty Space";
     sub.textContent = "Click the chips to build an atom →";
-    sw.style.background = "#1a2136";
+    sw.style.background = "#e3e6eb";
     list.innerHTML = '<div class="empty">Choose an <b>Amount</b>, then click a <b>Proton</b> or <b>Neutron</b> chip to fill the nucleus, and an <b>Electron</b> chip to fill the outer shells.<br><br>Right‑click (or use the ＋/－ toggle) to remove.</div>';
     return;
   }
@@ -1256,7 +1315,7 @@ function refreshAtom() {
   title.textContent = sym + "-" + (atom.p + atom.n) + chargeStr;
   sub.textContent = `${elName}  ·  ${atom.p} p · ${atom.n} n · ${atom.e} e⁻  ·  ${currentProps.electronConfiguration}  ·  ${currentProps.stateAtSTP}`;
   const rgb = currentProps.elementColor;
-  sw.style.background = `linear-gradient(90deg, rgb(${rgb[0]},${rgb[1]},${rgb[2]}), #1a2136)`;
+  sw.style.background = `linear-gradient(90deg, rgb(${rgb[0]},${rgb[1]},${rgb[2]}), #e3e6eb)`;
   renderPropertyList(currentProps, list, document.getElementById("propSearch").value.toLowerCase());
 }
 document.getElementById("propSearch").addEventListener("input", () => {
@@ -1284,7 +1343,6 @@ qtyInput.addEventListener("blur", () => setQty(addQty));
 qtyInput.addEventListener("keydown", e => { if (e.key === "Enter") { setQty(addQty); qtyInput.blur(); } });
 document.querySelectorAll(".qpreset").forEach(b => { b.onclick = () => setQty(+b.dataset.q); });
 
-/* ---- ADD / REMOVE tap-mode toggle (mainly for touch devices) ---- */
 let chipRemoveMode = false;
 const chipModeBtn = document.getElementById("chipModeBtn");
 chipModeBtn.addEventListener("click", () => {
@@ -1800,13 +1858,13 @@ function refreshCompound() {
   if (!currentCompoundProps) {
     title.textContent = "No Compound";
     sub.textContent = "Pick a recipe or add elements below →";
-    sw.style.background = "#1a2136";
+    sw.style.background = "#e3e6eb";
     renderPropertyList(null, document.getElementById("cmPropList"), "");
   } else {
     title.textContent = currentCompoundProps.compoundName;
     sub.textContent = `${currentCompoundProps.formula}  ·  ${currentCompoundProps.molarMass} g/mol  ·  ${currentCompoundProps.stateAtSTP}`;
     const rgb = currentCompoundProps.elementColor;
-    sw.style.background = `linear-gradient(90deg, rgb(${rgb[0]},${rgb[1]},${rgb[2]}), #1a2136)`;
+    sw.style.background = `linear-gradient(90deg, rgb(${rgb[0]},${rgb[1]},${rgb[2]}), #e3e6eb)`;
     renderPropertyList(currentCompoundProps, document.getElementById("cmPropList"),
       document.getElementById("cmSearch").value.toLowerCase());
   }
@@ -1896,9 +1954,6 @@ document.getElementById("cmSearch").addEventListener("input", () => {
     document.getElementById("cmSearch").value.toLowerCase());
 });
 
-/* ============================================================
-   SANDBOX
-============================================================ */
 const GW = 260, GH = 160;
 const EMPTY = 0, WALL = 1, FIRE = 2, PB = 3;
 const N = GW * GH;
@@ -1913,7 +1968,6 @@ const SPEEDS = [0.10,0.25,0.50,0.75,1.00,1.50,2.00,3.00,4.00,6.00,8.00,12.00];
 let speedIndex = 4, paused = false, speedAccum = 0;
 const imgData = simCtx.createImageData(GW, GH);
 
-/* ---- Touch tool mode (place / erase) ---- */
 let sandboxTool = "place";
 const toolPlaceBtn = document.getElementById("toolPlace");
 const toolEraseBtn = document.getElementById("toolErase");
@@ -1996,7 +2050,6 @@ function doReact(i, j, p, q) {
   }
 }
 
-/* Get or create a compound powder from a reaction descriptor */
 function getOrCreateCompound(react) {
   const existing = powders.find(p => p.isCompound && p.compoundKey === react.key);
   if (existing) return existing;
@@ -2010,14 +2063,12 @@ function getOrCreateCompound(react) {
   return p;
 }
 
-/* Compound-forming reaction between two powders */
 function tryCompoundReact(i, j, p, q) {
   if (p.elementZ === null || q.elementZ === null) return false;
   if (p.elementZ === q.elementZ) return false;
   const react = lookupReaction(p.elementZ, q.elementZ);
   if (!react) return false;
   if (heat[i] < react.minTemp && heat[j] < react.minTemp) return false;
-  /* Probability gate — spontaneous reactions fire quickly */
   const chance = react.minTemp < 0.5 ? 0.7 :
                  react.minTemp < 1.2 ? 0.22 :
                  react.minTemp < 2.0 ? 0.08 : 0.03;
@@ -2035,7 +2086,6 @@ function tryCompoundReact(i, j, p, q) {
 }
 
 function tryReact(x, y, i, p) {
-  /* ---- 1. Compound-forming reactions (element + element) ---- */
   if (p.elementZ !== null) {
     const nbs = [];
     if (x + 1 < GW) nbs.push(i + 1);
@@ -2050,7 +2100,6 @@ function tryReact(x, y, i, p) {
       if (tryCompoundReact(i, j, p, q)) return;
     }
   }
-  /* ---- 2. Generic corrosion / heating (existing behaviour) ---- */
   if (p.reactivity < 12) return;
   const nbs = [];
   if (x + 1 < GW) nbs.push(i + 1);
@@ -2095,7 +2144,7 @@ function updateFire(x, y, i) {
 function updatePowder(x, y, i, p) {
   if (moved[i]) return;
   if (((frame + i) & 1) === 0) tryReact(x, y, i, p);
-  if (moved[i]) return; /* Reacted → stop processing this cell this frame */
+  if (moved[i]) return;
   const T = heat[i];
   if (p.radio > 45 && Math.random() < p.radio / 400000) {
     const dx = (Math.random() * 5 | 0) - 2, dy = (Math.random() * 5 | 0) - 2;
@@ -2166,8 +2215,8 @@ function render() {
   const d = imgData.data;
   for (let i = 0; i < N; i++) {
     const m = mat[i]; let r, g, b;
-    if (m === EMPTY) { const t = heat[i]; r = 10 + t * 170; g = 12 + t * 75; b = 20 + t * 12; }
-    else if (m === WALL) { r = 68; g = 76; b = 96; const t = heat[i]; if (t > 0.1) { r += t * 100; g += t * 40; } }
+    if (m === EMPTY) { const t = heat[i]; r = 10 + t * 170; g = 14 + t * 75; b = 28 + t * 12; }
+    else if (m === WALL) { r = 92; g = 100; b = 118; const t = heat[i]; if (t > 0.1) { r += t * 100; g += t * 40; } }
     else if (m === FIRE) { const l = Math.max(0, life[i]); r = 255; g = 110 + 130 * l; b = 25 * l; }
     else {
       const p = powders[m - PB];
@@ -2389,9 +2438,6 @@ function loop(ts) {
   }
 }
 
-/* ============================================================
-   PERSISTENCE — auto-save / auto-restore to localStorage
-============================================================ */
 const SAVE_KEY = 'atomforge_state_v1';
 const SAVE_DEBOUNCE_MS = 500;
 let _saveTimer = null;
@@ -2414,10 +2460,7 @@ function _b64ToBytes(b64) {
 
 function serializeState() {
   let gridB64 = null;
-  try {
-    gridB64 = _bytesToB64(new Uint8Array(mat.buffer));
-  } catch (e) { gridB64 = null; }
-
+  try { gridB64 = _bytesToB64(new Uint8Array(mat.buffer)); } catch (e) { gridB64 = null; }
   return {
     version: 1,
     atom: { p: atom.p, n: atom.n, e: atom.e, nucleons: atom.nucleons.slice() },
@@ -2437,11 +2480,8 @@ function serializeState() {
 
 function saveState() {
   if (_isRestoring) return;
-  try {
-    localStorage.setItem(SAVE_KEY, JSON.stringify(serializeState()));
-  } catch (e) {
-    console.warn('Atom Forge: save failed', e);
-  }
+  try { localStorage.setItem(SAVE_KEY, JSON.stringify(serializeState())); }
+  catch (e) { console.warn('Atom Forge: save failed', e); }
 }
 
 function scheduleSave() {
@@ -2512,7 +2552,7 @@ function loadState() {
         if (bytes.length === mat.byteLength) {
           new Uint8Array(mat.buffer).set(bytes);
         }
-      } catch (e) { /* leave grid empty */ }
+      } catch (e) { }
     }
 
     rebuildForgedElements();
@@ -2530,7 +2570,6 @@ function loadState() {
   return true;
 }
 
-// Save whenever the tab is hidden or closed
 window.addEventListener('beforeunload', () => {
   if (_saveTimer) { clearTimeout(_saveTimer); _saveTimer = null; }
   saveState();
@@ -2541,12 +2580,8 @@ document.addEventListener('visibilitychange', () => {
     saveState();
   }
 });
-// Backup autosave every 20 seconds
 setInterval(saveState, 20000);
 
-/* ============================================================
-   BOOT — restore previous session, or start fresh
-============================================================ */
 if (!loadState()) {
   refreshAtom();
   syncCompoundLab();
