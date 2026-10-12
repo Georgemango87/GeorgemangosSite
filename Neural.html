@@ -3,118 +3,388 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-    <meta name="theme-color" content="#0b0f19">
+    <meta name="theme-color" content="#f7f8fa">
     <title>Neural Network Grid Studio - Interactive Training Studio</title>
     <link rel="icon" type="image/png" sizes="512x512" href="/face.png">
     <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
-        tailwind.config = {
-            darkMode: 'class',
-            theme: {
-                extend: {
-                    colors: {
-                        darkBg: '#0b0f19',
-                        panelBg: '#131b2e',
-                        cardBg: '#1e293b',
-                        borderCol: '#2a3649'
-                    }
+    tailwind.config = {
+        darkMode: 'class',
+        theme: {
+            extend: {
+                colors: {
+                    darkBg:    '#f2f4f8',
+                    panelBg:   '#ffffff',
+                    cardBg:    '#f7f8fa',
+                    borderCol: '#e3e6eb'
                 }
             }
         }
-    </script>
+    }
+</script>
     <style>
-        body {
-            background-color: #0b0f19;
-            color: #f8fafc;
-            font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-            user-select: none;
-            -webkit-user-select: none;
-            -webkit-tap-highlight-color: transparent;
-            overscroll-behavior: none;
-        }
-        ::-webkit-scrollbar { width: 6px; height: 6px; }
-        ::-webkit-scrollbar-track { background: #131b2e; }
-        ::-webkit-scrollbar-thumb { background: #334155; border-radius: 3px; }
-        ::-webkit-scrollbar-thumb:hover { background: #475569; }
-        canvas { touch-action: none; }
-        input, select, button { font-family: inherit; }
+    :root {
+        --bg: #f2f4f8;
+        --panel: #ffffff;
+        --panel2: #f7f8fa;
+        --panel3: #eef1f6;
+        --border: #e3e6eb;
+        --border-strong: #d2d8e0;
+        --text: #14181f;
+        --muted: #5b6472;
+        --muted-2: #78818f;
+        --accent: #1f3a63;
+        --accent-2: #16294a;
+        --accent-soft: #3b5b8c;
+        --accent-tint: #eef1f6;
+        --canvas-bg: #0a0f1c;
+        --canvas-border: #1c2540;
+        --font-serif: "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, "Times New Roman", serif;
+    }
 
-        /* ===================== MOBILE DRAWER SYSTEM ===================== */
-        .mobile-only { display: none !important; }
-        .drawer-close { display: none; }
+    body {
+        background-color: var(--bg);
+        color: var(--text);
+        font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+        user-select: none;
+        -webkit-user-select: none;
+        -webkit-tap-highlight-color: transparent;
+        overscroll-behavior: none;
+        -webkit-font-smoothing: antialiased;
+    }
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: var(--panel2); }
+    ::-webkit-scrollbar-thumb { background: var(--border-strong); border-radius: 3px; }
+    ::-webkit-scrollbar-thumb:hover { background: var(--muted-2); }
+    canvas { touch-action: none; }
+    input, select, button { font-family: inherit; }
 
-        #backdrop {
+    /* ===================== CANVAS SURFACE ===================== */
+    /* The simulation viewport stays dark — it's a technical plot. */
+    #canvas-container {
+        background: var(--canvas-bg) !important;
+    }
+    #loss-canvas {
+        background: var(--canvas-bg) !important;
+        border-color: var(--canvas-border) !important;
+    }
+
+    /* ===================== HEADER ===================== */
+    #main-header {
+        background: var(--panel) !important;
+        border-bottom: 1px solid var(--border) !important;
+        box-shadow: 0 1px 2px rgba(20,24,31,.05) !important;
+    }
+    #main-header h1 {
+        font-family: var(--font-serif) !important;
+        font-weight: 600 !important;
+        font-size: 16px !important;
+        letter-spacing: -0.01em !important;
+        background: none !important;
+        -webkit-text-fill-color: var(--accent) !important;
+        color: var(--accent) !important;
+    }
+    #main-header .brand-badge {
+        background: var(--accent) !important;
+        box-shadow: none !important;
+    }
+    #zoom-badge { color: var(--muted); }
+
+    /* ===================== SIDEBARS ===================== */
+    #sidebar-left,
+    #sidebar-right {
+        background: var(--panel) !important;
+        border-color: var(--border) !important;
+        box-shadow: 0 6px 20px rgba(20,24,31,.06) !important;
+    }
+    #sidebar-left h2,
+    #sidebar-right h2 {
+        font-family: var(--font-serif) !important;
+        font-weight: 600 !important;
+        letter-spacing: 0.06em !important;
+        color: var(--muted-2) !important;
+    }
+
+    /* ===================== PANELS INSIDE SIDEBARS ===================== */
+    .bg-cardBg\/60,
+    .bg-cardBg\/60 > * { background-color: var(--panel2) !important; }
+    .bg-cardBg { background-color: var(--panel2) !important; }
+    .bg-darkBg { background-color: var(--panel3) !important; }
+    .border-borderCol { border-color: var(--border) !important; }
+    .divide-borderCol\/50 > * + * { border-color: var(--border) !important; }
+
+    /* ===================== TEXT COLOUR REMAP ===================== */
+    .text-slate-100, .text-slate-200 { color: var(--text) !important; }
+    .text-slate-300 { color: #3d4653 !important; }
+    .text-slate-400 { color: var(--muted) !important; }
+    .text-slate-500 { color: var(--muted-2) !important; }
+
+    /* ===================== INPUTS ===================== */
+    input, select, textarea {
+        background-color: var(--panel) !important;
+        border-color: var(--border-strong) !important;
+        color: var(--text) !important;
+    }
+    input:focus, select:focus, textarea:focus {
+        border-color: var(--accent-soft) !important;
+        box-shadow: 0 0 0 3px rgba(31,58,99,.12) !important;
+        outline: none !important;
+        --tw-ring-color: transparent !important;
+        --tw-ring-shadow: none !important;
+    }
+    /* Kill the coloured focus rings */
+    .focus\:ring-2:focus,
+    .focus\:ring-blue-500:focus,
+    .focus\:ring-emerald-500:focus,
+    .focus\:ring-amber-500:focus,
+    .focus\:ring-1:focus,
+    .focus\:ring-1:focus,
+    input:focus, select:focus {
+        --tw-ring-color: transparent !important;
+        --tw-ring-offset-width: 0 !important;
+        --tw-ring-shadow: none !important;
+    }
+
+    /* ===================== BUTTONS (generic) ===================== */
+    button { transition: background .15s, border-color .15s, color .15s, transform .1s; }
+    button:active { transform: translateY(1px); }
+
+    /* Header buttons */
+    #main-header button {
+        background: var(--panel) !important;
+        border-color: var(--border-strong) !important;
+        color: var(--muted) !important;
+        box-shadow: none !important;
+    }
+    #main-header button:hover {
+        background: var(--accent-tint) !important;
+        border-color: var(--accent-soft) !important;
+        color: var(--accent) !important;
+    }
+    #main-header #btn-clear:hover {
+        background: #fdf2f2 !important;
+        border-color: #e3c4c4 !important;
+        color: #b91c1c !important;
+    }
+    #main-header #btn-clear:hover svg { color: #b91c1c !important; }
+    #main-header #btn-fit svg,
+    #main-header #btn-load-preset svg { color: var(--accent-soft) !important; }
+
+    /* Primary gradient buttons → flat navy */
+    #btn-simulate,
+    #qb-build,
+    #btn-train {
+        background: var(--accent) !important;
+        box-shadow: 0 1px 2px rgba(20,24,31,.06) !important;
+        color: #fff !important;
+        border: 1px solid var(--accent) !important;
+    }
+    #btn-simulate:hover,
+    #qb-build:hover,
+    #btn-train:hover {
+        background: var(--accent-2) !important;
+        border-color: var(--accent-2) !important;
+        filter: none !important;
+    }
+
+    /* Secondary buttons */
+    #btn-reset-train,
+    #btn-add-row,
+    #btn-clear-dataset,
+    #qb-cancel,
+    #modal-close {
+        background: var(--panel) !important;
+        border: 1px solid var(--border-strong) !important;
+        color: var(--text) !important;
+    }
+    #btn-reset-train:hover,
+    #btn-add-row:hover,
+    #btn-clear-dataset:hover,
+    #qb-cancel:hover,
+    #modal-close:hover {
+        background: var(--accent-tint) !important;
+        border-color: var(--accent-soft) !important;
+        color: var(--accent) !important;
+    }
+
+    /* Delete / danger buttons */
+    #modal-delete {
+        background: #fdf2f2 !important;
+        border: 1px solid #e3c4c4 !important;
+        color: #b91c1c !important;
+    }
+    #modal-delete:hover {
+        background: #fbe6e6 !important;
+        border-color: #d9a5a5 !important;
+    }
+
+    /* ===================== SPAWNER CARDS ===================== */
+    .spawner-item {
+        background: var(--panel) !important;
+        border-color: var(--border) !important;
+        color: var(--text) !important;
+        border-radius: 10px !important;
+        box-shadow: 0 1px 2px rgba(20,24,31,.04);
+    }
+    .spawner-item:hover {
+        background: var(--accent-tint) !important;
+        border-color: var(--accent-soft) !important;
+        color: var(--accent) !important;
+    }
+    .spawner-item[data-type="input"]  { border-left: 3px solid #3b5b8c !important; }
+    .spawner-item[data-type="hidden"] { border-left: 3px solid #15803d !important; }
+    .spawner-item[data-type="output"] { border-left: 3px solid #b45309 !important; }
+
+    /* ===================== DATASET PRESETS ===================== */
+    #btn-preset-double, #btn-preset-add, #btn-preset-xor {
+        background: var(--panel) !important;
+        border-color: var(--border-strong) !important;
+        color: var(--text) !important;
+        border-radius: 6px !important;
+    }
+    #btn-preset-double:hover, #btn-preset-add:hover, #btn-preset-xor:hover {
+        background: var(--accent-tint) !important;
+        color: var(--accent) !important;
+        border-color: var(--accent-soft) !important;
+    }
+
+    /* ===================== TABLE ===================== */
+    #dataset-table thead {
+        background: var(--panel2) !important;
+        color: var(--muted) !important;
+        border-color: var(--border) !important;
+    }
+    #dataset-table th { color: var(--muted-2) !important; font-weight: 600; }
+    #dataset-table td { border-color: var(--border) !important; }
+
+    /* ===================== BADGES ===================== */
+    #node-count-badge {
+        background: var(--accent-tint) !important;
+        color: var(--accent) !important;
+        border-color: var(--border) !important;
+        font-family: ui-monospace, monospace;
+    }
+
+    /* ===================== STATUS PILL ===================== */
+    #canvas-status {
+        background: rgba(255,255,255,.92) !important;
+        border-color: var(--border) !important;
+        color: var(--text) !important;
+        box-shadow: 0 2px 8px rgba(20,24,31,.10) !important;
+    }
+    #status-text { color: var(--muted) !important; }
+    #canvas-status .animate-pulse { background: #15803d !important; }
+
+    /* ===================== CALC BREAKDOWN CARDS ===================== */
+    #calc-breakdown-body .bg-cardBg {
+        background: var(--panel2) !important;
+        border-color: var(--border) !important;
+    }
+
+    /* ===================== MODALS ===================== */
+    #inspector-modal > div,
+    #quickbuild-modal > div {
+        background: var(--panel) !important;
+        border-color: var(--border) !important;
+        box-shadow: 0 24px 60px rgba(20,24,31,.20) !important;
+    }
+    #inspector-modal h3,
+    #quickbuild-modal h3 {
+        font-family: var(--font-serif) !important;
+        font-weight: 600 !important;
+        color: var(--accent) !important;
+    }
+    #inspector-modal .bg-black\/60,
+    #quickbuild-modal .bg-black\/60 {
+        background: rgba(20,24,31,.45) !important;
+    }
+
+    /* ===================== DRAWER BACKDROP ===================== */
+    #backdrop { background: rgba(20,24,31,.45) !important; }
+
+    /* ===================== MOBILE DRAWER CHROME ===================== */
+    .drawer-close {
+        background: var(--panel2) !important;
+        border-color: var(--border) !important;
+        color: var(--muted) !important;
+    }
+    .drawer-close:hover {
+        background: var(--accent-tint) !important;
+        color: var(--accent) !important;
+        border-color: var(--accent-soft) !important;
+    }
+
+    /* ===================== SPARKLINE AREA ===================== */
+    /* (canvas drawn in JS — colours stay green/navy, fine on dark plot) */
+
+    /* ===================== MOBILE DRAWER SYSTEM ===================== */
+    .mobile-only { display: none !important; }
+    .drawer-close { display: none; }
+
+    #backdrop {
+        position: fixed; inset: 0;
+        backdrop-filter: blur(2px);
+        -webkit-backdrop-filter: blur(2px);
+        z-index: 40;
+        opacity: 0;
+        pointer-events: none;
+        transition: opacity 0.25s ease;
+    }
+    #backdrop.show { opacity: 1; pointer-events: auto; }
+
+    @media (max-width: 1023px) {
+        .mobile-only { display: inline-flex !important; }
+        .drawer-close { display: inline-flex; }
+
+        #sidebar-left, #sidebar-right {
             position: fixed;
-            inset: 0;
-            background: rgba(0,0,0,0.55);
-            backdrop-filter: blur(2px);
-            -webkit-backdrop-filter: blur(2px);
-            z-index: 40;
-            opacity: 0;
-            pointer-events: none;
-            transition: opacity 0.25s ease;
+            top: 52px; bottom: 0;
+            z-index: 45;
+            width: min(380px, 92vw);
+            max-width: 92vw;
+            transition: transform 0.28s cubic-bezier(.2,.7,.2,1);
+            box-shadow: 0 0 40px rgba(20,24,31,.25);
+            border-top: 1px solid var(--border);
         }
-        #backdrop.show {
-            opacity: 1;
-            pointer-events: auto;
+        #sidebar-left {
+            left: 0;
+            transform: translateX(-105%);
+            border-right: 1px solid var(--border);
         }
-
-        @media (max-width: 1023px) {
-            .mobile-only { display: inline-flex !important; }
-            .drawer-close { display: inline-flex; }
-
-            #sidebar-left, #sidebar-right {
-                position: fixed;
-                top: 52px;
-                bottom: 0;
-                z-index: 45;
-                width: min(380px, 92vw);
-                max-width: 92vw;
-                transition: transform 0.28s cubic-bezier(.2,.7,.2,1);
-                box-shadow: 0 0 40px rgba(0,0,0,0.7);
-                border-top: 1px solid #2a3649;
-            }
-            #sidebar-left {
-                left: 0;
-                transform: translateX(-105%);
-                border-right: 1px solid #2a3649;
-            }
-            #sidebar-left.open { transform: translateX(0); }
-            #sidebar-right {
-                right: 0;
-                transform: translateX(105%);
-                border-left: 1px solid #2a3649;
-            }
-            #sidebar-right.open { transform: translateX(0); }
-
-            /* Header compact on mobile */
-            #main-header { padding-left: 10px; padding-right: 10px; }
-            #header-logo-title { display: none; }
-            #btn-fit span, #btn-load-preset span, #btn-clear span { display: none; }
-            #btn-fit, #btn-load-preset, #btn-clear {
-                padding: 6px !important;
-                min-width: 32px;
-                justify-content: center;
-            }
+        #sidebar-left.open { transform: translateX(0); }
+        #sidebar-right {
+            right: 0;
+            transform: translateX(105%);
+            border-left: 1px solid var(--border);
         }
+        #sidebar-right.open { transform: translateX(0); }
 
-        @media (max-width: 640px) {
-            #inspector-modal > div, #quickbuild-modal > div {
-                width: min(340px, 94vw) !important;
-                max-height: 90vh;
-                overflow-y: auto;
-            }
-            #zoom-badge { display: none; }
-            #main-header { gap: 6px; }
-            #header-actions { gap: 6px; }
+        #main-header { padding-left: 10px; padding-right: 10px; }
+        #header-logo-title { display: none; }
+        #btn-fit span, #btn-load-preset span, #btn-clear span { display: none; }
+        #btn-fit, #btn-load-preset, #btn-clear {
+            padding: 6px !important;
+            min-width: 32px;
+            justify-content: center;
         }
+    }
 
-        /* Larger touch targets for the header buttons on mobile */
-        @media (hover: none) {
-            button, .spawner-item, .tab { cursor: pointer; }
+    @media (max-width: 640px) {
+        #inspector-modal > div, #quickbuild-modal > div {
+            width: min(340px, 94vw) !important;
+            max-height: 90vh;
+            overflow-y: auto;
         }
-    </style>
+        #zoom-badge { display: none; }
+        #main-header { gap: 6px; }
+        #header-actions { gap: 6px; }
+    }
+
+    @media (hover: none) {
+        button, .spawner-item, .tab { cursor: pointer; }
+    }
+</style>
 </head>
 <body class="h-screen w-screen overflow-hidden flex flex-col">
 
@@ -126,12 +396,12 @@
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path></svg>
             </button>
 
-            <div class="w-8 h-8 rounded-lg bg-gradient-to-tr from-blue-500 via-emerald-500 to-amber-500 flex items-center justify-center shadow-lg shadow-blue-500/20 shrink-0">
+            <div class="brand-badge w-8 h-8 rounded-lg bg-gradient-to-tr from-blue-500 via-emerald-500 to-amber-500 flex items-center justify-center shrink-0">
                 <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z"></path>
                 </svg>
             </div>
-            <h1 id="header-logo-title" class="font-bold text-base tracking-wide bg-gradient-to-r from-blue-400 via-emerald-400 to-amber-400 bg-clip-text text-transparent whitespace-nowrap">Neural Network Grid Studio</h1>
+            <h1 id="header-logo-title" class="font-bold text-base tracking-wide whitespace-nowrap">Neural Network Grid Studio</h1>
         </div>
 
         <div id="header-actions" class="flex items-center space-x-2 shrink-0">
