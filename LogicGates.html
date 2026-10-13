@@ -17,7 +17,8 @@ import {
   signOut
 } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
 
-import { getDatabase, ref, onValue, set, update, remove, onDisconnect }
+import { getDatabase, ref, onValue, onChildAdded, onChildChanged, onChildRemoved,
+         set, update, remove, onDisconnect }
     from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js';
 
 // ═══════════════════════════════════════════════════════════════
@@ -38,7 +39,11 @@ const fbRtdb = getDatabase(fbApp);
 
 // Expose to the rest of the page (your main script is not a module)
 window.fbAuth = fbAuth;
-window.fbRtdbApi = { db: fbRtdb, ref, onValue, set, update, remove, onDisconnect };
+window.fbRtdbApi = {
+  db: fbRtdb, ref, onValue,
+  onChildAdded, onChildChanged, onChildRemoved,
+  set, update, remove, onDisconnect
+};
 window.fbSignInWithPopup = signInWithPopup;
 window.fbGoogleProvider  = GoogleAuthProvider;
 window.fbSignInEmail     = signInWithEmailAndPassword;
@@ -1308,6 +1313,7 @@ function spawnComponentAt(type,x,y){
         pixelWidth:type==='SCREEN'?40:undefined,pixelHeight:type==='SCREEN'?40:undefined};
     initComponentInputs(comp);
     components.push(comp);renderComponent(comp);forceSaveState();runSimulation();
+    localAddTimes.set(id, Date.now());
 }
 function spawnCustomGateInstance(gateName,x,y){
     const def=savedCustomGates[gateName];if(!def)return;
@@ -1327,6 +1333,7 @@ function spawnCustomGateInstance(gateName,x,y){
         if(sc.type==='COLOR')sc.pixelColor=sc.pixelColor||'#39ff14';
     });
     components.push(comp);renderComponent(comp);runSimulation();forceSaveState();
+    localAddTimes.set(id, Date.now());
 }
 
 function renderComponent(comp){
@@ -2753,6 +2760,7 @@ function mergeImportedState(state){
     });
     const nw=(state.wires||[]).filter(w=>idMap[w.fromComp]!==undefined&&idMap[w.toComp]!==undefined).map(w=>newWire(idMap[w.fromComp],w.fromPort,idMap[w.toComp],w.toPort));
     components.push(...nc);wires.push(...nw);nc.forEach(c=>renderComponent(c));
+    nc.forEach(c => localAddTimes.set(c.id, Date.now()));
     updateCustomGatesToolbar();markPortPositionsDirty();runSimulation();drawWires();forceSaveState();
 }
 
@@ -3717,6 +3725,7 @@ let lastSyncedCgJson    = '';
 let lastSyncedFoldersJson = '';
 let lastSyncedNextId    = 0;
 let lastSyncedNextWireId = 0;
+const localAddTimes = new Map();
 
 const remoteCursors   = new Map();
 const remoteGhosts    = new Map();
@@ -3825,16 +3834,33 @@ function renderShareModal(){
     if(u){
         authView.style.display = 'none';
         roomView.style.display = 'block';
+                        const PALETTE = ['#22d3ee','#ef4444','#f59e0b','#84cc16','#10b981','#8b5cf6','#ec4899','#f3f4f6'];
         document.getElementById('share-user-badge').innerHTML =
           `${u.photoURL
               ? `<img src="${u.photoURL}" style="width:20px;height:20px;border-radius:50%;object-fit:cover;">`
               : `<span class="dot" style="background:${u.color}"></span>`}
            <strong>${escapeHtml(u.name)}</strong>
-           <label style="margin-left:auto;display:flex;align-items:center;gap:6px;cursor:pointer;font-size:10px;opacity:.85;">
-             <span>Cursor&nbsp;color</span>
-             <input type="color" value="${u.color}" onchange="changeUserColor(this.value)"
-                    style="width:28px;height:22px;padding:1px;border:1px solid var(--border-color);border-radius:3px;background:transparent;cursor:pointer;">
-           </label>`;
+           <div style="margin-left:auto;display:flex;gap:4px;align-items:center;">
+             ${PALETTE.map(c => `
+               <button type="button"
+                       data-swatch="${c}"
+                       onmousedown="event.stopPropagation();event.preventDefault();"
+                       onclick="changeUserColor('${c}');event.stopPropagation();"
+                       title="${c}"
+                       style="width:18px;height:18px;border-radius:50%;padding:0;cursor:pointer;
+                              background:${c};
+                              border:2px solid ${c === u.color ? '#fff' : 'transparent'};
+                              box-shadow:0 0 0 1px rgba(0,0,0,.25) inset;">
+               </button>
+             `).join('')}
+             <input type="color" value="${u.color}"
+                    onchange="changeUserColor(this.value)"
+                    onmousedown="event.stopPropagation()"
+                    onclick="event.stopPropagation()"
+                    title="Custom color"
+                    style="width:22px;height:22px;margin-left:4px;padding:0;cursor:pointer;
+                           border:1px solid var(--border-color);border-radius:4px;background:transparent;">
+           </div>`;
         document.getElementById('share-host-panel').style.display = collabRoomCode ? 'none' : 'block';
         const codeBox = document.getElementById('share-room-code-box');
         if(collabRoomCode){
@@ -3882,11 +3908,17 @@ function changeUserColor(color){
     if(!/^#[0-9a-fA-F]{6}$/.test(color)) return;
     window.collabUser.color = color;
     localStorage.setItem('logic_sim_color_' + window.collabUser.uid, color);
+
     const badge = document.getElementById('share-user-badge');
-    if(badge){ const dot = badge.querySelector('.dot'); if(dot) dot.style.background = color; }
-    // Immediate push so peers see it now, not on next writer tick
-    if(peerRef){ flushPeerState(true); }
-    showToast('Cursor color updated', 'success', 1000);
+    if(badge){
+        badge.querySelectorAll('button[data-swatch]').forEach(btn => {
+            btn.style.borderColor = (btn.dataset.swatch === color) ? '#fff' : 'transparent';
+        });
+        const dot = badge.querySelector('.dot');
+        if(dot) dot.style.background = color;
+    }
+    if(peerRef) flushPeerState(true);
+    showToast('Cursor color updated', 'success', 900);
 }
 
 /* ── Room lifecycle ──────────────────────────────────────────── */
@@ -3976,13 +4008,16 @@ function joinFirebaseRoom(code){
         updatePeerList();
     });
 
-    // ── Granular tree subscriptions ──
-    baseUnsubs.push(onValue(ref(db, `${roomBase}/components`), snap => {
-        syncComponentsFromRemote(snap.val() || {});
-    }));
-    baseUnsubs.push(onValue(ref(db, `${roomBase}/wires`), snap => {
-        syncWiresFromRemote(snap.val() || {});
-    }));
+    // ── Per-child listeners (no more snapshot pruning) ──
+    const { onChildAdded, onChildChanged, onChildRemoved } = window.fbRtdbApi;
+    const compsRef = ref(db, `${roomBase}/components`);
+    const wiresRef = ref(db, `${roomBase}/wires`);
+    baseUnsubs.push(onChildAdded  (compsRef, snap => applyRemoteComponent(snap.key, snap.val())));
+    baseUnsubs.push(onChildChanged(compsRef, snap => applyRemoteComponent(snap.key, snap.val())));
+    baseUnsubs.push(onChildRemoved(compsRef, snap => applyRemoteComponentRemoval(snap.key)));
+    baseUnsubs.push(onChildAdded  (wiresRef, snap => applyRemoteWire(snap.key, snap.val())));
+    baseUnsubs.push(onChildChanged(wiresRef, snap => applyRemoteWire(snap.key, snap.val())));
+    baseUnsubs.push(onChildRemoved(wiresRef, snap => applyRemoteWireRemoval(snap.key)));
     baseUnsubs.push(onValue(ref(db, `${roomBase}/savedCustomGates`), snap => {
         savedCustomGates = snap.val() || {};
         Object.keys(savedCustomGates).forEach(n => {
@@ -4349,75 +4384,70 @@ function collabPushDiff(){
     update(ref(db, roomBase), updates).catch(() => {});
 }
 
-function syncComponentsFromRemote(remoteById){
-    applyingRemote = true;
-    try{
-        const incomingIds = new Set();
-        for(const idStr in remoteById){
-            const id = parseInt(idStr);
-            if(isNaN(id)) continue;
-            incomingIds.add(id);
-            const remote = remoteById[idStr];
-            remote.id = id;
-            if(remote.isCustom && remote.type && savedCustomGates[remote.type]){
-                remote.def = savedCustomGates[remote.type];
-            }
-            if(remote.subComps){
-                remote.subComps.forEach(sc => {
-                    if(sc.isCustom) expandNestedCustomGate(sc, 0);
-                    else initComponentInputs(sc);
-                });
-            }
-            initComponentInputs(remote);
-
-            const idx = components.findIndex(c => c.id === id);
-            if(idx === -1){
-                components.push(remote);
-                renderComponent(remote);
-            } else {
-                const oldEl = compEls.get(id);
-                if(oldEl){ oldEl.remove(); compEls.delete(id); compPortEls.delete(id); }
-                components[idx] = remote;
-                renderComponent(remote);
-            }
-        }
-        // Purge locals that no longer exist on the server
-        for(const c of components.slice()){
-            if(!incomingIds.has(c.id)) removeComponent(c.id, true);
-        }
-        markPortPositionsDirty();
-        drawWires();
-        runSimulation();
-    } finally {
-        applyingRemote = false;
+function applyRemoteComponent(idStr, data){
+    const id = parseInt(idStr);
+    if(isNaN(id) || !data) return;
+    data.id = id;
+    if(data.isCustom && data.type && savedCustomGates[data.type]){
+        data.def = savedCustomGates[data.type];
     }
-    // Realign our baseline so we don't echo the peer's data back
+    if(data.subComps){
+        data.subComps.forEach(sc => {
+            if(sc.isCustom) expandNestedCustomGate(sc, 0);
+            else initComponentInputs(sc);
+        });
+    }
+    initComponentInputs(data);
+
+    const idx = components.findIndex(c => c.id === id);
+    if(idx === -1){
+        components.push(data);
+        renderComponent(data);
+    } else {
+        // Skip if identical — avoids needless re-render flicker
+        if(JSON.stringify(serializeComp(components[idx])) === JSON.stringify(data)) return;
+        const oldEl = compEls.get(id);
+        if(oldEl){ oldEl.remove(); compEls.delete(id); compPortEls.delete(id); }
+        components[idx] = data;
+        renderComponent(data);
+    }
+    markPortPositionsDirty();
+    drawWires();
+    runSimulation();
     lastSyncedCompJson = sortedCompJson(components);
 }
 
-function syncWiresFromRemote(remoteById){
-    applyingRemote = true;
-    try{
-        const incomingIds = new Set();
-        const fresh = [];
-        for(const idStr in remoteById){
-            const id = parseInt(idStr);
-            if(isNaN(id)) continue;
-            incomingIds.add(id);
-            const w = remoteById[idStr];
-            w.id = id;
-            fresh.push(w);
-        }
-        wires = fresh;
-        adoptWireIds();
-        for(const [, p] of wirePaths) p.remove();
-        wirePaths.clear();
-        markPortPositionsDirty();
-        drawWires();
-        runSimulation();
-    } finally {
-        applyingRemote = false;
-    }
+function applyRemoteComponentRemoval(idStr){
+    const id = parseInt(idStr);
+    if(isNaN(id)) return;
+    const addedAt = localAddTimes.get(id) || 0;
+    if(Date.now() - addedAt < 5000) return;   // we're still waiting for our own write to land
+    removeComponent(id, true);
+    localAddTimes.delete(id);
+    lastSyncedCompJson = sortedCompJson(components);
+}
+
+function applyRemoteWire(idStr, data){
+    const id = parseInt(idStr);
+    if(isNaN(id) || !data) return;
+    data.id = id;
+    const idx = wires.findIndex(w => w.id === id);
+    if(idx === -1) wires.push(data);
+    else wires[idx] = data;
+    adoptWireIds();
+    markPortPositionsDirty();
+    drawWires();
+    runSimulation();
+    lastSyncedWireJson = sortedWireJson(wires);
+}
+
+function applyRemoteWireRemoval(idStr){
+    const id = parseInt(idStr);
+    if(isNaN(id)) return;
+    wires = wires.filter(w => w.id !== id);
+    markPortPositionsDirty();
+    drawWires();
+    runSimulation();
     lastSyncedWireJson = sortedWireJson(wires);
 }
 
