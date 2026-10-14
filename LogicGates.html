@@ -352,6 +352,8 @@ body.debug-mode .pixel-square .port{opacity:.72}
 .remote-ghost.ghost-pixel .gate-header{display:none}
 .remote-ghost.ghost-pixel .gate-body{padding:0!important;background:transparent!important;
     border-radius:0!important;height:100%;display:flex;align-items:center;justify-content:center}
+    body.pour-active .pixel-square .port{opacity:1!important;pointer-events:auto!important;transform:translate(-50%,-50%) scale(1)}
+body.pour-active .pixel-square .port.active-port{background:#15803d!important}
 </style>
 </head>
 <body>
@@ -474,7 +476,13 @@ body.debug-mode .pixel-square .port{opacity:.72}
             </div>
             <div class="cg-info">
                 <div><label>Gate Name:</label><input type="text" id="custom-gate-name-input" placeholder="Enter gate name"></div>
-                <div><label>Gate Color:</label><input type="color" id="custom-gate-color-input" value="#1f3a63"></div>
+                <div>
+                  <label>Gate Color:</label>
+                  <div style="display:flex;gap:6px;align-items:center;">
+                    <input type="color" id="custom-gate-color-input" value="#1f3a63" style="flex:1;">
+                    <div id="custom-gate-color-swatches" style="display:flex;gap:3px;flex-wrap:wrap;"></div>
+                  </div>
+                </div>
                 <div><label>Folder (optional):</label><input type="text" id="custom-gate-folder-input" list="custom-gate-folder-list" placeholder="(none)" autocomplete="off"><datalist id="custom-gate-folder-list"></datalist></div>
             </div>
         </div>
@@ -1182,9 +1190,10 @@ function enterWirePouring(cid,pidx,el){
     if(wirePouringState){const o=wirePouringState;const oe=document.querySelector(`.port[data-comp="${o.compId}"][data-type="out"][data-port="${o.portIndex}"]`);if(oe)oe.classList.remove('pour-selected')}
     wirePouringState={compId:cid,portIndex:pidx,el};el.classList.add('pour-selected');
     document.getElementById('pour-indicator').classList.add('active');
+    document.body.classList.add('pour-active');
     showToast('🔌 Pour mode: click any input port to wire.','info',2000);
 }
-function exitWirePouring(){if(wirePouringState){const el=wirePouringState.el;if(el)el.classList.remove('pour-selected');wirePouringState=null}document.getElementById('pour-indicator').classList.remove('active')}
+function exitWirePouring(){if(wirePouringState){const el=wirePouringState.el;if(el)el.classList.remove('pour-selected');wirePouringState=null}document.getElementById('pour-indicator').classList.remove('active');document.body.classList.remove('pour-active')}
 function connectWireInPourMode(tc,tp){
     if(!wirePouringState)return false;
     const fc=wirePouringState.compId,fp=wirePouringState.portIndex;
@@ -1365,6 +1374,7 @@ function renderComponent(comp){
         el.innerHTML=`<div class="gate-body" style="padding:0;background:transparent;display:flex;align-items:center;justify-content:center;border-radius:0;width:100%;height:100%;">${bc}</div>`;
         el.addEventListener('mousedown',e=>{if(!e.target.classList.contains('pixel-delete-btn')&&!e.target.classList.contains('pixel-resize-handle')&&!e.target.classList.contains('port'))startDragGate(e,comp.id)});
         el.addEventListener('touchstart',e=>{if(!e.target.classList.contains('pixel-delete-btn')&&!e.target.classList.contains('pixel-resize-handle')&&!e.target.classList.contains('port'))startDragGate(e,comp.id)});
+        attachPortHandlers(el,'main');
         canvas.appendChild(el);
         registerComponentDom(comp,el);
         return;
@@ -1431,6 +1441,51 @@ function startInlineRename(id){
     });
     inp.addEventListener('blur',()=>commit(true));
 }
+
+function startModalInlineRename(id){
+    const comp = modalComponents.find(c=>c.id===id);
+    if(!comp) return;
+    const el = document.getElementById(`modal-comp-${id}`);
+    if(!el) return;
+    const header = el.querySelector('.gate-header');
+    if(!header) return;
+    if(header.querySelector('.gate-label-input')) return;
+    const labelEl = header.querySelector('.gate-label');
+    if(!labelEl) return;
+    const defaultLabel = comp.type==='INPUT'?'Toggle':comp.type==='PUSH'?'Push':comp.type==='OUTPUT'?'OUT':(comp.isCustom?comp.type:comp.type);
+    const inp = document.createElement('input');
+    inp.type='text';
+    inp.className='gate-label-input';
+    inp.maxLength=32;
+    inp.value=(comp.customLabel||'').trim()||defaultLabel;
+    labelEl.style.display='none';
+    header.insertBefore(inp, labelEl);
+    inp.focus();
+    inp.select();
+    let done=false;
+    const commit=(save)=>{
+        if(done) return;
+        done=true;
+        if(save){
+            const v=inp.value.trim();
+            comp.customLabel=(v && v!==defaultLabel) ? v : '';
+            const shown=(comp.customLabel||'').trim()||defaultLabel;
+            labelEl.textContent=shown;
+        }
+        labelEl.style.display='';
+        inp.remove();
+    };
+    inp.addEventListener('mousedown',e=>e.stopPropagation());
+    inp.addEventListener('touchstart',e=>e.stopPropagation(),{passive:true});
+    inp.addEventListener('click',e=>e.stopPropagation());
+    inp.addEventListener('keydown',e=>{
+        e.stopPropagation();
+        if(e.key==='Enter'){e.preventDefault();commit(true);inp.blur();}
+        else if(e.key==='Escape'){e.preventDefault();commit(false);inp.blur();}
+    });
+    inp.addEventListener('blur',()=>commit(true));
+}
+
 function registerComponentDom(comp,el){
     compEls.set(comp.id,el);
     const pc={in:[],out:[]};
@@ -2141,6 +2196,33 @@ function updateVisuals(){
     const byId=new Map();
     for(let i=0;i<components.length;i++)byId.set(components[i].id,components[i]);
 
+    // ── Color propagation ─────────────────────────────────────
+    // A powered wire carries a color from its source. That color is
+    // passed through pass-through gates (AND/OR/NOT/etc.) so a chain
+    // from a COLOR gate to a SCREEN stays tinted end-to-end.
+    for(let pass=0; pass<6; pass++){
+        let changed=false;
+        for(const comp of components){
+            const oldColor = comp.outputColor || null;
+            let newColor = null;
+            if(comp.type === 'COLOR'){
+                newColor = comp.pixelColor || '#39ff14';
+            } else if(comp.outputVal === 1){
+                for(const w of wires){
+                    if(w.toComp !== comp.id) continue;
+                    const src = byId.get(w.fromComp);
+                    if(!src || src.outputVal !== 1) continue;
+                    const c = src.type === 'COLOR'
+                        ? (src.pixelColor || '#39ff14')
+                        : (src.outputColor || null);
+                    if(c){ newColor = c; break; }
+                }
+            }
+            if(oldColor !== newColor){ comp.outputColor = newColor; changed=true; }
+        }
+        if(!changed) break;
+    }
+
     for(let i=0;i<components.length;i++){
         const comp=components[i];
         const el=compEls.get(comp.id);if(!el)continue;
@@ -2159,7 +2241,13 @@ function updateVisuals(){
                 p.classList.toggle('on',v===1);
                 let cc=null;
                 const iw=wires.find(w=>w.toComp===comp.id&&w.toPort===0);
-                if(iw){const s=byId.get(iw.fromComp);if(s&&s.type==='COLOR')cc=s.pixelColor||'#39ff14'}
+                if(iw){
+                    const s=byId.get(iw.fromComp);
+                    if(s){
+                        if(s.type==='COLOR') cc=s.pixelColor||'#39ff14';
+                        else if(s.outputColor) cc=s.outputColor;
+                    }
+                }
                 if(v===1&&cc){p.style.background=cc;p.style.boxShadow=`0 0 15px ${cc}`}else{p.style.background='';p.style.boxShadow=''}
             }
         }
@@ -2186,10 +2274,18 @@ function updateVisuals(){
         if(p){
             const s=byId.get(w.fromComp);
             if(s){
-                let pw=false;
-                if(s.isCustom&&w.fromPort!==undefined)pw=s.outputsArray&&s.outputsArray[w.fromPort]===1;
-                else pw=s.outputVal===1;
+                let pw=false, color=null;
+                if(s.isCustom&&w.fromPort!==undefined){
+                    pw=s.outputsArray&&s.outputsArray[w.fromPort]===1;
+                } else {
+                    pw=s.outputVal===1;
+                    if(pw){
+                        if(s.type==='COLOR') color=s.pixelColor||'#39ff14';
+                        else if(s.outputColor) color=s.outputColor;
+                    }
+                }
                 p.classList.toggle('powered',pw);
+                p.style.stroke = color || '';
             }
         }
     }
@@ -2925,6 +3021,31 @@ function openCustomGateModal(gateType,isEditing){
         getFolderNamesSorted().forEach(f=>{const o=document.createElement('option');o.value=f;dl.appendChild(o)});
     }
 
+    // Palette swatches for the gate color picker
+    const sw = document.getElementById('custom-gate-color-swatches');
+    if(sw){
+        sw.innerHTML='';
+        ['#1f3a63','#15803d','#b45309','#6d28d9','#b91c1c','#0f766e','#0d9488','#be123c']
+            .forEach(c => {
+                const b = document.createElement('button');
+                b.type = 'button';
+                b.dataset.swatch = c;
+                b.style.cssText =
+                    'width:16px;height:16px;border-radius:4px;padding:0;cursor:pointer;background:'+c+
+                    ';border:2px solid transparent;box-shadow:0 0 0 1px rgba(0,0,0,.25) inset;';
+                b.addEventListener('mousedown', e => { e.preventDefault(); e.stopPropagation(); });
+                b.addEventListener('click', e => {
+                    e.preventDefault(); e.stopPropagation();
+                    const inp = document.getElementById('custom-gate-color-input');
+                    if(inp) inp.value = c;
+                    document.querySelectorAll('#custom-gate-color-swatches button[data-swatch]').forEach(x => {
+                        x.style.borderColor = (x.dataset.swatch === c) ? '#fff' : 'transparent';
+                    });
+                });
+                sw.appendChild(b);
+            });
+    }
+
     const delBtn = document.getElementById('modal-delete-gate-btn');
     if (delBtn) delBtn.style.display = (isEditing && gateType && savedCustomGates[gateType]) ? 'inline-block' : 'none';
 
@@ -3040,7 +3161,23 @@ function clearModalCanvas(){
 }
 function setupModalToolbar(){
     const tb=document.getElementById('custom-gate-modal-toolbar');if(!tb)return;tb.innerHTML='';
-    const std=[{type:'INPUT',label:'Toggle',color:'#2563eb'},{type:'PUSH',label:'Push',color:'#6c5ce7'},{type:'OUTPUT',label:'Output',color:'#f59e0b'},{type:'AND',label:'AND',color:'#16a34a'},{type:'OR',label:'OR',color:'#8b5cf6'},{type:'XOR',label:'XOR',color:'#ec4899'},{type:'NOT',label:'NOT',color:'#ef4444'},{type:'NAND',label:'NAND',color:'#0f766e'},{type:'NOR',label:'NOR',color:'#7c3aed'},{type:'XNOR',label:'XNOR',color:'#0891b2'},{type:'DELAY',label:'Delay',color:'#64748b'},{type:'CLOCK',label:'Clock',color:'#0d9488'},{type:'PULSE',label:'Pulse',color:'#f43f5e'},{type:'COLOR',label:'Color',color:'#db2777'},{type:'SCREEN',label:'Pixel',color:'#d97706'}];
+    const std=[
+        {type:'INPUT',  label:'Toggle', color:GATE_COLORS.INPUT},
+        {type:'PUSH',   label:'Push',   color:GATE_COLORS.PUSH},
+        {type:'OUTPUT', label:'Output', color:GATE_COLORS.OUTPUT},
+        {type:'AND',    label:'AND',    color:GATE_COLORS.AND},
+        {type:'OR',     label:'OR',     color:GATE_COLORS.OR},
+        {type:'XOR',    label:'XOR',    color:GATE_COLORS.XOR},
+        {type:'NOT',    label:'NOT',    color:GATE_COLORS.NOT},
+        {type:'NAND',   label:'NAND',   color:GATE_COLORS.NAND},
+        {type:'NOR',    label:'NOR',    color:GATE_COLORS.NOR},
+        {type:'XNOR',   label:'XNOR',   color:GATE_COLORS.XNOR},
+        {type:'DELAY',  label:'DELAY',  color:GATE_COLORS.DELAY},
+        {type:'CLOCK',  label:'CLOCK',  color:GATE_COLORS.CLOCK},
+        {type:'PULSE',  label:'PULSE',  color:GATE_COLORS.PULSE},
+        {type:'SCREEN', label:'Pixel',  color:GATE_COLORS.SCREEN},
+        {type:'COLOR',  label:'Color',  color:GATE_COLORS.COLOR}
+    ];
     std.forEach(g=>{const b=document.createElement('div');b.className='tool-btn';b.style.background=g.color;b.textContent=g.label;b.onmousedown=e=>startModalGhostDrag(e,g.type);b.ontouchstart=e=>startModalGhostDrag(e,g.type);tb.appendChild(b)});
     const folderMap=getGateFolders();
     const ordered=[];
@@ -3329,9 +3466,9 @@ function renderModalComponent(comp){
         const ih=il.map((init,i)=>`<div class="port-item"><div class="port" id="modal-port-${comp.id}-in-${i}" data-comp="${comp.id}" data-type="in" data-port="${i}"></div><span class="port-label">${init||''}</span></div>`).join('');
         const oh=ol.map((init,i)=>`<div class="port-item"><div class="port output" id="modal-port-${comp.id}-out-${i}" data-comp="${comp.id}" data-type="out" data-port="${i}"></div><span class="port-label">${init||''}</span></div>`).join('');
         bc=`<div class="custom-gate-ports"><div class="port-list">${ih||''}</div><div class="port-list" style="text-align:right;">${oh||''}</div></div>`;
-    }else if(comp.type==='INPUT'){tt='Toggle';bc=`<div class="io-port-row"><button class="switch-btn" id="modal-sw-${comp.id}">OFF</button><div style="display:flex;align-items:center;gap:3px;"><div class="port output" id="modal-port-${comp.id}-out-0" data-comp="${comp.id}" data-type="out" data-port="0"></div><input type="text" class="port-label-input" placeholder="Name" value="${comp.customLabel||''}" id="modal-label-${comp.id}"></div></div>`}
-    else if(comp.type==='PUSH'){tt='Push';bc=`<div class="io-port-row"><button class="push-btn" id="modal-push-${comp.id}">PRESS</button><div style="display:flex;align-items:center;gap:3px;"><div class="port output" id="modal-port-${comp.id}-out-0" data-comp="${comp.id}" data-type="out" data-port="0"></div><input type="text" class="port-label-input" placeholder="Name" value="${comp.customLabel||''}" id="modal-label-${comp.id}"></div></div>`}
-    else if(comp.type==='OUTPUT'){tt='OUT';bc=`<div class="io-port-row" style="flex-direction:row-reverse;"><div class="bulb"></div><div style="display:flex;align-items:center;gap:3px;"><div class="port" id="modal-port-${comp.id}-in-0" data-comp="${comp.id}" data-type="in" data-port="0"></div><input type="text" class="port-label-input" placeholder="Name" value="${comp.customLabel||''}" id="modal-label-${comp.id}"></div></div>`}
+    }else if(comp.type==='INPUT'){tt='Toggle';bc=`<div class="io-port-row"><button class="switch-btn" id="modal-sw-${comp.id}">OFF</button><div style="display:flex;align-items:center;gap:3px;"><div class="port output" id="modal-port-${comp.id}-out-0" data-comp="${comp.id}" data-type="out" data-port="0"></div></div></div>`}
+    else if(comp.type==='PUSH'){tt='Push';bc=`<div class="io-port-row"><button class="push-btn" id="modal-push-${comp.id}">PRESS</button><div style="display:flex;align-items:center;gap:3px;"><div class="port output" id="modal-port-${comp.id}-out-0" data-comp="${comp.id}" data-type="out" data-port="0"></div></div></div>`}
+    else if(comp.type==='OUTPUT'){tt='OUT';bc=`<div class="io-port-row" style="flex-direction:row-reverse;"><div class="bulb"></div><div style="display:flex;align-items:center;gap:3px;"><div class="port" id="modal-port-${comp.id}-in-0" data-comp="${comp.id}" data-type="in" data-port="0"></div></div></div>`}
     else if(comp.type==='NOT'){bc=`<div style="display:flex;justify-content:space-between;align-items:center;"><div class="port" id="modal-port-${comp.id}-in-0" data-comp="${comp.id}" data-type="in" data-port="0"></div><span style="font-size:10px;font-weight:bold;">NOT</span><div class="port output" id="modal-port-${comp.id}-out-0" data-comp="${comp.id}" data-type="out" data-port="0"></div></div>`}
     else if(comp.type==='DELAY'){bc=`<div style="display:flex;justify-content:space-between;align-items:center;gap:3px;"><div class="port" id="modal-port-${comp.id}-in-0" data-comp="${comp.id}" data-type="in" data-port="0"></div><input type="number" min="1" max="20000" step="1" value="${comp.delayMs||150}" class="delay-input" id="modal-delay-val-${comp.id}" title="Delay in milliseconds (1 – 20000)"><span style="font-size:8px;opacity:.6;">ms</span><div class="port output" id="modal-port-${comp.id}-out-0" data-comp="${comp.id}" data-type="out" data-port="0"></div></div>`}
     else if(comp.type==='PULSE'){bc=`<div style="display:flex;justify-content:space-between;align-items:center;gap:3px;"><div class="port" id="modal-port-${comp.id}-in-0" data-comp="${comp.id}" data-type="in" data-port="0"></div><span style="font-size:9px;font-weight:bold;">PULSE</span><span style="font-size:8px;opacity:.6;">1-shot</span><div class="port output" id="modal-port-${comp.id}-out-0" data-comp="${comp.id}" data-type="out" data-port="0"></div></div>`}
@@ -3346,8 +3483,25 @@ function renderModalComponent(comp){
         attachPortHandlers(el,'modal');return;
     }
     else{bc=`<div style="display:flex;justify-content:space-between;align-items:center;"><div style="display:flex;flex-direction:column;gap:4px;"><div class="port" id="modal-port-${comp.id}-in-0" data-comp="${comp.id}" data-type="in" data-port="0"></div><div class="port" id="modal-port-${comp.id}-in-1" data-comp="${comp.id}" data-type="in" data-port="1"></div></div><span style="font-size:10px;font-weight:bold;">${comp.type}</span><div class="port output" id="modal-port-${comp.id}-out-0" data-comp="${comp.id}" data-type="out" data-port="0"></div></div>`}
+    const defaultLabel = comp.type==='INPUT'?'Toggle':comp.type==='PUSH'?'Push':comp.type==='OUTPUT'?'OUT':(comp.isCustom?comp.type:(comp.customLabel||'').trim()||comp.type);
+    const displayLabel = (comp.customLabel||'').trim() || (comp.type==='INPUT'?'Toggle':comp.type==='PUSH'?'Push':comp.type==='OUTPUT'?'OUT':(comp.isCustom?comp.type:comp.type));
     const hr=`<button class="delete-btn" data-modal-delete="${comp.id}">×</button>`;
-    el.innerHTML=`<div class="gate-header" onmousedown="startDragModalGate(event,${comp.id})" ontouchstart="startDragModalGate(event,${comp.id})"><span>${tt}</span>${hr}</div><div class="gate-body">${bc}</div>`;
+    el.innerHTML=`<div class="gate-header" onmousedown="startDragModalGate(event,${comp.id})" ontouchstart="startDragModalGate(event,${comp.id})"><span class="gate-label" id="modal-gate-label-${comp.id}">${escapeHtml(displayLabel)}</span>${hr}</div><div class="gate-body">${bc}</div>`;
+
+    // Right-click or double-click the header to rename (same as main canvas)
+    const hdr = el.querySelector('.gate-header');
+    if(hdr){
+        hdr.addEventListener('dblclick', e => {
+            if(e.target.classList.contains('delete-btn')) return;
+            e.preventDefault(); e.stopPropagation();
+            startModalInlineRename(comp.id);
+        });
+        hdr.addEventListener('contextmenu', e => {
+            if(e.target.classList.contains('delete-btn')) return;
+            e.preventDefault(); e.stopPropagation();
+            startModalInlineRename(comp.id);
+        });
+    }
     const delBtn=el.querySelector('[data-modal-delete]');
     if(delBtn){
         const doDel=(e)=>{e.stopPropagation();e.preventDefault();removeModalComponent(comp.id)};
@@ -3356,7 +3510,6 @@ function renderModalComponent(comp){
     }
     if(comp.type==='INPUT'){const b=el.querySelector(`#modal-sw-${comp.id}`);const tg=e=>{e.preventDefault();e.stopPropagation();comp.state=comp.state===0?1:0;comp.outputVal=comp.state;b.classList.toggle('active',comp.state===1);b.innerText=comp.state===1?'ON':'OFF';runModalSimulation()};b.addEventListener('click',tg);b.addEventListener('touchstart',tg,{passive:false})}
     if(comp.type==='PUSH'){const b=el.querySelector(`#modal-push-${comp.id}`);const ps=e=>{e.preventDefault();e.stopPropagation();comp.state=1;comp.outputVal=1;b.classList.add('active');b.innerText='ON';runModalSimulation()};const pe=e=>{e.preventDefault();e.stopPropagation();comp.state=0;comp.outputVal=0;b.classList.remove('active');b.innerText='PRESS';runModalSimulation()};b.addEventListener('mousedown',ps);b.addEventListener('mouseup',pe);b.addEventListener('mouseleave',pe);b.addEventListener('touchstart',ps,{passive:false});b.addEventListener('touchend',pe,{passive:false})}
-    if(comp.type==='INPUT'||comp.type==='OUTPUT'||comp.type==='PUSH'){const inp=el.querySelector(`#modal-label-${comp.id}`);if(inp){inp.addEventListener('input',e=>{comp.customLabel=e.target.value});inp.addEventListener('mousedown',e=>e.stopPropagation());inp.addEventListener('touchstart',e=>e.stopPropagation())}}
     if(comp.type==='DELAY'){const i=el.querySelector(`#modal-delay-val-${comp.id}`);i.addEventListener('change',e=>{e.stopPropagation();let v=parseInt(i.value)||150;v=Math.max(1,Math.min(TICK_MS*MAX_TICKS,v));comp.delayMs=Math.round(v);i.value=comp.delayMs;ensureDelayQueue(comp)});i.addEventListener('mousedown',e=>e.stopPropagation())}
     if(comp.type==='CLOCK'){const i=el.querySelector(`#modal-clock-val-${comp.id}`);i.addEventListener('change',e=>{e.stopPropagation();let v=parseInt(i.value)||250;v=Math.max(TICK_MS,Math.min(TICK_MS*MAX_TICKS,v));comp.clockMs=Math.round(v);i.value=comp.clockMs;comp.clockCounter=0});i.addEventListener('mousedown',e=>e.stopPropagation())}
     if(comp.type==='COLOR'){const i=el.querySelector(`#modal-color-val-${comp.id}`);i.addEventListener('input',e=>{e.stopPropagation();comp.pixelColor=e.target.value});i.addEventListener('mousedown',e=>e.stopPropagation())}
@@ -3657,7 +3810,7 @@ window.renameIC=renameIC;window.setCustomGateColor=setCustomGateColor;window.del
 window.removeCustomContainer=removeCustomContainer;window.removeComponent=removeComponent;
 window.startResizePixel=startResizePixel;window.updateContainerTitle=updateContainerTitle;
 window.startResizeContainer=startResizeContainer;window.startDragContainer=startDragContainer;
-window.startDragGate=startDragGate;window.toggleInput=toggleInput;window.startInlineRename=startInlineRename;
+window.startDragGate=startDragGate;window.toggleInput=toggleInput;window.startInlineRename=startInlineRename;window.startModalInlineRename=startModalInlineRename;
 window.closeConfirm=closeConfirm;window.closeConfirmOutside=closeConfirmOutside;
 window.showToast=showToast;window.showConfirm=showConfirm;
 window.startPan=startPan;window.startTouchPanZoom=startTouchPanZoom;window.handleZoom=handleZoom;
@@ -4306,6 +4459,7 @@ function removeRemoteWirePath(peerId){
 function serializeComp(c){
     const cl = JSON.parse(JSON.stringify(c));
     delete cl.def;
+    delete cl.outputColor;
     return cl;
 }
 function sortedCompJson(arr){
