@@ -354,6 +354,91 @@ body.debug-mode .pixel-square .port{opacity:.72}
     border-radius:0!important;height:100%;display:flex;align-items:center;justify-content:center}
     body.pour-active .pixel-square .port{opacity:1!important;pointer-events:auto!important;transform:translate(-50%,-50%) scale(1)}
 body.pour-active .pixel-square .port.active-port{background:#15803d!important}
+/* ══════════════════════════════════════════════════
+   SETTINGS-DRIVEN OVERRIDES — keep at the END of <style>
+   ══════════════════════════════════════════════════ */
+body{font-family:var(--font-ui,system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif);}
+#toolbar{font-size:calc(11px * var(--ui-scale,1));}
+button,.tool-btn{font-size:calc(11px * var(--ui-scale,1));}
+#toolbar .brand-title{font-size:calc(13px * var(--brand-scale,1) * var(--ui-scale,1));font-family:var(--font-serif,"Iowan Old Style","Palatino Linotype",Palatino,Georgia,"Times New Roman",serif);}
+.instructions{font-size:calc(10px * var(--ui-scale,1));}
+.gate-header{font-size:calc(10px * var(--ui-scale,1));}
+.gate-label-input,.port-label-input{font-size:calc(10px * var(--ui-scale,1));}
+#debug-tooltip{font-family:var(--font-mono,ui-monospace,SFMono-Regular,Menlo,Consolas,monospace);}
+#share-room-code-box code{font-family:var(--font-mono,ui-monospace,Menlo,Consolas,monospace);}
+
+.gate{border-width:var(--gate-border-width,2px);border-radius:var(--gate-radius,6px);}
+.gate-header{border-top-left-radius:calc(var(--gate-radius,6px) - 2px);border-top-right-radius:calc(var(--gate-radius,6px) - 2px);}
+.gate-body{border-bottom-left-radius:calc(var(--gate-radius,6px) - 2px);border-bottom-right-radius:calc(var(--gate-radius,6px) - 2px);}
+#ghost-gate,.remote-ghost{border-radius:var(--gate-radius,6px);}
+#ghost-gate .gate-header,.remote-ghost .gate-header{border-top-left-radius:calc(var(--gate-radius,6px) - 2px);border-top-right-radius:calc(var(--gate-radius,6px) - 2px);}
+#ghost-gate .gate-body,.remote-ghost .gate-body{border-bottom-left-radius:calc(var(--gate-radius,6px) - 2px);border-bottom-right-radius:calc(var(--gate-radius,6px) - 2px);}
+
+.wire-path{stroke:var(--wire-color,#8b93a7);stroke-width:var(--wire-width,3.5);}
+.wire-path.powered{stroke:var(--wire-powered-color,#15803d);}
+.wire-path:hover{stroke:var(--wire-hover-color,#1f3a63);stroke-width:calc(var(--wire-width,3.5) + 1);}
+.wire-path.powered:hover{stroke:var(--wire-powered-color,#15803d);stroke-width:calc(var(--wire-width,3.5) + 1);}
+.wire-path.selected{stroke:var(--wire-selected-color,#1f3a63)!important;stroke-width:calc(var(--wire-width,3.5) + 1.5);}
+
+body.no-shadows .gate,body.no-shadows #toolbar,body.no-shadows .instructions,
+body.no-shadows .modal-content,body.no-shadows .toast,body.no-shadows #ghost-gate,
+body.no-shadows #settings-modal .settings-box{box-shadow:none!important;}
+body.no-animations *,body.no-animations *::before,body.no-animations *::after{
+  animation:none!important;transition:none!important;}
+
+/* ── Settings modal ───────────────────────────────── */
+#settings-modal{position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:4600;display:none;align-items:center;justify-content:center;}
+#settings-modal .settings-box{
+  background:var(--toolbar-bg);color:var(--text-color);border:1px solid var(--border-color);
+  border-radius:10px;box-shadow:0 12px 40px rgba(0,0,0,.4);
+  width:min(880px,94vw);height:min(720px,92vh);display:flex;flex-direction:column;overflow:hidden;}
+#settings-modal .settings-header{padding:14px 18px 0;flex-shrink:0;}
+#settings-modal .settings-header h3{margin:0 0 12px;font-size:15px;display:flex;align-items:center;gap:8px;}
+#settings-modal .settings-tabs{display:flex;gap:2px;border-bottom:1px solid var(--border-color);overflow-x:auto;scrollbar-width:none;}
+#settings-modal .settings-tabs::-webkit-scrollbar{display:none;}
+#settings-modal .stab{background:transparent!important;color:var(--text-color)!important;opacity:.55;
+  border-radius:0!important;border-bottom:2px solid transparent!important;padding:8px 14px!important;
+  font-size:11px;white-space:nowrap;font-weight:600;}
+#settings-modal .stab.active{opacity:1;border-bottom-color:var(--accent)!important;}
+#settings-modal .settings-body{flex:1;overflow-y:auto;padding:16px 18px;font-size:12px;}
+#settings-modal .settings-footer{padding:10px 18px;display:flex;gap:8px;justify-content:flex-end;
+  border-top:1px solid var(--border-color);flex-shrink:0;background:var(--toolbar-bg);flex-wrap:wrap;}
+#settings-modal .settings-footer button{padding:7px 16px;font-size:11px;}
+#settings-modal .btn-primary{background:var(--accent);color:#fff;}
+#settings-modal .btn-cancel{background:#6c757d;color:#fff;}
+#settings-modal .sec-title{font-size:10px;font-weight:bold;text-transform:uppercase;letter-spacing:.09em;
+  opacity:.6;margin:20px 0 9px;padding-bottom:5px;border-bottom:1px solid var(--border-color);}
+#settings-modal .sec-title:first-child{margin-top:0;}
+#settings-modal .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(255px,1fr));gap:8px;}
+#settings-modal .field{display:flex;align-items:center;gap:8px;padding:6px 9px;
+  background:var(--bg-color);border:1px solid var(--border-color);border-radius:6px;min-width:0;}
+#settings-modal .field label{flex:1;font-size:11px;opacity:.9;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0;}
+#settings-modal .field input[type=color]{width:36px;height:26px;padding:1px;border:1px solid var(--border-color);
+  border-radius:4px;background:transparent;cursor:pointer;flex-shrink:0;}
+#settings-modal .field input[type=text],
+#settings-modal .field input[type=number],
+#settings-modal .field select{background:var(--toolbar-bg);color:var(--text-color);
+  border:1px solid var(--border-color);border-radius:4px;padding:3px 6px;font-size:11px;
+  font-family:inherit;flex-shrink:0;min-width:0;}
+#settings-modal .field input[type=text]{width:150px;}
+#settings-modal .field input[type=number]{width:70px;}
+#settings-modal .field.wide{grid-column:1/-1;}
+#settings-modal .field.wide input[type=text]{flex:1;width:auto;}
+#settings-modal .field.wide select{flex:0 0 140px;}
+#settings-modal .field input[type=range]{flex:1;min-width:0;accent-color:var(--accent);cursor:pointer;}
+#settings-modal .field input[type=checkbox]{width:16px;height:16px;accent-color:var(--accent);cursor:pointer;flex-shrink:0;}
+#settings-modal .field .val{font-size:10px;opacity:.6;width:52px;text-align:right;flex-shrink:0;
+  font-variant-numeric:tabular-nums;font-family:var(--font-mono,ui-monospace,monospace);}
+#settings-modal .preset-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:10px;}
+#settings-modal .preset-card{border:1px solid var(--border-color);border-radius:8px;padding:10px;
+  cursor:pointer;background:var(--bg-color);transition:transform .12s,box-shadow .12s;}
+#settings-modal .preset-card:hover{transform:translateY(-2px);box-shadow:0 6px 18px rgba(0,0,0,.25);}
+#settings-modal .preset-card .pc-name{font-size:11px;font-weight:bold;margin-bottom:7px;}
+#settings-modal .preset-card .pc-swatches{display:flex;gap:4px;}
+#settings-modal .preset-card .pc-sw{width:18px;height:18px;border-radius:4px;border:1px solid rgba(0,0,0,.25);}
+#settings-modal textarea{width:100%;height:300px;background:var(--bg-color);color:var(--text-color);
+  border:1px solid var(--border-color);border-radius:6px;padding:8px;font-size:11px;
+  font-family:var(--font-mono,ui-monospace,Menlo,Consolas,monospace);resize:vertical;box-sizing:border-box;}
 </style>
 </head>
 <body>
@@ -391,6 +476,7 @@ body.pour-active .pixel-square .port.active-port{background:#15803d!important}
         <label style="font-size:10px;cursor:pointer;white-space:nowrap;"><input type="checkbox" id="snapCheck" checked /> Snap</label>
         <button onclick="resetView()" style="background:#3d4653;">Reset</button>
         <button onclick="toggleTheme()" style="background:#3b5b8c;">Theme</button>
+        <button onclick="openSettingsModal()" style="background:#0f766e;" title="Colours, fonts, layout &amp; presets">⚙️ Settings</button>
         <button onclick="clearAll()" style="background:#b91c1c;">Clear</button>
         <button id="debug-btn" onclick="toggleDebugMode()" style="background:#1f3a63;" title="Toggle Debug Mode (D)">🐞 Debug</button>
         <button onclick="toggleInstructions()" style="background:#3d4653;">Tips</button>
@@ -572,6 +658,29 @@ body.pour-active .pixel-square .port.active-port{background:#15803d!important}
     </div>
 </div>
 
+<div id="settings-modal" onclick="closeSettingsOutside(event)">
+  <div class="settings-box" onclick="event.stopPropagation()">
+    <div class="settings-header">
+      <h3>⚙️ Settings</h3>
+      <div class="settings-tabs">
+        <button class="stab active" data-tab="theme"   onclick="setSettingsTab('theme')">🎨 Colours</button>
+        <button class="stab"        data-tab="fonts"   onclick="setSettingsTab('fonts')">🔤 Fonts</button>
+        <button class="stab"        data-tab="layout"  onclick="setSettingsTab('layout')">📐 Layout</button>
+        <button class="stab"        data-tab="presets" onclick="setSettingsTab('presets')">✨ Presets</button>
+        <button class="stab"        data-tab="advanced"onclick="setSettingsTab('advanced')">⚙️ Advanced</button>
+      </div>
+    </div>
+    <div class="settings-body" id="settings-body"></div>
+    <div class="settings-footer">
+      <button class="btn-cancel" onclick="resetSettings()">↺ Reset all</button>
+      <button class="btn-cancel" onclick="exportSettings()">⬇ Export</button>
+      <button class="btn-cancel" onclick="importSettingsClick()">⬆ Import</button>
+      <button class="btn-primary" onclick="closeSettingsModal()">Done</button>
+      <input type="file" id="settings-file-input" accept=".json" style="display:none" onchange="importSettingsFile(event)" />
+    </div>
+  </div>
+</div>
+
 <div id="toast-container"></div>
 
 <div class="instructions" id="instructions-box">
@@ -654,7 +763,7 @@ const GATE_COLORS={INPUT:'#1f3a63',PUSH:'#3d4653',OUTPUT:'#b45309',AND:'#15803d'
 function getGateColor(c){if(c.isCustom)return(c.def&&c.def.color)||'#1f3a63';return GATE_COLORS[c.type]||'#007bff'}
 function getGateColorByName(t,d){if(d&&d.color)return d.color;return GATE_COLORS[t]||'#1f3a63'}
 
-const SNAP=20;
+let SNAP=20;
 function snapValue(v){if(!document.getElementById('snapCheck').checked)return v;return Math.round(v/SNAP)*SNAP}
 function snapPos(x,y){return{x:snapValue(x),y:snapValue(y)}}
 
@@ -904,14 +1013,19 @@ function updatePortPositions(){
     }
 }
 
-const GRID_UNIT=20;
+let GRID_UNIT=20;
 const GRID_MIN_PX=10;
 function applyDotStyle(el,z){
     const isDark=document.body.classList.contains('dark-theme');
+    const L=(LSET&&LSET.layout)||{};
     const t=Math.max(0,Math.min(1,(Math.log2(z)+3.32)/5.32));
-    const alpha=0.06+t*0.40;
-    const radius=(0.7+t*1.3).toFixed(2);
-    const rgb=isDark?'255,255,255':'100,110,130';
+    const minA=L.gridDotMinAlpha!=null?L.gridDotMinAlpha:0.06;
+    const maxA=L.gridDotMaxAlpha!=null?L.gridDotMaxAlpha:0.46;
+    const alpha=minA+t*(maxA-minA);
+    const minR=L.gridDotMinRadius!=null?L.gridDotMinRadius:0.7;
+    const maxR=L.gridDotMaxRadius!=null?L.gridDotMaxRadius:2.0;
+    const radius=(minR+t*(maxR-minR)).toFixed(2);
+    const rgb=isDark?(L.gridDotColorDark||'255,255,255'):(L.gridDotColorLight||'100,110,130');
     el.style.setProperty('--dot-color',`rgba(${rgb},${alpha.toFixed(3)})`);
     el.style.setProperty('--dot-radius',radius+'px');
 }
@@ -939,7 +1053,7 @@ function startPan(e){if(e.target.closest('.gate')||e.target.closest('.custom-con
 function startTouchPanZoom(e){if(e.target.closest('.gate')||e.target.closest('.custom-container-wrapper')||e.target.closest('#toolbar'))return;if(e.touches.length===2){initialPinchDistance=Math.hypot(e.touches[0].clientX-e.touches[1].clientX,e.touches[0].clientY-e.touches[1].clientY);initialZoom=zoom;isPanning=false}else if(e.touches.length===1){isPanning=true;startPanX=e.touches[0].clientX-panX;startPanY=e.touches[0].clientY-panY}e.stopPropagation()}
 function handleZoom(e){e.preventDefault();const zf=1.1;applyZoom(e.deltaY<0?zoom*zf:zoom/zf,e.clientX,e.clientY)}
 function resetView(){panX=0;panY=0;zoom=1;updateTransform();markPortPositionsDirty();saveToLocalStorage()}
-function toggleTheme(){document.body.classList.toggle('light-theme');document.body.classList.toggle('dark-theme');updateGridBackground();updateModalGridBackground();saveToLocalStorage()}
+function toggleTheme(){document.body.classList.toggle('light-theme');document.body.classList.toggle('dark-theme');applySettings();updateGridBackground();updateModalGridBackground();saveToLocalStorage()}
 function togglePause(){isPaused=!isPaused;const b=document.getElementById('pause-btn');b.innerText=isPaused?'Resume':'Pause';b.style.background=isPaused?'#16a34a':'#d97706'}
 
 function startBoxSelect(e){isBoxSelecting=true;const r=viewport.getBoundingClientRect();boxSelectStartScreenX=e.clientX;boxSelectStartScreenY=e.clientY;boxSelectStartX=(e.clientX-r.left-panX)/zoom;boxSelectStartY=(e.clientY-r.top-panY)/zoom;selectionBoxEl.style.display='block';selectionBoxEl.style.left=(boxSelectStartScreenX-r.left)+'px';selectionBoxEl.style.top=(boxSelectStartScreenY-r.top)+'px';selectionBoxEl.style.width='0px';selectionBoxEl.style.height='0px'}
@@ -1031,7 +1145,7 @@ function pasteAtCursor(){
 
 function startGhostDrag(e,type,sourceFolder){
     e.preventDefault();ghostType=type;ghostSourceFolder=sourceFolder||'';
-    let ht=type,bc='',w=140,h='auto',gc='#1f3a63';
+    let ht=type,bc='',w=gwPx(),h='auto',gc='#1f3a63';
     if(savedCustomGates[type]){
         const d=savedCustomGates[type];gc=d.color||'#1f3a63';
         let rows='';const ml=Math.max((d.inputInitials||[]).length,(d.outputInitials||[]).length);
@@ -1129,7 +1243,7 @@ function handleMove(cx,cy){
     const r=viewport.getBoundingClientRect();
     cursorCanvasX=(cx-r.left-panX)/zoom;cursorCanvasY=(cy-r.top-panY)/zoom;
     if(ghostType){
-        let w=140,h=70;
+        let w=gwPx(),h=70;
         if(savedCustomGates[ghostType]){const d=savedCustomGates[ghostType];h=Math.max(50,Math.max((d.inputInitials||[]).length,(d.outputInitials||[]).length)*22+12)}
         if(ghostType==='SCREEN'){w=40;h=40}
         updateGhostPosition(cx,cy,w,h);
@@ -1354,7 +1468,7 @@ function renderComponent(comp){
         el.style.setProperty('min-width',w+'px','important');
         el.style.setProperty('min-height',h+'px','important');
         el.style.left=Math.round(comp.x)+'px';el.style.top=Math.round(comp.y)+'px';
-    }else{el.style.width='140px';el.style.minWidth='140px';el.style.height='auto';el.style.left=comp.x+'px';el.style.top=comp.y+'px'}
+    }else{el.style.width='var(--gate-width,140px)';el.style.minWidth='var(--gate-width,140px)';el.style.height='auto';el.style.left=comp.x+'px';el.style.top=comp.y+'px'}
     let bc='';
     if(comp.isCustom){
         const il=(comp.def&&comp.def.inputInitials)||[],ol=(comp.def&&comp.def.outputInitials)||[];
@@ -3383,7 +3497,7 @@ function fitModalToContents(padding=48){
 function startModalGhostDrag(e,type){
     e.preventDefault();e.stopPropagation();modalGhostType=type;
     const g=document.getElementById('custom-gate-modal-ghost-gate');if(!g)return;
-    let ht=type,bc='',w=140,h='auto',gc=getGateColorByName(type,null),isPixel=false;
+    let ht=type,bc='',w=gwPx(),h='auto',gc=getGateColorByName(type,null),isPixel=false;
     if(savedCustomGates[type]){
         const d=savedCustomGates[type];gc=d.color||'#1f3a63';
         const il=d.inputInitials||[],ol=d.outputInitials||[],ml=Math.max(il.length,ol.length);
@@ -3458,7 +3572,7 @@ function renderModalComponent(comp){
         el.classList.add('gate-pixel');const w=comp.pixelWidth||40,h=comp.pixelHeight||40;
         el.style.width=w+'px';el.style.height=h+'px';el.style.minWidth=w+'px';el.style.minHeight=h+'px';
         el.style.left=Math.round(comp.x)+'px';el.style.top=Math.round(comp.y)+'px';
-    }else{el.style.width='140px';el.style.minWidth='140px';el.style.height='auto';el.style.left=comp.x+'px';el.style.top=comp.y+'px'}
+    }else{el.style.width='var(--gate-width,140px)';el.style.minWidth='var(--gate-width,140px)';el.style.height='auto';el.style.left=comp.x+'px';el.style.top=comp.y+'px'}
     let bc='',tt=comp.type;
     if(comp.isCustom){
         tt=comp.type;
@@ -3850,6 +3964,454 @@ window.addEventListener('load',()=>{
     if(localStorage.getItem('debug_mode')==='1')setDebugMode(true);else setDebugMode(false);
     console.log('✅ Logic Sim loaded.');
 });
+
+/* ═══════════════════════════════════════════════════════════════
+   SETTINGS ENGINE — colours · fonts · layout · presets
+   ═══════════════════════════════════════════════════════════════ */
+var LSET = null;
+const LSET_KEY = 'logic_sim_settings_v1';
+
+const LSET_DEFAULT = {
+  light: {
+    '--bg-color':'#f7f8fa','--toolbar-bg':'#ffffff','--text-color':'#14181f',
+    '--border-color':'#e3e6eb','--border-strong':'#d2d8e0','--gate-bg':'#ffffff',
+    '--gate-header':'#1f3a63','--pixel-off':'#0a0f1c','--pixel-on':'#22c55e',
+    '--accent':'#1f3a63','--accent-2':'#16294a','--accent-soft':'#3b5b8c',
+    '--accent-tint':'#eef1f6','--muted':'#5b6472','--muted-2':'#78818f',
+    '--danger':'#b91c1c','--good':'#15803d'
+  },
+  dark: {
+    '--bg-color':'#0e1422','--toolbar-bg':'#131a2b','--text-color':'#dbe4f7',
+    '--border-color':'#253053','--border-strong':'#334066','--gate-bg':'#182137',
+    '--gate-header':'#8fa6d8','--pixel-off':'#050912','--pixel-on':'#22c55e',
+    '--accent':'#4d70db','--accent-2':'#3a56a0','--accent-soft':'#8fa6d8',
+    '--accent-tint':'#1a2338','--muted':'#8b96b8','--muted-2':'#5a6b95',
+    '--danger':'#ef4444','--good':'#22c55e'
+  },
+  fonts: { ui:'', serif:'', mono:'', uiScale:1, brandScale:1 },
+  layout: {
+    gateRadius:6, gateWidth:140, gateBorderWidth:2,
+    wireWidth:3.5, wireColor:'#8b93a7', wirePoweredColor:'#15803d',
+    wireHoverColor:'#1f3a63', wireSelectedColor:'#1f3a63',
+    gridSize:20, snapSize:20,
+    gridDotColorLight:'100,110,130', gridDotColorDark:'255,255,255',
+    gridDotMinAlpha:0.06, gridDotMaxAlpha:0.46,
+    gridDotMinRadius:0.7, gridDotMaxRadius:2.0,
+    shadows:true, animations:true
+  }
+};
+
+const LSET_THEME_FIELDS = [
+  ['--bg-color','Canvas background'],
+  ['--toolbar-bg','Toolbar / panels'],
+  ['--text-color','Text'],
+  ['--border-color','Borders'],
+  ['--border-strong','Borders (strong)'],
+  ['--gate-bg','Gate body'],
+  ['--gate-header','Gate header / accent'],
+  ['--accent','Primary accent'],
+  ['--accent-2','Accent (hover)'],
+  ['--accent-soft','Accent (soft)'],
+  ['--accent-tint','Accent tint'],
+  ['--pixel-off','Pixel — OFF'],
+  ['--pixel-on','Pixel — ON'],
+  ['--muted','Muted text'],
+  ['--muted-2','Muted text (dim)'],
+  ['--danger','Danger'],
+  ['--good','Success']
+];
+
+const LSET_FONTS = [
+  ['','System default'],
+  ['Inter, system-ui, sans-serif','Inter'],
+  ['"Segoe UI", system-ui, sans-serif','Segoe UI'],
+  ['Roboto, system-ui, sans-serif','Roboto'],
+  ['"Helvetica Neue", Helvetica, Arial, sans-serif','Helvetica'],
+  ['Verdana, Geneva, sans-serif','Verdana'],
+  ['Tahoma, Geneva, sans-serif','Tahoma'],
+  ['"Trebuchet MS", sans-serif','Trebuchet MS'],
+  ['Georgia, serif','Georgia'],
+  ['"Times New Roman", Times, serif','Times'],
+  ['"Palatino Linotype", Palatino, serif','Palatino'],
+  ['"Iowan Old Style", Georgia, serif','Iowan Old Style'],
+  ['"Courier New", monospace','Courier New'],
+  ['ui-monospace, Menlo, Consolas, monospace','System mono'],
+  ['"Fira Code", ui-monospace, monospace','Fira Code'],
+  ['"JetBrains Mono", ui-monospace, monospace','JetBrains Mono'],
+  ['"Comic Sans MS", cursive','Comic Sans'],
+  ['Impact, sans-serif','Impact']
+];
+
+const LSET_PRESETS = {
+  'Default': null,
+  'Midnight': {
+    light:{'--bg-color':'#eef2f9','--toolbar-bg':'#ffffff','--text-color':'#0b1220','--border-color':'#d6deea','--border-strong':'#b9c6d9','--gate-bg':'#ffffff','--gate-header':'#1e3a8a','--pixel-off':'#0a0f1c','--pixel-on':'#22d3ee','--accent':'#1e40af','--accent-2':'#1e3a8a','--accent-soft':'#3b82f6','--accent-tint':'#e8eefb','--muted':'#475569','--muted-2':'#64748b','--danger':'#dc2626','--good':'#059669'},
+    dark:{'--bg-color':'#070b14','--toolbar-bg':'#0d1524','--text-color':'#d6e2f5','--border-color':'#1c2a44','--border-strong':'#2a3d61','--gate-bg':'#101a2e','--gate-header':'#60a5fa','--pixel-off':'#03060d','--pixel-on':'#22d3ee','--accent':'#3b82f6','--accent-2':'#2563eb','--accent-soft':'#60a5fa','--accent-tint':'#101c33','--muted':'#8296b8','--muted-2':'#5b6f92','--danger':'#f87171','--good':'#34d399'}
+  },
+  'Nord': {
+    light:{'--bg-color':'#eceff4','--toolbar-bg':'#ffffff','--text-color':'#2e3440','--border-color':'#d8dee9','--border-strong':'#c2cad8','--gate-bg':'#ffffff','--gate-header':'#5e81ac','--pixel-off':'#2e3440','--pixel-on':'#a3be8c','--accent':'#5e81ac','--accent-2':'#4c6a92','--accent-soft':'#81a1c1','--accent-tint':'#e5e9f0','--muted':'#4c566a','--muted-2':'#6b7a91','--danger':'#bf616a','--good':'#a3be8c'},
+    dark:{'--bg-color':'#2e3440','--toolbar-bg':'#3b4252','--text-color':'#eceff4','--border-color':'#434c5e','--border-strong':'#4c566a','--gate-bg':'#3b4252','--gate-header':'#88c0d0','--pixel-off':'#242933','--pixel-on':'#a3be8c','--accent':'#88c0d0','--accent-2':'#8fbcbb','--accent-soft':'#81a1c1','--accent-tint':'#3b4252','--muted':'#aebacf','--muted-2':'#7b8aa3','--danger':'#bf616a','--good':'#a3be8c'}
+  },
+  'Solarized Light': {
+    light:{'--bg-color':'#fdf6e3','--toolbar-bg':'#eee8d5','--text-color':'#073642','--border-color':'#e4dcc4','--border-strong':'#d3cbb3','--gate-bg':'#fffbf0','--gate-header':'#268bd2','--pixel-off':'#073642','--pixel-on':'#859900','--accent':'#268bd2','--accent-2':'#1f6fa8','--accent-soft':'#6cace4','--accent-tint':'#eef1e0','--muted':'#586e75','--muted-2':'#839496','--danger':'#dc322f','--good':'#859900'}
+  },
+  'Solarized Dark': {
+    dark:{'--bg-color':'#002b36','--toolbar-bg':'#073642','--text-color':'#eee8d5','--border-color':'#0f4753','--border-strong':'#155e6e','--gate-bg':'#073642','--gate-header':'#2aa198','--pixel-off':'#001f27','--pixel-on':'#b58900','--accent':'#2aa198','--accent-2':'#268bd2','--accent-soft':'#4fb8ae','--accent-tint':'#0b3d4a','--muted':'#93a1a1','--muted-2':'#6b8285','--danger':'#dc322f','--good':'#859900'}
+  },
+  'Dracula': {
+    dark:{'--bg-color':'#282a36','--toolbar-bg':'#21222c','--text-color':'#f8f8f2','--border-color':'#44475a','--border-strong':'#6272a4','--gate-bg':'#343746','--gate-header':'#bd93f9','--pixel-off':'#1a1b23','--pixel-on':'#50fa7b','--accent':'#bd93f9','--accent-2':'#a679e8','--accent-soft':'#caa8fb','--accent-tint':'#3a3d4d','--muted':'#a8b0c8','--muted-2':'#6f7893','--danger':'#ff5555','--good':'#50fa7b'}
+  },
+  'Paper': {
+    light:{'--bg-color':'#faf7f0','--toolbar-bg':'#fffdf7','--text-color':'#2b2620','--border-color':'#e6dfd0','--border-strong':'#d5cbb6','--gate-bg':'#fffdf7','--gate-header':'#7c5c3b','--pixel-off':'#2b2620','--pixel-on':'#4d7c0f','--accent':'#7c5c3b','--accent-2':'#61452b','--accent-soft':'#a8845c','--accent-tint':'#f3ecdf','--muted':'#6b6152','--muted-2':'#8a8071','--danger':'#a1332c','--good':'#4d7c0f'},
+    dark:{'--bg-color':'#1c1814','--toolbar-bg':'#241f19','--text-color':'#ece3d3','--border-color':'#3a3228','--border-strong':'#4d4234','--gate-bg':'#262019','--gate-header':'#c9a06a','--pixel-off':'#100d0a','--pixel-on':'#84cc16','--accent':'#c9a06a','--accent-2':'#a9855a','--accent-soft':'#dcc09a','--accent-tint':'#2c251c','--muted':'#b5a68f','--muted-2':'#83755f','--danger':'#e07a72','--good':'#a3d977'},
+    fonts:{ui:'Georgia, serif',serif:'"Iowan Old Style", Georgia, serif'}
+  },
+  'Neon': {
+    dark:{'--bg-color':'#05060a','--toolbar-bg':'#0a0d16','--text-color':'#e6fff8','--border-color':'#12202a','--border-strong':'#1e3b46','--gate-bg':'#0a1018','--gate-header':'#00ffc8','--pixel-off':'#04060a','--pixel-on':'#ff2fd0','--accent':'#00ffc8','--accent-2':'#00d6a8','--accent-soft':'#4dffe0','--accent-tint':'#0d1a20','--muted':'#7de6d0','--muted-2':'#4d9a8e','--danger':'#ff2f6d','--good':'#00ff9d'},
+    layout:{gateRadius:2,wireWidth:4.5,shadows:true}
+  },
+  'High Contrast': {
+    light:{'--bg-color':'#ffffff','--toolbar-bg':'#ffffff','--text-color':'#000000','--border-color':'#000000','--border-strong':'#000000','--gate-bg':'#ffffff','--gate-header':'#000000','--pixel-off':'#000000','--pixel-on':'#00ff00','--accent':'#0000ff','--accent-2':'#0000cc','--accent-soft':'#3333ff','--accent-tint':'#e6e6ff','--muted':'#333333','--muted-2':'#555555','--danger':'#cc0000','--good':'#008000'},
+    dark:{'--bg-color':'#000000','--toolbar-bg':'#000000','--text-color':'#ffffff','--border-color':'#ffffff','--border-strong':'#ffffff','--gate-bg':'#000000','--gate-header':'#ffff00','--pixel-off':'#000000','--pixel-on':'#00ff00','--accent':'#00ffff','--accent-2':'#00cccc','--accent-soft':'#66ffff','--accent-tint':'#001a1a','--muted':'#cccccc','--muted-2':'#999999','--danger':'#ff0000','--good':'#00ff00'},
+    layout:{gateBorderWidth:3,wireWidth:5,shadows:false,animations:false}
+  },
+  'Terminal': {
+    dark:{'--bg-color':'#000000','--toolbar-bg':'#0a0a0a','--text-color':'#33ff33','--border-color':'#1a3a1a','--border-strong':'#2a5a2a','--gate-bg':'#051005','--gate-header':'#33ff33','--pixel-off':'#000000','--pixel-on':'#33ff33','--accent':'#33ff33','--accent-2':'#22cc22','--accent-soft':'#66ff66','--accent-tint':'#0a1a0a','--muted':'#22aa22','--muted-2':'#1a7a1a','--danger':'#ff3333','--good':'#33ff33'},
+    fonts:{ui:'"Courier New", monospace',serif:'"Courier New", monospace',mono:'"Courier New", monospace'},
+    layout:{gateRadius:0,shadows:false}
+  }
+};
+
+/* ── small helpers ─────────────────────────────────────── */
+function lsetClone(o){ return JSON.parse(JSON.stringify(o)); }
+function lsetGet(obj,path){ return path.split('.').reduce((o,k)=>(o==null?undefined:o[k]),obj); }
+function lsetSet(obj,path,val){
+  const p=path.split('.');let o=obj;
+  for(let i=0;i<p.length-1;i++){ if(o[p[i]]==null)o[p[i]]={}; o=o[p[i]]; }
+  o[p[p.length-1]]=val;
+}
+function lsetMerge(base,over){
+  const out=lsetClone(base);
+  if(!over||typeof over!=='object')return out;
+  for(const k of Object.keys(over)){
+    if(over[k]&&typeof over[k]==='object'&&!Array.isArray(over[k]))out[k]=lsetMerge(out[k]||{},over[k]);
+    else if(over[k]!==undefined)out[k]=over[k];
+  }
+  return out;
+}
+function lsetNormHex(c){
+  if(!c)return '#000000';
+  c=String(c).trim();
+  if(/^#[0-9a-f]{6}$/i.test(c))return c;
+  if(/^#[0-9a-f]{3}$/i.test(c))return '#'+c[1]+c[1]+c[2]+c[2]+c[3]+c[3];
+  return '#000000';
+}
+function gwPx(){ return (LSET&&LSET.layout&&LSET.layout.gateWidth)||140; }
+
+/* ── persistence ───────────────────────────────────────── */
+let lsetSaveTimer=null;
+function scheduleSaveSettings(){
+  if(lsetSaveTimer)clearTimeout(lsetSaveTimer);
+  lsetSaveTimer=setTimeout(()=>{lsetSaveTimer=null;saveSettings();},250);
+}
+function saveSettings(){
+  try{ localStorage.setItem(LSET_KEY,JSON.stringify(LSET)); }catch(_){}
+}
+function loadSettings(){
+  let saved=null;
+  try{ saved=JSON.parse(localStorage.getItem(LSET_KEY)||'null'); }catch(_){}
+  LSET=lsetMerge(LSET_DEFAULT,saved||{});
+}
+
+/* ── apply ─────────────────────────────────────────────── */
+function applySettings(){
+  const body=document.body;
+  if(!body||!LSET)return;
+  const isDark=body.classList.contains('dark-theme');
+  const map=isDark?LSET.dark:LSET.light;
+  const base=isDark?LSET_DEFAULT.dark:LSET_DEFAULT.light;
+  for(const k of Object.keys(LSET_DEFAULT.light)){
+    const v=(map&&map[k])||base[k];
+    if(v&&typeof v==='string')body.style.setProperty(k,v);
+    else body.style.removeProperty(k);
+  }
+  const L=LSET.layout,F=LSET.fonts;
+  body.style.setProperty('--gate-radius',L.gateRadius+'px');
+  body.style.setProperty('--gate-width',L.gateWidth+'px');
+  body.style.setProperty('--gate-border-width',L.gateBorderWidth+'px');
+  body.style.setProperty('--wire-width',String(L.wireWidth));
+  body.style.setProperty('--wire-color',L.wireColor);
+  body.style.setProperty('--wire-powered-color',L.wirePoweredColor);
+  body.style.setProperty('--wire-hover-color',L.wireHoverColor);
+  body.style.setProperty('--wire-selected-color',L.wireSelectedColor);
+  body.style.setProperty('--ui-scale',String(F.uiScale||1));
+  body.style.setProperty('--brand-scale',String(F.brandScale||1));
+  if(F.ui)body.style.setProperty('--font-ui',F.ui); else body.style.removeProperty('--font-ui');
+  if(F.serif)body.style.setProperty('--font-serif',F.serif); else body.style.removeProperty('--font-serif');
+  if(F.mono)body.style.setProperty('--font-mono',F.mono); else body.style.removeProperty('--font-mono');
+  body.classList.toggle('no-shadows',!L.shadows);
+  body.classList.toggle('no-animations',!L.animations);
+  GRID_UNIT=L.gridSize;
+  SNAP=L.snapSize;
+  try{ updateGridBackground(); }catch(_){}
+  try{ updateModalGridBackground(); }catch(_){}
+  try{ markPortPositionsDirty(); drawWires(); }catch(_){}
+}
+
+/* ── modal shell ───────────────────────────────────────── */
+let lsetTab='theme';
+function openSettingsModal(){
+  const m=document.getElementById('settings-modal');
+  if(!m)return;
+  m.style.display='flex';
+  setSettingsTab(lsetTab);
+}
+function closeSettingsModal(){
+  const m=document.getElementById('settings-modal');
+  if(m)m.style.display='none';
+  saveSettings();
+}
+function closeSettingsOutside(e){ if(e.target.id==='settings-modal')closeSettingsModal(); }
+function setSettingsTab(tab){
+  lsetTab=tab;
+  document.querySelectorAll('#settings-modal .stab').forEach(b=>b.classList.toggle('active',b.dataset.tab===tab));
+  renderSettingsTab();
+}
+function lsetRng(label,path,min,max,step,unit){
+  const v=lsetGet(LSET,path);
+  return `<div class="field"><label>${escapeHtml(label)}</label>
+    <input type="range" data-path="${path}" data-unit="${unit||''}" min="${min}" max="${max}" step="${step}" value="${v}">
+    <span class="val">${v}${unit||''}</span></div>`;
+}
+function lsetCol(label,path){
+  return `<div class="field"><label title="${path}">${escapeHtml(label)}</label>
+    <input type="color" data-path="${path}" value="${lsetNormHex(lsetGet(LSET,path))}"></div>`;
+}
+function lsetChk(label,path){
+  return `<div class="field"><label>${escapeHtml(label)}</label>
+    <input type="checkbox" data-path="${path}" ${lsetGet(LSET,path)?'checked':''}></div>`;
+}
+function lsetTxt(label,path,placeholder){
+  return `<div class="field wide"><label>${escapeHtml(label)}</label>
+    <input type="text" data-path="${path}" value="${escapeHtml(lsetGet(LSET,path)||'')}" placeholder="${escapeHtml(placeholder||'')}"></div>`;
+}
+
+function lsetHtmlTheme(){
+  const rows=LSET_THEME_FIELDS.map(([v,label])=>{
+    const l=LSET.light[v]||LSET_DEFAULT.light[v]||'#000000';
+    const d=LSET.dark[v]||LSET_DEFAULT.dark[v]||'#000000';
+    return `<div class="field"><label title="${v}">${escapeHtml(label)}</label>
+      <input type="color" data-path="light.${v}" value="${lsetNormHex(l)}" title="Light — ${v}">
+      <input type="color" data-path="dark.${v}"  value="${lsetNormHex(d)}" title="Dark — ${v}"></div>`;
+  }).join('');
+  return `<div class="sec-title">Colours &nbsp;·&nbsp; left swatch = light theme, right swatch = dark theme</div>
+    <div class="grid">${rows}</div>
+    <div style="margin-top:16px;display:flex;gap:8px;flex-wrap:wrap;">
+      <button class="btn-cancel" onclick="copyLightToDark()">Copy light → dark</button>
+      <button class="btn-cancel" onclick="copyDarkToLight()">Copy dark → light</button>
+    </div>`;
+}
+function lsetHtmlFonts(){
+  const opt=cur=>LSET_FONTS.map(([v,l])=>
+    `<option value="${escapeHtml(v)}"${v===cur?' selected':''}>${escapeHtml(l)}</option>`).join('');
+  const F=LSET.fonts;
+  return `<div class="sec-title">Font families</div>
+    <div class="grid">
+      <div class="field wide"><label>Interface font</label>
+        <select data-fontpick="fonts.ui">${opt(F.ui)}</select>
+        <input type="text" data-path="fonts.ui" value="${escapeHtml(F.ui||'')}" placeholder="system default"></div>
+      <div class="field wide"><label>Brand / serif font</label>
+        <select data-fontpick="fonts.serif">${opt(F.serif)}</select>
+        <input type="text" data-path="fonts.serif" value="${escapeHtml(F.serif||'')}" placeholder="default serif"></div>
+      <div class="field wide"><label>Monospace font</label>
+        <select data-fontpick="fonts.mono">${opt(F.mono)}</select>
+        <input type="text" data-path="fonts.mono" value="${escapeHtml(F.mono||'')}" placeholder="default mono"></div>
+    </div>
+    <div class="sec-title">Sizing</div>
+    <div class="grid">${lsetRng('UI scale','fonts.uiScale',0.7,1.8,0.05,'×')}</div>
+    <div class="sec-title">Preview</div>
+    <div style="border:1px solid var(--border-color);border-radius:8px;padding:14px;background:var(--bg-color);">
+      <div style="font-family:var(--font-serif);font-size:20px;font-weight:600;margin-bottom:6px;">Logic Sim</div>
+      <div style="font-size:12px;line-height:1.6;">The quick brown fox jumps over the lazy dog — 0123456789</div>
+      <div style="font-family:var(--font-mono,ui-monospace,monospace);font-size:12px;margin-top:8px;">const gate = (a, b) =&gt; a &amp;&amp; b;</div>
+    </div>`;
+}
+function lsetHtmlLayout(){
+  const L=LSET.layout;
+  return `<div class="sec-title">Gate geometry</div>
+    <div class="grid">
+      ${lsetRng('Corner radius','layout.gateRadius',0,24,1,'px')}
+      ${lsetRng('Gate width','layout.gateWidth',100,280,2,'px')}
+      ${lsetRng('Border thickness','layout.gateBorderWidth',0,6,0.5,'px')}
+    </div>
+    <div class="sec-title">Wires</div>
+    <div class="grid">
+      ${lsetRng('Wire thickness','layout.wireWidth',1,8,0.5,'px')}
+      ${lsetCol('Wire — idle','layout.wireColor')}
+      ${lsetCol('Wire — powered','layout.wirePoweredColor')}
+      ${lsetCol('Wire — hover','layout.wireHoverColor')}
+      ${lsetCol('Wire — selected','layout.wireSelectedColor')}
+    </div>
+    <div class="sec-title">Grid &amp; snapping</div>
+    <div class="grid">
+      ${lsetRng('Grid size','layout.gridSize',10,60,1,'px')}
+      ${lsetRng('Snap size','layout.snapSize',5,60,1,'px')}
+      ${lsetRng('Dot alpha — min','layout.gridDotMinAlpha',0,1,0.01,'')}
+      ${lsetRng('Dot alpha — max','layout.gridDotMaxAlpha',0,1,0.01,'')}
+      ${lsetRng('Dot radius — min','layout.gridDotMinRadius',0,4,0.1,'px')}
+      ${lsetRng('Dot radius — max','layout.gridDotMaxRadius',0,4,0.1,'px')}
+      ${lsetTxt('Dot colour — light (r,g,b)','layout.gridDotColorLight','100,110,130')}
+      ${lsetTxt('Dot colour — dark (r,g,b)','layout.gridDotColorDark','255,255,255')}
+    </div>
+    <div class="sec-title">Effects</div>
+    <div class="grid">
+      ${lsetChk('Drop shadows','layout.shadows')}
+      ${lsetChk('Animations & transitions','layout.animations')}
+    </div>`;
+}
+function lsetHtmlPresets(){
+  const cards=Object.keys(LSET_PRESETS).map(name=>{
+    const p=LSET_PRESETS[name];
+    const sw=['--bg-color','--gate-header','--accent','--pixel-on'].map(k=>{
+      const c=(p&&p.dark&&p.dark[k])||LSET_DEFAULT.dark[k];
+      return `<span class="pc-sw" style="background:${c}"></span>`;
+    }).join('');
+    return `<div class="preset-card" data-preset="${escapeHtml(name)}">
+      <div class="pc-name">${escapeHtml(name)}</div>
+      <div class="pc-swatches">${sw}</div></div>`;
+  }).join('');
+  return `<div class="sec-title">Theme presets</div>
+    <div class="preset-grid">${cards}</div>
+    <p style="font-size:11px;opacity:.6;margin-top:16px;line-height:1.6;">
+      Presets replace your colours, fonts and layout settings. You can keep tweaking afterwards —
+      nothing is locked in.
+    </p>`;
+}
+function lsetHtmlAdvanced(){
+  return `<div class="sec-title">Raw settings JSON</div>
+    <p style="font-size:11px;opacity:.65;margin:0 0 8px;">
+      Edit and press <b>Apply JSON</b>. Missing keys fall back to defaults, so you can paste a partial object.
+    </p>
+    <textarea id="settings-json" spellcheck="false"></textarea>
+    <div style="display:flex;gap:8px;margin-top:10px;flex-wrap:wrap;">
+      <button class="btn-primary" onclick="applySettingsJson()">Apply JSON</button>
+      <button class="btn-cancel" onclick="exportSettings()">⬇ Export .json</button>
+      <button class="btn-cancel" onclick="importSettingsClick()">⬆ Import .json</button>
+      <button class="btn-cancel" onclick="resetSettings()">↺ Reset everything</button>
+    </div>
+    <div class="sec-title">Storage</div>
+    <p style="font-size:11px;opacity:.65;line-height:1.6;">
+      Settings live in <code>localStorage["${LSET_KEY}"]</code> on this device only.
+      They're independent of your circuit save and your collab room.
+    </p>`;
+}
+function renderSettingsTab(){
+  const body=document.getElementById('settings-body');
+  if(!body)return;
+  if(lsetTab==='theme')        body.innerHTML=lsetHtmlTheme();
+  else if(lsetTab==='fonts')   body.innerHTML=lsetHtmlFonts();
+  else if(lsetTab==='layout')  body.innerHTML=lsetHtmlLayout();
+  else if(lsetTab==='presets') body.innerHTML=lsetHtmlPresets();
+  else                         body.innerHTML=lsetHtmlAdvanced();
+  if(lsetTab==='advanced'){
+    const ta=document.getElementById('settings-json');
+    if(ta)ta.value=JSON.stringify(LSET,null,2);
+  }
+}
+
+/* ── live editing ──────────────────────────────────────── */
+function onSettingsInput(e){
+  const el=e.target;
+  if(el.matches('select[data-fontpick]')){
+    const path=el.dataset.fontpick;
+    lsetSet(LSET,path,el.value);
+    const ti=el.parentElement.querySelector('input[type=text]');
+    if(ti)ti.value=el.value;
+    applySettings(); scheduleSaveSettings();
+    return;
+  }
+  const path=el.dataset.path;
+  if(!path)return;
+  let val;
+  if(el.type==='checkbox')val=el.checked;
+  else if(el.type==='range'||el.type==='number'){ val=parseFloat(el.value); if(isNaN(val))return; }
+  else val=el.value;
+  lsetSet(LSET,path,val);
+  if(el.type==='range'){
+    const span=el.parentElement.querySelector('.val');
+    if(span)span.textContent=val+(el.dataset.unit||'');
+  }
+  applySettings();
+  scheduleSaveSettings();
+}
+function onSettingsClick(e){
+  const card=e.target.closest('.preset-card');
+  if(card){ applyLsPreset(card.dataset.preset); }
+}
+function applyLsPreset(name){
+  const p=LSET_PRESETS[name];
+  LSET=p?lsetMerge(LSET_DEFAULT,p):lsetClone(LSET_DEFAULT);
+  applySettings(); saveSettings(); renderSettingsTab();
+  showToast(`Preset "${name}" applied.`,'success',1600);
+}
+function copyLightToDark(){ LSET.dark=lsetClone(LSET.light); applySettings(); saveSettings(); renderSettingsTab(); }
+function copyDarkToLight(){ LSET.light=lsetClone(LSET.dark); applySettings(); saveSettings(); renderSettingsTab(); }
+
+/* ── import / export / reset ───────────────────────────── */
+function resetSettings(){
+  if(!confirm('Reset all settings (colours, fonts, layout) to defaults?'))return;
+  LSET=lsetClone(LSET_DEFAULT);
+  applySettings(); saveSettings(); renderSettingsTab();
+  showToast('Settings reset to defaults.','success',1500);
+}
+function exportSettings(){
+  const blob=new Blob([JSON.stringify(LSET,null,2)],{type:'application/json'});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a');
+  a.href=url; a.download='logic-sim-settings.json'; a.click();
+  URL.revokeObjectURL(url);
+  showToast('Settings exported.','success',1500);
+}
+function importSettingsClick(){
+  const f=document.getElementById('settings-file-input');
+  if(f)f.click();
+}
+function importSettingsFile(event){
+  const file=event.target.files&&event.target.files[0];
+  if(!file)return;
+  const r=new FileReader();
+  r.onload=ev=>{
+    try{
+      const parsed=JSON.parse(ev.target.result);
+      LSET=lsetMerge(LSET_DEFAULT,parsed);
+      applySettings(); saveSettings(); renderSettingsTab();
+      showToast('Settings imported.','success',1500);
+    }catch(err){ showToast('Import failed: '+err.message,'error'); }
+  };
+  r.readAsText(file);
+  event.target.value='';
+}
+function applySettingsJson(){
+  const ta=document.getElementById('settings-json');
+  if(!ta)return;
+  try{
+    const parsed=JSON.parse(ta.value);
+    LSET=lsetMerge(LSET_DEFAULT,parsed);
+    applySettings(); saveSettings(); renderSettingsTab();
+    showToast('Settings applied.','success',1400);
+  }catch(err){ showToast('Invalid JSON: '+err.message,'error',3500); }
+}
+
+/* ── wire up ───────────────────────────────────────────── */
+loadSettings();
+(function attachSettingsListeners(){
+  const body=document.getElementById('settings-body');
+  if(!body)return;
+  body.addEventListener('input', onSettingsInput);
+  body.addEventListener('change', onSettingsInput);
+  body.addEventListener('click', onSettingsClick);
+})();
+window.addEventListener('load',()=>{ try{ applySettings(); }catch(e){ console.warn('applySettings failed',e); } });
 
 /* ═══════════════════════════════════════════════════════════════
    COLLABORATION via Firebase Realtime Database
