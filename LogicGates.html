@@ -282,7 +282,7 @@ svg{position:absolute;top:0;left:0;width:100%;height:100%;pointer-events:all;ove
 #custom-gate-modal .modal-content .btn-row button{padding:5px 16px;border:none;border-radius:4px;cursor:pointer;font-weight:bold;font-size:11px}
 #custom-gate-modal .modal-content .btn-row .btn-cancel{background:#6c757d;color:#fff}
 #custom-gate-modal .modal-content .btn-row .btn-confirm{background:#15803d;color:#fff}
-#confirm-modal, #prompt-modal, #folder-modal { z-index: 4000 !important; }
+#confirm-modal, #prompt-modal, #folder-modal { z-index: 5200 !important; }
 
 .gate-folder-btn{gap:5px;position:relative;transition:background .1s,outline .1s}
 .gate-folder-btn:hover{filter:brightness(1.12)}
@@ -357,6 +357,10 @@ body.pour-active .pixel-square .port.active-port{background:#15803d!important}
 body{font-family:var(--font-ui,system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif);}
 #toolbar{font-size:calc(11px * var(--ui-scale,1));}
 button,.tool-btn{font-size:calc(11px * var(--ui-scale,1));}
+/* Form controls don't inherit fonts — force them to follow the UI font. */
+button, input, select, textarea, optgroup, option, .tool-btn, .gate-folder-btn, .gate-folder-item {
+    font-family: var(--font-ui, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif);
+}
 #toolbar .brand-title{font-size:calc(13px * var(--brand-scale,1) * var(--ui-scale,1));font-family:var(--font-serif,"Iowan Old Style","Palatino Linotype",Palatino,Georgia,"Times New Roman",serif);}
 .instructions{font-size:calc(10px * var(--ui-scale,1));}
 .gate-header{font-size:calc(10px * var(--ui-scale,1));}
@@ -480,6 +484,19 @@ body.no-animations *,body.no-animations *::before,body.no-animations *::after{
   box-shadow:0 0 16px var(--port-pour-color,#ff6b00),
              0 0 32px color-mix(in srgb,var(--port-pour-color,#ff6b00) 40%,transparent)!important;
 }
+/* ══ Custom presets ══ */
+.preset-card{position:relative}
+.preset-card-custom{border-style:dashed}
+.preset-delete{
+    position:absolute;top:6px;right:6px;
+    width:22px;height:22px;border-radius:50%;
+    background:rgba(0,0,0,.45);color:#fff;border:none;
+    cursor:pointer;font-size:11px;line-height:1;padding:0;
+    display:none;align-items:center;justify-content:center;
+    transition:background .12s;
+}
+.preset-card:hover .preset-delete{display:flex}
+.preset-delete:hover{background:rgba(220,53,69,.95)}
 </style>
 </head>
 <body>
@@ -950,7 +967,18 @@ function updateToastButton(){
     b.title=toastsEnabled?'Notifications ON (click to disable)':'Notifications OFF (click to enable)';
 }
 let confirmResolve=null,promptResolve=null;
-function showConfirm(t,m){return new Promise(r=>{document.getElementById('confirm-title').textContent=t;document.getElementById('confirm-message').textContent=m;confirmResolve=r;document.getElementById('confirm-modal').style.display='flex'})}
+function showConfirm(t,m,cancelText,confirmText){
+    return new Promise(r=>{
+        document.getElementById('confirm-title').textContent=t;
+        document.getElementById('confirm-message').textContent=m;
+        const cancelBtn=document.querySelector('#confirm-modal .btn-cancel');
+        const confirmBtn=document.querySelector('#confirm-modal .btn-confirm');
+        if(cancelBtn)cancelBtn.textContent=cancelText||'Cancel';
+        if(confirmBtn)confirmBtn.textContent=confirmText||'Confirm';
+        confirmResolve=r;
+        document.getElementById('confirm-modal').style.display='flex';
+    });
+}
 function closeConfirm(r){document.getElementById('confirm-modal').style.display='none';if(confirmResolve){confirmResolve(r);confirmResolve=null}}
 function closeConfirmOutside(e){if(e.target.id==='confirm-modal')closeConfirm(false)}
 function showPrompt(t,m,dv){return new Promise(r=>{document.getElementById('prompt-title').textContent=t;document.getElementById('prompt-message').textContent=m;const i=document.getElementById('prompt-input');i.value=dv||'';promptResolve=r;document.getElementById('prompt-modal').style.display='flex';setTimeout(()=>{i.focus();i.select()},50)})}
@@ -4166,6 +4194,8 @@ window.editFolder=editFolder;
 window.moveGateToFolder=moveGateToFolder;
 window.toggleDebugMode=toggleDebugMode;
 window.setDebugMode=setDebugMode;
+window.saveCurrentAsPreset=saveCurrentAsPreset;
+window.deleteCustomPreset=deleteCustomPreset;
 
 window.addEventListener('load',()=>{
     loadFromLocalStorage();
@@ -5209,6 +5239,70 @@ function randomizeGatePalette(){
   showToast('Gate palette randomized.','success',1400);
 }
 
+/* ── User-saved presets ─────────────────────────────────
+   Stored separately from LSET so they survive a "Reset all".
+   Every custom preset is a full snapshot of LSET at save time. */
+const CUSTOM_PRESETS_KEY = 'logic_sim_custom_presets';
+let CUSTOM_PRESETS = {};
+
+function loadCustomPresets(){
+    try {
+        const raw = localStorage.getItem(CUSTOM_PRESETS_KEY);
+        const parsed = raw ? JSON.parse(raw) : {};
+        CUSTOM_PRESETS = (parsed && typeof parsed === 'object') ? parsed : {};
+    } catch(_) {
+        CUSTOM_PRESETS = {};
+    }
+    // Register them alongside the built-in presets so applyLsPreset,
+    // the grid, and preset lookups all treat them identically.
+    for(const name of Object.keys(CUSTOM_PRESETS)){
+        LSET_PRESETS[name] = CUSTOM_PRESETS[name];
+    }
+}
+function persistCustomPresets(){
+    try {
+        localStorage.setItem(CUSTOM_PRESETS_KEY, JSON.stringify(CUSTOM_PRESETS));
+    } catch(_){}
+}
+async function saveCurrentAsPreset(){
+    const name = await showPrompt('Save Preset', 'Give this preset a name:', 'My Preset');
+    if(name === null) return;
+    const trimmed = String(name).trim();
+    if(!trimmed){ showToast('Preset name cannot be empty.','error',1500); return; }
+    // Prevent accidental clobbering.
+    if(LSET_PRESETS[trimmed]){
+        const ow = await showConfirm(
+            'Overwrite Preset',
+            `A preset named "${trimmed}" already exists. Overwrite it with your current settings?`,
+            'Cancel',
+            'Overwrite'
+        );
+        if(!ow) return;
+    }
+    // Deep-clone the current settings so later edits don't mutate the saved preset.
+    const snapshot = lsetClone(LSET);
+    CUSTOM_PRESETS[trimmed] = snapshot;
+    LSET_PRESETS[trimmed]   = snapshot;
+    persistCustomPresets();
+    renderSettingsTab();
+    showToast(`Preset "${trimmed}" saved.`,'success',1800);
+}
+async function deleteCustomPreset(name){
+    if(!CUSTOM_PRESETS[name]) return;
+    const ok = await showConfirm(
+        'Delete Preset',
+        `Delete your custom preset "${name}"? This does not affect your circuit or settings.`,
+        'Cancel',
+        'Delete'
+    );
+    if(!ok) return;
+    delete CUSTOM_PRESETS[name];
+    delete LSET_PRESETS[name];
+    persistCustomPresets();
+    renderSettingsTab();
+    showToast(`Preset "${name}" deleted.`,'info',1500);
+}
+
 function hslToHexLocal(h, s, l){
     l /= 100;
     const a = s * Math.min(l, 1-l) / 100;
@@ -5327,53 +5421,90 @@ function lsetHtmlLayout(){
     </div>`;
 }
 function lsetHtmlPresets(){
-  const cards=Object.keys(LSET_PRESETS).map(name=>{
-    const p=LSET_PRESETS[name];
-    // Prefer dark theme for preview if present; else light; else defaults.
-    const theme = p && (p.dark || p.light);
-    const themeKey = p && p.dark ? 'dark' : 'light';
-    const themeVals = theme || LSET_DEFAULT.dark;
-    const bg = themeVals['--bg-color'] || LSET_DEFAULT.dark['--bg-color'];
-    const fg = themeVals['--text-color'] || LSET_DEFAULT.dark['--text-color'];
-    const accent = themeVals['--accent'] || LSET_DEFAULT.dark['--accent'];
-    const gatesPal = (p && p.gates) || LSET_DEFAULT.gates;
-    const gateSwatches = ['AND','OR','XOR','NOT','CLOCK','OUTPUT']
-      .map(k => `<span class="pc-sw" style="background:${gatesPal[k]||'#888'}"></span>`)
-      .join('');
-    // Apply the preset's own background pattern as a decorative layer in the card.
-    const lay = (p && p.layout) || {};
-    const pattern = lay.bgPattern || 'dots';
-    const nc = lay.noiseColor || accent;
-    const nOpacity = lay.noiseOpacity || 0;
-    let cardBg = bg;
-    if(pattern === 'dots'){
-      cardBg = `radial-gradient(${fg}22 1px, transparent 1px), ${bg}`;
-    } else if(pattern === 'grid'){
-      cardBg = `linear-gradient(to right, ${fg}22 1px, transparent 1px), linear-gradient(to bottom, ${fg}22 1px, transparent 1px), ${bg}`;
-    } else if(pattern === 'noise' || pattern === 'noise+dots'){
-      const tint = nc + Math.round(nOpacity * 255).toString(16).padStart(2,'0');
-      cardBg = `radial-gradient(${tint} 0.5px, transparent 0.5px), ${bg}`;
-    }
-    return `<div class="preset-card" data-preset="${escapeHtml(name)}"
-                 style="background:${cardBg};background-size:${pattern==='grid'?'8px 8px,8px 8px,auto':(pattern==='dots'||pattern==='noise+dots'?'6px 6px,auto':'auto')};color:${fg};border-color:${accent}55;">
-      <div class="pc-name" style="color:${fg}">${escapeHtml(name)}</div>
-      <div class="pc-swatches">${gateSwatches}</div>
-      <div class="pc-swatches" style="margin-top:6px;">
-        <span class="pc-sw" style="background:${accent};flex:2;"></span>
-        <span class="pc-sw" style="background:${fg};"></span>
-        <span class="pc-sw" style="background:${bg};border-color:${fg}66;"></span>
+    const builtinNames = Object.keys(LSET_PRESETS).filter(n => !CUSTOM_PRESETS[n]);
+    const customNames  = Object.keys(CUSTOM_PRESETS);
+
+    const renderCard = (name) => {
+        const p = LSET_PRESETS[name];
+        const isCustom = !!CUSTOM_PRESETS[name];
+        const theme = p && (p.dark || p.light);
+        const themeVals = theme || LSET_DEFAULT.dark;
+        const bg     = themeVals['--bg-color']   || LSET_DEFAULT.dark['--bg-color'];
+        const fg     = themeVals['--text-color'] || LSET_DEFAULT.dark['--text-color'];
+        const accent = themeVals['--accent']     || LSET_DEFAULT.dark['--accent'];
+        const gatesPal = (p && p.gates) || LSET_DEFAULT.gates;
+        const gateSwatches = ['AND','OR','XOR','NOT','CLOCK','OUTPUT']
+            .map(k => `<span class="pc-sw" style="background:${gatesPal[k]||'#888'}"></span>`)
+            .join('');
+        const lay = (p && p.layout) || {};
+        const pattern = lay.bgPattern || 'dots';
+        const nc = lay.noiseColor || accent;
+        const nOpacity = lay.noiseOpacity || 0;
+        let cardBg = bg;
+        if(pattern === 'dots'){
+            cardBg = `radial-gradient(${fg}22 1px, transparent 1px), ${bg}`;
+        } else if(pattern === 'grid'){
+            cardBg = `linear-gradient(to right, ${fg}22 1px, transparent 1px), linear-gradient(to bottom, ${fg}22 1px, transparent 1px), ${bg}`;
+        } else if(pattern === 'mesh'){
+            cardBg = `radial-gradient(circle at 20% 30%, ${lay.meshColor1||accent}66, transparent 60%), radial-gradient(circle at 80% 70%, ${lay.meshColor3||accent}66, transparent 60%), ${bg}`;
+        } else if(pattern.startsWith('mesh+')){
+            cardBg = `radial-gradient(circle at 20% 30%, ${lay.meshColor1||accent}66, transparent 60%), radial-gradient(circle at 80% 70%, ${lay.meshColor3||accent}66, transparent 60%), ${bg}`;
+        } else if(pattern === 'noise' || pattern === 'noise+dots'){
+            const tint = nc + Math.round(nOpacity * 255).toString(16).padStart(2,'0');
+            cardBg = `radial-gradient(${tint} 0.5px, transparent 0.5px), ${bg}`;
+        }
+        const delBtn = isCustom
+            ? `<button class="preset-delete" type="button"
+                       onclick="event.stopPropagation();event.preventDefault();deleteCustomPreset('${escapeHtml(name).replace(/'/g,"\\'")}')"
+                       title="Delete preset">✕</button>`
+            : '';
+        return `<div class="preset-card${isCustom?' preset-card-custom':''}"
+                     data-preset="${escapeHtml(name)}"
+                     style="background:${cardBg};background-size:${pattern==='grid'?'8px 8px,8px 8px,auto':(pattern==='dots'||pattern.startsWith('mesh')||pattern==='noise+dots'?'6px 6px,auto':'auto')};color:${fg};border-color:${accent}55;">
+          ${delBtn}
+          <div class="pc-name" style="color:${fg}">${escapeHtml(name)}</div>
+          <div class="pc-swatches">${gateSwatches}</div>
+          <div class="pc-swatches" style="margin-top:6px;">
+            <span class="pc-sw" style="background:${accent};flex:2;"></span>
+            <span class="pc-sw" style="background:${fg};"></span>
+            <span class="pc-sw" style="background:${bg};border-color:${fg}66;"></span>
+          </div>
+          <div style="font-size:9px;opacity:.55;margin-top:6px;letter-spacing:.03em;">
+            ${isCustom ? '★ your preset' : escapeHtml(pattern)}
+          </div>
+        </div>`;
+    };
+
+    const builtinCards = builtinNames.map(renderCard).join('');
+    const customCards  = customNames .map(renderCard).join('');
+
+    return `<div style="display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:12px;flex-wrap:wrap;">
+        <div style="font-size:11px;opacity:.65;line-height:1.5;">
+          Presets replace your colours, gate palette, button colours, fonts,
+          layout, background pattern, and mesh gradient.
+        </div>
+        <button class="btn-primary" onclick="saveCurrentAsPreset()">💾 Save current as preset</button>
       </div>
-      <div style="font-size:9px;opacity:.55;margin-top:6px;letter-spacing:.03em;">
-        ${escapeHtml(pattern)}
-      </div>
-    </div>`;
-  }).join('');
-  return `<div class="sec-title">Theme presets</div>
-    <div class="preset-grid">${cards}</div>
-    <p style="font-size:11px;opacity:.6;margin-top:16px;line-height:1.6;">
-      Presets replace your <b>colours</b>, <b>gate palette</b>, <b>fonts</b>, and <b>layout</b> settings.
-      Every preset changes the entire look — nothing is locked in, and you can keep tweaking afterwards.
-    </p>`;
+
+      <div class="sec-title">Built-in presets</div>
+      <div class="preset-grid">${builtinCards}</div>
+
+      ${customNames.length ? `
+        <div class="sec-title" style="margin-top:22px;">Your presets &nbsp;·&nbsp; ${customNames.length}</div>
+        <div class="preset-grid">${customCards}</div>
+      ` : `
+        <p style="font-size:11px;opacity:.55;margin-top:20px;line-height:1.6;">
+          You haven't saved any custom presets yet. Configure the look you want under
+          <b>Colours</b>, <b>Gates</b>, <b>Ports</b>, <b>Buttons</b>, <b>Fonts</b>, and
+          <b>Layout</b>, then click <b>Save current as preset</b> above to store it here.
+        </p>
+      `}
+
+      <p style="font-size:11px;opacity:.6;margin-top:20px;line-height:1.6;">
+        Applying a preset asks whether to recolour custom gates and folders to match.
+        Names, folders, and hierarchy are always preserved. Custom presets live in
+        this browser's storage and can be exported with the rest of your settings.
+      </p>`;
 }
 function lsetHtmlAdvanced(){
   return `<div class="sec-title">Raw settings JSON</div>
@@ -5439,11 +5570,142 @@ function onSettingsClick(e){
   const card=e.target.closest('.preset-card');
   if(card){ applyLsPreset(card.dataset.preset); }
 }
-function applyLsPreset(name){
-  const p=LSET_PRESETS[name];
-  LSET=p?lsetMerge(LSET_DEFAULT,p):lsetClone(LSET_DEFAULT);
-  applySettings(); saveSettings(); renderSettingsTab();
-  showToast(`Preset "${name}" applied.`,'success',1600);
+/* Parse "#rgb" or "#rrggbb" into {r,g,b} 0–255. */
+function hexToRgb(hex){
+    const h = String(hex||'').replace('#','').trim();
+    if(h.length === 3){
+        return {
+            r: parseInt(h[0]+h[0],16),
+            g: parseInt(h[1]+h[1],16),
+            b: parseInt(h[2]+h[2],16)
+        };
+    }
+    if(h.length === 6){
+        return {
+            r: parseInt(h.slice(0,2),16),
+            g: parseInt(h.slice(2,4),16),
+            b: parseInt(h.slice(4,6),16)
+        };
+    }
+    return {r:0, g:0, b:0};
+}
+
+/* Perceptual colour distance. Weighted by the Rec. 601 luma response:
+   human eyes are most sensitive to green, least to blue. Returns the
+   squared distance, so it's cheap to compare. */
+function colorDistanceSq(hexA, hexB){
+    const A = hexToRgb(hexA), B = hexToRgb(hexB);
+    const dr = A.r - B.r, dg = A.g - B.g, db = A.b - B.b;
+    return 2*dr*dr + 4*dg*dg + 3*db*db;
+}
+
+/* Find the key of the standard gate whose colour in `palette` is
+   perceptually closest to `color`. Falls back to CUSTOM_DEFAULT. */
+function findClosestPaletteKey(palette, color){
+    const standardKeys = Object.keys(palette).filter(k => k !== 'CUSTOM_DEFAULT');
+    let bestKey  = 'CUSTOM_DEFAULT';
+    let bestDist = colorDistanceSq(palette.CUSTOM_DEFAULT || '#1f3a63', color);
+    for(const k of standardKeys){
+        const d = colorDistanceSq(palette[k], color);
+        if(d < bestDist){ bestDist = d; bestKey = k; }
+    }
+    return bestKey;
+}
+
+/* For each custom gate, find the standard gate whose OLD colour is
+   closest to the custom gate's current colour, then assign the new
+   palette's colour for that standard gate. */
+function remapCustomGateColors(oldPalette, newPalette, customGateColorSnapshot){
+    let changed = 0;
+    for(const [gateName, oldColor] of Object.entries(customGateColorSnapshot)){
+        const def = savedCustomGates[gateName];
+        if(!def) continue;
+        const key = findClosestPaletteKey(oldPalette, oldColor);
+        const newColor = newPalette[key] || newPalette.CUSTOM_DEFAULT || oldColor;
+        if(def.color !== newColor){ def.color = newColor; changed++; }
+    }
+    return changed;
+}
+
+/* Same idea for folders — a folder that was cyan-ish becomes the new
+   palette's cyan, so its visual identity survives the swap. */
+function remapFolderColors(oldPalette, newPalette, folderColorSnapshot){
+    let changed = 0;
+    for(const [folderName, oldColor] of Object.entries(folderColorSnapshot)){
+        const folder = savedFolders[folderName];
+        if(!folder) continue;
+        const key = findClosestPaletteKey(oldPalette, oldColor);
+        const newColor = newPalette[key] || newPalette.CUSTOM_DEFAULT || oldColor;
+        if(folder.color !== newColor){ folder.color = newColor; changed++; }
+    }
+    return changed;
+}
+
+async function applyLsPreset(name){
+    const p = LSET_PRESETS[name];
+
+    // Snapshot everything that carries a user-chosen colour.
+    const oldGates = (LSET && LSET.gates) ? Object.assign({}, LSET.gates)
+                                          : Object.assign({}, LSET_DEFAULT.gates);
+    const customGateColors = {};
+    for(const [n, def] of Object.entries(savedCustomGates || {})){
+        if(def && typeof def.color === 'string') customGateColors[n] = def.color;
+    }
+    const folderColors = {};
+    for(const [n, f] of Object.entries(savedFolders || {})){
+        if(f && typeof f.color === 'string') folderColors[n] = f.color;
+    }
+    const gateCount   = Object.keys(customGateColors).length;
+    const folderCount = Object.keys(folderColors).length;
+    const totalCount  = gateCount + folderCount;
+
+    // Swap the palette first, but don't repaint yet — we want the
+    // confirm modal to appear before the visual change.
+    LSET = p ? lsetMerge(LSET_DEFAULT, p) : lsetClone(LSET_DEFAULT);
+
+    let recolouredGates = 0, recolouredFolders = 0;
+    if(totalCount > 0){
+        // Build a human-readable description of what will change.
+        const parts = [];
+        if(gateCount)   parts.push(`${gateCount} custom gate${gateCount===1?'':'s'}`);
+        if(folderCount) parts.push(`${folderCount} folder${folderCount===1?'':'s'}`);
+        const what = parts.join(' and ');
+
+        const recolor = await showConfirm(
+            `Apply Preset: ${name}`,
+            `Would you like to also recolour your ${what} to match the new palette?\n\n` +
+            `Each one's colour is remapped to whichever colour it's currently closest to — ` +
+            `for example, something currently cyan-ish will take on the new palette's cyan. ` +
+            `Names, contents, and hierarchy stay exactly as they are.`,
+            'Keep current colours',
+            'Recolour everything'
+        );
+        if(recolor){
+            recolouredGates   = remapCustomGateColors(oldGates, LSET.gates, customGateColors);
+            recolouredFolders = remapFolderColors(oldGates, LSET.gates, folderColors);
+        }
+    }
+
+    applySettings();
+    saveSettings();
+    renderSettingsTab();
+
+    if(recolouredGates > 0 || recolouredFolders > 0){
+        if(typeof updateCustomGatesToolbar === 'function') updateCustomGatesToolbar();
+        if(typeof forceSaveState === 'function') forceSaveState();
+    }
+
+    // Build a summary toast.
+    const bits = [];
+    if(recolouredGates)   bits.push(`${recolouredGates} gate${recolouredGates===1?'':'s'}`);
+    if(recolouredFolders) bits.push(`${recolouredFolders} folder${recolouredFolders===1?'':'s'}`);
+    showToast(
+        bits.length
+            ? `Preset "${name}" applied — ${bits.join(' and ')} recoloured.`
+            : `Preset "${name}" applied.`,
+        'success',
+        bits.length ? 2400 : 1600
+    );
 }
 function copyLightToDark(){ LSET.dark=lsetClone(LSET.light); applySettings(); saveSettings(); renderSettingsTab(); }
 function copyDarkToLight(){ LSET.light=lsetClone(LSET.dark); applySettings(); saveSettings(); renderSettingsTab(); }
@@ -5495,6 +5757,7 @@ function applySettingsJson(){
 
 /* ── wire up ───────────────────────────────────────────── */
 loadSettings();
+loadCustomPresets();
 (function attachSettingsListeners(){
   const body=document.getElementById('settings-body');
   if(!body)return;
