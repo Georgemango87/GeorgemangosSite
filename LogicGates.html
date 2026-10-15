@@ -153,11 +153,7 @@ button:active{transform:translateY(1px)}
 .tool-btn:active{cursor:grabbing}
 .toolbar-group{display:flex;gap:3px;align-items:center;border-left:2px solid var(--border-color);padding-left:5px;flex-shrink:0}
 .toolbar-group:first-child{border-left:none;padding-left:0}
-#viewport{position:absolute;top:62px;left:0;right:0;bottom:0;overflow:hidden;cursor:grab;touch-action:none;transform:translateZ(0);
-    background-image:radial-gradient(var(--dot-color) var(--dot-radius,1px),transparent var(--dot-radius,1px));
-    background-size:20px 20px;
-    background-position:0 0;
-    background-repeat:repeat}
+#viewport{position:absolute;top:62px;left:0;right:0;bottom:0;overflow:hidden;cursor:grab;touch-action:none;transform:translateZ(0)}
 #viewport:active{cursor:grabbing}
 #canvas{position:absolute;width:100%;height:100%;top:0;left:0;transform-origin:0 0;pointer-events:all;will-change:transform}
 #grid-bg{display:none!important}
@@ -265,7 +261,7 @@ svg{position:absolute;top:0;left:0;width:100%;height:100%;pointer-events:all;ove
 #custom-gate-modal .cg-sim-row{display:flex;gap:8px;flex:1;min-height:0}
 #custom-gate-modal #custom-gate-modal-toolbar{width:100px;flex-shrink:0;overflow-y:auto;overflow-x:hidden;background:var(--bg-color);border:1px solid var(--border-color);border-radius:6px;padding:6px;display:flex;flex-direction:column;gap:4px}
 #custom-gate-modal #custom-gate-modal-toolbar .tool-btn{font-size:10px;padding:3px 5px;width:100%;justify-content:center}
-#custom-gate-modal #custom-gate-modal-viewport{flex:1;position:relative;overflow:hidden;border:1px solid var(--border-color);border-radius:6px;background-color:var(--bg-color);background-image:radial-gradient(var(--dot-color) var(--dot-radius,1px),transparent var(--dot-radius,1px));background-size:20px 20px;background-position:0 0;background-repeat:repeat;min-width:0;cursor:grab;touch-action:none}
+#custom-gate-modal #custom-gate-modal-viewport{flex:1;position:relative;overflow:hidden;border:1px solid var(--border-color);border-radius:6px;background-color:var(--bg-color);min-width:0;cursor:grab;touch-action:none}
 #custom-gate-modal #custom-gate-modal-viewport:active{cursor:grabbing}
 #custom-gate-modal #custom-gate-modal-canvas{position:absolute;top:0;left:0;width:100%;height:100%;transform-origin:0 0;will-change:transform}
 #custom-gate-modal #custom-gate-modal-grid-bg{display:none!important}
@@ -440,6 +436,50 @@ body.no-animations *,body.no-animations *::before,body.no-animations *::after{
 #settings-modal textarea{width:100%;height:300px;background:var(--bg-color);color:var(--text-color);
   border:1px solid var(--border-color);border-radius:6px;padding:8px;font-size:11px;
   font-family:var(--font-mono,ui-monospace,Menlo,Consolas,monospace);resize:vertical;box-sizing:border-box;}
+  /* ══ Settings-driven overrides for previously-hardcoded colours ══ */
+.gate-header{color:var(--gate-header-text,#fff);}
+.gate{box-shadow:var(--gate-shadow,0 4px 6px rgba(0,0,0,.1));}
+.gate.selected{
+  outline:3px solid var(--selection-color,#1f3a63);
+  box-shadow:0 0 0 3px color-mix(in srgb,var(--selection-color,#1f3a63) 20%,transparent),
+             var(--gate-shadow,0 4px 6px rgba(0,0,0,.1));
+}
+.port{
+  background:var(--port-input-color,#e83e8c);
+  border-color:var(--port-border-color,#fff);
+}
+.port.output{background:var(--port-output-color,#3b5b8c);}
+.port.active-port{
+  background:var(--port-active-color,#15803d)!important;
+  box-shadow:0 0 6px var(--port-active-color,#15803d);
+}
+.port.pour-selected{
+  background:var(--port-pour-color,#b45309)!important;
+  box-shadow:0 0 16px var(--port-pour-color,#b45309),
+             0 0 32px color-mix(in srgb,var(--port-pour-color,#b45309) 30%,transparent);
+}
+.bulb{
+  background:var(--bulb-off,#ddd);
+  border-color:var(--bulb-off-border,#555);
+}
+.bulb.on{
+  background:var(--bulb-on,#d97706);
+  box-shadow:0 0 10px var(--bulb-on,#d97706);
+  border-color:var(--bulb-on-border,#b45309);
+}
+.pixel-square .port{
+  background:var(--port-output-color,#007bff);
+  border-color:var(--port-border-color,#fff);
+}
+.pixel-square .port.active-port{
+  background:var(--port-active-color,#28a745)!important;
+  box-shadow:0 0 12px color-mix(in srgb,var(--port-active-color,#28a745) 60%,transparent);
+}
+.pixel-square .port.pour-selected{
+  background:var(--port-pour-color,#ff6b00)!important;
+  box-shadow:0 0 16px var(--port-pour-color,#ff6b00),
+             0 0 32px color-mix(in srgb,var(--port-pour-color,#ff6b00) 40%,transparent)!important;
+}
 </style>
 </head>
 <body>
@@ -447,53 +487,53 @@ body.no-animations *,body.no-animations *::before,body.no-animations *::after{
 <div id="toolbar">
     <div class="brand-title" style="font-size:13px;">Logic Sim</div>
     <div class="toolbar-group">
-        <div class="tool-btn" style="background:#1f3a63;" onmousedown="startGhostDrag(event,'INPUT')" ontouchstart="startGhostDrag(event,'INPUT')">Toggle</div>
-        <div class="tool-btn" style="background:#3d4653;" onmousedown="startGhostDrag(event,'PUSH')" ontouchstart="startGhostDrag(event,'PUSH')">Push</div>
-        <div class="tool-btn" style="background:#b45309;" onmousedown="startGhostDrag(event,'OUTPUT')" ontouchstart="startGhostDrag(event,'OUTPUT')">Output</div>
+        <div class="tool-btn" data-gate-type="INPUT"  style="background:#1f3a63;" onmousedown="startGhostDrag(event,'INPUT')"  ontouchstart="startGhostDrag(event,'INPUT')">Toggle</div>
+        <div class="tool-btn" data-gate-type="PUSH"   style="background:#3d4653;" onmousedown="startGhostDrag(event,'PUSH')"   ontouchstart="startGhostDrag(event,'PUSH')">Push</div>
+        <div class="tool-btn" data-gate-type="OUTPUT" style="background:#b45309;" onmousedown="startGhostDrag(event,'OUTPUT')" ontouchstart="startGhostDrag(event,'OUTPUT')">Output</div>
     </div>
     <div class="toolbar-group">
-        <div class="tool-btn" style="background:#15803d;" onmousedown="startGhostDrag(event,'AND')" ontouchstart="startGhostDrag(event,'AND')">AND</div>
-        <div class="tool-btn" style="background:#0f766e;" onmousedown="startGhostDrag(event,'OR')" ontouchstart="startGhostDrag(event,'OR')">OR</div>
-        <div class="tool-btn" style="background:#6d28d9;" onmousedown="startGhostDrag(event,'XOR')" ontouchstart="startGhostDrag(event,'XOR')">XOR</div>
-        <div class="tool-btn" style="background:#b91c1c;" onmousedown="startGhostDrag(event,'NOT')" ontouchstart="startGhostDrag(event,'NOT')">NOT</div>
-        <div class="tool-btn" style="background:#134e4a;" onmousedown="startGhostDrag(event,'NAND')" ontouchstart="startGhostDrag(event,'NAND')">NAND</div>
-        <div class="tool-btn" style="background:#3730a3;" onmousedown="startGhostDrag(event,'NOR')" ontouchstart="startGhostDrag(event,'NOR')">NOR</div>
-        <div class="tool-btn" style="background:#0369a1;" onmousedown="startGhostDrag(event,'XNOR')" ontouchstart="startGhostDrag(event,'XNOR')">XNOR</div>
-        <div class="tool-btn" style="background:#3d4653;" onmousedown="startGhostDrag(event,'DELAY')" ontouchstart="startGhostDrag(event,'DELAY')">DELAY</div>
-        <div class="tool-btn" style="background:#0d9488;" onmousedown="startGhostDrag(event,'CLOCK')" ontouchstart="startGhostDrag(event,'CLOCK')">CLOCK</div>
-        <div class="tool-btn" style="background:#be123c;" onmousedown="startGhostDrag(event,'PULSE')" ontouchstart="startGhostDrag(event,'PULSE')">PULSE</div>
+        <div class="tool-btn" data-gate-type="AND"   style="background:#15803d;" onmousedown="startGhostDrag(event,'AND')"   ontouchstart="startGhostDrag(event,'AND')">AND</div>
+        <div class="tool-btn" data-gate-type="OR"    style="background:#0f766e;" onmousedown="startGhostDrag(event,'OR')"    ontouchstart="startGhostDrag(event,'OR')">OR</div>
+        <div class="tool-btn" data-gate-type="XOR"   style="background:#6d28d9;" onmousedown="startGhostDrag(event,'XOR')"   ontouchstart="startGhostDrag(event,'XOR')">XOR</div>
+        <div class="tool-btn" data-gate-type="NOT"   style="background:#b91c1c;" onmousedown="startGhostDrag(event,'NOT')"   ontouchstart="startGhostDrag(event,'NOT')">NOT</div>
+        <div class="tool-btn" data-gate-type="NAND"  style="background:#134e4a;" onmousedown="startGhostDrag(event,'NAND')"  ontouchstart="startGhostDrag(event,'NAND')">NAND</div>
+        <div class="tool-btn" data-gate-type="NOR"   style="background:#3730a3;" onmousedown="startGhostDrag(event,'NOR')"   ontouchstart="startGhostDrag(event,'NOR')">NOR</div>
+        <div class="tool-btn" data-gate-type="XNOR"  style="background:#0369a1;" onmousedown="startGhostDrag(event,'XNOR')"  ontouchstart="startGhostDrag(event,'XNOR')">XNOR</div>
+        <div class="tool-btn" data-gate-type="DELAY" style="background:#3d4653;" onmousedown="startGhostDrag(event,'DELAY')" ontouchstart="startGhostDrag(event,'DELAY')">DELAY</div>
+        <div class="tool-btn" data-gate-type="CLOCK" style="background:#0d9488;" onmousedown="startGhostDrag(event,'CLOCK')" ontouchstart="startGhostDrag(event,'CLOCK')">CLOCK</div>
+        <div class="tool-btn" data-gate-type="PULSE" style="background:#be123c;" onmousedown="startGhostDrag(event,'PULSE')" ontouchstart="startGhostDrag(event,'PULSE')">PULSE</div>
     </div>
     <div class="toolbar-group" style="border-left:2px solid var(--border-color);padding-left:5px;">
-        <div class="tool-btn" style="background:#d97706;" onmousedown="startGhostDrag(event,'SCREEN')" ontouchstart="startGhostDrag(event,'SCREEN')">Pixel</div>
-        <div class="tool-btn" style="background:#9d174d;" onmousedown="startGhostDrag(event,'COLOR')" ontouchstart="startGhostDrag(event,'COLOR')">Color</div>
+        <div class="tool-btn" data-gate-type="SCREEN" style="background:#d97706;" onmousedown="startGhostDrag(event,'SCREEN')" ontouchstart="startGhostDrag(event,'SCREEN')">Pixel</div>
+        <div class="tool-btn" data-gate-type="COLOR"  style="background:#9d174d;" onmousedown="startGhostDrag(event,'COLOR')"  ontouchstart="startGhostDrag(event,'COLOR')">Color</div>
     </div>
     <div class="toolbar-group" style="border-left:2px solid var(--border-color);padding-left:5px;">
-        <div class="tool-btn" style="background:#8b5cf6;" onclick="openCustomGateModal(null, false)">⚙️ Custom Gate</div>
+        <div class="tool-btn" data-btn-id="customGate" style="background:#8b5cf6;" onclick="openCustomGateModal(null, false)">⚙️ Custom Gate</div>
     </div>
     <div class="toolbar-group" id="custom-gates-toolbar"></div>
     <div class="toolbar-group">
-        <button id="pause-btn" onclick="togglePause()" style="background:#1f3a63;">Pause</button>
-        <button onclick="stepSimulation()" style="background:#3b5b8c;">Step</button>
+        <button id="pause-btn" data-btn-id="pause" onclick="togglePause()" style="background:#1f3a63;">Pause</button>
+        <button data-btn-id="step" onclick="stepSimulation()" style="background:#3b5b8c;">Step</button>
         <label style="font-size:10px;cursor:pointer;white-space:nowrap;"><input type="checkbox" id="snapCheck" checked /> Snap</label>
-        <button onclick="resetView()" style="background:#3d4653;">Reset</button>
-        <button onclick="toggleTheme()" style="background:#3b5b8c;">Theme</button>
-        <button onclick="openSettingsModal()" style="background:#0f766e;" title="Colours, fonts, layout &amp; presets">⚙️ Settings</button>
-        <button onclick="clearAll()" style="background:#b91c1c;">Clear</button>
-        <button id="debug-btn" onclick="toggleDebugMode()" style="background:#1f3a63;" title="Toggle Debug Mode (D)">🐞 Debug</button>
-        <button onclick="toggleInstructions()" style="background:#3d4653;">Tips</button>
-        <button id="toast-btn" onclick="toggleToasts()" style="background:#3d4653;" title="Toggle notifications">🔔</button>
+        <button data-btn-id="reset" onclick="resetView()" style="background:#3d4653;">Reset</button>
+        <button data-btn-id="theme" onclick="toggleTheme()" style="background:#3b5b8c;">Theme</button>
+        <button data-btn-id="settings" onclick="openSettingsModal()" style="background:#0f766e;" title="Colours, fonts, layout &amp; presets">⚙️ Settings</button>
+        <button data-btn-id="clear" onclick="clearAll()" style="background:#b91c1c;">Clear</button>
+        <button id="debug-btn" data-btn-id="debug" onclick="toggleDebugMode()" style="background:#1f3a63;" title="Toggle Debug Mode (D)">🐞 Debug</button>
+        <button data-btn-id="tips" onclick="toggleInstructions()" style="background:#3d4653;">Tips</button>
+        <button id="toast-btn" data-btn-id="toast" onclick="toggleToasts()" style="background:#3d4653;" title="Toggle notifications">🔔</button>
     </div>
     <div class="toolbar-group">
-        <button onclick="exportCircuit()" style="background:#15803d;">⬇ Export</button>
-        <button onclick="document.getElementById('file-input').click()" style="background:#0f766e;">⬆ Import</button>
+        <button data-btn-id="export" onclick="exportCircuit()" style="background:#15803d;">⬇ Export</button>
+        <button data-btn-id="import" onclick="document.getElementById('file-input').click()" style="background:#0f766e;">⬆ Import</button>
         <input type="file" id="file-input" accept=".json" onchange="importCircuit(event)" />
     </div>
     <div class="toolbar-group">
-        <button id="undo-btn" onclick="undo()" style="background:#3d4653;">↩ Undo</button>
-        <button id="redo-btn" onclick="redo()" style="background:#3d4653;">↪ Redo</button>
+        <button id="undo-btn" data-btn-id="undo" onclick="undo()" style="background:#3d4653;">↩ Undo</button>
+        <button id="redo-btn" data-btn-id="redo" onclick="redo()" style="background:#3d4653;">↪ Redo</button>
     </div>
-        <div class="toolbar-group" style="border-left:2px solid var(--border-color);padding-left:5px;">
-        <button id="share-btn" onclick="openShareModal()" style="background:#1f3a63;">🌐 Share</button>
+    <div class="toolbar-group" style="border-left:2px solid var(--border-color);padding-left:5px;">
+        <button id="share-btn" data-btn-id="share" onclick="openShareModal()" style="background:#1f3a63;">🌐 Share</button>
     </div>
     <div class="toolbar-group" style="border-left:2px solid var(--border-color);padding-left:5px;">
         <span id="pour-indicator">🔌 Pour mode <button class="pour-exit-btn" onclick="exitWirePouring()">✕</button></span>
@@ -665,6 +705,9 @@ body.no-animations *,body.no-animations *::before,body.no-animations *::after{
       <h3>⚙️ Settings</h3>
       <div class="settings-tabs">
         <button class="stab active" data-tab="theme"   onclick="setSettingsTab('theme')">🎨 Colours</button>
+        <button class="stab"        data-tab="gates"   onclick="setSettingsTab('gates')">🧩 Gates</button>
+        <button class="stab"        data-tab="ports"   onclick="setSettingsTab('ports')">🔌 Ports</button>
+        <button class="stab"        data-tab="buttons" onclick="setSettingsTab('buttons')">🔘 Buttons</button>
         <button class="stab"        data-tab="fonts"   onclick="setSettingsTab('fonts')">🔤 Fonts</button>
         <button class="stab"        data-tab="layout"  onclick="setSettingsTab('layout')">📐 Layout</button>
         <button class="stab"        data-tab="presets" onclick="setSettingsTab('presets')">✨ Presets</button>
@@ -1120,18 +1163,16 @@ function updateGridBackground(){
     const gs=Math.max(GRID_MIN_PX,GRID_UNIT*zoom);
     const bx=((panX%gs)+gs)%gs;
     const by=((panY%gs)+gs)%gs;
-    viewport.style.backgroundSize=gs+'px '+gs+'px';
-    viewport.style.backgroundPosition=bx+'px '+by+'px';
     applyDotStyle(viewport,zoom);
+    applyPatternBackground(viewport, gs, bx, by);
 }
 function updateModalGridBackground(){
     const vp=document.getElementById('custom-gate-modal-viewport');if(!vp)return;
     const gs=Math.max(GRID_MIN_PX,GRID_UNIT*modalZoom);
     const bx=((modalPanX%gs)+gs)%gs;
     const by=((modalPanY%gs)+gs)%gs;
-    vp.style.backgroundSize=gs+'px '+gs+'px';
-    vp.style.backgroundPosition=bx+'px '+by+'px';
     applyDotStyle(vp,modalZoom);
+    applyPatternBackground(vp, gs, bx, by);
 }
 
 function updateTransform(){canvas.style.transform=`translate(${panX}px,${panY}px) scale(${zoom})`;updateGridBackground();repositionRemoteCursors()}
@@ -2805,7 +2846,9 @@ function setDebugMode(on){
     const btn=document.getElementById('debug-btn');
     if(btn){
         btn.textContent=debugMode?'🐞 Debug ON':'🐞 Debug';
-        btn.style.background=debugMode?'#16a34a':'#7c3aed';
+        btn.style.background=debugMode
+            ? '#16a34a'
+            : ((LSET&&LSET.buttons&&LSET.buttons.debug)||'#1f3a63');
     }
     if(!debugMode){
         debugPinned=null;
@@ -3310,7 +3353,8 @@ function openCustomGateModal(gateType,isEditing){
     const sw = document.getElementById('custom-gate-color-swatches');
     if(sw){
         sw.innerHTML='';
-        ['#1f3a63','#15803d','#b45309','#6d28d9','#b91c1c','#0f766e','#0d9488','#be123c']
+        [LSET.gates.INPUT,LSET.gates.AND,LSET.gates.OUTPUT,LSET.gates.XOR,
+         LSET.gates.NOT,LSET.gates.OR,LSET.gates.CLOCK,LSET.gates.PULSE]
             .forEach(c => {
                 const b = document.createElement('button');
                 b.type = 'button';
@@ -3349,7 +3393,7 @@ function openCustomGateModal(gateType,isEditing){
         const selectedSources=getOrderedSelectedSources();
         titleText.textContent='Create Custom Gate';
         nameInput.value='';
-        colorInput.value='#1f3a63';
+        colorInput.value=(LSET&&LSET.gates&&LSET.gates.CUSTOM_DEFAULT)||'#1f3a63';
         if(folderInput)folderInput.value='';
         if(selectedSources.length>0)loadSelectionIntoModal();
         customGateModalIsEditing=false;customGateModalEditingType=null;
@@ -4149,7 +4193,20 @@ const LSET_DEFAULT = {
     '--gate-header':'#1f3a63','--pixel-off':'#0a0f1c','--pixel-on':'#22c55e',
     '--accent':'#1f3a63','--accent-2':'#16294a','--accent-soft':'#3b5b8c',
     '--accent-tint':'#eef1f6','--muted':'#5b6472','--muted-2':'#78818f',
-    '--danger':'#b91c1c','--good':'#15803d'
+    '--danger':'#b91c1c','--good':'#15803d',
+    /* NEW */
+    '--gate-header-text':'#ffffff',
+    '--gate-shadow':'0 4px 6px rgba(0,0,0,.10)',
+    '--selection-color':'#1f3a63',
+    '--port-input-color':'#e83e8c',
+    '--port-output-color':'#3b5b8c',
+    '--port-active-color':'#15803d',
+    '--port-pour-color':'#b45309',
+    '--port-border-color':'#ffffff',
+    '--bulb-off':'#dddddd',
+    '--bulb-off-border':'#555555',
+    '--bulb-on':'#d97706',
+    '--bulb-on-border':'#b45309'
   },
   dark: {
     '--bg-color':'#0e1422','--toolbar-bg':'#131a2b','--text-color':'#dbe4f7',
@@ -4157,7 +4214,29 @@ const LSET_DEFAULT = {
     '--gate-header':'#8fa6d8','--pixel-off':'#050912','--pixel-on':'#22c55e',
     '--accent':'#4d70db','--accent-2':'#3a56a0','--accent-soft':'#8fa6d8',
     '--accent-tint':'#1a2338','--muted':'#8b96b8','--muted-2':'#5a6b95',
-    '--danger':'#ef4444','--good':'#22c55e'
+    '--danger':'#ef4444','--good':'#22c55e',
+    /* NEW */
+    '--gate-header-text':'#ffffff',
+    '--gate-shadow':'0 4px 6px rgba(0,0,0,.35)',
+    '--selection-color':'#8fa6d8',
+    '--port-input-color':'#e83e8c',
+    '--port-output-color':'#8fa6d8',
+    '--port-active-color':'#22c55e',
+    '--port-pour-color':'#f59e0b',
+    '--port-border-color':'#ffffff',
+    '--bulb-off':'#3f3f46',
+    '--bulb-off-border':'#555555',
+    '--bulb-on':'#f59e0b',
+    '--bulb-on-border':'#b45309'
+  },
+  /* NEW — theme-independent gate-type palette */
+  gates: {
+    INPUT:'#1f3a63', PUSH:'#3d4653', OUTPUT:'#b45309',
+    AND:'#15803d', OR:'#0f766e', XOR:'#6d28d9', NOT:'#b91c1c',
+    NAND:'#134e4a', NOR:'#3730a3', XNOR:'#0369a1',
+    DELAY:'#3d4653', CLOCK:'#0d9488', PULSE:'#be123c',
+    SCREEN:'#d97706', COLOR:'#9d174d',
+    CUSTOM_DEFAULT:'#1f3a63'
   },
   fonts: { ui:'', serif:'', mono:'', uiScale:1, brandScale:1 },
   layout: {
@@ -4168,7 +4247,23 @@ const LSET_DEFAULT = {
     gridDotColorLight:'100,110,130', gridDotColorDark:'255,255,255',
     gridDotMinAlpha:0.06, gridDotMaxAlpha:0.46,
     gridDotMinRadius:0.7, gridDotMaxRadius:2.0,
-    shadows:true, animations:true
+    shadows:true, animations:true,
+    /* NEW: background pattern */
+    bgPattern:'dots',
+    noiseColor:'#ffffff',
+    noiseOpacity:0.12,
+    noiseScale:0.65,
+    noiseOctaves:3
+  },
+  /* NEW: toolbar action button colours */
+  buttons: {
+    customGate:'#8b5cf6',
+    pause:'#1f3a63', step:'#3b5b8c', reset:'#3d4653', theme:'#3b5b8c',
+    settings:'#0f766e', clear:'#b91c1c', debug:'#1f3a63',
+    tips:'#3d4653', toast:'#3d4653',
+    export:'#15803d', import:'#0f766e',
+    undo:'#3d4653', redo:'#3d4653',
+    share:'#1f3a63'
   }
 };
 
@@ -4215,41 +4310,421 @@ const LSET_FONTS = [
 
 const LSET_PRESETS = {
   'Default': null,
-  'Midnight': {
-    light:{'--bg-color':'#eef2f9','--toolbar-bg':'#ffffff','--text-color':'#0b1220','--border-color':'#d6deea','--border-strong':'#b9c6d9','--gate-bg':'#ffffff','--gate-header':'#1e3a8a','--pixel-off':'#0a0f1c','--pixel-on':'#22d3ee','--accent':'#1e40af','--accent-2':'#1e3a8a','--accent-soft':'#3b82f6','--accent-tint':'#e8eefb','--muted':'#475569','--muted-2':'#64748b','--danger':'#dc2626','--good':'#059669'},
-    dark:{'--bg-color':'#070b14','--toolbar-bg':'#0d1524','--text-color':'#d6e2f5','--border-color':'#1c2a44','--border-strong':'#2a3d61','--gate-bg':'#101a2e','--gate-header':'#60a5fa','--pixel-off':'#03060d','--pixel-on':'#22d3ee','--accent':'#3b82f6','--accent-2':'#2563eb','--accent-soft':'#60a5fa','--accent-tint':'#101c33','--muted':'#8296b8','--muted-2':'#5b6f92','--danger':'#f87171','--good':'#34d399'}
-  },
-  'Nord': {
-    light:{'--bg-color':'#eceff4','--toolbar-bg':'#ffffff','--text-color':'#2e3440','--border-color':'#d8dee9','--border-strong':'#c2cad8','--gate-bg':'#ffffff','--gate-header':'#5e81ac','--pixel-off':'#2e3440','--pixel-on':'#a3be8c','--accent':'#5e81ac','--accent-2':'#4c6a92','--accent-soft':'#81a1c1','--accent-tint':'#e5e9f0','--muted':'#4c566a','--muted-2':'#6b7a91','--danger':'#bf616a','--good':'#a3be8c'},
-    dark:{'--bg-color':'#2e3440','--toolbar-bg':'#3b4252','--text-color':'#eceff4','--border-color':'#434c5e','--border-strong':'#4c566a','--gate-bg':'#3b4252','--gate-header':'#88c0d0','--pixel-off':'#242933','--pixel-on':'#a3be8c','--accent':'#88c0d0','--accent-2':'#8fbcbb','--accent-soft':'#81a1c1','--accent-tint':'#3b4252','--muted':'#aebacf','--muted-2':'#7b8aa3','--danger':'#bf616a','--good':'#a3be8c'}
-  },
-  'Solarized Light': {
-    light:{'--bg-color':'#fdf6e3','--toolbar-bg':'#eee8d5','--text-color':'#073642','--border-color':'#e4dcc4','--border-strong':'#d3cbb3','--gate-bg':'#fffbf0','--gate-header':'#268bd2','--pixel-off':'#073642','--pixel-on':'#859900','--accent':'#268bd2','--accent-2':'#1f6fa8','--accent-soft':'#6cace4','--accent-tint':'#eef1e0','--muted':'#586e75','--muted-2':'#839496','--danger':'#dc322f','--good':'#859900'}
-  },
-  'Solarized Dark': {
-    dark:{'--bg-color':'#002b36','--toolbar-bg':'#073642','--text-color':'#eee8d5','--border-color':'#0f4753','--border-strong':'#155e6e','--gate-bg':'#073642','--gate-header':'#2aa198','--pixel-off':'#001f27','--pixel-on':'#b58900','--accent':'#2aa198','--accent-2':'#268bd2','--accent-soft':'#4fb8ae','--accent-tint':'#0b3d4a','--muted':'#93a1a1','--muted-2':'#6b8285','--danger':'#dc322f','--good':'#859900'}
-  },
-  'Dracula': {
-    dark:{'--bg-color':'#282a36','--toolbar-bg':'#21222c','--text-color':'#f8f8f2','--border-color':'#44475a','--border-strong':'#6272a4','--gate-bg':'#343746','--gate-header':'#bd93f9','--pixel-off':'#1a1b23','--pixel-on':'#50fa7b','--accent':'#bd93f9','--accent-2':'#a679e8','--accent-soft':'#caa8fb','--accent-tint':'#3a3d4d','--muted':'#a8b0c8','--muted-2':'#6f7893','--danger':'#ff5555','--good':'#50fa7b'}
-  },
-  'Paper': {
-    light:{'--bg-color':'#faf7f0','--toolbar-bg':'#fffdf7','--text-color':'#2b2620','--border-color':'#e6dfd0','--border-strong':'#d5cbb6','--gate-bg':'#fffdf7','--gate-header':'#7c5c3b','--pixel-off':'#2b2620','--pixel-on':'#4d7c0f','--accent':'#7c5c3b','--accent-2':'#61452b','--accent-soft':'#a8845c','--accent-tint':'#f3ecdf','--muted':'#6b6152','--muted-2':'#8a8071','--danger':'#a1332c','--good':'#4d7c0f'},
-    dark:{'--bg-color':'#1c1814','--toolbar-bg':'#241f19','--text-color':'#ece3d3','--border-color':'#3a3228','--border-strong':'#4d4234','--gate-bg':'#262019','--gate-header':'#c9a06a','--pixel-off':'#100d0a','--pixel-on':'#84cc16','--accent':'#c9a06a','--accent-2':'#a9855a','--accent-soft':'#dcc09a','--accent-tint':'#2c251c','--muted':'#b5a68f','--muted-2':'#83755f','--danger':'#e07a72','--good':'#a3d977'},
-    fonts:{ui:'Georgia, serif',serif:'"Iowan Old Style", Georgia, serif'}
-  },
+
+  /* ════════════ NEON ════════════ */
   'Neon': {
-    dark:{'--bg-color':'#05060a','--toolbar-bg':'#0a0d16','--text-color':'#e6fff8','--border-color':'#12202a','--border-strong':'#1e3b46','--gate-bg':'#0a1018','--gate-header':'#00ffc8','--pixel-off':'#04060a','--pixel-on':'#ff2fd0','--accent':'#00ffc8','--accent-2':'#00d6a8','--accent-soft':'#4dffe0','--accent-tint':'#0d1a20','--muted':'#7de6d0','--muted-2':'#4d9a8e','--danger':'#ff2f6d','--good':'#00ff9d'},
-    layout:{gateRadius:2,wireWidth:4.5,shadows:true}
+    dark: {
+      '--bg-color':'#06060c','--toolbar-bg':'#0d0d1a','--text-color':'#e8fff8',
+      '--border-color':'#1a1a3a','--border-strong':'#2a2a5a','--gate-bg':'#0a0a18',
+      '--gate-header':'#00ffcc','--pixel-off':'#03030a','--pixel-on':'#ff2fd0',
+      '--accent':'#00ffcc','--accent-2':'#00ccaa','--accent-soft':'#66ffee',
+      '--accent-tint':'#0a1520','--muted':'#7de6d0','--muted-2':'#4d9a8e',
+      '--danger':'#ff2f6d','--good':'#00ff9d',
+      '--gate-header-text':'#06060c',
+      '--gate-shadow':'0 0 12px rgba(0,255,204,.22), 0 0 4px rgba(255,47,208,.15)',
+      '--selection-color':'#ff2fd0',
+      '--port-input-color':'#ff2fd0','--port-output-color':'#00ffcc',
+      '--port-active-color':'#00ff9d','--port-pour-color':'#ffaa00',
+      '--port-border-color':'#06060c',
+      '--bulb-off':'#1a1a2e','--bulb-off-border':'#2a2a5a',
+      '--bulb-on':'#00ffcc','--bulb-on-border':'#00ffcc'
+    },
+    gates: { INPUT:'#00b8a0',PUSH:'#1a1a3a',OUTPUT:'#ffaa00',AND:'#00ff9d',OR:'#00ffcc',XOR:'#b14eff',NOT:'#ff2f6d',NAND:'#00cc88',NOR:'#4d5dff',XNOR:'#00aacc',DELAY:'#5a5a8a',CLOCK:'#00e5ff',PULSE:'#ff6bcb',SCREEN:'#ffaa00',COLOR:'#ff2fd0',CUSTOM_DEFAULT:'#00ffcc' },
+    buttons: { customGate:'#b14eff',pause:'#00ffcc',step:'#00ccaa',reset:'#1a1a3a',theme:'#00ccaa',settings:'#00ffcc',clear:'#ff2f6d',debug:'#00ffcc',tips:'#1a1a3a',toast:'#1a1a3a',export:'#00ff9d',import:'#00ffcc',undo:'#1a1a3a',redo:'#1a1a3a',share:'#00ffcc' },
+    fonts:{ui:'ui-monospace, Menlo, Consolas, monospace',serif:'"Courier New", monospace',mono:'"Courier New", monospace'},
+    layout:{gateRadius:2,gateBorderWidth:2,wireWidth:4,shadows:true,animations:true,
+      bgPattern:'noise+dots',noiseColor:'#00ffcc',noiseOpacity:0.07,noiseScale:0.9,noiseOctaves:2}
   },
-  'High Contrast': {
-    light:{'--bg-color':'#ffffff','--toolbar-bg':'#ffffff','--text-color':'#000000','--border-color':'#000000','--border-strong':'#000000','--gate-bg':'#ffffff','--gate-header':'#000000','--pixel-off':'#000000','--pixel-on':'#00ff00','--accent':'#0000ff','--accent-2':'#0000cc','--accent-soft':'#3333ff','--accent-tint':'#e6e6ff','--muted':'#333333','--muted-2':'#555555','--danger':'#cc0000','--good':'#008000'},
-    dark:{'--bg-color':'#000000','--toolbar-bg':'#000000','--text-color':'#ffffff','--border-color':'#ffffff','--border-strong':'#ffffff','--gate-bg':'#000000','--gate-header':'#ffff00','--pixel-off':'#000000','--pixel-on':'#00ff00','--accent':'#00ffff','--accent-2':'#00cccc','--accent-soft':'#66ffff','--accent-tint':'#001a1a','--muted':'#cccccc','--muted-2':'#999999','--danger':'#ff0000','--good':'#00ff00'},
-    layout:{gateBorderWidth:3,wireWidth:5,shadows:false,animations:false}
-  },
+
+  /* ════════════ TERMINAL ════════════ */
   'Terminal': {
-    dark:{'--bg-color':'#000000','--toolbar-bg':'#0a0a0a','--text-color':'#33ff33','--border-color':'#1a3a1a','--border-strong':'#2a5a2a','--gate-bg':'#051005','--gate-header':'#33ff33','--pixel-off':'#000000','--pixel-on':'#33ff33','--accent':'#33ff33','--accent-2':'#22cc22','--accent-soft':'#66ff66','--accent-tint':'#0a1a0a','--muted':'#22aa22','--muted-2':'#1a7a1a','--danger':'#ff3333','--good':'#33ff33'},
+    dark: {
+      '--bg-color':'#000000','--toolbar-bg':'#051005','--text-color':'#33ff33',
+      '--border-color':'#0d3a0d','--border-strong':'#1a5a1a','--gate-bg':'#020802',
+      '--gate-header':'#33ff33','--pixel-off':'#000000','--pixel-on':'#33ff33',
+      '--accent':'#33ff33','--accent-2':'#22cc22','--accent-soft':'#66ff66',
+      '--accent-tint':'#0a1a0a','--muted':'#22aa22','--muted-2':'#1a7a1a',
+      '--danger':'#ff3333','--good':'#33ff33',
+      '--gate-header-text':'#000000','--gate-shadow':'none',
+      '--selection-color':'#33ff33',
+      '--port-input-color':'#33ff33','--port-output-color':'#33ff33',
+      '--port-active-color':'#88ff88','--port-pour-color':'#ffff00',
+      '--port-border-color':'#33ff33',
+      '--bulb-off':'#0a2a0a','--bulb-off-border':'#1a5a1a',
+      '--bulb-on':'#33ff33','--bulb-on-border':'#33ff33'
+    },
+    gates: { INPUT:'#1a5a1a',PUSH:'#0a2a0a',OUTPUT:'#66ff66',AND:'#33ff33',OR:'#22cc22',XOR:'#55ff55',NOT:'#ff5555',NAND:'#22aa22',NOR:'#44dd44',XNOR:'#2a9a2a',DELAY:'#1a7a1a',CLOCK:'#55ffaa',PULSE:'#88ff88',SCREEN:'#33ff33',COLOR:'#66ff66',CUSTOM_DEFAULT:'#33ff33' },
+    buttons: { customGate:'#22aa22',pause:'#33ff33',step:'#22cc22',reset:'#0a2a0a',theme:'#22cc22',settings:'#33ff33',clear:'#ff5555',debug:'#33ff33',tips:'#0a2a0a',toast:'#0a2a0a',export:'#33ff33',import:'#22cc22',undo:'#0a2a0a',redo:'#0a2a0a',share:'#33ff33' },
     fonts:{ui:'"Courier New", monospace',serif:'"Courier New", monospace',mono:'"Courier New", monospace'},
-    layout:{gateRadius:0,shadows:false}
+    layout:{gateRadius:0,gateBorderWidth:2,wireWidth:3,shadows:false,animations:false,
+      bgPattern:'none',noiseColor:'#33ff33',noiseOpacity:0,noiseScale:1,noiseOctaves:1}
+  },
+
+  /* ════════════ CYBERPUNK ════════════ */
+  'Cyberpunk': {
+    dark: {
+      '--bg-color':'#0a0800','--toolbar-bg':'#141008','--text-color':'#ffee00',
+      '--border-color':'#3a3000','--border-strong':'#5a4a00','--gate-bg':'#1a1400',
+      '--gate-header':'#ffee00','--pixel-off':'#000000','--pixel-on':'#ffee00',
+      '--accent':'#ffee00','--accent-2':'#ccbb00','--accent-soft':'#ffee88',
+      '--accent-tint':'#1a1400','--muted':'#aa9900','--muted-2':'#776600',
+      '--danger':'#ff2200','--good':'#00ff88',
+      '--gate-header-text':'#000000',
+      '--gate-shadow':'0 0 0 2px #000, 4px 4px 0 #ffee00',
+      '--selection-color':'#ff2200',
+      '--port-input-color':'#ff4400','--port-output-color':'#ffee00',
+      '--port-active-color':'#00ff88','--port-pour-color':'#ff2200',
+      '--port-border-color':'#000000',
+      '--bulb-off':'#1a1400','--bulb-off-border':'#5a4a00',
+      '--bulb-on':'#ffee00','--bulb-on-border':'#ffee00'
+    },
+    gates: { INPUT:'#ccbb00',PUSH:'#3a3000',OUTPUT:'#ff2200',AND:'#ffee00',OR:'#ffcc00',XOR:'#ff9900',NOT:'#ff2200',NAND:'#ccaa00',NOR:'#cc8800',XNOR:'#aa7700',DELAY:'#554400',CLOCK:'#ffee00',PULSE:'#ff4400',SCREEN:'#ff2200',COLOR:'#ffee00',CUSTOM_DEFAULT:'#ffee00' },
+    buttons: { customGate:'#ff9900',pause:'#ffee00',step:'#ccbb00',reset:'#3a3000',theme:'#ccbb00',settings:'#ffee00',clear:'#ff2200',debug:'#ffee00',tips:'#3a3000',toast:'#3a3000',export:'#00ff88',import:'#ffee00',undo:'#3a3000',redo:'#3a3000',share:'#ffee00' },
+    fonts:{ui:'Impact, sans-serif',serif:'Impact, sans-serif',mono:'"Courier New", monospace'},
+    layout:{gateRadius:0,gateBorderWidth:3,wireWidth:4,shadows:true,animations:true,
+      bgPattern:'noise+dots',noiseColor:'#ffee00',noiseOpacity:0.09,noiseScale:0.55,noiseOctaves:3}
+  },
+
+  /* ════════════ BLUEPRINT ════════════ */
+  'Blueprint': {
+    dark: {
+      '--bg-color':'#0a1e3f','--toolbar-bg':'#0d2648','--text-color':'#e8f0ff',
+      '--border-color':'#1a3a6a','--border-strong':'#2a5a9a','--gate-bg':'#0f2a52',
+      '--gate-header':'#8ab4e8','--pixel-off':'#0a1e3f','--pixel-on':'#ffffff',
+      '--accent':'#8ab4e8','--accent-2':'#6a94c8','--accent-soft':'#a8ccf0',
+      '--accent-tint':'#122a52','--muted':'#8aa8d0','--muted-2':'#5a7ab0',
+      '--danger':'#ff6b6b','--good':'#88ffcc',
+      '--gate-header-text':'#0a1e3f',
+      '--gate-shadow':'0 0 0 1px rgba(138,180,232,.3), 0 4px 8px rgba(0,0,0,.3)',
+      '--selection-color':'#ffffff',
+      '--port-input-color':'#ffcc00','--port-output-color':'#8ab4e8',
+      '--port-active-color':'#88ffcc','--port-pour-color':'#ff8844',
+      '--port-border-color':'#0a1e3f',
+      '--bulb-off':'#122a52','--bulb-off-border':'#2a5a9a',
+      '--bulb-on':'#ffffff','--bulb-on-border':'#8ab4e8'
+    },
+    gates: { INPUT:'#3a6ab0',PUSH:'#1a3a6a',OUTPUT:'#b0d4ff',AND:'#6a94c8',OR:'#5a84b8',XOR:'#8ab4e8',NOT:'#ff6b6b',NAND:'#4a74a8',NOR:'#3a64a0',XNOR:'#2a5490',DELAY:'#2a5a9a',CLOCK:'#88ffcc',PULSE:'#ff8844',SCREEN:'#ffffff',COLOR:'#8ab4e8',CUSTOM_DEFAULT:'#6a94c8' },
+    buttons: { customGate:'#6a94c8',pause:'#4a84c8',step:'#3a6ab0',reset:'#1a3a6a',theme:'#3a6ab0',settings:'#5a94d8',clear:'#ff6b6b',debug:'#4a84c8',tips:'#1a3a6a',toast:'#1a3a6a',export:'#88ffcc',import:'#4a84c8',undo:'#1a3a6a',redo:'#1a3a6a',share:'#5a94d8' },
+    fonts:{ui:'"Courier New", monospace',serif:'"Palatino Linotype", Palatino, serif',mono:'"Courier New", monospace'},
+    layout:{gateRadius:0,gateBorderWidth:2,wireWidth:3,shadows:true,animations:false,
+      bgPattern:'grid',noiseColor:'#8ab4e8',noiseOpacity:0,noiseScale:1,noiseOctaves:1}
+  },
+
+  /* ════════════ PAPER ════════════ */
+  'Paper': {
+    light: {
+      '--bg-color':'#f4ecd8','--toolbar-bg':'#fbf6e8','--text-color':'#2b2620',
+      '--border-color':'#d8ccb0','--border-strong':'#b8a888','--gate-bg':'#fbf6e8',
+      '--gate-header':'#5c4a2e','--pixel-off':'#2b2620','--pixel-on':'#4d7c0f',
+      '--accent':'#7c5c3b','--accent-2':'#61452b','--accent-soft':'#a8845c',
+      '--accent-tint':'#ece3cf','--muted':'#6b6152','--muted-2':'#8a8071',
+      '--danger':'#a1332c','--good':'#4d7c0f',
+      '--gate-header-text':'#fbf6e8',
+      '--gate-shadow':'2px 2px 0 rgba(43,38,32,.15)',
+      '--selection-color':'#7c5c3b',
+      '--port-input-color':'#a1332c','--port-output-color':'#5c4a2e',
+      '--port-active-color':'#4d7c0f','--port-pour-color':'#c88a2c',
+      '--port-border-color':'#fbf6e8',
+      '--bulb-off':'#d8ccb0','--bulb-off-border':'#8a8071',
+      '--bulb-on':'#c88a2c','--bulb-on-border':'#5c4a2e'
+    },
+    gates: { INPUT:'#3a4a7c',PUSH:'#5c5c6b',OUTPUT:'#8a4c1c',AND:'#4d7c0f',OR:'#3b6a68',XOR:'#6a4a8a',NOT:'#a1332c',NAND:'#3a5c1c',NOR:'#3a4a70',XNOR:'#2a5a70',DELAY:'#5c5c6b',CLOCK:'#3b7a6a',PULSE:'#9a2a3a',SCREEN:'#8a4c1c',COLOR:'#7a1a4a',CUSTOM_DEFAULT:'#5c4a2e' },
+    buttons: { customGate:'#6a4a8a',pause:'#7c5c3b',step:'#8a6a1a',reset:'#5c5c6b',theme:'#8a6a1a',settings:'#4d7c0f',clear:'#a1332c',debug:'#7c5c3b',tips:'#5c5c6b',toast:'#5c5c6b',export:'#4d7c0f',import:'#3b6a68',undo:'#5c5c6b',redo:'#5c5c6b',share:'#7c5c3b' },
+    fonts:{ui:'Georgia, serif',serif:'"Iowan Old Style", Georgia, serif',mono:'"Courier New", monospace'},
+    layout:{gateRadius:2,gateBorderWidth:2,wireWidth:2.5,shadows:true,animations:false,
+      bgPattern:'noise',noiseColor:'#8a6a3a',noiseOpacity:0.15,noiseScale:0.5,noiseOctaves:4}
+  },
+
+  /* ════════════ SEPIA ════════════ */
+  'Sepia': {
+    light: {
+      '--bg-color':'#ede0c8','--toolbar-bg':'#f5ead6','--text-color':'#3a2a1a',
+      '--border-color':'#c8b494','--border-strong':'#a89570','--gate-bg':'#f5ead6',
+      '--gate-header':'#6b4a1e','--pixel-off':'#3a2a1a','--pixel-on':'#8a6a1a',
+      '--accent':'#8a6a1a','--accent-2':'#6b4a1e','--accent-soft':'#b8944c',
+      '--accent-tint':'#e0d0a8','--muted':'#7a6850','--muted-2':'#9a8870',
+      '--danger':'#8a2a1a','--good':'#5a6a1a',
+      '--gate-header-text':'#f5ead6',
+      '--gate-shadow':'1px 2px 3px rgba(58,42,26,.25)',
+      '--selection-color':'#8a6a1a',
+      '--port-input-color':'#8a2a1a','--port-output-color':'#6b4a1e',
+      '--port-active-color':'#5a6a1a','--port-pour-color':'#a88a2c',
+      '--port-border-color':'#f5ead6',
+      '--bulb-off':'#c8b494','--bulb-off-border':'#8a7850',
+      '--bulb-on':'#a88a2c','--bulb-on-border':'#6b4a1e'
+    },
+    gates: { INPUT:'#5a4a2a',PUSH:'#5a5a4a',OUTPUT:'#8a4a1a',AND:'#5a6a1a',OR:'#4a5a5a',XOR:'#6a4a5a',NOT:'#8a2a1a',NAND:'#4a5a2a',NOR:'#4a4a5a',XNOR:'#3a4a5a',DELAY:'#5a5a4a',CLOCK:'#3a5a5a',PULSE:'#8a3a2a',SCREEN:'#8a4a1a',COLOR:'#6a2a3a',CUSTOM_DEFAULT:'#6b4a1e' },
+    buttons: { customGate:'#6a4a5a',pause:'#8a6a1a',step:'#a88a2c',reset:'#5a5a4a',theme:'#a88a2c',settings:'#5a6a1a',clear:'#8a2a1a',debug:'#8a6a1a',tips:'#5a5a4a',toast:'#5a5a4a',export:'#5a6a1a',import:'#3a5a5a',undo:'#5a5a4a',redo:'#5a5a4a',share:'#8a6a1a' },
+    fonts:{ui:'Georgia, serif',serif:'"Iowan Old Style", Georgia, serif',mono:'"Courier New", monospace'},
+    layout:{gateRadius:3,gateBorderWidth:1.5,wireWidth:2.5,shadows:true,animations:false,
+      bgPattern:'noise',noiseColor:'#5a3a1a',noiseOpacity:0.18,noiseScale:0.35,noiseOctaves:4}
+  },
+
+  /* ════════════ DRACULA ════════════ */
+  'Dracula': {
+    dark: {
+      '--bg-color':'#282a36','--toolbar-bg':'#21222c','--text-color':'#f8f8f2',
+      '--border-color':'#44475a','--border-strong':'#6272a4','--gate-bg':'#343746',
+      '--gate-header':'#bd93f9','--pixel-off':'#1a1b23','--pixel-on':'#50fa7b',
+      '--accent':'#bd93f9','--accent-2':'#a679e8','--accent-soft':'#caa8fb',
+      '--accent-tint':'#3a3d4d','--muted':'#a8b0c8','--muted-2':'#6f7893',
+      '--danger':'#ff5555','--good':'#50fa7b',
+      '--gate-header-text':'#282a36','--gate-shadow':'0 4px 8px rgba(0,0,0,.35)',
+      '--selection-color':'#ff79c6',
+      '--port-input-color':'#ff79c6','--port-output-color':'#bd93f9',
+      '--port-active-color':'#50fa7b','--port-pour-color':'#ffb86c',
+      '--port-border-color':'#282a36',
+      '--bulb-off':'#44475a','--bulb-off-border':'#6272a4',
+      '--bulb-on':'#ffb86c','--bulb-on-border':'#ff79c6'
+    },
+    gates: { INPUT:'#6272a4',PUSH:'#44475a',OUTPUT:'#ffb86c',AND:'#50fa7b',OR:'#8be9fd',XOR:'#bd93f9',NOT:'#ff5555',NAND:'#2ab86a',NOR:'#5ac8e8',XNOR:'#8a6ad8',DELAY:'#44475a',CLOCK:'#8be9fd',PULSE:'#ff79c6',SCREEN:'#ffb86c',COLOR:'#ff79c6',CUSTOM_DEFAULT:'#bd93f9' },
+    buttons: { customGate:'#bd93f9',pause:'#6272a4',step:'#8be9fd',reset:'#44475a',theme:'#8be9fd',settings:'#50fa7b',clear:'#ff5555',debug:'#6272a4',tips:'#44475a',toast:'#44475a',export:'#50fa7b',import:'#8be9fd',undo:'#44475a',redo:'#44475a',share:'#bd93f9' },
+    fonts:{ui:'Inter, system-ui, sans-serif',serif:'Georgia, serif',mono:'ui-monospace, Menlo, Consolas, monospace'},
+    layout:{gateRadius:6,gateBorderWidth:2,wireWidth:3.5,shadows:true,animations:true,
+      bgPattern:'dots',noiseColor:'#bd93f9',noiseOpacity:0,noiseScale:1,noiseOctaves:1}
+  },
+
+  /* ════════════ NORD ════════════ */
+  'Nord': {
+    dark: {
+      '--bg-color':'#2e3440','--toolbar-bg':'#3b4252','--text-color':'#eceff4',
+      '--border-color':'#434c5e','--border-strong':'#4c566a','--gate-bg':'#3b4252',
+      '--gate-header':'#88c0d0','--pixel-off':'#242933','--pixel-on':'#a3be8c',
+      '--accent':'#88c0d0','--accent-2':'#8fbcbb','--accent-soft':'#81a1c1',
+      '--accent-tint':'#3b4252','--muted':'#aebacf','--muted-2':'#7b8aa3',
+      '--danger':'#bf616a','--good':'#a3be8c',
+      '--gate-header-text':'#2e3440','--gate-shadow':'0 3px 6px rgba(0,0,0,.25)',
+      '--selection-color':'#ebcb8b',
+      '--port-input-color':'#bf616a','--port-output-color':'#88c0d0',
+      '--port-active-color':'#a3be8c','--port-pour-color':'#ebcb8b',
+      '--port-border-color':'#2e3440',
+      '--bulb-off':'#434c5e','--bulb-off-border':'#4c566a',
+      '--bulb-on':'#ebcb8b','--bulb-on-border':'#d08770'
+    },
+    gates: { INPUT:'#5e81ac',PUSH:'#4c566a',OUTPUT:'#d08770',AND:'#a3be8c',OR:'#8fbcbb',XOR:'#b48ead',NOT:'#bf616a',NAND:'#7aa06a',NOR:'#6ea09a',XNOR:'#946ead',DELAY:'#4c566a',CLOCK:'#88c0d0',PULSE:'#d08770',SCREEN:'#ebcb8b',COLOR:'#b48ead',CUSTOM_DEFAULT:'#88c0d0' },
+    buttons: { customGate:'#b48ead',pause:'#5e81ac',step:'#88c0d0',reset:'#4c566a',theme:'#88c0d0',settings:'#a3be8c',clear:'#bf616a',debug:'#5e81ac',tips:'#4c566a',toast:'#4c566a',export:'#a3be8c',import:'#88c0d0',undo:'#4c566a',redo:'#4c566a',share:'#5e81ac' },
+    fonts:{ui:'Inter, system-ui, sans-serif',serif:'Georgia, serif',mono:'ui-monospace, Menlo, Consolas, monospace'},
+    layout:{gateRadius:6,gateBorderWidth:2,wireWidth:3,shadows:true,animations:true,
+      bgPattern:'dots',noiseColor:'#88c0d0',noiseOpacity:0,noiseScale:1,noiseOctaves:1}
+  },
+
+  /* ════════════ SOLARIZED DARK ════════════ */
+  'Solarized Dark': {
+    dark: {
+      '--bg-color':'#002b36','--toolbar-bg':'#073642','--text-color':'#eee8d5',
+      '--border-color':'#0f4753','--border-strong':'#155e6e','--gate-bg':'#073642',
+      '--gate-header':'#2aa198','--pixel-off':'#001f27','--pixel-on':'#b58900',
+      '--accent':'#2aa198','--accent-2':'#268bd2','--accent-soft':'#4fb8ae',
+      '--accent-tint':'#0b3d4a','--muted':'#93a1a1','--muted-2':'#6b8285',
+      '--danger':'#dc322f','--good':'#859900',
+      '--gate-header-text':'#002b36','--gate-shadow':'0 3px 6px rgba(0,0,0,.3)',
+      '--selection-color':'#b58900',
+      '--port-input-color':'#dc322f','--port-output-color':'#2aa198',
+      '--port-active-color':'#859900','--port-pour-color':'#cb4b16',
+      '--port-border-color':'#002b36',
+      '--bulb-off':'#0f4753','--bulb-off-border':'#155e6e',
+      '--bulb-on':'#b58900','--bulb-on-border':'#cb4b16'
+    },
+    gates: { INPUT:'#268bd2',PUSH:'#586e75',OUTPUT:'#cb4b16',AND:'#859900',OR:'#2aa198',XOR:'#6c71c4',NOT:'#dc322f',NAND:'#6a8a1a',NOR:'#2a8a8a',XNOR:'#5a5aa4',DELAY:'#586e75',CLOCK:'#2aa198',PULSE:'#d33682',SCREEN:'#b58900',COLOR:'#d33682',CUSTOM_DEFAULT:'#2aa198' },
+    buttons: { customGate:'#6c71c4',pause:'#268bd2',step:'#2aa198',reset:'#586e75',theme:'#2aa198',settings:'#859900',clear:'#dc322f',debug:'#268bd2',tips:'#586e75',toast:'#586e75',export:'#859900',import:'#2aa198',undo:'#586e75',redo:'#586e75',share:'#268bd2' },
+    fonts:{ui:'Inter, system-ui, sans-serif',serif:'Georgia, serif',mono:'ui-monospace, Menlo, Consolas, monospace'},
+    layout:{gateRadius:4,gateBorderWidth:2,wireWidth:3,shadows:true,animations:true,
+      bgPattern:'dots',noiseColor:'#2aa198',noiseOpacity:0,noiseScale:1,noiseOctaves:1}
+  },
+
+  /* ════════════ SYNTHWAVE ════════════ */
+  'Synthwave': {
+    dark: {
+      '--bg-color':'#1a0a2e','--toolbar-bg':'#241040','--text-color':'#ffd6ff',
+      '--border-color':'#3d1a5e','--border-strong':'#5a2a8a','--gate-bg':'#2a1048',
+      '--gate-header':'#ff2fd0','--pixel-off':'#0a0418','--pixel-on':'#00e5ff',
+      '--accent':'#ff2fd0','--accent-2':'#cc1aa8','--accent-soft':'#ff80e0',
+      '--accent-tint':'#2a1048','--muted':'#c88aff','--muted-2':'#8a5ac8',
+      '--danger':'#ff3355','--good':'#00ffcc',
+      '--gate-header-text':'#1a0a2e',
+      '--gate-shadow':'0 4px 12px rgba(255,47,208,.35)',
+      '--selection-color':'#00e5ff',
+      '--port-input-color':'#ff2fd0','--port-output-color':'#00e5ff',
+      '--port-active-color':'#00ffcc','--port-pour-color':'#ffaa00',
+      '--port-border-color':'#1a0a2e',
+      '--bulb-off':'#3d1a5e','--bulb-off-border':'#5a2a8a',
+      '--bulb-on':'#00e5ff','--bulb-on-border':'#00e5ff'
+    },
+    gates: { INPUT:'#8a2aff',PUSH:'#3d1a5e',OUTPUT:'#ffaa00',AND:'#00ffcc',OR:'#00e5ff',XOR:'#ff2fd0',NOT:'#ff3355',NAND:'#22ddaa',NOR:'#22c8e8',XNOR:'#cc44ff',DELAY:'#5a2a8a',CLOCK:'#00e5ff',PULSE:'#ff80e0',SCREEN:'#ffaa00',COLOR:'#ff2fd0',CUSTOM_DEFAULT:'#ff2fd0' },
+    buttons: { customGate:'#cc44ff',pause:'#ff2fd0',step:'#00e5ff',reset:'#3d1a5e',theme:'#00e5ff',settings:'#00ffcc',clear:'#ff3355',debug:'#8a2aff',tips:'#3d1a5e',toast:'#3d1a5e',export:'#00ffcc',import:'#00e5ff',undo:'#3d1a5e',redo:'#3d1a5e',share:'#ff2fd0' },
+    fonts:{ui:'"Trebuchet MS", sans-serif',serif:'Georgia, serif',mono:'"Fira Code", ui-monospace, monospace'},
+    layout:{gateRadius:8,gateBorderWidth:2,wireWidth:4,shadows:true,animations:true,
+      bgPattern:'noise+dots',noiseColor:'#ff2fd0',noiseOpacity:0.12,noiseScale:0.4,noiseOctaves:3}
+  },
+
+  /* ════════════ FOREST ════════════ */
+  'Forest': {
+    dark: {
+      '--bg-color':'#1a2018','--toolbar-bg':'#232b20','--text-color':'#e0e8d8',
+      '--border-color':'#3a4530','--border-strong':'#556040','--gate-bg':'#2a3224',
+      '--gate-header':'#8aa860','--pixel-off':'#0d1208','--pixel-on':'#ccdd55',
+      '--accent':'#8aa860','--accent-2':'#6a8848','--accent-soft':'#aac880',
+      '--accent-tint':'#2a3224','--muted':'#a8b898','--muted-2':'#708060',
+      '--danger':'#a84838','--good':'#88b848',
+      '--gate-header-text':'#1a2018','--gate-shadow':'0 3px 8px rgba(0,0,0,.4)',
+      '--selection-color':'#ccdd55',
+      '--port-input-color':'#a84838','--port-output-color':'#8aa860',
+      '--port-active-color':'#ccdd55','--port-pour-color':'#cc8833',
+      '--port-border-color':'#1a2018',
+      '--bulb-off':'#3a4530','--bulb-off-border':'#556040',
+      '--bulb-on':'#ccdd55','--bulb-on-border':'#8aa860'
+    },
+    gates: { INPUT:'#4a5a3a',PUSH:'#3a4530',OUTPUT:'#a87838',AND:'#6a8848',OR:'#5a7a68',XOR:'#7a5a68',NOT:'#a84838',NAND:'#4a7a38',NOR:'#4a6a68',XNOR:'#5a5a58',DELAY:'#3a4530',CLOCK:'#5a8a78',PULSE:'#a85848',SCREEN:'#a87838',COLOR:'#8a4858',CUSTOM_DEFAULT:'#8aa860' },
+    buttons: { customGate:'#7a5a68',pause:'#4a5a3a',step:'#6a8848',reset:'#3a4530',theme:'#6a8848',settings:'#5a8a78',clear:'#a84838',debug:'#4a5a3a',tips:'#3a4530',toast:'#3a4530',export:'#6a8848',import:'#5a8a78',undo:'#3a4530',redo:'#3a4530',share:'#4a5a3a' },
+    fonts:{ui:'Verdana, Geneva, sans-serif',serif:'Georgia, serif',mono:'"Courier New", monospace'},
+    layout:{gateRadius:8,gateBorderWidth:2,wireWidth:3,shadows:true,animations:true,
+      bgPattern:'noise',noiseColor:'#8aa860',noiseOpacity:0.10,noiseScale:0.3,noiseOctaves:4}
+  },
+
+  /* ════════════ OCEAN ════════════ */
+  'Ocean': {
+    dark: {
+      '--bg-color':'#0a1e2e','--toolbar-bg':'#0f2a40','--text-color':'#d0f0ff',
+      '--border-color':'#1a3d5a','--border-strong':'#2a5a80','--gate-bg':'#123048',
+      '--gate-header':'#4ad8c8','--pixel-off':'#041018','--pixel-on':'#40e0ff',
+      '--accent':'#4ad8c8','--accent-2':'#3ab8a8','--accent-soft':'#7ae8d8',
+      '--accent-tint':'#123048','--muted':'#88b8d8','--muted-2':'#5880a0',
+      '--danger':'#ff6b6b','--good':'#4ad8c8',
+      '--gate-header-text':'#0a1e2e','--gate-shadow':'0 4px 10px rgba(0,0,0,.4)',
+      '--selection-color':'#ffcc44',
+      '--port-input-color':'#ff9966','--port-output-color':'#4ad8c8',
+      '--port-active-color':'#88ffcc','--port-pour-color':'#ffcc44',
+      '--port-border-color':'#0a1e2e',
+      '--bulb-off':'#1a3d5a','--bulb-off-border':'#2a5a80',
+      '--bulb-on':'#40e0ff','--bulb-on-border':'#4ad8c8'
+    },
+    gates: { INPUT:'#2a6a9a',PUSH:'#1a3d5a',OUTPUT:'#cc8855',AND:'#3ac8a8',OR:'#40b0d8',XOR:'#7a5ac8',NOT:'#e85a5a',NAND:'#2a9a88',NOR:'#3a80a8',XNOR:'#5a50a8',DELAY:'#2a5a80',CLOCK:'#40e0ff',PULSE:'#ff8080',SCREEN:'#cc8855',COLOR:'#e85a9a',CUSTOM_DEFAULT:'#4ad8c8' },
+    buttons: { customGate:'#7a5ac8',pause:'#2a6a9a',step:'#4ad8c8',reset:'#1a3d5a',theme:'#4ad8c8',settings:'#3ac8a8',clear:'#e85a5a',debug:'#2a6a9a',tips:'#1a3d5a',toast:'#1a3d5a',export:'#3ac8a8',import:'#4ad8c8',undo:'#1a3d5a',redo:'#1a3d5a',share:'#2a6a9a' },
+    fonts:{ui:'Inter, system-ui, sans-serif',serif:'Georgia, serif',mono:'ui-monospace, Menlo, Consolas, monospace'},
+    layout:{gateRadius:10,gateBorderWidth:2,wireWidth:3.5,shadows:true,animations:true,
+      bgPattern:'noise+dots',noiseColor:'#4ad8c8',noiseOpacity:0.08,noiseScale:0.25,noiseOctaves:4}
+  },
+
+  /* ════════════ CANDY ════════════ */
+  'Candy': {
+    light: {
+      '--bg-color':'#fdf6fa','--toolbar-bg':'#ffffff','--text-color':'#4a2848',
+      '--border-color':'#f0d8e8','--border-strong':'#dbb8cc','--gate-bg':'#ffffff',
+      '--gate-header':'#d488b8','--pixel-off':'#4a2848','--pixel-on':'#88e0b8',
+      '--accent':'#d488b8','--accent-2':'#b86898','--accent-soft':'#f0a8cc',
+      '--accent-tint':'#fce8f0','--muted':'#8a6888','--muted-2':'#b898b0',
+      '--danger':'#e85a88','--good':'#88d8a8',
+      '--gate-header-text':'#ffffff',
+      '--gate-shadow':'0 3px 8px rgba(212,136,184,.25)',
+      '--selection-color':'#c8a0e8',
+      '--port-input-color':'#e85a88','--port-output-color':'#88a8e8',
+      '--port-active-color':'#88d8a8','--port-pour-color':'#ffc060',
+      '--port-border-color':'#ffffff',
+      '--bulb-off':'#f0d8e8','--bulb-off-border':'#dbb8cc',
+      '--bulb-on':'#ffc060','--bulb-on-border':'#e8a838'
+    },
+    gates: { INPUT:'#a890e0',PUSH:'#c0a8c8',OUTPUT:'#f0a860',AND:'#88d8a8',OR:'#88c8d8',XOR:'#c8a0e8',NOT:'#e888a8',NAND:'#68b888',NOR:'#68a8b8',XNOR:'#a888c8',DELAY:'#c0a8c8',CLOCK:'#88d8c8',PULSE:'#e888b8',SCREEN:'#f0a860',COLOR:'#e888b8',CUSTOM_DEFAULT:'#d488b8' },
+    buttons: { customGate:'#c8a0e8',pause:'#a890e0',step:'#88c8d8',reset:'#c0a8c8',theme:'#88c8d8',settings:'#88d8a8',clear:'#e888a8',debug:'#a890e0',tips:'#c0a8c8',toast:'#c0a8c8',export:'#88d8a8',import:'#88c8d8',undo:'#c0a8c8',redo:'#c0a8c8',share:'#d488b8' },
+    fonts:{ui:'"Trebuchet MS", sans-serif',serif:'Georgia, serif',mono:'ui-monospace, Menlo, Consolas, monospace'},
+    layout:{gateRadius:14,gateBorderWidth:2,wireWidth:3.5,shadows:true,animations:true,
+      bgPattern:'dots',noiseColor:'#d488b8',noiseOpacity:0,noiseScale:1,noiseOctaves:1}
+  },
+
+  /* ════════════ MONO ════════════ */
+  'Mono': {
+    light: {
+      '--bg-color':'#f5f5f5','--toolbar-bg':'#ffffff','--text-color':'#1a1a1a',
+      '--border-color':'#d8d8d8','--border-strong':'#a8a8a8','--gate-bg':'#ffffff',
+      '--gate-header':'#333333','--pixel-off':'#000000','--pixel-on':'#cccccc',
+      '--accent':'#333333','--accent-2':'#1a1a1a','--accent-soft':'#666666',
+      '--accent-tint':'#ececec','--muted':'#666666','--muted-2':'#999999',
+      '--danger':'#1a1a1a','--good':'#555555',
+      '--gate-header-text':'#ffffff','--gate-shadow':'0 2px 4px rgba(0,0,0,.15)',
+      '--selection-color':'#000000',
+      '--port-input-color':'#555555','--port-output-color':'#333333',
+      '--port-active-color':'#000000','--port-pour-color':'#777777',
+      '--port-border-color':'#ffffff',
+      '--bulb-off':'#d8d8d8','--bulb-off-border':'#888888',
+      '--bulb-on':'#333333','--bulb-on-border':'#000000'
+    },
+    gates: { INPUT:'#333333',PUSH:'#555555',OUTPUT:'#4a4a4a',AND:'#2a2a2a',OR:'#3a3a3a',XOR:'#1a1a1a',NOT:'#0a0a0a',NAND:'#4a4a4a',NOR:'#5a5a5a',XNOR:'#6a6a6a',DELAY:'#555555',CLOCK:'#2a2a2a',PULSE:'#1a1a1a',SCREEN:'#4a4a4a',COLOR:'#333333',CUSTOM_DEFAULT:'#333333' },
+    buttons: { customGate:'#444444',pause:'#333333',step:'#4a4a4a',reset:'#666666',theme:'#4a4a4a',settings:'#333333',clear:'#1a1a1a',debug:'#333333',tips:'#666666',toast:'#666666',export:'#2a2a2a',import:'#3a3a3a',undo:'#666666',redo:'#666666',share:'#333333' },
+    fonts:{ui:'Inter, system-ui, sans-serif',serif:'Georgia, serif',mono:'ui-monospace, Menlo, Consolas, monospace'},
+    layout:{gateRadius:4,gateBorderWidth:2,wireWidth:3,shadows:true,animations:true,
+      bgPattern:'none',noiseColor:'#000000',noiseOpacity:0,noiseScale:1,noiseOctaves:1}
+  },
+
+  /* ════════════ HIGH CONTRAST ════════════ */
+  'High Contrast': {
+    dark: {
+      '--bg-color':'#000000','--toolbar-bg':'#000000','--text-color':'#ffffff',
+      '--border-color':'#ffffff','--border-strong':'#ffffff','--gate-bg':'#000000',
+      '--gate-header':'#ffff00','--pixel-off':'#000000','--pixel-on':'#00ff00',
+      '--accent':'#00ffff','--accent-2':'#00cccc','--accent-soft':'#66ffff',
+      '--accent-tint':'#001a1a','--muted':'#cccccc','--muted-2':'#999999',
+      '--danger':'#ff0000','--good':'#00ff00',
+      '--gate-header-text':'#000000','--gate-shadow':'none',
+      '--selection-color':'#ffffff',
+      '--port-input-color':'#ff00ff','--port-output-color':'#00ffff',
+      '--port-active-color':'#00ff00','--port-pour-color':'#ffaa00',
+      '--port-border-color':'#ffffff',
+      '--bulb-off':'#333333','--bulb-off-border':'#ffffff',
+      '--bulb-on':'#00ff00','--bulb-on-border':'#ffffff'
+    },
+    gates: { INPUT:'#0088ff',PUSH:'#444444',OUTPUT:'#ff8800',AND:'#00ff00',OR:'#00ffff',XOR:'#ff00ff',NOT:'#ff0000',NAND:'#00cc00',NOR:'#00cccc',XNOR:'#cc00cc',DELAY:'#666666',CLOCK:'#00ffff',PULSE:'#ff0088',SCREEN:'#ffff00',COLOR:'#ff00ff',CUSTOM_DEFAULT:'#ffff00' },
+    buttons: { customGate:'#ff00ff',pause:'#0088ff',step:'#00ffff',reset:'#666666',theme:'#00ffff',settings:'#00ff00',clear:'#ff0000',debug:'#0088ff',tips:'#666666',toast:'#666666',export:'#00ff00',import:'#00ffff',undo:'#666666',redo:'#666666',share:'#0088ff' },
+    fonts:{ui:'Verdana, Geneva, sans-serif',serif:'Georgia, serif',mono:'"Courier New", monospace'},
+    layout:{gateRadius:0,gateBorderWidth:4,wireWidth:6,shadows:false,animations:false,
+      bgPattern:'none',noiseColor:'#ffffff',noiseOpacity:0,noiseScale:1,noiseOctaves:1}
+  },
+
+  /* ════════════ LAVA ════════════ */
+  'Lava': {
+    dark: {
+      '--bg-color':'#1a0604','--toolbar-bg':'#281008','--text-color':'#ffe0b8',
+      '--border-color':'#4a1e10','--border-strong':'#6a2a18','--gate-bg':'#2a1208',
+      '--gate-header':'#ff5522','--pixel-off':'#0a0200','--pixel-on':'#ffcc00',
+      '--accent':'#ff5522','--accent-2':'#cc3311','--accent-soft':'#ff8844',
+      '--accent-tint':'#2a1208','--muted':'#cc8855','--muted-2':'#8a5530',
+      '--danger':'#ff2200','--good':'#ffaa00',
+      '--gate-header-text':'#1a0604',
+      '--gate-shadow':'0 4px 12px rgba(255,85,34,.35)',
+      '--selection-color':'#ffcc00',
+      '--port-input-color':'#ff2200','--port-output-color':'#ffaa44',
+      '--port-active-color':'#ffcc00','--port-pour-color':'#ff6622',
+      '--port-border-color':'#1a0604',
+      '--bulb-off':'#4a1e10','--bulb-off-border':'#6a2a18',
+      '--bulb-on':'#ffcc00','--bulb-on-border':'#ff5522'
+    },
+    gates: { INPUT:'#8a2a10',PUSH:'#3a1a0c',OUTPUT:'#ffcc00',AND:'#ff8822',OR:'#ff5522',XOR:'#cc3311',NOT:'#ff2200',NAND:'#cc6611',NOR:'#aa4411',XNOR:'#884400',DELAY:'#4a2a18',CLOCK:'#ffcc44',PULSE:'#ff4488',SCREEN:'#ffcc00',COLOR:'#ff3366',CUSTOM_DEFAULT:'#ff5522' },
+    buttons: { customGate:'#ff3366',pause:'#8a2a10',step:'#ff8822',reset:'#3a1a0c',theme:'#ff8822',settings:'#ffcc00',clear:'#ff2200',debug:'#8a2a10',tips:'#3a1a0c',toast:'#3a1a0c',export:'#ffcc00',import:'#ff8822',undo:'#3a1a0c',redo:'#3a1a0c',share:'#ff5522' },
+    fonts:{ui:'Inter, system-ui, sans-serif',serif:'Georgia, serif',mono:'ui-monospace, Menlo, Consolas, monospace'},
+    layout:{gateRadius:6,gateBorderWidth:2,wireWidth:4,shadows:true,animations:true,
+      bgPattern:'noise+dots',noiseColor:'#ff5522',noiseOpacity:0.14,noiseScale:0.3,noiseOctaves:4}
+  },
+
+  /* ════════════ ICE ════════════ */
+  'Ice': {
+    light: {
+      '--bg-color':'#eaf4fc','--toolbar-bg':'#ffffff','--text-color':'#0a2848',
+      '--border-color':'#c8e0f0','--border-strong':'#a0c8e0','--gate-bg':'#ffffff',
+      '--gate-header':'#3a8ac8','--pixel-off':'#0a2848','--pixel-on':'#4ad8ff',
+      '--accent':'#3a8ac8','--accent-2':'#2a6aa8','--accent-soft':'#7abae0',
+      '--accent-tint':'#e0f0fc','--muted':'#5a7a98','--muted-2':'#88a8c0',
+      '--danger':'#e85a88','--good':'#4ad8b8',
+      '--gate-header-text':'#ffffff','--gate-shadow':'0 3px 8px rgba(58,138,200,.2)',
+      '--selection-color':'#4ad8ff',
+      '--port-input-color':'#e85a88','--port-output-color':'#3a8ac8',
+      '--port-active-color':'#4ad8b8','--port-pour-color':'#ffaa44',
+      '--port-border-color':'#ffffff',
+      '--bulb-off':'#c8e0f0','--bulb-off-border':'#a0c8e0',
+      '--bulb-on':'#4ad8ff','--bulb-on-border':'#3a8ac8'
+    },
+    gates: { INPUT:'#5a8ac8',PUSH:'#8aa8c0',OUTPUT:'#e888a8',AND:'#4ad8b8',OR:'#4ac8e8',XOR:'#7ab0e8',NOT:'#e85a88',NAND:'#2ab898',NOR:'#2aa8c8',XNOR:'#5a90c8',DELAY:'#88a8c0',CLOCK:'#4ad8ff',PULSE:'#e87ac8',SCREEN:'#e888a8',COLOR:'#e85ac8',CUSTOM_DEFAULT:'#3a8ac8' },
+    buttons: { customGate:'#7ab0e8',pause:'#5a8ac8',step:'#4ac8e8',reset:'#8aa8c0',theme:'#4ac8e8',settings:'#4ad8b8',clear:'#e85a88',debug:'#5a8ac8',tips:'#8aa8c0',toast:'#8aa8c0',export:'#4ad8b8',import:'#4ac8e8',undo:'#8aa8c0',redo:'#8aa8c0',share:'#3a8ac8' },
+    fonts:{ui:'Inter, system-ui, sans-serif',serif:'Georgia, serif',mono:'ui-monospace, Menlo, Consolas, monospace'},
+    layout:{gateRadius:8,gateBorderWidth:2,wireWidth:3,shadows:true,animations:true,
+      bgPattern:'noise',noiseColor:'#3a8ac8',noiseOpacity:0.09,noiseScale:0.35,noiseOctaves:4}
   }
 };
 
@@ -4278,6 +4753,81 @@ function lsetNormHex(c){
   return '#000000';
 }
 function gwPx(){ return (LSET&&LSET.layout&&LSET.layout.gateWidth)||140; }
+
+/* Build an SVG data-URL that renders Perlin (fractal) noise tinted to a
+   colour, with alpha driven by the noise luminance. The result is a
+   repeatable 200×200 tile you can drop straight into a CSS background.
+   Cached so we don't regenerate the SVG string on every pan/zoom frame. */
+let _noiseUrlCache = { key:'', url:'' };
+function buildNoiseUrl(color, opacity, scale, octaves){
+    const key = color+'|'+opacity+'|'+scale+'|'+octaves;
+    if(_noiseUrlCache.key === key) return _noiseUrlCache.url;
+    const hex = String(color||'#ffffff').replace('#','');
+    const r = (parseInt(hex.slice(0,2),16)/255).toFixed(3);
+    const g = (parseInt(hex.slice(2,4),16)/255).toFixed(3);
+    const b = (parseInt(hex.slice(4,6),16)/255).toFixed(3);
+    const a = ((0.333 * Math.max(0, Math.min(1, opacity)))).toFixed(4);
+    const svg =
+        "<svg xmlns='http://www.w3.org/2000/svg' width='200' height='200'>" +
+          "<filter id='n' x='0' y='0' width='100%' height='100%'>" +
+            "<feTurbulence type='fractalNoise' baseFrequency='" + scale +
+              "' numOctaves='" + octaves + "' stitchTiles='stitch'/>" +
+            "<feColorMatrix type='matrix' values='" +
+              "0 0 0 0 "+r+"  " +
+              "0 0 0 0 "+g+"  " +
+              "0 0 0 0 "+b+"  " +
+              a+" "+a+" "+a+" 0 0'/>" +
+          "</filter>" +
+          "<rect width='100%' height='100%' filter='url(#n)'/>" +
+        "</svg>";
+    const url = 'url("data:image/svg+xml;utf8,' + encodeURIComponent(svg) + '")';
+    _noiseUrlCache = { key, url };
+    return url;
+}
+
+/* Compose the CSS background layers for a canvas-style element
+   according to LSET.layout.bgPattern. Handles: none | dots | grid |
+   noise | noise+dots. Returns nothing; mutates el.style. */
+function applyPatternBackground(el, gs, bx, by){
+    const L = (LSET&&LSET.layout)||{};
+    const pattern = L.bgPattern || 'dots';
+    if(pattern === 'none'){
+        el.style.backgroundImage = 'none';
+        el.style.backgroundSize = '';
+        el.style.backgroundPosition = '';
+        el.style.backgroundRepeat = '';
+        return;
+    }
+    const imgs = [], sizes = [], positions = [], repeats = [];
+
+    // Noise layer — drawn on top (first in the list).
+    if((pattern === 'noise' || pattern === 'noise+dots') && (L.noiseOpacity||0) > 0){
+        imgs.push(buildNoiseUrl(L.noiseColor||'#ffffff', L.noiseOpacity,
+                                L.noiseScale||0.65, L.noiseOctaves||3));
+        sizes.push('200px 200px');
+        positions.push('0 0');
+        repeats.push('repeat');
+    }
+
+    // Dot / grid layer — drawn below.
+    if(pattern === 'grid'){
+        imgs.push('linear-gradient(to right, var(--dot-color) 1px, transparent 1px)');
+        imgs.push('linear-gradient(to bottom, var(--dot-color) 1px, transparent 1px)');
+        sizes.push(gs+'px '+gs+'px', gs+'px '+gs+'px');
+        positions.push(bx+'px 0', '0 '+by+'px');
+        repeats.push('repeat', 'repeat');
+    } else if(pattern === 'dots' || pattern === 'noise+dots'){
+        imgs.push('radial-gradient(var(--dot-color) var(--dot-radius,1px),transparent var(--dot-radius,1px))');
+        sizes.push(gs+'px '+gs+'px');
+        positions.push(bx+'px '+by+'px');
+        repeats.push('repeat');
+    }
+
+    el.style.backgroundImage = imgs.join(', ');
+    el.style.backgroundSize = sizes.join(', ');
+    el.style.backgroundPosition = positions.join(', ');
+    el.style.backgroundRepeat = repeats.join(', ');
+}
 
 /* ── persistence ───────────────────────────────────────── */
 let lsetSaveTimer=null;
@@ -4324,6 +4874,50 @@ function applySettings(){
   body.classList.toggle('no-animations',!L.animations);
   GRID_UNIT=L.gridSize;
   SNAP=L.snapSize;
+
+  // ── Gate palette ────────────────────────────────────────
+  // Mutate the shared GATE_COLORS map in place so every existing
+  // lookup (spawn, ghost, renderComponent, modal) picks up new values.
+  if(LSET.gates){
+    for(const k of Object.keys(LSET.gates)){
+      if(k === 'CUSTOM_DEFAULT') continue;
+      if(k in GATE_COLORS) GATE_COLORS[k] = LSET.gates[k];
+    }
+  }
+
+  // Re-paint every existing gate's --gate-color.
+  for(const [id, el] of compEls){
+    const comp = components.find(c => c.id === id);
+    if(!comp) continue;
+    el.style.setProperty('--gate-color', getGateColor(comp));
+  }
+
+  // Toolbar gate buttons follow the gate palette.
+  document.querySelectorAll('.tool-btn[data-gate-type]').forEach(btn => {
+    const t = btn.dataset.gateType;
+    if(LSET.gates && LSET.gates[t]) btn.style.background = LSET.gates[t];
+  });
+  // Toolbar action buttons follow LSET.buttons.
+  if(LSET.buttons){
+    document.querySelectorAll('[data-btn-id]').forEach(el => {
+      const id = el.dataset.btnId;
+      const color = LSET.buttons[id];
+      if(!color) return;
+      // Share button keeps its room-state colour while in a room.
+      if(id === 'share' && typeof collabRoomCode !== 'undefined' && collabRoomCode) return;
+      // Debug button keeps its ON colour while debug is active.
+      if(id === 'debug' && typeof debugMode !== 'undefined' && debugMode) return;
+      el.style.background = color;
+    });
+  }
+
+  // If the custom-gate modal is open, refresh its toolbar so its
+  // swatches use the new palette.
+  const modalTb = document.getElementById('custom-gate-modal-toolbar');
+  if(modalTb && modalTb.children.length > 0 && typeof setupModalToolbar === 'function'){
+    try { setupModalToolbar(); } catch(_){}
+  }
+
   try{ updateGridBackground(); }catch(_){}
   try{ updateModalGridBackground(); }catch(_){}
   try{ markPortPositionsDirty(); drawWires(); }catch(_){}
@@ -4407,6 +5001,129 @@ function lsetHtmlFonts(){
       <div style="font-family:var(--font-mono,ui-monospace,monospace);font-size:12px;margin-top:8px;">const gate = (a, b) =&gt; a &amp;&amp; b;</div>
     </div>`;
 }
+function lsetHtmlGates(){
+  const list = [
+    ['INPUT','Toggle input'], ['PUSH','Push button'], ['OUTPUT','Output bulb'],
+    ['AND','AND gate'], ['OR','OR gate'], ['XOR','XOR gate'], ['NOT','NOT gate'],
+    ['NAND','NAND gate'], ['NOR','NOR gate'], ['XNOR','XNOR gate'],
+    ['DELAY','Delay gate'], ['CLOCK','Clock'], ['PULSE','Pulse'],
+    ['SCREEN','Pixel screen'], ['COLOR','Color gate'],
+    ['CUSTOM_DEFAULT','New custom gate (default)']
+  ];
+  const rows = list.map(([key,label]) =>
+    `<div class="field"><label>${escapeHtml(label)}</label>
+      <input type="color" data-path="gates.${key}" value="${lsetNormHex(lsetGet(LSET,'gates.'+key))}"></div>`
+  ).join('');
+  return `<div class="sec-title">Gate palette</div>
+    <div class="grid">${rows}</div>
+    <div style="margin-top:16px;display:flex;gap:8px;flex-wrap:wrap;">
+      <button class="btn-cancel" onclick="resetGatePalette()">↺ Reset palette</button>
+      <button class="btn-cancel" onclick="randomizeGatePalette()">🎲 Randomize</button>
+    </div>
+    <p style="font-size:11px;opacity:.6;margin-top:16px;line-height:1.6;">
+      These colors apply to every gate of that type on the canvas and to the toolbar buttons.
+      Custom gates use their own color, set when the gate is created.
+    </p>`;
+}
+
+function lsetHtmlButtons(){
+    const list = [
+        ['customGate','⚙️ Custom Gate'],
+        ['pause','Pause / Resume'],
+        ['step','Step'],
+        ['reset','Reset view'],
+        ['theme','Theme toggle'],
+        ['settings','⚙️ Settings'],
+        ['clear','Clear all'],
+        ['debug','🐞 Debug'],
+        ['tips','Tips'],
+        ['toast','🔔 Notifications'],
+        ['export','⬇ Export'],
+        ['import','⬆ Import'],
+        ['undo','↩ Undo'],
+        ['redo','↪ Redo'],
+        ['share','🌐 Share']
+    ];
+    const rows = list.map(([k,label]) =>
+        `<div class="field"><label>${escapeHtml(label)}</label>
+          <input type="color" data-path="buttons.${k}" value="${lsetNormHex(lsetGet(LSET,'buttons.'+k))}"></div>`
+    ).join('');
+    return `<div class="sec-title">Toolbar action buttons</div>
+      <div class="grid">${rows}</div>
+      <div style="margin-top:16px;display:flex;gap:8px;flex-wrap:wrap;">
+        <button class="btn-cancel" onclick="resetButtonColors()">↺ Reset button colours</button>
+      </div>
+      <p style="font-size:11px;opacity:.6;margin-top:16px;line-height:1.6;">
+        Gate-type buttons (AND, OR, XOR, Clock, Pixel, etc.) follow the palette in the
+        <b>🧩 Gates</b> tab. The Share button reverts to its room-state colour while
+        you're connected to a room.
+      </p>`;
+}
+
+function resetButtonColors(){
+    LSET.buttons = lsetClone(LSET_DEFAULT.buttons);
+    applySettings(); saveSettings(); renderSettingsTab();
+    showToast('Button colours reset.','success',1400);
+}
+
+function lsetHtmlPorts(){
+  const l = LSET.light, d = LSET.dark;
+  const row = (v,label) => {
+    const lv = l[v] || LSET_DEFAULT.light[v] || '#000000';
+    const dv = d[v] || LSET_DEFAULT.dark[v]  || '#000000';
+    return `<div class="field"><label title="${v}">${escapeHtml(label)}</label>
+      <input type="color" data-path="light.${v}" value="${lsetNormHex(lv)}" title="Light — ${v}">
+      <input type="color" data-path="dark.${v}"  value="${lsetNormHex(dv)}" title="Dark — ${v}"></div>`;
+  };
+  return `<div class="sec-title">Ports &nbsp;·&nbsp; left = light theme, right = dark theme</div>
+    <div class="grid">
+      ${row('--port-input-color','Input port')}
+      ${row('--port-output-color','Output port')}
+      ${row('--port-active-color','Active port (1)')}
+      ${row('--port-pour-color','Pour mode port')}
+      ${row('--port-border-color','Port border')}
+    </div>
+    <div class="sec-title">Selection &amp; highlights</div>
+    <div class="grid">
+      ${row('--selection-color','Selection outline')}
+    </div>
+    <div class="sec-title">Bulb</div>
+    <div class="grid">
+      ${row('--bulb-off','Bulb — off')}
+      ${row('--bulb-off-border','Bulb — off border')}
+      ${row('--bulb-on','Bulb — on')}
+      ${row('--bulb-on-border','Bulb — on border')}
+    </div>
+    <div class="sec-title">Gate chrome</div>
+    <div class="grid">
+      ${row('--gate-header-text','Gate header text')}
+    </div>
+    <div class="sec-title">Gate shadow</div>
+    <div class="grid">
+      ${lsetTxt('Shadow — light','light.--gate-shadow','0 4px 6px rgba(0,0,0,.10)')}
+      ${lsetTxt('Shadow — dark','dark.--gate-shadow','0 4px 6px rgba(0,0,0,.35)')}
+    </div>`;
+}
+
+function resetGatePalette(){
+  LSET.gates = lsetClone(LSET_DEFAULT.gates);
+  applySettings(); saveSettings(); renderSettingsTab();
+  showToast('Gate palette reset.','success',1400);
+}
+
+function randomizeGatePalette(){
+  const keys = Object.keys(LSET_DEFAULT.gates);
+  for(const k of keys){
+    const h = Math.floor(Math.random()*360), s = 45+Math.floor(Math.random()*40), l = 30+Math.floor(Math.random()*25);
+    // HSL → hex
+    const a = s*Math.min(l,100-l)/100;
+    const f = n => { const kk = (n + h/30) % 12; const c = l/100 - a/100*Math.max(-1,Math.min(kk-3,Math.min(9-kk,1))); return Math.round(255*c).toString(16).padStart(2,'0'); };
+    LSET.gates[k] = '#'+f(0)+f(8)+f(4);
+  }
+  applySettings(); saveSettings(); renderSettingsTab();
+  showToast('Gate palette randomized.','success',1400);
+}
+
 function lsetHtmlLayout(){
   const L=LSET.layout;
   return `<div class="sec-title">Gate geometry</div>
@@ -4434,6 +5151,27 @@ function lsetHtmlLayout(){
       ${lsetTxt('Dot colour — light (r,g,b)','layout.gridDotColorLight','100,110,130')}
       ${lsetTxt('Dot colour — dark (r,g,b)','layout.gridDotColorDark','255,255,255')}
     </div>
+    <div class="sec-title">Background pattern</div>
+    <div class="grid">
+      <div class="field wide"><label>Pattern</label>
+        <select data-path="layout.bgPattern">
+          <option value="dots"${LSET.layout.bgPattern==='dots'?' selected':''}>Dots</option>
+          <option value="grid"${LSET.layout.bgPattern==='grid'?' selected':''}>Grid lines</option>
+          <option value="noise"${LSET.layout.bgPattern==='noise'?' selected':''}>Perlin noise</option>
+          <option value="noise+dots"${LSET.layout.bgPattern==='noise+dots'?' selected':''}>Perlin noise + dots</option>
+          <option value="none"${LSET.layout.bgPattern==='none'?' selected':''}>None (solid colour)</option>
+        </select>
+      </div>
+      ${lsetCol('Noise colour','layout.noiseColor')}
+      ${lsetRng('Noise opacity','layout.noiseOpacity',0,1,0.01,'')}
+      ${lsetRng('Noise scale','layout.noiseScale',0.05,3,0.05,'')}
+      ${lsetRng('Noise detail (octaves)','layout.noiseOctaves',1,6,1,'')}
+    </div>
+    <p style="font-size:11px;opacity:.6;margin-top:8px;line-height:1.6;">
+      Noise is generated as an inline SVG using <code>feTurbulence</code> — no images, no extra
+      requests. Lower <b>scale</b> = chunkier clouds; higher = finer grain. The noise layer is
+      cached, so panning and zooming don't regenerate it.
+    </p>
     <div class="sec-title">Effects</div>
     <div class="grid">
       ${lsetChk('Drop shadows','layout.shadows')}
@@ -4443,19 +5181,50 @@ function lsetHtmlLayout(){
 function lsetHtmlPresets(){
   const cards=Object.keys(LSET_PRESETS).map(name=>{
     const p=LSET_PRESETS[name];
-    const sw=['--bg-color','--gate-header','--accent','--pixel-on'].map(k=>{
-      const c=(p&&p.dark&&p.dark[k])||LSET_DEFAULT.dark[k];
-      return `<span class="pc-sw" style="background:${c}"></span>`;
-    }).join('');
-    return `<div class="preset-card" data-preset="${escapeHtml(name)}">
-      <div class="pc-name">${escapeHtml(name)}</div>
-      <div class="pc-swatches">${sw}</div></div>`;
+    // Prefer dark theme for preview if present; else light; else defaults.
+    const theme = p && (p.dark || p.light);
+    const themeKey = p && p.dark ? 'dark' : 'light';
+    const themeVals = theme || LSET_DEFAULT.dark;
+    const bg = themeVals['--bg-color'] || LSET_DEFAULT.dark['--bg-color'];
+    const fg = themeVals['--text-color'] || LSET_DEFAULT.dark['--text-color'];
+    const accent = themeVals['--accent'] || LSET_DEFAULT.dark['--accent'];
+    const gatesPal = (p && p.gates) || LSET_DEFAULT.gates;
+    const gateSwatches = ['AND','OR','XOR','NOT','CLOCK','OUTPUT']
+      .map(k => `<span class="pc-sw" style="background:${gatesPal[k]||'#888'}"></span>`)
+      .join('');
+    // Apply the preset's own background pattern as a decorative layer in the card.
+    const lay = (p && p.layout) || {};
+    const pattern = lay.bgPattern || 'dots';
+    const nc = lay.noiseColor || accent;
+    const nOpacity = lay.noiseOpacity || 0;
+    let cardBg = bg;
+    if(pattern === 'dots'){
+      cardBg = `radial-gradient(${fg}22 1px, transparent 1px), ${bg}`;
+    } else if(pattern === 'grid'){
+      cardBg = `linear-gradient(to right, ${fg}22 1px, transparent 1px), linear-gradient(to bottom, ${fg}22 1px, transparent 1px), ${bg}`;
+    } else if(pattern === 'noise' || pattern === 'noise+dots'){
+      const tint = nc + Math.round(nOpacity * 255).toString(16).padStart(2,'0');
+      cardBg = `radial-gradient(${tint} 0.5px, transparent 0.5px), ${bg}`;
+    }
+    return `<div class="preset-card" data-preset="${escapeHtml(name)}"
+                 style="background:${cardBg};background-size:${pattern==='grid'?'8px 8px,8px 8px,auto':(pattern==='dots'||pattern==='noise+dots'?'6px 6px,auto':'auto')};color:${fg};border-color:${accent}55;">
+      <div class="pc-name" style="color:${fg}">${escapeHtml(name)}</div>
+      <div class="pc-swatches">${gateSwatches}</div>
+      <div class="pc-swatches" style="margin-top:6px;">
+        <span class="pc-sw" style="background:${accent};flex:2;"></span>
+        <span class="pc-sw" style="background:${fg};"></span>
+        <span class="pc-sw" style="background:${bg};border-color:${fg}66;"></span>
+      </div>
+      <div style="font-size:9px;opacity:.55;margin-top:6px;letter-spacing:.03em;">
+        ${escapeHtml(pattern)}
+      </div>
+    </div>`;
   }).join('');
   return `<div class="sec-title">Theme presets</div>
     <div class="preset-grid">${cards}</div>
     <p style="font-size:11px;opacity:.6;margin-top:16px;line-height:1.6;">
-      Presets replace your colours, fonts and layout settings. You can keep tweaking afterwards —
-      nothing is locked in.
+      Presets replace your <b>colours</b>, <b>gate palette</b>, <b>fonts</b>, and <b>layout</b> settings.
+      Every preset changes the entire look — nothing is locked in, and you can keep tweaking afterwards.
     </p>`;
 }
 function lsetHtmlAdvanced(){
@@ -4480,6 +5249,9 @@ function renderSettingsTab(){
   const body=document.getElementById('settings-body');
   if(!body)return;
   if(lsetTab==='theme')        body.innerHTML=lsetHtmlTheme();
+  else if(lsetTab==='gates')   body.innerHTML=lsetHtmlGates();
+  else if(lsetTab==='ports')   body.innerHTML=lsetHtmlPorts();
+  else if(lsetTab==='buttons') body.innerHTML=lsetHtmlButtons();
   else if(lsetTab==='fonts')   body.innerHTML=lsetHtmlFonts();
   else if(lsetTab==='layout')  body.innerHTML=lsetHtmlLayout();
   else if(lsetTab==='presets') body.innerHTML=lsetHtmlPresets();
@@ -4811,7 +5583,7 @@ function updateShareButton(){
         b.style.background = collabIsHost ? '#16a34a' : '#2563eb';
     } else {
         b.textContent = '🌐 Share';
-        b.style.background = '#0ea5e9';
+        b.style.background = (LSET&&LSET.buttons&&LSET.buttons.share)||'#1f3a63';
     }
 }
 function changeUserColor(color){
