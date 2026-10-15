@@ -73,7 +73,7 @@ onAuthStateChanged(fbAuth, user => {
 <style>
   /* ══ COLLAB ══ */
 #remote-cursors{position:absolute;top:0;left:0;right:0;bottom:0;pointer-events:none;z-index:900;overflow:hidden}
-.remote-cursor{position:absolute;top:0;left:0;width:20px;height:24px;pointer-events:none;will-change:transform;transition:transform .06s linear}
+.remote-cursor{position:absolute;top:0;left:0;width:20px;height:24px;pointer-events:none;will-change:transform;transition:transform .12s linear}
 .remote-cursor svg{display:block;width:20px;height:24px;filter:drop-shadow(0 2px 4px rgba(0,0,0,.4))}
 .remote-cursor .rc-label{position:absolute;left:15px;top:16px;padding:2px 8px;border-radius:10px;font-size:10px;font-weight:bold;color:#fff;white-space:nowrap;box-shadow:0 2px 6px rgba(0,0,0,.4);text-shadow:0 1px 2px rgba(0,0,0,.35)}
 #share-modal{position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:4500;display:none;align-items:center;justify-content:center}
@@ -162,7 +162,8 @@ button:active{transform:translateY(1px)}
 #canvas{position:absolute;width:100%;height:100%;top:0;left:0;transform-origin:0 0;pointer-events:all;will-change:transform}
 #grid-bg{display:none!important}
 svg{position:absolute;top:0;left:0;width:100%;height:100%;pointer-events:all;overflow:visible;z-index:1}
-.gate{position:absolute;--gate-color:var(--gate-header);background:var(--gate-bg);border:2px solid var(--gate-color);border-radius:6px;box-shadow:0 4px 6px rgba(0,0,0,.1);cursor:move;z-index:3;touch-action:none;pointer-events:auto;transition:border-color .15s,box-shadow .15s;width:140px;height:auto;min-width:140px;will-change:transform,left,top}
+.gate{position:absolute;--gate-color:var(--gate-header);background:var(--gate-bg);border:2px solid var(--gate-color);border-radius:6px;box-shadow:0 4px 6px rgba(0,0,0,.1);cursor:move;z-index:3;touch-action:none;pointer-events:auto;transition:border-color .15s,box-shadow .15s;width:140px;height:auto;min-width:140px}
+.gate.dragging{will-change:transform}
 .gate.powered{border-color:var(--gate-color);box-shadow:0 0 10px color-mix(in srgb,var(--gate-color) 55%,transparent)}
 .gate.selected{outline:3px solid #1f3a63;outline-offset:2px;box-shadow:0 0 0 3px rgba(31,58,99,.20),0 4px 6px rgba(0,0,0,.1)}
 .gate-header{background:var(--gate-color);color:#fff;padding:4px 6px;font-size:10px;display:flex;justify-content:space-between;align-items:center;border-top-left-radius:4px;border-top-right-radius:4px;position:relative;gap:4px;min-height:26px}
@@ -335,7 +336,7 @@ body.debug-mode .pixel-square .port{opacity:.72}
     border-radius:0!important;height:100%;display:flex;align-items:center;justify-content:center;
     border:none!important}
     /* ══ REMOTE INTERACTIONS ══ */
-.gate.remote-dragging{outline:2px dashed #0ea5e9;outline-offset:2px}
+.gate.remote-dragging{outline:2px dashed #0ea5e9;outline-offset:2px;transition:left .12s linear,top .12s linear}
 .remote-wire{stroke:#0ea5e9;stroke-width:3;fill:none;stroke-dasharray:6,5;stroke-linecap:round;opacity:.85;pointer-events:none}
 .remote-ghost{position:absolute;top:0;left:0;pointer-events:none;will-change:transform;
     transition:transform .06s linear;transform-origin:0 0;opacity:.75;
@@ -720,6 +721,76 @@ const compPortEls=new Map();
 const dirtyPortComponents=new Set();
 let openFolderName=null;
 
+/* ═══════════════════════════════════════════════════════════════
+   WORLD CACHE
+   Lazily-rebuilt indexes for the simulation + render hot paths.
+   Auto-invalidates when the number of components or wires changes.
+   Call markWorldDirty() explicitly after any mutation that keeps
+   the counts the same but swaps identity (e.g. undo/redo).
+   ═══════════════════════════════════════════════════════════════ */
+let worldStamp = 0;
+function markWorldDirty(){ worldStamp++; }
+const worldCache = {
+    stamp: -1, nComp: -1, nWire: -1,
+    compsRef: null, wiresRef: null,
+    byId: null,
+    compsByType: null,
+    wiresByToComp: null,
+    iwm: null,
+    consumers: null
+};
+function buildWorldCache(){
+    const byId = new Map();
+    const compsByType = new Map();
+    for(let i=0;i<components.length;i++){
+        const c = components[i];
+        byId.set(c.id, c);
+        let arr = compsByType.get(c.type);
+        if(!arr){ arr=[]; compsByType.set(c.type, arr); }
+        arr.push(c);
+    }
+    const wiresByToComp = new Map();
+    const iwm = new Map();
+    for(let i=0;i<wires.length;i++){
+        const w = wires[i];
+        if(!byId.has(w.fromComp) || !byId.has(w.toComp)) continue;
+        let list = wiresByToComp.get(w.toComp);
+        if(!list){ list=[]; wiresByToComp.set(w.toComp, list); }
+        list.push(w);
+        iwm.set(w.toComp + ':' + w.toPort, w);
+    }
+    const consumers = new Map();
+    for(let i=0;i<wires.length;i++){
+        const w = wires[i];
+        if(!byId.has(w.fromComp) || !byId.has(w.toComp)) continue;
+        const key = w.fromComp + ':' + w.fromPort;
+        let list = consumers.get(key);
+        if(!list){ list=[]; consumers.set(key, list); }
+        list.push({ toComp: w.toComp, toPort: w.toPort });
+    }
+    worldCache.stamp = worldStamp;
+    worldCache.nComp = components.length;
+    worldCache.nWire = wires.length;
+    worldCache.compsRef = components;
+    worldCache.wiresRef = wires;
+    worldCache.byId = byId;
+    worldCache.compsByType = compsByType;
+    worldCache.wiresByToComp = wiresByToComp;
+    worldCache.iwm = iwm;
+    worldCache.consumers = consumers;
+    return worldCache;
+}
+function getWorld(){
+    if(worldCache.stamp !== worldStamp ||
+       worldCache.nComp  !== components.length ||
+       worldCache.nWire  !== wires.length ||
+       worldCache.compsRef !== components ||
+       worldCache.wiresRef !== wires){
+        return buildWorldCache();
+    }
+    return worldCache;
+}
+
 let debugMode=false;
 let debugPinned=null;
 let debugTooltipEl=null;
@@ -918,6 +989,20 @@ function _snap(){
         savedFolders:clone(savedFolders)
     };
 }
+let _idleSaveHandle = null;
+function scheduleIdleSave(){
+    if(_idleSaveHandle) return;
+    const run = () => {
+        _idleSaveHandle = null;
+        try { saveToLocalStorage(); } catch(_){}
+    };
+    if(typeof requestIdleCallback === 'function'){
+        _idleSaveHandle = requestIdleCallback(run, { timeout: 4000 });
+    } else {
+        _idleSaveHandle = setTimeout(run, 1200);
+    }
+}
+
 function pushSnapshotNow(){
     if(isUndoRedo)return;
     if(pendingSnapshotTimer){clearTimeout(pendingSnapshotTimer);pendingSnapshotTimer=null}
@@ -925,8 +1010,9 @@ function pushSnapshotNow(){
     if(undoStack.length>MAX_HISTORY)undoStack.shift();
     redoStack=[];
     updateUndoRedoButtons();
-    saveToLocalStorage();
     lastSaveTime=Date.now();
+    // Save on idle, not on this frame. Autosave + beforeunload cover the rest.
+    scheduleIdleSave();
     collabBroadcastState();
 }
 function forceSaveState(){
@@ -945,6 +1031,7 @@ function forceSaveState(){
 }
 function restoreState(s){
     isUndoRedo=true;
+    markWorldDirty();
     for(const el of compEls.values())el.remove();
     compEls.clear();compPortEls.clear();dirtyPortComponents.clear();portPositionsDirty=true;
     customContainers.forEach(c=>{const el=document.getElementById(`container-${c.id}`);if(el)el.remove()});
@@ -1048,11 +1135,29 @@ function updateModalGridBackground(){
 }
 
 function updateTransform(){canvas.style.transform=`translate(${panX}px,${panY}px) scale(${zoom})`;updateGridBackground();repositionRemoteCursors()}
-function applyZoom(nz,ox,oy){nz=Math.max(.1,Math.min(5,nz));const r=viewport.getBoundingClientRect();const mx=ox-r.left,my=oy-r.top;panX=mx-(mx-panX)*(nz/zoom);panY=my-(my-panY)*(nz/zoom);zoom=nz;updateTransform();if(zoomThrottleTimer)cancelAnimationFrame(zoomThrottleTimer);zoomThrottleTimer=requestAnimationFrame(()=>{zoomThrottleTimer=null;markPortPositionsDirty();drawWires();saveToLocalStorage()})}
+function applyZoom(nz,ox,oy){
+    nz=Math.max(.1,Math.min(5,nz));
+    const r=viewport.getBoundingClientRect();
+    const mx=ox-r.left,my=oy-r.top;
+    panX=mx-(mx-panX)*(nz/zoom);
+    panY=my-(my-panY)*(nz/zoom);
+    zoom=nz;
+    // Zoom only changes the CSS transform on #canvas. Port positions and wire
+    // paths live in canvas space, so nothing needs to be re-measured or
+    // redrawn. The grid background is the only thing that visually updates.
+    updateTransform();
+    if(zoomThrottleTimer)cancelAnimationFrame(zoomThrottleTimer);
+    zoomThrottleTimer=requestAnimationFrame(()=>{
+        zoomThrottleTimer=null;
+        void canvas.offsetHeight;
+        clearTimeout(window._zoomSaveTimer);
+        window._zoomSaveTimer=setTimeout(saveToLocalStorage,500);
+    });
+}
 function startPan(e){if(e.target.closest('.gate')||e.target.closest('.custom-container-wrapper')||e.target.closest('#toolbar'))return;if(e.shiftKey){startBoxSelect(e);e.stopPropagation();return}if(!e.shiftKey){if(selectedIds.size)clearSelection();if(selectedWireIds.size)clearWireSelection()}isPanning=true;startPanX=e.clientX-panX;startPanY=e.clientY-panY;e.stopPropagation()}
 function startTouchPanZoom(e){if(e.target.closest('.gate')||e.target.closest('.custom-container-wrapper')||e.target.closest('#toolbar'))return;if(e.touches.length===2){initialPinchDistance=Math.hypot(e.touches[0].clientX-e.touches[1].clientX,e.touches[0].clientY-e.touches[1].clientY);initialZoom=zoom;isPanning=false}else if(e.touches.length===1){isPanning=true;startPanX=e.touches[0].clientX-panX;startPanY=e.touches[0].clientY-panY}e.stopPropagation()}
 function handleZoom(e){e.preventDefault();const zf=1.1;applyZoom(e.deltaY<0?zoom*zf:zoom/zf,e.clientX,e.clientY)}
-function resetView(){panX=0;panY=0;zoom=1;updateTransform();markPortPositionsDirty();saveToLocalStorage()}
+function resetView(){panX=0;panY=0;zoom=1;updateTransform();saveToLocalStorage()}
 function toggleTheme(){document.body.classList.toggle('light-theme');document.body.classList.toggle('dark-theme');applySettings();updateGridBackground();updateModalGridBackground();saveToLocalStorage()}
 function togglePause(){isPaused=!isPaused;const b=document.getElementById('pause-btn');b.innerText=isPaused?'Resume':'Pause';b.style.background=isPaused?'#16a34a':'#d97706'}
 
@@ -1212,13 +1317,13 @@ function updateGhostPosition(cx,cy,w,h){
 }
 
 window.addEventListener('mousemove',e=>{
-    if(isPanning){panX=e.clientX-startPanX;panY=e.clientY-startPanY;updateTransform();markPortPositionsDirty()}
+    if(isPanning){panX=e.clientX-startPanX;panY=e.clientY-startPanY;updateTransform()}
     if(isBoxSelecting)updateBoxSelect(e.clientX,e.clientY);
     handleMove(e.clientX,e.clientY);
 });
 window.addEventListener('touchmove',e=>{
     if(e.touches.length===2&&initialPinchDistance!==null){e.preventDefault();const d=Math.hypot(e.touches[0].clientX-e.touches[1].clientX,e.touches[0].clientY-e.touches[1].clientY);const nz=initialZoom*(d/initialPinchDistance);applyZoom(nz,(e.touches[0].clientX+e.touches[1].clientX)/2,(e.touches[0].clientY+e.touches[1].clientY)/2);return}
-    if(e.touches.length===1){const t=e.touches[0];if(isPanning){panX=t.clientX-startPanX;panY=t.clientY-startPanY;updateTransform();markPortPositionsDirty()}handleMove(t.clientX,t.clientY)}
+    if(e.touches.length===1){const t=e.touches[0];if(isPanning){panX=t.clientX-startPanX;panY=t.clientY-startPanY;updateTransform()}handleMove(t.clientX,t.clientY)}
 },{passive:false});
 
 let lastDragOverFolder=null;
@@ -1314,7 +1419,7 @@ function connectWireInPourMode(tc,tp){
     if(wires.some(w=>w.fromComp===fc&&w.fromPort===fp&&w.toComp===tc&&w.toPort===tp)){showToast('Wire already exists.','info',800);return false}
     wires=wires.filter(w=>!(w.toComp===tc&&w.toPort===tp));
     wires.push(newWire(fc,fp,tc,tp));
-    markPortPositionsDirty();runSimulation();drawWires();forceSaveState();
+    runSimulation();drawWires();forceSaveState();
     const ie=document.querySelector(`.port[data-comp="${tc}"][data-type="in"][data-port="${tp}"]`);
     if(ie){ie.style.transition='box-shadow .15s';ie.style.boxShadow='0 0 20px #28a745';setTimeout(()=>{ie.style.boxShadow=''},300)}
     return true;
@@ -1325,7 +1430,7 @@ function wireFromSelectedSource(tc,tp){
     if(wires.some(w=>w.fromComp===s.id&&w.fromPort===fp&&w.toComp===tc&&w.toPort===tp)){showToast(`Wire from ${s.type||'gate'} already exists.`,'info',800);return true}
     wires=wires.filter(w=>!(w.toComp===tc&&w.toPort===tp));
     wires.push(newWire(s.id,fp,tc,tp));
-    markPortPositionsDirty();runSimulation();drawWires();forceSaveState();
+    runSimulation();drawWires();forceSaveState();
     const ie=document.querySelector(`.port[data-comp="${tc}"][data-type="in"][data-port="${tp}"]`);
     if(ie){ie.style.transition='box-shadow .15s';ie.style.boxShadow='0 0 20px #28a745';setTimeout(()=>{ie.style.boxShadow=''},300)}
     showToast(`🔗 ${s.customLabel||s.type||'gate'} → input`,'success',600);
@@ -1335,7 +1440,7 @@ function removeWireFromPort(cid,pt,pidx){
     let removed=false;
     if(pt==='in'){const i=wires.findIndex(w=>w.toComp===cid&&w.toPort===pidx);if(i!==-1){wires.splice(i,1);removed=true}}
     else if(pt==='out'){const i=wires.findIndex(w=>w.fromComp===cid&&w.fromPort===pidx);if(i!==-1){wires.splice(i,1);removed=true}}
-    if(removed){markPortPositionsDirty();runSimulation();drawWires();forceSaveState();showToast('Wire removed.','info',1000)}
+    if(removed){runSimulation();drawWires();forceSaveState();showToast('Wire removed.','info',1000)}
     else showToast('No wire connected.','info',800);
 }
 
@@ -1500,7 +1605,7 @@ function renderComponent(comp){
     let ts=`<span class="gate-label" id="gate-label-${comp.id}">${escapeHtml(displayLabel)}</span>`;
     el.innerHTML=`<div class="gate-header" onmousedown="startDragGate(event,${comp.id})" ontouchstart="startDragGate(event,${comp.id})">${ts}${hr}</div><div class="gate-body">${bc}</div>`;
     if(comp.type==='INPUT'){const b=el.querySelector(`#sw-${comp.id}`);const tg=e=>{e.preventDefault();e.stopPropagation();toggleInput(comp.id)};b.addEventListener('click',tg);b.addEventListener('touchstart',tg,{passive:false})}
-    if(comp.type==='PUSH'){const b=el.querySelector(`#push-${comp.id}`);const ps=e=>{e.preventDefault();e.stopPropagation();comp.state=1;comp.outputVal=1;b.classList.add('active');b.innerText='ON';runSimulation();forceSaveState()};const pe=e=>{e.preventDefault();e.stopPropagation();comp.state=0;comp.outputVal=0;b.classList.remove('active');b.innerText='PRESS';runSimulation();forceSaveState()};b.addEventListener('mousedown',ps);b.addEventListener('mouseup',pe);b.addEventListener('mouseleave',pe);b.addEventListener('touchstart',ps,{passive:false});b.addEventListener('touchend',pe,{passive:false});b.addEventListener('touchcancel',pe,{passive:false})}
+    if(comp.type==='PUSH'){const b=el.querySelector(`#push-${comp.id}`);const ps=e=>{e.preventDefault();e.stopPropagation();comp.state=1;comp.outputVal=1;b.classList.add('active');b.innerText='ON';runSimulation([comp.id]);forceSaveState()};const pe=e=>{e.preventDefault();e.stopPropagation();comp.state=0;comp.outputVal=0;b.classList.remove('active');b.innerText='PRESS';runSimulation([comp.id]);forceSaveState()};b.addEventListener('mousedown',ps);b.addEventListener('mouseup',pe);b.addEventListener('mouseleave',pe);b.addEventListener('touchstart',ps,{passive:false});b.addEventListener('touchend',pe,{passive:false});b.addEventListener('touchcancel',pe,{passive:false})}
     if(comp.type==='DELAY'){const dInp=el.querySelector(`#delay-val-${comp.id}`);dInp.addEventListener('change',e=>{e.stopPropagation();let v=parseInt(dInp.value)||150;v=Math.max(1,Math.min(TICK_MS*MAX_TICKS,v));comp.delayMs=Math.round(v);dInp.value=comp.delayMs;ensureDelayQueue(comp);forceSaveState()});dInp.addEventListener('mousedown',e=>e.stopPropagation())}
     if(comp.type==='CLOCK'){const cInp=el.querySelector(`#clock-val-${comp.id}`);cInp.addEventListener('change',e=>{e.stopPropagation();let v=parseInt(cInp.value)||250;v=Math.max(TICK_MS,Math.min(TICK_MS*MAX_TICKS,v));comp.clockMs=Math.round(v);cInp.value=comp.clockMs;comp.clockCounter=0;forceSaveState()});cInp.addEventListener('mousedown',e=>e.stopPropagation())}
     if(comp.type==='COLOR'){const cInp=el.querySelector(`#color-val-${comp.id}`);cInp.addEventListener('input',e=>{e.stopPropagation();comp.pixelColor=e.target.value;updateVisuals();forceSaveState()});cInp.addEventListener('mousedown',e=>e.stopPropagation())}
@@ -1677,7 +1782,7 @@ function attachPortHandlers(el,which){
                         if(isMain){
                             wires=wires.filter(w=>!(w.toComp===tc&&w.toPort===tp));
                             wires.push(newWire(ds.compId,ds.portIndex,tc,tp));
-                            markPortPositionsDirty();runSimulation();drawWires();forceSaveState();
+                            runSimulation();drawWires();forceSaveState();
                         }else{
                             connectModalWire(ds.compId,ds.portIndex,tc,tp);
                         }
@@ -1773,7 +1878,7 @@ function deleteWireById(wireId){
     if(i===-1)return;
     wires.splice(i,1);
     selectedWireIds.delete(wireId);
-    markPortPositionsDirty();runSimulation();drawWires();forceSaveState();
+    runSimulation();drawWires();forceSaveState();
     showToast('Wire deleted.','info',1000);
 }
 function deleteSelectedWires(){
@@ -1781,7 +1886,7 @@ function deleteSelectedWires(){
     const n=selectedWireIds.size;
     wires=wires.filter(w=>!selectedWireIds.has(w.id));
     selectedWireIds.clear();
-    markPortPositionsDirty();runSimulation();drawWires();forceSaveState();
+    runSimulation();drawWires();forceSaveState();
     showToast(`Deleted ${n} wire${n>1?'s':''}.`,'info',1200);
 }
 function onWireClick(e){
@@ -1879,10 +1984,17 @@ function startDragGate(e,id){
     gateGrabOffsetX=(cx-r.left-panX)/zoom-comp.x;
     gateGrabOffsetY=(cy-r.top-panY)/zoom-comp.y;
     activeComp=comp;isDraggingGate=true;
-    collabSend({ t:'gate-drag-start', compId:id, offsetX:gateGrabOffsetX, offsetY:gateGrabOffsetY });
+    // Promote only the gates being moved to their own compositor layer.
+    const dragEl=document.getElementById(`comp-${id}`);
+    if(dragEl)dragEl.classList.add('dragging');
     if(selectedIds.size>1&&selectedIds.has(id)){
         groupDragStartPositions=new Map();
-        selectedIds.forEach(sid=>{const sc=components.find(c=>c.id===sid);if(sc)groupDragStartPositions.set(sid,{x:sc.x,y:sc.y})});
+        selectedIds.forEach(sid=>{
+            const sc=components.find(c=>c.id===sid);
+            if(sc)groupDragStartPositions.set(sid,{x:sc.x,y:sc.y});
+            const se=document.getElementById(`comp-${sid}`);
+            if(se)se.classList.add('dragging');
+        });
         groupDragAnchorStartX=comp.x;groupDragAnchorStartY=comp.y;
     }else groupDragStartPositions=null;
     e.stopPropagation();e.preventDefault();
@@ -1920,6 +2032,8 @@ function finishGateDrag(){
         if(el){el.style.left=activeComp.x+'px';el.style.top=activeComp.y+'px'}
         markPortPositionsDirty(activeComp.id);
     }
+    // Release compositor layers for everything that was being dragged.
+    document.querySelectorAll('.gate.dragging').forEach(el=>el.classList.remove('dragging'));
     forceSaveState();drawWires();
     isDraggingGate=false;activeComp=null;groupDragStartPositions=null;
 }
@@ -1936,14 +2050,14 @@ function removeComponent(id,skipSave){
     compEls.delete(id);
     compPortEls.delete(id);
     dirtyPortComponents.delete(id);
-    selectedIds.delete(id);resetSelectionSourceIndex();markPortPositionsDirty();runSimulation();drawWires();
+    selectedIds.delete(id);resetSelectionSourceIndex();runSimulation();drawWires();
     if(!skipSave)forceSaveState();
 }
 function toggleInput(id){
     const c=components.find(c=>c.id===id);if(!c||c.type!=='INPUT')return;
     c.state=c.state===0?1:0;c.outputVal=c.state;
     const b=document.getElementById(`sw-${id}`);if(b){b.classList.toggle('active');b.innerText=c.state===1?'ON':'OFF'}
-    runSimulation();forceSaveState();
+    runSimulation([id]);forceSaveState();
 }
 
 function evaluateGate(comp,inputs){
@@ -1967,13 +2081,12 @@ function evaluateGate(comp,inputs){
    gates' internal OUTPUTs cannot shift the port index. */
 function evaluateCustomGate(comp) {
     const sub = comp.subComps || [];
-    const sw = comp.subWires || [];
+    const sw  = comp.subWires || [];
     if (!sub.length) {
         comp.outputsArray = new Array((comp.def && comp.def.outputsCount) || 0).fill(0);
         comp.outputVal = 0;
         return;
     }
-    /* Hydrate any nested custom gate that lost its internals (v2 storage). */
     sub.forEach(sc => {
         if (sc.isCustom && (!Array.isArray(sc.subComps) || sc.subComps.length === 0)) {
             expandNestedCustomGate(sc, 0);
@@ -1981,26 +2094,64 @@ function evaluateCustomGate(comp) {
         if (!Array.isArray(sc.inputs)) initComponentInputs(sc);
     });
 
-    const byId = new Map();
-    for (const sc of sub) byId.set(sc.id, sc);
+    // ── Structural cache: keyed on the identity + length of subComps/subWires.
+    // Any structural edit produces a fresh array (the codebase always clones),
+    // so identity comparison is safe and cheap.
+    let cache = comp._evalCache;
+    if (!cache ||
+        cache.sub !== sub || cache.sw !== sw ||
+        cache.subLen !== sub.length || cache.swLen !== sw.length)
+    {
+        const byId = new Map();
+        for (let i = 0; i < sub.length; i++) byId.set(sub[i].id, sub[i]);
 
-    const inputs = sub.filter(sc => sc.type === 'INPUT' || sc.type === 'PUSH').sort((a, b) => a.y - b.y);
+        const subWires = sw.filter(w => byId.has(w.fromComp) && byId.has(w.toComp));
+        const inputWireMap = new Map();
+        for (let i = 0; i < subWires.length; i++) {
+            const w = subWires[i];
+            inputWireMap.set(w.toComp + ':' + w.toPort, w);
+        }
+        const inputsList = sub.filter(sc => sc.type === 'INPUT' || sc.type === 'PUSH')
+                              .sort((a, b) => a.y - b.y);
+
+        const defOutIds = (comp.def && Array.isArray(comp.def.innerOutputs))
+                        ? comp.def.innerOutputs : [];
+        const declared  = (comp.def && comp.def.outputsCount) || 0;
+        let orderedOutputs = null;
+        if (defOutIds.length && defOutIds.length === declared) {
+            const want = new Set(defOutIds.map(String));
+            const found = sub.filter(sc => sc.type === 'OUTPUT' && want.has(String(sc.id)));
+            if (found.length === defOutIds.length) {
+                const order = new Map(defOutIds.map((id, i) => [String(id), i]));
+                orderedOutputs = found.slice().sort(
+                    (a, b) => order.get(String(a.id)) - order.get(String(b.id))
+                );
+            }
+        }
+        if (!orderedOutputs)
+            orderedOutputs = sub.filter(sc => sc.type === 'OUTPUT').sort((a, b) => a.y - b.y);
+
+        cache = {
+            sub, sw, subLen: sub.length, swLen: sw.length,
+            byId, inputWireMap, inputsList, orderedOutputs
+        };
+        comp._evalCache = cache;
+    }
+
+    const byId         = cache.byId;
+    const inputWireMap = cache.inputWireMap;
+    const inputs       = cache.inputsList;
+
     for (let i = 0; i < inputs.length; i++) {
         const ic = inputs[i];
-        const v = comp.inputs && comp.inputs[i] === 1 ? 1 : 0;
+        const v  = (comp.inputs && comp.inputs[i] === 1) ? 1 : 0;
         ic.state = v;
         ic.outputVal = v;
     }
 
-    const subWires = sw.filter(w => byId.has(w.fromComp) && byId.has(w.toComp));
-    const inputWireMap = new Map();
-    for (const w of subWires) {
-        inputWireMap.set(`${w.toComp}:${w.toPort}`, w);
-    }
-
     let changed = true;
     let iter = 0;
-    const maxIter = Math.min(30, sub.length * 2 + 5);   /* same cap as v1 */
+    const maxIter = Math.min(30, sub.length * 2 + 5);
 
     while (changed && iter < maxIter) {
         changed = false;
@@ -2009,13 +2160,13 @@ function evaluateCustomGate(comp) {
             if (sc.type === 'INPUT' || sc.type === 'PUSH') continue;
             if (sc.type === 'CLOCK') continue;
 
-            const oldOut = sc.outputVal;
+            const oldOut    = sc.outputVal;
             const oldOutputs = sc.outputsArray ? sc.outputsArray.slice() : [];
             const inputCount = (sc.inputs || []).length;
             const ins = new Array(inputCount).fill(0);
 
             for (let i = 0; i < inputCount; i++) {
-                const w = inputWireMap.get(`${sc.id}:${i}`);
+                const w = inputWireMap.get(sc.id + ':' + i);
                 if (!w) continue;
                 const src = byId.get(w.fromComp);
                 if (!src) continue;
@@ -2032,7 +2183,7 @@ function evaluateCustomGate(comp) {
                 evaluateCustomGate(sc);
             } else if (sc.type === 'DELAY') {
                 if (comp.delayStates && comp.delayStates[sc.id]) {
-                    const st = comp.delayStates[sc.id];
+                    const st  = comp.delayStates[sc.id];
                     const val = st.queue[st.ptr] || 0;
                     st.queue[st.ptr] = ins[0] || 0;
                     st.ptr = (st.ptr + 1) % st.queue.length;
@@ -2041,7 +2192,7 @@ function evaluateCustomGate(comp) {
                     sc.outputVal = 0;
                 }
             } else if (sc.type === 'PULSE') {
-                const inp = ins[0] || 0;
+                const inp  = ins[0] || 0;
                 const prev = sc.pulsePrevInput ? 1 : 0;
                 if (inp === 1 && prev === 0) { sc.state = 1; sc.pulseCounter = 1; }
                 else if ((sc.pulseCounter || 0) > 0) {
@@ -2062,20 +2213,7 @@ function evaluateCustomGate(comp) {
         }
     }
 
-    /* Prefer def.innerOutputs when it matches the declared count; otherwise
-       fall back to y-order of all OUTPUT children. */
-    const defOutIds = (comp.def && Array.isArray(comp.def.innerOutputs)) ? comp.def.innerOutputs : [];
-    const declared = (comp.def && comp.def.outputsCount) || 0;
-    let outputs = null;
-    if (defOutIds.length && defOutIds.length === declared) {
-        const want = new Set(defOutIds.map(String));
-        const found = sub.filter(sc => sc.type === 'OUTPUT' && want.has(String(sc.id)));
-        if (found.length === defOutIds.length) {
-            const order = new Map(defOutIds.map((id, i) => [String(id), i]));
-            outputs = found.slice().sort((a, b) => order.get(String(a.id)) - order.get(String(b.id)));
-        }
-    }
-    if (!outputs) outputs = sub.filter(sc => sc.type === 'OUTPUT').sort((a, b) => a.y - b.y);
+    const outputs = cache.orderedOutputs;
     comp.outputsArray = outputs.map(oc => oc.outputVal === 1 ? 1 : 0);
     comp.outputVal = comp.outputsArray[0] || 0;
 }
@@ -2108,41 +2246,33 @@ function tickNestedClocksMain(comp){
 }
 function runSimulationIncremental(comps,wr,seeds,updateFn){
     if(!comps.length){if(updateFn)updateFn();return}
-    const byId=new Map();
-    for(const c of comps)byId.set(c.id,c);
-    const iwm=new Map();
-    for(const w of wr){
-        if(!byId.has(w.toComp)||!byId.has(w.fromComp))continue;
-        iwm.set(`${w.toComp}:${w.toPort}`,w);
-    }
-    const consumers=new Map();
-    for(const w of wr){
-        if(!byId.has(w.fromComp)||!byId.has(w.toComp))continue;
-        const key=`${w.fromComp}:${w.fromPort}`;
-        let list=consumers.get(key);
-        if(!list){list=[];consumers.set(key,list)}
-        list.push({toComp:w.toComp,toPort:w.toPort});
-    }
+    const world=getWorld();
+    const byId=world.byId;
+    const iwm=world.iwm;
+    const consumers=world.consumers;
+
     const queue=[];
+    let qHead=0;
     const inQueue=new Set();
     function enqueue(id){
         if(!inQueue.has(id)&&byId.has(id)){inQueue.add(id);queue.push(id)}
     }
-    for(const id of seeds){
+    for(let s=0;s<seeds.length;s++){
+        const id=seeds[s];
         const comp=byId.get(id);
         if(!comp)continue;
-        if(!comp.isCustom&&(comp.type==='CLOCK'||comp.type==='PULSE'||comp.type==='DELAY')){
-            const list0=consumers.get(`${comp.id}:0`);
-            if(list0)for(const c of list0)enqueue(c.toComp);
+        if(!comp.isCustom&&(comp.type==='CLOCK'||comp.type==='PULSE'||comp.type==='DELAY'||comp.type==='INPUT'||comp.type==='PUSH')){
+            const list0=consumers.get(comp.id+':0');
+            if(list0)for(let i=0;i<list0.length;i++)enqueue(list0[i].toComp);
         }
         enqueue(id);
     }
 
     const maxIter=Math.min(4000,comps.length*3+100);
     let iter=0;
-    while(queue.length>0&&iter<maxIter){
+    while(qHead<queue.length&&iter<maxIter){
         iter++;
-        const id=queue.shift();
+        const id=queue[qHead++];
         inQueue.delete(id);
         const comp=byId.get(id);
         if(!comp)continue;
@@ -2153,7 +2283,7 @@ function runSimulationIncremental(comps,wr,seeds,updateFn){
         const ic=(comp.inputs||[]).length;
         const ins=new Array(ic).fill(0);
         for(let i=0;i<ic;i++){
-            const w=iwm.get(`${comp.id}:${i}`);
+            const w=iwm.get(comp.id+':'+i);
             if(!w)continue;
             const src=byId.get(w.fromComp);
             if(!src)continue;
@@ -2166,46 +2296,46 @@ function runSimulationIncremental(comps,wr,seeds,updateFn){
 
         if(comp.isCustom){
             evaluateCustomGate(comp);
-            let changed=false;
-            if(!oldOutputs||!comp.outputsArray||oldOutputs.length!==comp.outputsArray.length){
-                changed=true;
-            }else{
-                for(let i=0;i<comp.outputsArray.length;i++){
+            let changed=oldOut!==comp.outputVal;
+            if(!changed&&comp.outputsArray){
+                if(!oldOutputs||oldOutputs.length!==comp.outputsArray.length)changed=true;
+                else for(let i=0;i<comp.outputsArray.length;i++){
                     if(oldOutputs[i]!==comp.outputsArray[i]){changed=true;break}
                 }
             }
-            if(oldOut!==comp.outputVal)changed=true;
-
-            if(changed){
-                for(let pi=0;pi<(comp.outputsArray||[]).length;pi++){
-                    const list=consumers.get(`${comp.id}:${pi}`);
-                    if(list)for(const c of list)enqueue(c.toComp);
+            if(changed&&comp.outputsArray){
+                for(let pi=0;pi<comp.outputsArray.length;pi++){
+                    const list=consumers.get(comp.id+':'+pi);
+                    if(list)for(let i=0;i<list.length;i++)enqueue(list[i].toComp);
                 }
-                const list0=consumers.get(`${comp.id}:0`);
-                if(list0)for(const c of list0)enqueue(c.toComp);
+            }
+            if(changed){
+                const list0=consumers.get(comp.id+':0');
+                if(list0)for(let i=0;i<list0.length;i++)enqueue(list0[i].toComp);
             }
         }else{
             comp.outputVal=evaluateGate(comp,ins);
-            let changed=oldOut!==comp.outputVal;
-            if(comp.outputsArray){
-                if(!oldOutputs||oldOutputs.length!==comp.outputsArray.length||
-                   oldOutputs.some((v,i)=>v!==comp.outputsArray[i]))changed=true;
-                if(changed){
+            const changed=oldOut!==comp.outputVal;
+            if(changed){
+                if(comp.outputsArray){
                     for(let pi=0;pi<comp.outputsArray.length;pi++){
-                        const list=consumers.get(`${comp.id}:${pi}`);
-                        if(list)for(const c of list)enqueue(c.toComp);
+                        const list=consumers.get(comp.id+':'+pi);
+                        if(list)for(let i=0;i<list.length;i++)enqueue(list[i].toComp);
                     }
+                }else{
+                    const list0=consumers.get(comp.id+':0');
+                    if(list0)for(let i=0;i<list0.length;i++)enqueue(list0[i].toComp);
                 }
-            }else if(changed){
-                const list=consumers.get(`${comp.id}:0`);
-                if(list)for(const c of list)enqueue(c.toComp);
             }
         }
     }
     if(updateFn)updateFn();
 }
-function runSimulation(){
-    const seeds=components.map(c=>c.id);
+function runSimulation(seeds){
+    if(seeds===undefined){
+        seeds=new Array(components.length);
+        for(let i=0;i<components.length;i++)seeds[i]=components[i].id;
+    }
     runSimulationIncremental(components,wires,seeds,updateVisuals);
 }
 function runModalSimulation(){
@@ -2227,6 +2357,21 @@ function tickPulseComponent(comp){
     comp.pulsePrevInput=inp;
     comp.outputVal=comp.state?1:0;
 }
+function hasNestedTiming(comp){
+    const sub = comp.subComps || [];
+    if(comp._timingCacheSub === sub) return comp._timingCacheFlag;
+    let found = false;
+    const stack = sub.slice();
+    while(stack.length && !found){
+        const sc = stack.pop();
+        if(sc.type === 'DELAY' || sc.type === 'CLOCK' || sc.type === 'PULSE'){ found = true; break; }
+        if(sc.isCustom && sc.subComps) for(const c of sc.subComps) stack.push(c);
+    }
+    comp._timingCacheSub = sub;
+    comp._timingCacheFlag = found;
+    return found;
+}
+
 function tickNestedTiming(container){
     let anyChanged=false;
     (container.subComps||[]).forEach(sc=>{
@@ -2270,13 +2415,15 @@ function tickAll(){
             tickSingleClock(comp);
             if(old!==comp.outputVal)seeds.push(comp.id);
         }else if(comp.isCustom){
-            tickNestedTiming(comp);
-            tickNestedClocksMain(comp);
-            seeds.push(comp.id);
+            if(hasNestedTiming(comp)){
+                let innerChanged=tickNestedTiming(comp);
+                if(tickNestedClocksMain(comp))innerChanged=true;
+                if(innerChanged)seeds.push(comp.id);
+            }
         }
     }
     if(seeds.length)runSimulationIncremental(components,wires,seeds,updateVisuals);
-    else updateVisuals();
+    // else: nothing changed this tick — visuals are already correct, skip.
 }
 function tickModal(){
     const seeds=[];
@@ -2295,46 +2442,61 @@ function tickModal(){
             tickSingleClock(comp);
             if(old!==comp.outputVal)seeds.push(comp.id);
         }else if(comp.isCustom){
-            tickNestedTiming(comp);
-            tickNestedClocksMain(comp);
-            seeds.push(comp.id);
+            if(hasNestedTiming(comp)){
+                let innerChanged=tickNestedTiming(comp);
+                if(tickNestedClocksMain(comp))innerChanged=true;
+                if(innerChanged)seeds.push(comp.id);
+            }
         }
     }
     if(seeds.length)runSimulationIncremental(modalComponents,modalWires,seeds,updateModalVisuals);
-    else updateModalVisuals();
+    // else: nothing changed this tick — visuals are already correct, skip.
 }
-setInterval(()=>{if(!isPaused)tickAll();if(isModalOpen())tickModal()},TICK_MS);
+(function tickLoop(){
+    try {
+        if(!isPaused) tickAll();
+        if(isModalOpen()) tickModal();
+    } catch(err){
+        console.error('[sim] tick error', err);
+    }
+    setTimeout(tickLoop, TICK_MS);
+})();
 function stepSimulation(){tickAll();forceSaveState()}
 
 function updateVisuals(){
-    const byId=new Map();
-    for(let i=0;i<components.length;i++)byId.set(components[i].id,components[i]);
+    const world=getWorld();
+    const byId=world.byId;
+    const wiresByToComp=world.wiresByToComp;
+    const iwm=world.iwm;
 
-    // ── Color propagation ─────────────────────────────────────
-    // A powered wire carries a color from its source. That color is
-    // passed through pass-through gates (AND/OR/NOT/etc.) so a chain
-    // from a COLOR gate to a SCREEN stays tinted end-to-end.
+    // ── Colour propagation ─────────────────────────────────────
+    // Uses the precomputed inbound-wire map, so this is O(passes·(N+M))
+    // instead of O(passes·N·M).
     for(let pass=0; pass<6; pass++){
         let changed=false;
-        for(const comp of components){
-            const oldColor = comp.outputColor || null;
-            let newColor = null;
-            if(comp.type === 'COLOR'){
-                newColor = comp.pixelColor || '#39ff14';
-            } else if(comp.outputVal === 1){
-                for(const w of wires){
-                    if(w.toComp !== comp.id) continue;
-                    const src = byId.get(w.fromComp);
-                    if(!src || src.outputVal !== 1) continue;
-                    const c = src.type === 'COLOR'
-                        ? (src.pixelColor || '#39ff14')
-                        : (src.outputColor || null);
-                    if(c){ newColor = c; break; }
+        for(let i=0;i<components.length;i++){
+            const comp=components[i];
+            const oldColor=comp.outputColor||null;
+            let newColor=null;
+            if(comp.type==='COLOR'){
+                newColor=comp.pixelColor||'#39ff14';
+            } else if(comp.outputVal===1){
+                const ws=wiresByToComp.get(comp.id);
+                if(ws){
+                    for(let k=0;k<ws.length;k++){
+                        const w=ws[k];
+                        const src=byId.get(w.fromComp);
+                        if(!src||src.outputVal!==1)continue;
+                        const c=src.type==='COLOR'
+                            ?(src.pixelColor||'#39ff14')
+                            :(src.outputColor||null);
+                        if(c){newColor=c;break}
+                    }
                 }
             }
-            if(oldColor !== newColor){ comp.outputColor = newColor; changed=true; }
+            if(oldColor!==newColor){comp.outputColor=newColor;changed=true}
         }
-        if(!changed) break;
+        if(!changed)break;
     }
 
     for(let i=0;i<components.length;i++){
@@ -2343,18 +2505,18 @@ function updateVisuals(){
         const pc=compPortEls.get(comp.id);
         let pw=comp.outputVal===1;
         if(comp.isCustom&&comp.outputsArray&&comp.outputsArray.length)pw=comp.outputsArray.some(v=>v===1);
-        el.classList.toggle('powered',pw);
+        if(el._pw!==pw){el.classList.toggle('powered',pw);el._pw=pw}
         if(comp.type==='OUTPUT'){
             const b=el.querySelector('.bulb');
-            if(b)b.classList.toggle('on',comp.outputVal===1);
+            const on=comp.outputVal===1;
+            if(b&&b._on!==on){b.classList.toggle('on',on);b._on=on}
         }
         if(comp.type==='SCREEN'){
             const p=el.querySelector('.pixel-square');
             if(p){
                 const v=(comp.inputs&&comp.inputs[0])?1:0;
-                p.classList.toggle('on',v===1);
                 let cc=null;
-                const iw=wires.find(w=>w.toComp===comp.id&&w.toPort===0);
+                const iw=iwm.get(comp.id+':0');
                 if(iw){
                     const s=byId.get(iw.fromComp);
                     if(s){
@@ -2362,46 +2524,54 @@ function updateVisuals(){
                         else if(s.outputColor) cc=s.outputColor;
                     }
                 }
-                if(v===1&&cc){p.style.background=cc;p.style.boxShadow=`0 0 15px ${cc}`}else{p.style.background='';p.style.boxShadow=''}
+                const key=v+'|'+(cc||'');
+                if(p._vk!==key){
+                    p.classList.toggle('on',v===1);
+                    if(v===1&&cc){p.style.background=cc;p.style.boxShadow='0 0 15px '+cc}
+                    else{p.style.background='';p.style.boxShadow=''}
+                    p._vk=key;
+                }
             }
         }
         if(pc){
             const ins=comp.inputs||[];
             for(let j=0;j<ins.length;j++){
-                const p=pc.in[j];
-                if(p)p.classList.toggle('active-port',ins[j]===1);
+                const p=pc.in[j];if(!p)continue;
+                const on=ins[j]===1;
+                if(p._ao!==on){p.classList.toggle('active-port',on);p._ao=on}
             }
             if(comp.isCustom&&comp.outputsArray){
                 for(let j=0;j<comp.outputsArray.length;j++){
-                    const p=pc.out[j];
-                    if(p)p.classList.toggle('active-port',comp.outputsArray[j]===1);
+                    const p=pc.out[j];if(!p)continue;
+                    const on=comp.outputsArray[j]===1;
+                    if(p._ao!==on){p.classList.toggle('active-port',on);p._ao=on}
                 }
             }else if(comp.type!=='SCREEN'){
                 const p=pc.out[0];
-                if(p)p.classList.toggle('active-port',comp.outputVal===1);
+                if(p){
+                    const on=comp.outputVal===1;
+                    if(p._ao!==on){p.classList.toggle('active-port',on);p._ao=on}
+                }
             }
         }
     }
     for(let i=0;i<wires.length;i++){
         const w=wires[i];
-        const p=document.getElementById(`wire-${w.id}`);
-        if(p){
-            const s=byId.get(w.fromComp);
-            if(s){
-                let pw=false, color=null;
-                if(s.isCustom&&w.fromPort!==undefined){
-                    pw=s.outputsArray&&s.outputsArray[w.fromPort]===1;
-                } else {
-                    pw=s.outputVal===1;
-                    if(pw){
-                        if(s.type==='COLOR') color=s.pixelColor||'#39ff14';
-                        else if(s.outputColor) color=s.outputColor;
-                    }
-                }
-                p.classList.toggle('powered',pw);
-                p.style.stroke = color || '';
+        const p=wirePaths.get('wire-'+w.id);
+        if(!p)continue;
+        const s=byId.get(w.fromComp);if(!s)continue;
+        let pw=false,color=null;
+        if(s.isCustom&&w.fromPort!==undefined){
+            pw=!!(s.outputsArray&&s.outputsArray[w.fromPort]===1);
+        } else {
+            pw=s.outputVal===1;
+            if(pw){
+                if(s.type==='COLOR') color=s.pixelColor||'#39ff14';
+                else if(s.outputColor) color=s.outputColor;
             }
         }
+        if(p._pw!==pw){p.classList.toggle('powered',pw);p._pw=pw}
+        if(p._stroke!==color){p.style.stroke=color||'';p._stroke=color}
     }
     if(debugMode){
         refreshDebugOverlay();
@@ -2463,7 +2633,7 @@ function drawWires(){
                     p.addEventListener('mousedown',e=>e.stopPropagation());
                     svgWires.insertBefore(p,tw);wirePaths.set(wid,p);
                 }
-                p.setAttribute('d',d);
+                if(p._lastD!==d){p.setAttribute('d',d);p._lastD=d}
                 p.classList.toggle('selected',selectedWireIds.has(w.id));
             }else{const p=wirePaths.get(wid);if(p){p.remove();wirePaths.delete(wid)}}
         }
@@ -2901,6 +3071,7 @@ function importCircuit(event){
     reader.readAsText(file);event.target.value='';
 }
 function mergeImportedState(state){
+    markWorldDirty();
     const idMap={};
     const importedDefs=state.savedCustomGates||{};
     for(const[name,def]of Object.entries(importedDefs)){
@@ -3112,7 +3283,7 @@ async function clearAll(){
     updateCustomGatesToolbar();resetWiring();markPortPositionsDirty();drawWires();
     localStorage.removeItem('logic_sim_save_state_v4');forceSaveState();showToast('All cleared.','info');
 }
-setInterval(saveToLocalStorage,10000);
+setInterval(() => { scheduleIdleSave(); }, 15000);
 window.addEventListener('beforeunload',saveToLocalStorage);
 function toggleInstructions(show){
     const b=document.getElementById('instructions-box');if(!b)return;
@@ -4416,16 +4587,29 @@ window.addEventListener('load',()=>{ try{ applySettings(); }catch(e){ console.wa
 /* ═══════════════════════════════════════════════════════════════
    COLLABORATION via Firebase Realtime Database
    ═══════════════════════════════════════════════════════════════ */
-const CURSOR_SEND_MS    = 90;    // ~11 Hz writer loop
-const STATE_DEBOUNCE_MS = 220;   // circuit state write debounce
+const CURSOR_SEND_MS    = 40;    // ~25 Hz writer loop
+const STATE_DEBOUNCE_MS = 60;    // circuit state write debounce
 const CURSOR_TIMEOUT_MS = 20000; // purge peers who stop writing
 const FIREBASE_ROOT     = 'logic_sim_rooms';
+
+/* Unique per browser tab. Survives reloads within the same tab, but
+   two tabs on the same account still get distinct IDs, so they can
+   see each other's cursors. */
+const PEER_SESSION_ID = (() => {
+    let id = sessionStorage.getItem('logic_sim_peer_session');
+    if (!id) {
+        id = 'p_' + Math.random().toString(36).slice(2, 10) + Date.now().toString(36);
+        sessionStorage.setItem('logic_sim_peer_session', id);
+    }
+    return id;
+})();
 
 let collabRoomCode      = '';
 let collabIsHost        = false;
 let applyingRemote      = false;
 let stateBroadcastTimer = null;
 let peerWriteTimer      = null;
+let peerWriteTimer2     = null;
 let lastPeerSnapshot    = { x: -1, y: -1, hadGhost: false, hadInteraction: false };
 
 let peerRef   = null;
@@ -4434,10 +4618,22 @@ let peersUnsub = null;
 const baseUnsubs = [];
 
 let roomBase = null;
-let lastSyncedCompJson  = '';
-let lastSyncedWireJson  = '';
+const lastSyncedCompSigs = new Map();   // id -> cheap structural signature
+const lastSyncedWireSigs = new Map();   // id -> cheap structural signature
 let lastSyncedCgJson    = '';
 let lastSyncedFoldersJson = '';
+
+/* Cheap per-component signature. Avoids the deep clone that
+   JSON.parse(JSON.stringify(c)) does for every component on every diff. */
+function compSig(c){
+    return c.type + '|' + c.x + '|' + c.y + '|' + (c.state||0) + '|' + (c.outputVal||0)
+         + '|' + (c.customLabel||'') + '|' + (c.pixelColor||'') + '|' + (c.pixelWidth||0)
+         + '|' + (c.pixelHeight||0) + '|' + (c.delayMs||0) + '|' + (c.clockMs||0)
+         + '|' + (c.isCustom?'C':'');
+}
+function wireSig(w){
+    return w.fromComp + '>' + w.fromPort + '>' + w.toComp + '>' + w.toPort;
+}
 let lastSyncedNextId    = 0;
 let lastSyncedNextWireId = 0;
 const localAddTimes = new Map();
@@ -4687,11 +4883,11 @@ function joinFirebaseRoom(code){
     roomBase = `${FIREBASE_ROOT}/${collabRoomCode}`;
 
     peersRef = ref(db, `${roomBase}/peers`);
-    peerRef  = ref(db, `${roomBase}/peers/${uid}`);
+    peerRef  = ref(db, `${roomBase}/peers/${PEER_SESSION_ID}`);
 
     // Reset the local sync baselines so the first push writes everything
-    lastSyncedCompJson = '';
-    lastSyncedWireJson = '';
+    lastSyncedCompSigs.clear();
+    lastSyncedWireSigs.clear();
     lastSyncedCgJson = '';
     lastSyncedFoldersJson = '';
     lastSyncedNextId = 0;
@@ -4699,13 +4895,16 @@ function joinFirebaseRoom(code){
 
     onDisconnect(peerRef).remove();
     flushPeerState(true);
+    // Push once more on the next writer tick so late-joining peers
+    // get a fresh cursor position without waiting for local motion.
+    setTimeout(() => { try { flushPeerState(true); } catch(_){} }, 150);
 
     peersUnsub = onValue(peersRef, snap => {
         const data = snap.val() || {};
         const now = Date.now();
         const seen = new Set();
         for(const pid in data){
-            if(pid === uid) continue;
+            if(pid === PEER_SESSION_ID) continue;
             seen.add(pid);
             const p = data[pid];
             if(now - (p.lastSeen || 0) > CURSOR_TIMEOUT_MS){
@@ -4788,14 +4987,18 @@ function leaveFirebaseRoom(){
 /* ── Writer loop ─────────────────────────────────────────────── */
 function startPeerWriter(){
     stopPeerWriter();
+    // Two interleaved intervals with a small phase offset give smoother
+    // write cadence and avoid colliding with the sim tick every frame.
     peerWriteTimer = setInterval(() => flushPeerState(false), CURSOR_SEND_MS);
+    peerWriteTimer2 = setInterval(() => flushPeerState(false), CURSOR_SEND_MS);
 }
 function stopPeerWriter(){
     if(peerWriteTimer){ clearInterval(peerWriteTimer); peerWriteTimer = null; }
+    if(peerWriteTimer2){ clearInterval(peerWriteTimer2); peerWriteTimer2 = null; }
 }
 function flushPeerState(force){
     if(!peerRef || !window.collabUser) return;
-    const { set } = window.fbRtdbApi;
+    const { set, update } = window.fbRtdbApi;
 
     const payload = {
         uid:      window.collabUser.uid,
@@ -4825,22 +5028,37 @@ function flushPeerState(force){
         payload.interaction = { type:'wire', compId:draggingWire.compId, fromPort:draggingWire.portIndex };
     }
 
-    // Skip the write if literally nothing has changed
-    const same =
-        !force &&
-        lastPeerSnapshot.x === payload.x &&
-        lastPeerSnapshot.y === payload.y &&
-        lastPeerSnapshot.hadGhost === !!payload.ghost &&
-        lastPeerSnapshot.hadInteraction === !!payload.interaction;
-    if(same) return;
-
-    lastPeerSnapshot = {
+    const next = {
         x: payload.x,
         y: payload.y,
+        name: payload.name,
+        color: payload.color,
         hadGhost: !!payload.ghost,
         hadInteraction: !!payload.interaction
     };
-    set(peerRef, payload).catch(() => {});
+
+    const bigChanged = force ||
+        lastPeerSnapshot.name !== next.name ||
+        lastPeerSnapshot.color !== next.color ||
+        lastPeerSnapshot.hadGhost !== next.hadGhost ||
+        lastPeerSnapshot.hadInteraction !== next.hadInteraction;
+
+    const posChanged =
+        lastPeerSnapshot.x !== next.x ||
+        lastPeerSnapshot.y !== next.y;
+
+    if(!bigChanged && !posChanged) return;
+
+    if(bigChanged){
+        // Full set — carries identity, ghost HTML and interaction.
+        set(peerRef, payload).catch(err => console.warn('[collab] peer set failed', err));
+    } else {
+        // Hot path — tiny update, only the moving fields.
+        update(peerRef, { x: next.x, y: next.y, lastSeen: payload.lastSeen })
+            .catch(err => console.warn('[collab] peer update failed', err));
+    }
+
+    lastPeerSnapshot = next;
 }
 
 /* ── Ingest a peer snapshot from RTDB ────────────────────────── */
@@ -5043,44 +5261,45 @@ function collabPushDiff(){
     const db = window.fbRtdbApi.db;
     const updates = {};
 
-    // Components — add / change / remove
-    const curCompJson = sortedCompJson(components);
-    if(curCompJson !== lastSyncedCompJson){
-        const prevArr = lastSyncedCompJson ? JSON.parse(lastSyncedCompJson) : [];
-        const prevById = new Map(prevArr.map(c => [c.id, c]));
-        const curIds = new Set(components.map(c => c.id));
-        for(const c of components){
-            const ser = serializeComp(c);
-            const prev = prevById.get(c.id);
-            if(!prev || JSON.stringify(prev) !== JSON.stringify(ser)){
-                updates[`components/${c.id}`] = ser;
-            }
+    // Components — signature-based change detection, deep-serialize only
+    // the components that actually changed.
+    const curSigs = lastSyncedCompSigs;
+    const seen = new Set();
+    for(let i=0;i<components.length;i++){
+        const c = components[i];
+        const sig = compSig(c);
+        seen.add(c.id);
+        if(curSigs.get(c.id) !== sig){
+            updates['components/' + c.id] = serializeComp(c);
+            curSigs.set(c.id, sig);
         }
-        for(const pc of prevArr){
-            if(!curIds.has(pc.id)) updates[`components/${pc.id}`] = null;
+    }
+    for(const id of Array.from(curSigs.keys())){
+        if(!seen.has(id)){
+            updates['components/' + id] = null;
+            curSigs.delete(id);
         }
-        lastSyncedCompJson = curCompJson;
     }
 
-    // Wires
-    const curWireJson = sortedWireJson(wires);
-    if(curWireJson !== lastSyncedWireJson){
-        const prevArr = lastSyncedWireJson ? JSON.parse(lastSyncedWireJson) : [];
-        const prevById = new Map(prevArr.map(w => [w.id, w]));
-        const curIds = new Set(wires.map(w => w.id));
-        for(const w of wires){
-            const prev = prevById.get(w.id);
-            if(!prev || JSON.stringify(prev) !== JSON.stringify(w)){
-                updates[`wires/${w.id}`] = w;
-            }
+    // Wires — same approach.
+    const wSeen = new Set();
+    for(let i=0;i<wires.length;i++){
+        const w = wires[i];
+        const sig = wireSig(w);
+        wSeen.add(w.id);
+        if(lastSyncedWireSigs.get(w.id) !== sig){
+            updates['wires/' + w.id] = w;
+            lastSyncedWireSigs.set(w.id, sig);
         }
-        for(const pw of prevArr){
-            if(!curIds.has(pw.id)) updates[`wires/${pw.id}`] = null;
+    }
+    for(const id of Array.from(lastSyncedWireSigs.keys())){
+        if(!wSeen.has(id)){
+            updates['wires/' + id] = null;
+            lastSyncedWireSigs.delete(id);
         }
-        lastSyncedWireJson = curWireJson;
     }
 
-    // Custom gates & folders (full replace on change)
+    // Custom gates & folders (full replace on change) — unchanged.
     const curCgJson = JSON.stringify(savedCustomGates);
     if(curCgJson !== lastSyncedCgJson){
         updates['savedCustomGates'] = savedCustomGates;
@@ -5092,7 +5311,6 @@ function collabPushDiff(){
         lastSyncedFoldersJson = curFoldersJson;
     }
 
-    // Counters
     if(nextId !== lastSyncedNextId){ updates['meta/nextId'] = nextId; lastSyncedNextId = nextId; }
     if(nextWireId !== lastSyncedNextWireId){ updates['meta/nextWireId'] = nextWireId; lastSyncedNextWireId = nextWireId; }
 
@@ -5125,12 +5343,13 @@ function applyRemoteComponent(idStr, data){
         const oldEl = compEls.get(id);
         if(oldEl){ oldEl.remove(); compEls.delete(id); compPortEls.delete(id); }
         components[idx] = data;
+        markWorldDirty();
         renderComponent(data);
     }
     markPortPositionsDirty();
     drawWires();
     runSimulation();
-    lastSyncedCompJson = sortedCompJson(components);
+    lastSyncedCompSigs.set(id, compSig(components.find(c => c.id === id) || data));
 }
 
 function applyRemoteComponentRemoval(idStr){
@@ -5140,7 +5359,7 @@ function applyRemoteComponentRemoval(idStr){
     if(Date.now() - addedAt < 5000) return;   // we're still waiting for our own write to land
     removeComponent(id, true);
     localAddTimes.delete(id);
-    lastSyncedCompJson = sortedCompJson(components);
+    lastSyncedCompSigs.delete(id);
 }
 
 function applyRemoteWire(idStr, data){
@@ -5149,22 +5368,20 @@ function applyRemoteWire(idStr, data){
     data.id = id;
     const idx = wires.findIndex(w => w.id === id);
     if(idx === -1) wires.push(data);
-    else wires[idx] = data;
+    else { wires[idx] = data; markWorldDirty(); }
     adoptWireIds();
-    markPortPositionsDirty();
     drawWires();
     runSimulation();
-    lastSyncedWireJson = sortedWireJson(wires);
+    lastSyncedWireSigs.set(id, wireSig(data));
 }
 
 function applyRemoteWireRemoval(idStr){
     const id = parseInt(idStr);
     if(isNaN(id)) return;
     wires = wires.filter(w => w.id !== id);
-    markPortPositionsDirty();
     drawWires();
     runSimulation();
-    lastSyncedWireJson = sortedWireJson(wires);
+    lastSyncedWireSigs.delete(id);
 }
 
 /* ── Housekeeping ────────────────────────────────────────────── */
