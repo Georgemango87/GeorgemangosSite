@@ -731,7 +731,7 @@ body.no-animations *,body.no-animations *::before,body.no-animations *::after{
         <button class="stab"        data-tab="gates"   onclick="setSettingsTab('gates')">🧩 Gates</button>
         <button class="stab"        data-tab="ports"   onclick="setSettingsTab('ports')">🔌 Ports</button>
         <button class="stab"        data-tab="buttons" onclick="setSettingsTab('buttons')">🔘 Buttons</button>
-        <button class="stab"        data-tab="behaviour" onclick="setSettingsTab('behaviour')">⚡ Behaviour</button>
+        <button class="stab"        data-tab="preferences" onclick="setSettingsTab('preferences')">⚡ Preferences</button>
         <button class="stab"        data-tab="fonts"   onclick="setSettingsTab('fonts')">🔤 Fonts</button>
         <button class="stab"        data-tab="layout"  onclick="setSettingsTab('layout')">📐 Layout</button>
         <button class="stab"        data-tab="presets" onclick="setSettingsTab('presets')">✨ Presets</button>
@@ -895,7 +895,14 @@ let customGateModalIsEditing=false,customGateModalEditingType=null;
 let undoStack=[],redoStack=[];
 const MAX_HISTORY=100;let isUndoRedo=false,lastSaveTime=0;
 const SNAPSHOT_COALESCE_MS=350;
-let pendingSnapshotTimer=null;
+let pendingSnapshotTimer=null;function snapValue(v){
+    // Read from LSET.preferences directly instead of a cached flag.
+    // This way the checkbox toggle takes effect on the very next snap
+    // call, regardless of whether applySettings has propagated yet.
+    const prefOn = !(LSET && LSET.preferences && LSET.preferences.snap === false);
+    if(!prefOn) return v;
+    return Math.round(v/SNAP)*SNAP;
+}
 
 const GATE_COLORS={INPUT:'#1f3a63',PUSH:'#3d4653',OUTPUT:'#b45309',AND:'#15803d',OR:'#0f766e',XOR:'#6d28d9',NOT:'#b91c1c',NAND:'#134e4a',NOR:'#3730a3',XNOR:'#0369a1',DELAY:'#3d4653',CLOCK:'#0d9488',PULSE:'#be123c',SCREEN:'#d97706',COLOR:'#9d174d'};
 function getGateColor(c){if(c.isCustom)return(c.def&&c.def.color)||'#1f3a63';return GATE_COLORS[c.type]||'#007bff'}
@@ -903,7 +910,11 @@ function getGateColorByName(t,d){if(d&&d.color)return d.color;return GATE_COLORS
 
 let SNAP=20;
 let snapEnabled=true;
-function snapValue(v){if(!snapEnabled)return v;return Math.round(v/SNAP)*SNAP}
+function snapValue(v){
+    const prefOn = !(LSET && LSET.preferences && LSET.preferences.snap === false);
+    if(!prefOn) return v;
+    return Math.round(v/SNAP)*SNAP;
+}
 function snapPos(x,y){return{x:snapValue(x),y:snapValue(y)}}
 
 const TICK_MS=50;
@@ -964,7 +975,8 @@ function showToast(m,t='info',d=2500){
 function toggleToasts(){
     toastsEnabled=!toastsEnabled;
     localStorage.setItem('toasts_enabled',toastsEnabled?'true':'false');
-    if(LSET && LSET.behaviour) LSET.behaviour.notifications = toastsEnabled;
+    if(LSET && LSET.preferences) LSET.preferences.notifications = toastsEnabled;
+    persistPreferences();
     updateToastButton();
     if(toastsEnabled)showToast('Notifications enabled','success',1200);
 }
@@ -1228,6 +1240,25 @@ function applyZoom(nz,ox,oy){
     zoomThrottleTimer=requestAnimationFrame(()=>{
         zoomThrottleTimer=null;
         void canvas.offsetHeight;
+
+        // After zoom settles, force Chrome to discard the stale composited
+        // raster and re-paint #canvas at the current scale.
+        // Setting the transform to its CURRENT value is a no-op — Chrome
+        // skips the invalidation. We nudge by 0.01% (imperceptible) and
+        // then set the real value, which forces a full re-raster of every
+        // gate, port, wire, and label in the subtree.
+        clearTimeout(window._zoomRerasterTimer);
+        window._zoomRerasterTimer = setTimeout(() => {
+            const t = `translate(${panX}px, ${panY}px)`;
+            canvas.style.willChange = 'auto';
+            void canvas.offsetHeight;
+            canvas.style.transform = `${t} scale(${zoom + 0.0001})`;
+            void canvas.offsetHeight;
+            canvas.style.transform = `${t} scale(${zoom})`;
+            void canvas.offsetHeight;
+            canvas.style.willChange = 'transform';
+        }, 180);
+
         clearTimeout(window._zoomSaveTimer);
         window._zoomSaveTimer=setTimeout(saveToLocalStorage,500);
     });
@@ -3292,72 +3323,179 @@ function normalizeCustomGateDef(def){
 function buildFullState(){
     return{version:'3.8',components,wires,customContainers,savedCustomGates,savedFolders,nextId,panX,panY,zoom,isDark:document.body.classList.contains('dark-theme')};
 }
-function saveToLocalStorage(){try{localStorage.setItem('logic_sim_save_state_v4',JSON.stringify(buildFullState()))}catch(_){}}
-function loadFromLocalStorage(){
-    try{
-        const raw=localStorage.getItem('logic_sim_save_state_v4')||localStorage.getItem('logic_sim_save_state_v3')||localStorage.getItem('logic_sim_save_state_v2')||localStorage.getItem('logic_sim_save_state');
-        if(!raw)return false;
-        const state=JSON.parse(raw);
-        components=state.components||[];wires=state.wires||[];customContainers=state.customContainers||[];savedCustomGates=state.savedCustomGates||{};
-        adoptWireIds();
-        savedFolders=state.savedFolders||{};
-        nextId=state.nextId||1;panX=state.panX||0;panY=state.panY||0;zoom=state.zoom||1;
-        if(state.isDark){document.body.classList.remove('light-theme');document.body.classList.add('dark-theme')}
-        for(const name of Object.keys(savedCustomGates)){
-            if(!savedCustomGates[name].name)savedCustomGates[name].name=name;
-            normalizeCustomGateDef(savedCustomGates[name]);
-        }
-        Object.keys(savedCustomGates).forEach(n=>{
-            const f=(savedCustomGates[n].folder||'').trim();
-            if(f&&!savedFolders[f])savedFolders[f]={name:f,color:'#3d4653'};
-        });
-        components.forEach(comp => {
-            if(comp.isCustom && comp.type && Array.isArray(comp.subComps) && comp.subComps.length > 0){
-                const ex = savedCustomGates[comp.type];
-                if(!ex || !Array.isArray(ex.innerComps) || ex.innerComps.length === 0){
-                    const ins  = comp.subComps.filter(c => c.type === 'INPUT' || c.type === 'PUSH');
-                    const outs = comp.subComps.filter(c => c.type === 'OUTPUT');
-                    savedCustomGates[comp.type] = {
-                        name: comp.type,
-                        color: (ex && ex.color) || (comp.def && comp.def.color) || '#1f3a63',
-                        folder: (ex && ex.folder) || '',
-                        inputsCount:  (ex && ex.inputsCount)  || ins.length,
-                        outputsCount: (ex && ex.outputsCount) || outs.length,
-                        inputInitials: (ex && ex.inputInitials && ex.inputInitials.length)
-                            ? ex.inputInitials
-                            : ins.map(c => { const n = (c.customLabel || '').trim(); return n ? n.toUpperCase() : (c.type === 'INPUT' ? 'T' : 'P'); }),
-                        outputInitials: (ex && ex.outputInitials && ex.outputInitials.length)
-                            ? ex.outputInitials
-                            : outs.map(c => { const n = (c.customLabel || '').trim(); return n ? n.toUpperCase() : ''; }),
-                        innerInputs:  ins.map(c => c.id),
-                        innerOutputs: outs.map(c => c.id),
-                        innerComps: comp.subComps.map(sc => {
-                            const c2 = JSON.parse(JSON.stringify(sc));
-                            delete c2.def; delete c2.delayStates; delete c2.clockStates;
-                            delete c2.subComps; delete c2.subWires; delete c2.outputsArray;
-                            delete c2.delayQueue;
-                            if(c2.isCustom && !c2._defName) c2._defName = c2.type;
-                            return c2;
-                        }),
-                        innerWires: (comp.subWires || []).map(w => ({ ...w }))
-                    };
-                }
+/* ═══════════════════════════════════════════════════════════════
+   STORAGE — IndexedDB primary, localStorage as a small-circuit mirror
+   ═══════════════════════════════════════════════════════════════ */
+const IDB_NAME  = 'logic_sim_db';
+const IDB_STORE = 'state';
+const IDB_KEY   = 'save_v5';   // new key; v4 remains in localStorage for migration
+let _storageWarned = false;
+let _idbPromise = null;
+
+function idbOpen(){
+    if(_idbPromise) return _idbPromise;
+    _idbPromise = new Promise((resolve, reject) => {
+        const req = indexedDB.open(IDB_NAME, 1);
+        req.onupgradeneeded = () => {
+            const db = req.result;
+            if(!db.objectStoreNames.contains(IDB_STORE)){
+                db.createObjectStore(IDB_STORE);
             }
+        };
+        req.onsuccess = () => resolve(req.result);
+        req.onerror = () => reject(req.error);
+    });
+    return _idbPromise;
+}
+async function idbPut(key, value){
+    const db = await idbOpen();
+    return new Promise((resolve, reject) => {
+        const tx = db.transaction(IDB_STORE, 'readwrite');
+        tx.objectStore(IDB_STORE).put(value, key);
+        tx.oncomplete = () => resolve();
+        tx.onerror = () => reject(tx.error);
+    });
+}
+async function idbGet(key){
+    const db = await idbOpen();
+    return new Promise((resolve, reject) => {
+        const tx = db.transaction(IDB_STORE, 'readonly');
+        const req = tx.objectStore(IDB_STORE).get(key);
+        req.onsuccess = () => resolve(req.result);
+        req.onerror = () => reject(req.error);
+    });
+}
+
+function saveToLocalStorage(){
+    // Serialize once.
+    let json;
+    try{
+        json = JSON.stringify(buildFullState());
+    }catch(e){
+        console.error('[storage] serialize failed', e);
+        return;
+    }
+
+    // 1) Synchronous localStorage write — small circuits fit here, and
+    //    this is the only path that has a chance to complete on
+    //    beforeunload. Silently ignore quota errors.
+    try{
+        localStorage.setItem('logic_sim_save_state_v4', json);
+    }catch(_){ /* quota exceeded — IndexedDB will handle it */ }
+
+    // 2) Asynchronous IndexedDB write — this is the durable one.
+    idbPut(IDB_KEY, json).catch(e => {
+        console.error('[storage] IndexedDB write failed', e);
+        if(!_storageWarned){
+            _storageWarned = true;
+            showToast('Could not save circuit. Storage may be full.', 'error', 4000);
+        }
+    });
+}
+/* Apply a fully-parsed save state to the running simulator.
+   This is the entire body of the old loadFromLocalStorage, minus the
+   localStorage read + JSON.parse preamble. */
+function applyLoadedState(state){
+    components=state.components||[];wires=state.wires||[];customContainers=state.customContainers||[];savedCustomGates=state.savedCustomGates||{};
+    adoptWireIds();
+    savedFolders=state.savedFolders||{};
+    nextId=state.nextId||1;panX=state.panX||0;panY=state.panY||0;zoom=state.zoom||1;
+    if(state.isDark){document.body.classList.remove('light-theme');document.body.classList.add('dark-theme')}
+    for(const name of Object.keys(savedCustomGates)){
+        if(!savedCustomGates[name].name)savedCustomGates[name].name=name;
+        normalizeCustomGateDef(savedCustomGates[name]);
+    }
+    Object.keys(savedCustomGates).forEach(n=>{
+        const f=(savedCustomGates[n].folder||'').trim();
+        if(f&&!savedFolders[f])savedFolders[f]={name:f,color:'#3d4653'};
+    });
+    components.forEach(comp => {
+        if(comp.isCustom && comp.type && Array.isArray(comp.subComps) && comp.subComps.length > 0){
+            const ex = savedCustomGates[comp.type];
+            if(!ex || !Array.isArray(ex.innerComps) || ex.innerComps.length === 0){
+                const ins  = comp.subComps.filter(c => c.type === 'INPUT' || c.type === 'PUSH');
+                const outs = comp.subComps.filter(c => c.type === 'OUTPUT');
+                savedCustomGates[comp.type] = {
+                    name: comp.type,
+                    color: (ex && ex.color) || (comp.def && comp.def.color) || '#1f3a63',
+                    folder: (ex && ex.folder) || '',
+                    inputsCount:  (ex && ex.inputsCount)  || ins.length,
+                    outputsCount: (ex && ex.outputsCount) || outs.length,
+                    inputInitials: (ex && ex.inputInitials && ex.inputInitials.length)
+                        ? ex.inputInitials
+                        : ins.map(c => { const n = (c.customLabel || '').trim(); return n ? n.toUpperCase() : (c.type === 'INPUT' ? 'T' : 'P'); }),
+                    outputInitials: (ex && ex.outputInitials && ex.outputInitials.length)
+                        ? ex.outputInitials
+                        : outs.map(c => { const n = (c.customLabel || '').trim(); return n ? n.toUpperCase() : ''; }),
+                    innerInputs:  ins.map(c => c.id),
+                    innerOutputs: outs.map(c => c.id),
+                    innerComps: comp.subComps.map(sc => {
+                        const c2 = JSON.parse(JSON.stringify(sc));
+                        delete c2.def; delete c2.delayStates; delete c2.clockStates;
+                        delete c2.subComps; delete c2.subWires; delete c2.outputsArray;
+                        delete c2.delayQueue;
+                        if(c2.isCustom && !c2._defName) c2._defName = c2.type;
+                        return c2;
+                    }),
+                    innerWires: (comp.subWires || []).map(w => ({ ...w }))
+                };
+            }
+        }
+    });
+    Object.keys(savedCustomGates).forEach(n=>{
+        const f=(savedCustomGates[n].folder||'').trim();
+        if(f&&!savedFolders[f])savedFolders[f]={name:f,color:'#3d4653'};
+    });
+    components.forEach(comp=>{
+        if(comp.isCustom&&comp.type&&savedCustomGates[comp.type])comp.def=savedCustomGates[comp.type];
+        if(comp.subComps)comp.subComps.forEach(sc=>{
+            if(sc.isCustom){expandNestedCustomGate(sc,0);return}
+            initComponentInputs(sc);
         });
-        Object.keys(savedCustomGates).forEach(n=>{
-            const f=(savedCustomGates[n].folder||'').trim();
-            if(f&&!savedFolders[f])savedFolders[f]={name:f,color:'#3d4653'};
-        });
-        components.forEach(comp=>{
-            if(comp.isCustom&&comp.type&&savedCustomGates[comp.type])comp.def=savedCustomGates[comp.type];
-            if(comp.subComps)comp.subComps.forEach(sc=>{
-                if(sc.isCustom){expandNestedCustomGate(sc,0);return}
-                initComponentInputs(sc);
-            });
-            initComponentInputs(comp);
-        });
-        updateCustomGatesToolbar();return true;
-    }catch(_){return false}
+        initComponentInputs(comp);
+    });
+    updateCustomGatesToolbar();
+    return true;
+}
+
+async function loadFromLocalStorage(){
+    // 1) Try IndexedDB first — it holds the most recent, largest save.
+    let raw = null;
+    try{
+        raw = await idbGet(IDB_KEY);
+    }catch(e){
+        console.warn('[storage] IndexedDB read failed, falling back', e);
+    }
+
+    // 2) Fall back to any legacy localStorage key.
+    if(!raw){
+        try{
+            raw = localStorage.getItem('logic_sim_save_state_v4') ||
+                  localStorage.getItem('logic_sim_save_state_v3') ||
+                  localStorage.getItem('logic_sim_save_state_v2') ||
+                  localStorage.getItem('logic_sim_save_state');
+        }catch(_){}
+    }
+
+    if(!raw) return false;
+
+    let state;
+    try{
+        state = JSON.parse(raw);
+    }catch(_){
+        return false;
+    }
+    try{
+        const ok = applyLoadedState(state);
+        // Opportunistically migrate the legacy save into IndexedDB so the
+        // next save uses the durable path.
+        if(ok){
+            try{ await idbPut(IDB_KEY, raw); }catch(_){}
+        }
+        return ok;
+    }catch(_){
+        return false;
+    }
 }
 
 async function clearAll(){
@@ -3388,7 +3526,8 @@ function toggleInstructions(show){
         else{b.classList.add('hidden');visible=false;}
     }
     localStorage.setItem('instructions_hidden',visible?'false':'true');
-    if(LSET && LSET.behaviour) LSET.behaviour.showTips = visible;
+    if(LSET && LSET.preferences) LSET.preferences.showTips = visible;
+    persistPreferences();
 }
 
 function isModalOpen(){const m=document.getElementById('custom-gate-modal');return m&&m.style.display==='flex'}
@@ -3729,6 +3868,16 @@ function applyModalZoom(nz,ox,oy){
     const mx=ox-r.left,my=oy-r.top;
     modalPanX=mx-(mx-modalPanX)*(nz/modalZoom);modalPanY=my-(my-modalPanY)*(nz/modalZoom);modalZoom=nz;
     updateModalTransform();markModalPortPositionsDirty();drawModalWires();
+    clearTimeout(window._modalZoomRerasterTimer);
+    window._modalZoomRerasterTimer = setTimeout(() => {
+        const c = document.getElementById('custom-gate-modal-canvas');
+        if(!c) return;
+        c.style.willChange = 'auto';
+        void c.offsetHeight;
+        c.style.transform = `translate(${modalPanX}px, ${modalPanY}px) scale(${modalZoom})`;
+        void c.offsetHeight;
+        c.style.willChange = 'transform';
+    }, 180);
 }
 function updateModalTransform(){
     const c=document.getElementById('custom-gate-modal-canvas');
@@ -4234,9 +4383,10 @@ window.toggleDebugMode=toggleDebugMode;
 window.setDebugMode=setDebugMode;
 window.saveCurrentAsPreset=saveCurrentAsPreset;
 window.deleteCustomPreset=deleteCustomPreset;
+window.resetPreferences=resetPreferences;
 
-window.addEventListener('load',()=>{
-    loadFromLocalStorage();
+window.addEventListener('load',async()=>{
+    await loadFromLocalStorage();
     updateTransform();updateCustomGatesToolbar();updateToastButton();
     svgWires=document.getElementById('wires');
     components.forEach(comp=>renderComponent(comp));
@@ -4253,6 +4403,40 @@ window.addEventListener('load',()=>{
    ═══════════════════════════════════════════════════════════════ */
 var LSET = null;
 const LSET_KEY = 'logic_sim_settings_v1';
+/* Preferences live in their own storage key so applying a preset
+   (which rebuilds LSET via lsetMerge) can never touch them. */
+const PREFS_KEY = 'logic_sim_preferences_v1';
+
+function persistPreferences(){
+    try {
+        if(LSET && LSET.preferences){
+            localStorage.setItem(PREFS_KEY, JSON.stringify(LSET.preferences));
+        }
+    } catch(_){}
+}
+
+function readPersistedPreferences(){
+    try {
+        const raw = localStorage.getItem(PREFS_KEY);
+        if(!raw) return null;
+        const parsed = JSON.parse(raw);
+        return (parsed && typeof parsed === 'object') ? parsed : null;
+    } catch(_) { return null; }
+}
+
+/* Return a fully-populated preferences object. Precedence:
+   persisted copy → LSET.preferences → defaults.
+
+   The persisted copy takes priority because it's the only place
+   preferences can't be accidentally overwritten by a preset merge.
+   Every key from LSET_DEFAULT.preferences is guaranteed present. */
+function readPreferencesOrFallback(source){
+    const out = Object.assign({}, LSET_DEFAULT.preferences);
+    const persisted = readPersistedPreferences();
+    if(persisted) Object.assign(out, persisted);
+    if(source)    Object.assign(out, source);
+    return out;
+}
 
 const LSET_DEFAULT = {
   light: {
@@ -4315,7 +4499,7 @@ const LSET_DEFAULT = {
     gridDotColorLight:'100,110,130', gridDotColorDark:'255,255,255',
     gridDotMinAlpha:0.06, gridDotMaxAlpha:0.46,
     gridDotMinRadius:0.7, gridDotMaxRadius:2.0,
-    shadows:true, animations:true,
+    /* shadows & animations now live under preferences — see below */
     /* ── Background pattern ── */
     bgPattern:'dots',
     /* Mesh gradient — large soft colour blobs (Gemini-style) */
@@ -4341,11 +4525,16 @@ const LSET_DEFAULT = {
     undo:'#3d4653', redo:'#3d4653',
     share:'#1f3a63'
   },
-  /* NEW: behaviour toggles formerly on the toolbar */
-  behaviour: {
+  /* Preferences are user-controlled and are deliberately NOT part of
+     preset overrides — see applyLsPreset(). Everything the user can
+     toggle in the ⚡ Preferences tab lives here, so presets never
+     touch any of it. */
+  preferences: {
     snap: true,
     showTips: true,
-    notifications: true
+    notifications: true,
+    shadows: true,
+    animations: true
   }
 };
 
@@ -5022,11 +5211,35 @@ function scheduleSaveSettings(){
 }
 function saveSettings(){
   try{ localStorage.setItem(LSET_KEY,JSON.stringify(LSET)); }catch(_){}
+  persistPreferences();
 }
 function loadSettings(){
   let saved=null;
   try{ saved=JSON.parse(localStorage.getItem(LSET_KEY)||'null'); }catch(_){}
+  // Migrate the old `behaviour` key name if present.
+  if(saved && saved.behaviour && !saved.preferences){
+    saved.preferences = saved.behaviour;
+    delete saved.behaviour;
+  }
   LSET=lsetMerge(LSET_DEFAULT,saved||{});
+  if(LSET.behaviour && !LSET.preferences){
+    LSET.preferences = LSET.behaviour;
+    delete LSET.behaviour;
+  }
+  // Migrate shadows/animations out of layout into preferences.
+  if(!LSET.preferences) LSET.preferences = {};
+  if(LSET.layout){
+    if(LSET.preferences.shadows === undefined && LSET.layout.shadows !== undefined){
+      LSET.preferences.shadows = LSET.layout.shadows;
+    }
+    if(LSET.preferences.animations === undefined && LSET.layout.animations !== undefined){
+      LSET.preferences.animations = LSET.layout.animations;
+    }
+  }
+  // The durable preferences key wins if it exists — this makes any
+  // historical corruption of LSET.preferences irrelevant.
+  LSET.preferences = readPreferencesOrFallback(LSET.preferences);
+  persistPreferences();
 }
 
 /* ── apply ─────────────────────────────────────────────── */
@@ -5055,8 +5268,15 @@ function applySettings(){
   if(F.ui)body.style.setProperty('--font-ui',F.ui); else body.style.removeProperty('--font-ui');
   if(F.serif)body.style.setProperty('--font-serif',F.serif); else body.style.removeProperty('--font-serif');
   if(F.mono)body.style.setProperty('--font-mono',F.mono); else body.style.removeProperty('--font-mono');
-  body.classList.toggle('no-shadows',!L.shadows);
-  body.classList.toggle('no-animations',!L.animations);
+  // Preferences are read from durable storage, not LSET.preferences.
+  // This makes them immune to any transient state during a preset
+  // merge — the preset rebuilds LSET, but it can never touch what we
+  // read here.
+  const P = readPreferencesOrFallback(LSET && LSET.preferences);
+  LSET.preferences = P;   // keep the two in sync for the Advanced JSON view
+
+  body.classList.toggle('no-shadows', P.shadows === false);
+  body.classList.toggle('no-animations', P.animations === false);
   GRID_UNIT=L.gridSize;
   SNAP=L.snapSize;
 
@@ -5077,11 +5297,14 @@ function applySettings(){
     el.style.setProperty('--gate-color', getGateColor(comp));
   }
 
-  // ── Behaviour toggles ───────────────────────────────────
-  if(LSET.behaviour){
-    snapEnabled = LSET.behaviour.snap !== false;
+  // ── Preferences ────────────────────────────────────────
+  // Read from the durable storage, not LSET.preferences. That way
+  // a stale in-memory copy from a preset merge is irrelevant.
+  {
+    const snapPref = LSET.preferences.snap !== false;
+    snapEnabled = snapPref;
 
-    const newToasts = LSET.behaviour.notifications !== false;
+    const newToasts = P.notifications !== false;
     if(newToasts !== toastsEnabled){
       toastsEnabled = newToasts;
       localStorage.setItem('toasts_enabled', toastsEnabled ? 'true' : 'false');
@@ -5090,7 +5313,7 @@ function applySettings(){
 
     const tipsBox = document.getElementById('instructions-box');
     if(tipsBox){
-      if(LSET.behaviour.showTips){
+      if(P.showTips){
         tipsBox.classList.remove('hidden');
         localStorage.setItem('instructions_hidden','false');
       } else {
@@ -5234,29 +5457,78 @@ function lsetHtmlGates(){
     </p>`;
 }
 
-function lsetHtmlBehaviour(){
+function lsetHtmlPreferences(){
     return `<div class="sec-title">Editing</div>
       <div class="grid">
-        ${lsetChk('Snap to grid when dragging gates','behaviour.snap')}
+        ${lsetChk('Snap to grid when dragging gates','preferences.snap')}
       </div>
 
       <div class="sec-title">Appearance</div>
       <div class="grid">
-        ${lsetChk('Drop shadows on gates &amp; panels','layout.shadows')}
-        ${lsetChk('Animations &amp; transitions','layout.animations')}
+        ${lsetChk('Drop shadows on gates &amp; panels','preferences.shadows')}
+        ${lsetChk('Animations &amp; transitions','preferences.animations')}
       </div>
 
       <div class="sec-title">Overlays</div>
       <div class="grid">
-        ${lsetChk('Show the tips box on the canvas','behaviour.showTips')}
-        ${lsetChk('Show notification toasts','behaviour.notifications')}
+        ${lsetChk('Show the tips box on the canvas','preferences.showTips')}
+        ${lsetChk('Show notification toasts','preferences.notifications')}
+      </div>
+
+      <div style="margin-top:20px;">
+        <button class="btn-cancel" onclick="resetPreferences()">↺ Reset preferences to defaults</button>
       </div>
 
       <p style="font-size:11px;opacity:.6;margin-top:20px;line-height:1.6;">
-        These were formerly toolbar controls. Turning <b>Snap</b> off lets you place gates
-        anywhere; turning <b>Drop shadows</b> off makes side-by-side gates tile without any
+        These settings are personal and are <b>never changed by presets</b>.
+        Turning <b>Snap</b> off lets you place gates anywhere; turning
+        <b>Drop shadows</b> off makes side-by-side gates tile without any
         visual gap.
       </p>`;
+}
+
+function resetPreferences(){
+    // 1. Reset the settings object to defaults.
+    LSET.preferences = Object.assign({}, LSET_DEFAULT.preferences);
+
+    // 2. Persist immediately — this is the ground truth.
+    persistPreferences();
+
+    // 3. Re-read from storage so runtime state can't be stale.
+    const P = readPreferencesOrFallback();
+    LSET.preferences = P;
+
+    // 4. Force every runtime value, explicitly. This bypasses
+    //    applySettings entirely — it cannot fail to propagate.
+    snapEnabled = P.snap !== false;
+
+    toastsEnabled = P.notifications !== false;
+    localStorage.setItem('toasts_enabled', toastsEnabled ? 'true' : 'false');
+    if(typeof updateToastButton === 'function') updateToastButton();
+
+    document.body.classList.toggle('no-shadows', P.shadows === false);
+    document.body.classList.toggle('no-animations', P.animations === false);
+
+    const tipsBox = document.getElementById('instructions-box');
+    if(tipsBox){
+        if(P.showTips) tipsBox.classList.remove('hidden');
+        else tipsBox.classList.add('hidden');
+        localStorage.setItem('instructions_hidden', P.showTips ? 'false' : 'true');
+    }
+
+    // 5. Now let applySettings handle the rest (colors, buttons, etc).
+    applySettings();
+
+    // 6. Persist and re-render the tab so the checkboxes match.
+    saveSettings();
+    renderSettingsTab();
+
+    // 7. Diagnostic — open the console to confirm.
+    console.log('[prefs] after reset:',
+        JSON.parse(JSON.stringify(LSET.preferences)),
+        'snapEnabled:', snapEnabled);
+
+    showToast('Preferences reset to defaults.','success',1500);
 }
 
 function lsetHtmlButtons(){
@@ -5371,10 +5643,12 @@ function loadCustomPresets(){
     } catch(_) {
         CUSTOM_PRESETS = {};
     }
-    // Register them alongside the built-in presets so applyLsPreset,
-    // the grid, and preset lookups all treat them identically.
+    // Strip preferences from any custom preset — they should never
+    // have been stored, and older saves may contain them.
     for(const name of Object.keys(CUSTOM_PRESETS)){
-        LSET_PRESETS[name] = CUSTOM_PRESETS[name];
+        const p = CUSTOM_PRESETS[name];
+        if(p && p.preferences) delete p.preferences;
+        LSET_PRESETS[name] = p;
     }
 }
 function persistCustomPresets(){
@@ -5399,6 +5673,9 @@ async function saveCurrentAsPreset(){
     }
     // Deep-clone the current settings so later edits don't mutate the saved preset.
     const snapshot = lsetClone(LSET);
+    // Preferences are user-controlled and never belong to a preset.
+    // Strip them so applying this preset can't touch them.
+    delete snapshot.preferences;
     CUSTOM_PRESETS[trimmed] = snapshot;
     LSET_PRESETS[trimmed]   = snapshot;
     persistCustomPresets();
@@ -5532,11 +5809,9 @@ function lsetHtmlLayout(){
       behind most modern gradient backgrounds. The grain is an optional fine texture you can layer
       on top. Both render client-side; no images are fetched.
     </p>
-    <div class="sec-title">Effects</div>
-    <div class="grid">
-      ${lsetChk('Drop shadows','layout.shadows')}
-      ${lsetChk('Animations & transitions','layout.animations')}
-    </div>`;
+    <p style="font-size:11px;opacity:.6;margin-top:20px;line-height:1.6;">
+      Shadows and animations are under <b>⚡ Preferences</b>.
+    </p>`;
 }
 function lsetHtmlPresets(){
     const builtinNames = Object.keys(LSET_PRESETS).filter(n => !CUSTOM_PRESETS[n]);
@@ -5649,7 +5924,7 @@ function renderSettingsTab(){
   else if(lsetTab==='gates')   body.innerHTML=lsetHtmlGates();
   else if(lsetTab==='ports')   body.innerHTML=lsetHtmlPorts();
   else if(lsetTab==='buttons') body.innerHTML=lsetHtmlButtons();
-  else if(lsetTab==='behaviour') body.innerHTML=lsetHtmlBehaviour();
+  else if(lsetTab==='preferences') body.innerHTML=lsetHtmlPreferences();
   else if(lsetTab==='fonts')   body.innerHTML=lsetHtmlFonts();
   else if(lsetTab==='layout')  body.innerHTML=lsetHtmlLayout();
   else if(lsetTab==='presets') body.innerHTML=lsetHtmlPresets();
@@ -5678,6 +5953,9 @@ function onSettingsInput(e){
   else if(el.type==='range'||el.type==='number'){ val=parseFloat(el.value); if(isNaN(val))return; }
   else val=el.value;
   lsetSet(LSET,path,val);
+  // Preferences persist immediately, not through the debounced save,
+  // so a preset applied a moment later reads the current value.
+  if(path.indexOf('preferences.') === 0) persistPreferences();
   if(el.type==='range'){
     const span=el.parentElement.querySelector('.val');
     if(span)span.textContent=val+(el.dataset.unit||'');
@@ -5763,6 +6041,11 @@ function remapFolderColors(oldPalette, newPalette, folderColorSnapshot){
 async function applyLsPreset(name){
     const p = LSET_PRESETS[name];
 
+    // Preferences are never part of a preset. Source them from the
+    // durable storage, not from LSET, so any in-memory corruption is
+    // irrelevant. readPreferencesOrFallback() guarantees every key exists.
+    const savedPreferences = readPreferencesOrFallback(LSET && LSET.preferences);
+
     // Snapshot everything that carries a user-chosen colour.
     const oldGates = (LSET && LSET.gates) ? Object.assign({}, LSET.gates)
                                           : Object.assign({}, LSET_DEFAULT.gates);
@@ -5780,7 +6063,15 @@ async function applyLsPreset(name){
 
     // Swap the palette first, but don't repaint yet — we want the
     // confirm modal to appear before the visual change.
-    LSET = p ? lsetMerge(LSET_DEFAULT, p) : lsetClone(LSET_DEFAULT);
+    // Strip preferences from the preset before merging, in case a
+    // custom preset carries a stale preferences block from an older
+    // version of the app.
+    const presetClean = p ? lsetClone(p) : null;
+    if(presetClean && presetClean.preferences) delete presetClean.preferences;
+    LSET = presetClean ? lsetMerge(LSET_DEFAULT, presetClean) : lsetClone(LSET_DEFAULT);
+    // Restore user preferences. The preset cannot override them.
+    LSET.preferences = savedPreferences;
+    persistPreferences();
 
     let recolouredGates = 0, recolouredFolders = 0;
     if(totalCount > 0){
@@ -5818,6 +6109,34 @@ async function applyLsPreset(name){
     const bits = [];
     if(recolouredGates)   bits.push(`${recolouredGates} gate${recolouredGates===1?'':'s'}`);
     if(recolouredFolders) bits.push(`${recolouredFolders} folder${recolouredFolders===1?'':'s'}`);
+    // ═══ Preferences safety net ═══
+    // Read the durable preferences copy directly from storage and
+    // force-apply every one of them. This bypasses applySettings and
+    // LSET.preferences entirely, so nothing that happened during the
+    // preset merge or the awaited confirm dialog can leak through.
+    {
+        let persistedPrefs = null;
+        try {
+            persistedPrefs = JSON.parse(localStorage.getItem('logic_sim_preferences_v1') || 'null');
+        } catch(_) {}
+        LSET.preferences = Object.assign({}, LSET_DEFAULT.preferences, persistedPrefs || {});
+        if (typeof persistPreferences === 'function') persistPreferences();
+
+        snapEnabled = LSET.preferences.snap !== false;
+        toastsEnabled = LSET.preferences.notifications !== false;
+        if (typeof updateToastButton === 'function') updateToastButton();
+
+        const tipsBox = document.getElementById('instructions-box');
+        if (tipsBox) {
+            if (LSET.preferences.showTips) tipsBox.classList.remove('hidden');
+            else tipsBox.classList.add('hidden');
+        }
+        document.body.classList.toggle('no-shadows', LSET.preferences.shadows === false);
+        document.body.classList.toggle('no-animations', LSET.preferences.animations === false);
+
+        if (typeof saveSettings === 'function') saveSettings();
+    }
+
     showToast(
         bits.length
             ? `Preset "${name}" applied — ${bits.join(' and ')} recoloured.`
