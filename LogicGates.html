@@ -158,14 +158,22 @@ button:active{transform:translateY(1px)}
 #canvas{position:absolute;width:100%;height:100%;top:0;left:0;transform-origin:0 0;pointer-events:all;will-change:transform}
 #grid-bg{display:none!important}
 svg{position:absolute;top:0;left:0;width:100%;height:100%;pointer-events:all;overflow:visible;z-index:1}
-.gate{position:absolute;--gate-color:var(--gate-header);background:var(--gate-bg);border:2px solid var(--gate-color);border-radius:6px;box-shadow:0 4px 6px rgba(0,0,0,.1);cursor:move;z-index:3;touch-action:none;pointer-events:auto;transition:border-color .15s,box-shadow .15s;width:140px;height:auto;min-width:140px}
+.gate{position:absolute;--gate-color:var(--gate-header);background:var(--gate-bg);border:2px solid var(--gate-color);border-radius:6px;box-shadow:0 4px 6px rgba(0,0,0,.1);cursor:move;z-index:3;touch-action:none;pointer-events:auto;transition:border-color .15s,box-shadow .15s;width:var(--gate-width,140px);min-width:var(--gate-width,140px);height:var(--gate-height,80px);min-height:var(--gate-height,80px);box-sizing:border-box;display:flex;flex-direction:column;overflow:visible;will-change:transform,left,top}
 .gate.dragging{will-change:transform}
 .gate.powered{border-color:var(--gate-color);box-shadow:0 0 10px color-mix(in srgb,var(--gate-color) 55%,transparent)}
 .gate.selected{outline:3px solid #1f3a63;outline-offset:2px;box-shadow:0 0 0 3px rgba(31,58,99,.20),0 4px 6px rgba(0,0,0,.1)}
-.gate-header{background:var(--gate-color);color:#fff;padding:4px 6px;font-size:10px;display:flex;justify-content:space-between;align-items:center;border-top-left-radius:4px;border-top-right-radius:4px;position:relative;gap:4px;min-height:26px}
+.gate-header{background:var(--gate-color);color:#fff;padding:0 6px;font-size:10px;display:flex;justify-content:space-between;align-items:center;border-top-left-radius:4px;border-top-right-radius:4px;position:relative;gap:4px;height:24px;min-height:24px;flex-shrink:0;box-sizing:border-box;overflow:hidden}
 .delete-btn{background:transparent;border:none;color:#ff6b6b;font-weight:bold;cursor:pointer;padding:1px 4px;font-size:14px;line-height:1;border-radius:3px;z-index:4;pointer-events:auto;flex-shrink:0;position:relative}
 .delete-btn:hover{background:rgba(255,0,0,.2);color:#f00}
-.gate-body{padding:6px;display:flex;flex-direction:column;gap:4px;color:var(--text-color)}
+.gate-body{padding:4px 6px;display:flex;flex-direction:row;align-items:stretch;justify-content:space-between;color:var(--text-color);flex:1;min-height:0;box-sizing:border-box;gap:6px}
+.gate-body > *{flex-shrink:1;min-width:0}
+.gate-body > div{display:flex;flex-direction:row;justify-content:space-between;align-items:center;width:100%;height:100%;gap:4px}
+.gate-body > div.io-port-row{align-items:center}
+.custom-gate-ports{align-items:stretch !important}
+.gate-type-label{display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:bold;flex:0 0 auto;padding:0 4px}
+.ports-in{display:flex;flex-direction:column;justify-content:space-around;align-items:center;flex-shrink:0}
+.gate-body .port.output{align-self:center}
+.gate-body > div > .port.output{align-self:center}
 .port-label-input{background:rgba(0,0,0,.25);color:#fff;border:1px solid rgba(255,255,255,.4);border-radius:3px;padding:1px 4px;font-size:10px;width:50px;outline:none;cursor:text;pointer-events:auto}
 .port-label-input:focus{border-color:#fff;background:rgba(0,0,0,.4)}
 .gate-label{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
@@ -221,9 +229,9 @@ svg{position:absolute;top:0;left:0;width:100%;height:100%;pointer-events:all;ove
 .modal-content{background:var(--toolbar-bg);color:var(--text-color);padding:18px;border-radius:8px;width:340px;max-width:90vw;box-shadow:0 4px 15px rgba(0,0,0,.2);border:1px solid var(--border-color)}
 .ic-item{display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:1px solid var(--border-color);font-size:11px}
 .ic-color-picker{width:24px;height:20px;padding:1px;border:1px solid var(--border-color);border-radius:3px;background:var(--bg-color);cursor:pointer}
-.custom-gate-ports{display:flex;flex-direction:row;justify-content:space-between;gap:6px;padding:2px 0}
-.custom-gate-ports .port-list{display:flex;flex-direction:column;gap:4px;flex:1}
-.custom-gate-ports .port-list .port-item{display:flex;align-items:center;gap:3px;font-size:9px;min-height:20px}
+.custom-gate-ports{display:flex;flex-direction:row;justify-content:space-between;gap:6px;width:100%;height:100%;align-items:stretch}
+.custom-gate-ports .port-list{display:flex;flex-direction:column;justify-content:space-around;gap:0;flex:1;height:100%}
+.custom-gate-ports .port-list .port-item{display:flex;align-items:center;gap:3px;font-size:9px;min-height:0;flex:0 0 auto}
 .custom-gate-ports .port-list .port-label{font-size:8px;color:var(--text-color);opacity:.8}
 .io-port-row{display:flex;align-items:center;gap:4px;justify-content:space-between}
 .io-port-row .io-label{font-size:9px;opacity:.8;min-width:18px}
@@ -274,6 +282,7 @@ svg{position:absolute;top:0;left:0;width:100%;height:100%;pointer-events:all;ove
 #custom-gate-modal #custom-gate-modal-ghost-gate.ghost-pixel .gate-body{padding:0!important;background:transparent!important;border-radius:0!important}
 #custom-gate-modal-selection-box{position:absolute;border:1.5px dashed #ffc107;background:rgba(255,193,7,.12);z-index:500;pointer-events:none;display:none}
 #custom-gate-modal .cg-info{display:flex;gap:12px;flex-shrink:0}
+#custom-gate-modal-canvas .gate-body > div{width:100%;height:100%}
 #custom-gate-modal .cg-info>div{flex:1}
 #custom-gate-modal .cg-info label{display:block;font-size:11px;margin-bottom:4px}
 #custom-gate-modal .cg-info input[type=text]{width:100%;padding:6px;border:1px solid var(--border-color);border-radius:4px;background:var(--bg-color);color:var(--text-color);font-size:12px;font-family:inherit}
@@ -531,14 +540,11 @@ body.no-animations *,body.no-animations *::before,body.no-animations *::after{
     <div class="toolbar-group">
         <button id="pause-btn" data-btn-id="pause" onclick="togglePause()" style="background:#1f3a63;">Pause</button>
         <button data-btn-id="step" onclick="stepSimulation()" style="background:#3b5b8c;">Step</button>
-        <label style="font-size:10px;cursor:pointer;white-space:nowrap;"><input type="checkbox" id="snapCheck" checked /> Snap</label>
         <button data-btn-id="reset" onclick="resetView()" style="background:#3d4653;">Reset</button>
         <button data-btn-id="theme" onclick="toggleTheme()" style="background:#3b5b8c;">Theme</button>
         <button data-btn-id="settings" onclick="openSettingsModal()" style="background:#0f766e;" title="Colours, fonts, layout &amp; presets">⚙️ Settings</button>
         <button data-btn-id="clear" onclick="clearAll()" style="background:#b91c1c;">Clear</button>
         <button id="debug-btn" data-btn-id="debug" onclick="toggleDebugMode()" style="background:#1f3a63;" title="Toggle Debug Mode (D)">🐞 Debug</button>
-        <button data-btn-id="tips" onclick="toggleInstructions()" style="background:#3d4653;">Tips</button>
-        <button id="toast-btn" data-btn-id="toast" onclick="toggleToasts()" style="background:#3d4653;" title="Toggle notifications">🔔</button>
     </div>
     <div class="toolbar-group">
         <button data-btn-id="export" onclick="exportCircuit()" style="background:#15803d;">⬇ Export</button>
@@ -725,6 +731,7 @@ body.no-animations *,body.no-animations *::before,body.no-animations *::after{
         <button class="stab"        data-tab="gates"   onclick="setSettingsTab('gates')">🧩 Gates</button>
         <button class="stab"        data-tab="ports"   onclick="setSettingsTab('ports')">🔌 Ports</button>
         <button class="stab"        data-tab="buttons" onclick="setSettingsTab('buttons')">🔘 Buttons</button>
+        <button class="stab"        data-tab="behaviour" onclick="setSettingsTab('behaviour')">⚡ Behaviour</button>
         <button class="stab"        data-tab="fonts"   onclick="setSettingsTab('fonts')">🔤 Fonts</button>
         <button class="stab"        data-tab="layout"  onclick="setSettingsTab('layout')">📐 Layout</button>
         <button class="stab"        data-tab="presets" onclick="setSettingsTab('presets')">✨ Presets</button>
@@ -895,7 +902,8 @@ function getGateColor(c){if(c.isCustom)return(c.def&&c.def.color)||'#1f3a63';ret
 function getGateColorByName(t,d){if(d&&d.color)return d.color;return GATE_COLORS[t]||'#1f3a63'}
 
 let SNAP=20;
-function snapValue(v){if(!document.getElementById('snapCheck').checked)return v;return Math.round(v/SNAP)*SNAP}
+let snapEnabled=true;
+function snapValue(v){if(!snapEnabled)return v;return Math.round(v/SNAP)*SNAP}
 function snapPos(x,y){return{x:snapValue(x),y:snapValue(y)}}
 
 const TICK_MS=50;
@@ -956,6 +964,7 @@ function showToast(m,t='info',d=2500){
 function toggleToasts(){
     toastsEnabled=!toastsEnabled;
     localStorage.setItem('toasts_enabled',toastsEnabled?'true':'false');
+    if(LSET && LSET.behaviour) LSET.behaviour.notifications = toastsEnabled;
     updateToastButton();
     if(toastsEnabled)showToast('Notifications enabled','success',1200);
 }
@@ -1642,7 +1651,15 @@ function renderComponent(comp){
         el.style.setProperty('min-width',w+'px','important');
         el.style.setProperty('min-height',h+'px','important');
         el.style.left=Math.round(comp.x)+'px';el.style.top=Math.round(comp.y)+'px';
-    }else{el.style.width='var(--gate-width,140px)';el.style.minWidth='var(--gate-width,140px)';el.style.height='auto';el.style.left=comp.x+'px';el.style.top=comp.y+'px'}
+    }else{
+        const h=getGateHeight(comp);
+        el.style.width='var(--gate-width,140px)';
+        el.style.minWidth='var(--gate-width,140px)';
+        el.style.height=h+'px';
+        el.style.minHeight=h+'px';
+        el.style.left=comp.x+'px';
+        el.style.top=comp.y+'px';
+    }
     let bc='';
     if(comp.isCustom){
         const il=(comp.def&&comp.def.inputInitials)||[],ol=(comp.def&&comp.def.outputInitials)||[];
@@ -1652,7 +1669,7 @@ function renderComponent(comp){
     }else if(comp.type==='INPUT'){const l=(comp.customLabel||'').trim()||'Toggle';bc=`<div class="io-port-row"><button class="switch-btn ${comp.state===1?'active':''}" id="sw-${comp.id}">${comp.state===1?'ON':'OFF'}</button><div style="display:flex;align-items:center;gap:3px;"><div class="port output" id="port-${comp.id}-out-0" data-comp="${comp.id}" data-type="out" data-port="0"></div><span class="io-label">${l}</span></div></div>`}
     else if(comp.type==='PUSH'){const l=(comp.customLabel||'').trim()||'Push';bc=`<div class="io-port-row"><button class="push-btn ${comp.state===1?'active':''}" id="push-${comp.id}">${comp.state===1?'ON':'PRESS'}</button><div style="display:flex;align-items:center;gap:3px;"><div class="port output" id="port-${comp.id}-out-0" data-comp="${comp.id}" data-type="out" data-port="0"></div><span class="io-label">${l}</span></div></div>`}
     else if(comp.type==='OUTPUT'){const l=(comp.customLabel||'').trim()||'OUT';bc=`<div class="io-port-row" style="flex-direction:row-reverse;"><div class="bulb" id="bulb-${comp.id}"></div><div style="display:flex;align-items:center;gap:3px;"><div class="port" id="port-${comp.id}-in-0" data-comp="${comp.id}" data-type="in" data-port="0"></div><span class="io-label">${l}</span></div></div>`}
-    else if(comp.type==='NOT'){bc=`<div style="display:flex;justify-content:space-between;align-items:center;"><div class="port" id="port-${comp.id}-in-0" data-comp="${comp.id}" data-type="in" data-port="0"></div><span style="font-size:10px;font-weight:bold;">NOT</span><div class="port output" id="port-${comp.id}-out-0" data-comp="${comp.id}" data-type="out" data-port="0"></div></div>`}
+    else if(comp.type==='NOT'){bc=`<div><div class="port" id="port-${comp.id}-in-0" data-comp="${comp.id}" data-type="in" data-port="0" style="align-self:center;"></div><span class="gate-type-label">NOT</span><div class="port output" id="port-${comp.id}-out-0" data-comp="${comp.id}" data-type="out" data-port="0" style="align-self:center;"></div></div>`}
     else if(comp.type==='DELAY'){bc=`<div style="display:flex;justify-content:space-between;align-items:center;gap:3px;"><div class="port" id="port-${comp.id}-in-0" data-comp="${comp.id}" data-type="in" data-port="0"></div><input type="number" min="1" max="20000" step="1" value="${comp.delayMs||150}" class="delay-input" id="delay-val-${comp.id}" title="Delay in milliseconds (1 – 20000)"><span style="font-size:8px;opacity:.6;">ms</span><div class="port output" id="port-${comp.id}-out-0" data-comp="${comp.id}" data-type="out" data-port="0"></div></div>`}
     else if(comp.type==='PULSE'){bc=`<div style="display:flex;justify-content:space-between;align-items:center;gap:3px;"><div class="port" id="port-${comp.id}-in-0" data-comp="${comp.id}" data-type="in" data-port="0"></div><span style="font-size:9px;font-weight:bold;">PULSE</span><span style="font-size:8px;opacity:.6;">1-shot</span><div class="port output" id="port-${comp.id}-out-0" data-comp="${comp.id}" data-type="out" data-port="0"></div></div>`}
     else if(comp.type==='CLOCK'){bc=`<div style="display:flex;justify-content:space-between;align-items:center;gap:3px;"><div class="port" id="port-${comp.id}-in-0" data-comp="${comp.id}" data-type="in" data-port="0"></div><span style="font-size:9px;">⏱</span><input type="number" min="50" max="20000" step="1" value="${comp.clockMs||250}" class="delay-input" id="clock-val-${comp.id}" title="Toggle period in milliseconds (50 – 20000)"><span style="font-size:8px;opacity:.6;">ms</span><div class="port output" id="port-${comp.id}-out-0" data-comp="${comp.id}" data-type="out" data-port="0"></div></div>`}
@@ -1667,7 +1684,7 @@ function renderComponent(comp){
         registerComponentDom(comp,el);
         return;
     }
-    else{bc=`<div style="display:flex;justify-content:space-between;align-items:center;"><div style="display:flex;flex-direction:column;gap:4px;"><div class="port" id="port-${comp.id}-in-0" data-comp="${comp.id}" data-type="in" data-port="0"></div><div class="port" id="port-${comp.id}-in-1" data-comp="${comp.id}" data-type="in" data-port="1"></div></div><span style="font-size:10px;font-weight:bold;">${comp.type}</span><div class="port output" id="port-${comp.id}-out-0" data-comp="${comp.id}" data-type="out" data-port="0"></div></div>`}
+    else{bc=`<div><div class="ports-in"><div class="port" id="port-${comp.id}-in-0" data-comp="${comp.id}" data-type="in" data-port="0"></div><div class="port" id="port-${comp.id}-in-1" data-comp="${comp.id}" data-type="in" data-port="1"></div></div><span class="gate-type-label">${comp.type}</span><div class="port output" id="port-${comp.id}-out-0" data-comp="${comp.id}" data-type="out" data-port="0"></div></div>`}
     let hr=`<button class="delete-btn" onclick="removeComponent(${comp.id})">×</button>`;
     const defaultLabel=comp.type==='INPUT'?'Toggle':comp.type==='PUSH'?'Push':comp.type;
     const displayLabel=(comp.customLabel||'').trim()||defaultLabel;
@@ -2072,7 +2089,10 @@ function moveDraggedGate(cx,cy){
     if(!isDraggingGate||!activeComp)return;
     const r=viewport.getBoundingClientRect();
     const mx=(cx-r.left-panX)/zoom,my=(cy-r.top-panY)/zoom;
-    const nX=snapValue(mx-gateGrabOffsetX),nY=snapValue(my-gateGrabOffsetY);
+    // Snap the gate so its BODY top (24px below the gate top) lands on the
+    // grid, not the header top. This makes ports align with dots/lines.
+    const nX=snapValue(mx-gateGrabOffsetX);
+    const nY=snapValue(my-gateGrabOffsetY);
     activeComp.x=nX;activeComp.y=nY;
     const el=compEls.get(activeComp.id);if(el){el.style.left=nX+'px';el.style.top=nY+'px'}
     markPortPositionsDirty(activeComp.id);
@@ -3358,8 +3378,17 @@ setInterval(() => { scheduleIdleSave(); }, 15000);
 window.addEventListener('beforeunload',saveToLocalStorage);
 function toggleInstructions(show){
     const b=document.getElementById('instructions-box');if(!b)return;
-    if(show===undefined){const h=b.classList.contains('hidden');b.classList.toggle('hidden');localStorage.setItem('instructions_hidden',h?'false':'true')}
-    else{if(show){b.classList.remove('hidden');localStorage.setItem('instructions_hidden','false')}else{b.classList.add('hidden');localStorage.setItem('instructions_hidden','true')}}
+    let visible;
+    if(show===undefined){
+        const wasHidden=b.classList.contains('hidden');
+        b.classList.toggle('hidden');
+        visible=wasHidden;         // if it was hidden, it's now visible
+    } else {
+        if(show){b.classList.remove('hidden');visible=true;}
+        else{b.classList.add('hidden');visible=false;}
+    }
+    localStorage.setItem('instructions_hidden',visible?'false':'true');
+    if(LSET && LSET.behaviour) LSET.behaviour.showTips = visible;
 }
 
 function isModalOpen(){const m=document.getElementById('custom-gate-modal');return m&&m.style.display==='flex'}
@@ -3815,7 +3844,15 @@ function renderModalComponent(comp){
         el.classList.add('gate-pixel');const w=comp.pixelWidth||40,h=comp.pixelHeight||40;
         el.style.width=w+'px';el.style.height=h+'px';el.style.minWidth=w+'px';el.style.minHeight=h+'px';
         el.style.left=Math.round(comp.x)+'px';el.style.top=Math.round(comp.y)+'px';
-    }else{el.style.width='var(--gate-width,140px)';el.style.minWidth='var(--gate-width,140px)';el.style.height='auto';el.style.left=comp.x+'px';el.style.top=comp.y+'px'}
+    }else{
+        const h=getGateHeight(comp);
+        el.style.width='var(--gate-width,140px)';
+        el.style.minWidth='var(--gate-width,140px)';
+        el.style.height=h+'px';
+        el.style.minHeight=h+'px';
+        el.style.left=comp.x+'px';
+        el.style.top=comp.y+'px';
+    }
     let bc='',tt=comp.type;
     if(comp.isCustom){
         tt=comp.type;
@@ -3826,7 +3863,7 @@ function renderModalComponent(comp){
     }else if(comp.type==='INPUT'){tt='Toggle';bc=`<div class="io-port-row"><button class="switch-btn" id="modal-sw-${comp.id}">OFF</button><div style="display:flex;align-items:center;gap:3px;"><div class="port output" id="modal-port-${comp.id}-out-0" data-comp="${comp.id}" data-type="out" data-port="0"></div></div></div>`}
     else if(comp.type==='PUSH'){tt='Push';bc=`<div class="io-port-row"><button class="push-btn" id="modal-push-${comp.id}">PRESS</button><div style="display:flex;align-items:center;gap:3px;"><div class="port output" id="modal-port-${comp.id}-out-0" data-comp="${comp.id}" data-type="out" data-port="0"></div></div></div>`}
     else if(comp.type==='OUTPUT'){tt='OUT';bc=`<div class="io-port-row" style="flex-direction:row-reverse;"><div class="bulb"></div><div style="display:flex;align-items:center;gap:3px;"><div class="port" id="modal-port-${comp.id}-in-0" data-comp="${comp.id}" data-type="in" data-port="0"></div></div></div>`}
-    else if(comp.type==='NOT'){bc=`<div style="display:flex;justify-content:space-between;align-items:center;"><div class="port" id="modal-port-${comp.id}-in-0" data-comp="${comp.id}" data-type="in" data-port="0"></div><span style="font-size:10px;font-weight:bold;">NOT</span><div class="port output" id="modal-port-${comp.id}-out-0" data-comp="${comp.id}" data-type="out" data-port="0"></div></div>`}
+    else if(comp.type==='NOT'){bc=`<div><div class="port" id="modal-port-${comp.id}-in-0" data-comp="${comp.id}" data-type="in" data-port="0" style="align-self:center;"></div><span class="gate-type-label">NOT</span><div class="port output" id="modal-port-${comp.id}-out-0" data-comp="${comp.id}" data-type="out" data-port="0" style="align-self:center;"></div></div>`}
     else if(comp.type==='DELAY'){bc=`<div style="display:flex;justify-content:space-between;align-items:center;gap:3px;"><div class="port" id="modal-port-${comp.id}-in-0" data-comp="${comp.id}" data-type="in" data-port="0"></div><input type="number" min="1" max="20000" step="1" value="${comp.delayMs||150}" class="delay-input" id="modal-delay-val-${comp.id}" title="Delay in milliseconds (1 – 20000)"><span style="font-size:8px;opacity:.6;">ms</span><div class="port output" id="modal-port-${comp.id}-out-0" data-comp="${comp.id}" data-type="out" data-port="0"></div></div>`}
     else if(comp.type==='PULSE'){bc=`<div style="display:flex;justify-content:space-between;align-items:center;gap:3px;"><div class="port" id="modal-port-${comp.id}-in-0" data-comp="${comp.id}" data-type="in" data-port="0"></div><span style="font-size:9px;font-weight:bold;">PULSE</span><span style="font-size:8px;opacity:.6;">1-shot</span><div class="port output" id="modal-port-${comp.id}-out-0" data-comp="${comp.id}" data-type="out" data-port="0"></div></div>`}
     else if(comp.type==='CLOCK'){bc=`<div style="display:flex;justify-content:space-between;align-items:center;gap:3px;"><div class="port" id="modal-port-${comp.id}-in-0" data-comp="${comp.id}" data-type="in" data-port="0"></div><span style="font-size:9px;">⏱</span><input type="number" min="50" max="20000" step="1" value="${comp.clockMs||250}" class="delay-input" id="modal-clock-val-${comp.id}" title="Toggle period in milliseconds (50 – 20000)"><span style="font-size:8px;opacity:.6;">ms</span><div class="port output" id="modal-port-${comp.id}-out-0" data-comp="${comp.id}" data-type="out" data-port="0"></div></div>`}
@@ -3839,7 +3876,7 @@ function renderModalComponent(comp){
         document.getElementById('custom-gate-modal-canvas').appendChild(el);
         attachPortHandlers(el,'modal');return;
     }
-    else{bc=`<div style="display:flex;justify-content:space-between;align-items:center;"><div style="display:flex;flex-direction:column;gap:4px;"><div class="port" id="modal-port-${comp.id}-in-0" data-comp="${comp.id}" data-type="in" data-port="0"></div><div class="port" id="modal-port-${comp.id}-in-1" data-comp="${comp.id}" data-type="in" data-port="1"></div></div><span style="font-size:10px;font-weight:bold;">${comp.type}</span><div class="port output" id="modal-port-${comp.id}-out-0" data-comp="${comp.id}" data-type="out" data-port="0"></div></div>`}
+    else{bc=`<div><div class="ports-in"><div class="port" id="modal-port-${comp.id}-in-0" data-comp="${comp.id}" data-type="in" data-port="0"></div><div class="port" id="modal-port-${comp.id}-in-1" data-comp="${comp.id}" data-type="in" data-port="1"></div></div><span class="gate-type-label">${comp.type}</span><div class="port output" id="modal-port-${comp.id}-out-0" data-comp="${comp.id}" data-type="out" data-port="0"></div></div>`}
     const defaultLabel = comp.type==='INPUT'?'Toggle':comp.type==='PUSH'?'Push':comp.type==='OUTPUT'?'OUT':(comp.isCustom?comp.type:(comp.customLabel||'').trim()||comp.type);
     const displayLabel = (comp.customLabel||'').trim() || (comp.type==='INPUT'?'Toggle':comp.type==='PUSH'?'Push':comp.type==='OUTPUT'?'OUT':(comp.isCustom?comp.type:comp.type));
     const hr=`<button class="delete-btn" data-modal-delete="${comp.id}">×</button>`;
@@ -3971,7 +4008,8 @@ function moveModalDraggedGate(cx,cy){
     if(!isDraggingModalGate||!activeModalComp)return;
     const vpR=document.getElementById('custom-gate-modal-viewport').getBoundingClientRect();
     const mx=(cx-vpR.left-modalPanX)/modalZoom,my=(cy-vpR.top-modalPanY)/modalZoom;
-    const nX=modalSnapValue(mx-modalGateGrabOffsetX),nY=modalSnapValue(my-modalGateGrabOffsetY);
+    const nX=modalSnapValue(mx-modalGateGrabOffsetX);
+    const nY=modalSnapValue(my-modalGateGrabOffsetY);
     activeModalComp.x=nX;activeModalComp.y=nY;
     const el=document.getElementById(`modal-comp-${activeModalComp.id}`);if(el){el.style.left=nX+'px';el.style.top=nY+'px'}
     if(modalGroupDragStartPositions){
@@ -4302,6 +4340,12 @@ const LSET_DEFAULT = {
     export:'#15803d', import:'#0f766e',
     undo:'#3d4653', redo:'#3d4653',
     share:'#1f3a63'
+  },
+  /* NEW: behaviour toggles formerly on the toolbar */
+  behaviour: {
+    snap: true,
+    showTips: true,
+    notifications: true
   }
 };
 
@@ -4822,6 +4866,32 @@ function lsetNormHex(c){
 }
 function gwPx(){ return (LSET&&LSET.layout&&LSET.layout.gateWidth)||140; }
 
+/* Every gate's height is a multiple of the snap grid (20px), so gates
+   placed on grid lines always visually tile. Heights by type:
+     • 60px  — 1-port gates (NOT, INPUT, PUSH, OUTPUT, DELAY, CLOCK,
+               PULSE, COLOR, and 1-in/1-out custom gates)
+     • 80px  — 2-port gates (AND, OR, XOR, NAND, NOR, XNOR, and 2×N
+               custom gates)
+     • 100px+ — wider custom gates (one 20px row per port)
+     • SCREEN — dynamic, unchanged (it already snaps in 20px steps) */
+function getGateHeight(comp){
+    if(!comp) return 80;
+    if(comp.type === 'SCREEN') return null;
+    if(comp.isCustom){
+        const inN  = (comp.def && comp.def.inputsCount)  || 0;
+        const outN = (comp.def && comp.def.outputsCount) || 0;
+        const rows = Math.max(inN, outN, 1);
+        return 40 + rows * 20;
+    }
+    switch(comp.type){
+        case 'AND': case 'OR': case 'XOR':
+        case 'NAND': case 'NOR': case 'XNOR':
+            return 80;
+        default:
+            return 60;
+    }
+}
+
 /* Build an SVG data-URL for per-pixel Perlin grain. Used as an optional
    overlay on top of a solid or mesh background. Cached per parameter set. */
 let _noiseUrlCache = { key:'', url:'' };
@@ -5007,6 +5077,29 @@ function applySettings(){
     el.style.setProperty('--gate-color', getGateColor(comp));
   }
 
+  // ── Behaviour toggles ───────────────────────────────────
+  if(LSET.behaviour){
+    snapEnabled = LSET.behaviour.snap !== false;
+
+    const newToasts = LSET.behaviour.notifications !== false;
+    if(newToasts !== toastsEnabled){
+      toastsEnabled = newToasts;
+      localStorage.setItem('toasts_enabled', toastsEnabled ? 'true' : 'false');
+      updateToastButton();
+    }
+
+    const tipsBox = document.getElementById('instructions-box');
+    if(tipsBox){
+      if(LSET.behaviour.showTips){
+        tipsBox.classList.remove('hidden');
+        localStorage.setItem('instructions_hidden','false');
+      } else {
+        tipsBox.classList.add('hidden');
+        localStorage.setItem('instructions_hidden','true');
+      }
+    }
+  }
+
   // Toolbar gate buttons follow the gate palette.
   document.querySelectorAll('.tool-btn[data-gate-type]').forEach(btn => {
     const t = btn.dataset.gateType;
@@ -5139,6 +5232,31 @@ function lsetHtmlGates(){
       These colors apply to every gate of that type on the canvas and to the toolbar buttons.
       Custom gates use their own color, set when the gate is created.
     </p>`;
+}
+
+function lsetHtmlBehaviour(){
+    return `<div class="sec-title">Editing</div>
+      <div class="grid">
+        ${lsetChk('Snap to grid when dragging gates','behaviour.snap')}
+      </div>
+
+      <div class="sec-title">Appearance</div>
+      <div class="grid">
+        ${lsetChk('Drop shadows on gates &amp; panels','layout.shadows')}
+        ${lsetChk('Animations &amp; transitions','layout.animations')}
+      </div>
+
+      <div class="sec-title">Overlays</div>
+      <div class="grid">
+        ${lsetChk('Show the tips box on the canvas','behaviour.showTips')}
+        ${lsetChk('Show notification toasts','behaviour.notifications')}
+      </div>
+
+      <p style="font-size:11px;opacity:.6;margin-top:20px;line-height:1.6;">
+        These were formerly toolbar controls. Turning <b>Snap</b> off lets you place gates
+        anywhere; turning <b>Drop shadows</b> off makes side-by-side gates tile without any
+        visual gap.
+      </p>`;
 }
 
 function lsetHtmlButtons(){
@@ -5531,6 +5649,7 @@ function renderSettingsTab(){
   else if(lsetTab==='gates')   body.innerHTML=lsetHtmlGates();
   else if(lsetTab==='ports')   body.innerHTML=lsetHtmlPorts();
   else if(lsetTab==='buttons') body.innerHTML=lsetHtmlButtons();
+  else if(lsetTab==='behaviour') body.innerHTML=lsetHtmlBehaviour();
   else if(lsetTab==='fonts')   body.innerHTML=lsetHtmlFonts();
   else if(lsetTab==='layout')  body.innerHTML=lsetHtmlLayout();
   else if(lsetTab==='presets') body.innerHTML=lsetHtmlPresets();
