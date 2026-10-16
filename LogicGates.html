@@ -506,6 +506,235 @@ body.no-animations *,body.no-animations *::before,body.no-animations *::after{
 }
 .preset-card:hover .preset-delete{display:flex}
 .preset-delete:hover{background:rgba(220,53,69,.95)}
+/* ══ Logic Table modal ══ */
+#logic-table-modal {
+    position: fixed; inset: 0;
+    background: rgba(0,0,0,.55);
+    z-index: 4700;
+    display: none;
+    align-items: center;
+    justify-content: center;
+}
+#logic-table-modal .lt-modal-box {
+    background: var(--toolbar-bg);
+    color: var(--text-color);
+    padding: 18px;
+    border-radius: 10px;
+    width: min(1200px, 97vw);
+    height: min(900px, 95vh);
+    display: flex;
+    flex-direction: column;
+    box-shadow: 0 10px 40px rgba(0,0,0,.4);
+    border: 1px solid var(--border-color);
+    overflow: hidden;
+}
+#logic-table-modal h3 {
+    margin: 0 0 12px 0;
+    font-size: 15px;
+    flex-shrink: 0;
+}
+#lt-edit-view, #lt-preview-view {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    min-height: 0;
+}
+#lt-preview-view { display: none; }
+.lt-config {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 8px;
+    margin-bottom: 12px;
+    flex-shrink: 0;
+}
+.lt-config label {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 11px;
+    white-space: nowrap;
+}
+.lt-config input[type=number],
+.lt-config input[type=text] {
+    flex: 1;
+    min-width: 0;
+    padding: 5px 6px;
+    background: var(--bg-color);
+    color: var(--text-color);
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    font-family: inherit;
+    font-size: 11px;
+    outline: none;
+}
+.lt-config input[type=color] {
+    width: 40px;
+    height: 26px;
+    padding: 1px;
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    background: transparent;
+    cursor: pointer;
+}
+.lt-table-wrap {
+    flex: 1;
+    overflow: auto;
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    background: var(--bg-color);
+    min-height: 200px;
+    padding: 8px;
+}
+.lt-table-cols {
+    display: flex;
+    gap: 24px;
+    justify-content: center;
+    align-items: flex-start;
+    min-width: fit-content;
+}
+.lt-table-cols-single {
+    justify-content: center;
+}
+.lt-table-col {
+    flex: 0 0 auto;
+}
+.lt-table-el {
+    border-collapse: collapse;
+    font-size: 12px;
+    font-family: var(--font-mono, ui-monospace, Menlo, Consolas, monospace);
+}
+.lt-table-el {
+    border-collapse: collapse;
+    font-size: 12px;
+    font-family: var(--font-mono, ui-monospace, Menlo, Consolas, monospace);
+}
+.lt-table-el th, .lt-table-el td {
+    padding: 2px 8px;
+    text-align: center;
+    border-bottom: 1px solid var(--border-color);
+    border-right: 1px solid var(--border-color);
+    white-space: nowrap;
+    font-size: 12px;
+    line-height: 1.2;
+}
+.lt-table-el th:last-child, .lt-table-el td:last-child { border-right: none; }
+.lt-table-el th {
+    background: var(--accent-tint);
+    font-weight: bold;
+    position: sticky;
+    top: 0;
+    z-index: 1;
+    padding: 4px 6px;
+}
+.lt-table-el th.lt-in-col { background: color-mix(in srgb, var(--accent) 15%, var(--accent-tint)); }
+.lt-table-el th.lt-out-col { background: color-mix(in srgb, var(--good,#15803d) 20%, var(--accent-tint)); }
+.lt-table-el .lt-out-name,
+.lt-table-el .lt-in-name {
+    background: transparent;
+    border: none;
+    color: inherit;
+    font: inherit;
+    text-align: center;
+    width: 60px;
+    outline: none;
+}
+.lt-table-el .lt-out-name:focus,
+.lt-table-el .lt-in-name:focus { background: var(--bg-color); border-radius: 3px; }
+.lt-table-el td.lt-out-cell {
+    cursor: pointer;
+    user-select: none;
+    font-weight: bold;
+    font-size: 14px;
+    min-width: 40px;
+    transition: background .1s;
+}
+.lt-table-el td.lt-out-cell:hover { background: rgba(127,127,127,.12); }
+.lt-table-el td.lt-out-cell[data-val="1"] {
+    background: color-mix(in srgb, var(--good,#15803d) 25%, transparent);
+    color: var(--good,#15803d);
+}
+.lt-table-el td.lt-out-cell[data-val="X"] {
+    background: rgba(127,127,127,.15);
+    color: var(--muted);
+}
+.lt-table-el tbody tr:hover td { background: rgba(127,127,127,.05); }
+.lt-table-el tbody tr:hover td.lt-out-cell[data-val="1"] {
+    background: color-mix(in srgb, var(--good,#15803d) 35%, transparent);
+}
+.lt-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 8px;
+    margin-top: 12px;
+    flex-shrink: 0;
+    flex-wrap: wrap;
+}
+.lt-stats {
+    font-size: 11px;
+    opacity: .7;
+    font-variant-numeric: tabular-nums;
+}
+.lt-footer button {
+    padding: 7px 16px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-weight: bold;
+    font-size: 11px;
+    font-family: inherit;
+}
+.lt-footer .btn-primary { background: var(--accent); color: #fff; }
+.lt-footer .btn-cancel { background: #6c757d; color: #fff; }
+.lt-preview-stats {
+    font-size: 11px;
+    opacity: .85;
+    margin-bottom: 10px;
+    padding: 8px 10px;
+    background: var(--bg-color);
+    border-radius: 6px;
+    border: 1px solid var(--border-color);
+    line-height: 1.6;
+    flex-shrink: 0;
+}
+.lt-preview-scroll {
+    flex: 1;
+    overflow: auto;
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    background: var(--bg-color);
+    min-height: 200px;
+    padding: 12px;
+}
+#lt-preview-canvas {
+    position: relative;
+    min-width: 100px;
+    min-height: 100px;
+    transform-origin: 0 0;
+}
+.lt-preview-gate {
+    position: absolute;
+    font-size: 10px;
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    border-radius: 6px;
+    border: 2px solid;
+}
+.lt-preview-gate .lt-preview-hdr {
+    padding: 3px 6px;
+    height: 24px;
+    box-sizing: border-box;
+    display: flex;
+    align-items: center;
+    color: #fff;
+    font-weight: bold;
+    font-size: 10px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
 </style>
 </head>
 <body>
@@ -535,6 +764,7 @@ body.no-animations *,body.no-animations *::before,body.no-animations *::after{
     </div>
     <div class="toolbar-group" style="border-left:2px solid var(--border-color);padding-left:5px;">
         <div class="tool-btn" data-btn-id="customGate" style="background:#8b5cf6;" onclick="openCustomGateModal(null, false)">⚙️ Custom Gate</div>
+        <div class="tool-btn" data-btn-id="logicTable" style="background:#0891b2;" onclick="openLogicTable()">📋 Logic Table</div>
     </div>
     <div class="toolbar-group" id="custom-gates-toolbar"></div>
     <div class="toolbar-group">
@@ -748,6 +978,42 @@ body.no-animations *,body.no-animations *::before,body.no-animations *::after{
     </div>
   </div>
 </div>
+
+<div id="logic-table-modal" onclick="closeLogicTableOutside(event)">
+  <div class="lt-modal-box" onclick="event.stopPropagation()">
+    <div id="lt-edit-view">
+      <h3>📋 Logic Table → Custom Gate</h3>
+      <div class="lt-config">
+        <label>Inputs <input type="number" id="lt-num-inputs" min="1" max="8" value="2" oninput="logicTableConfigChanged()"></label>
+        <label>Outputs <input type="number" id="lt-num-outputs" min="1" max="4" value="1" oninput="logicTableConfigChanged()"></label>
+        <label>Name <input type="text" id="lt-gate-name" value="Custom Logic" maxlength="40"></label>
+        <label>Color <input type="color" id="lt-gate-color" value="#1f3a63"></label>
+        <label>Folder <input type="text" id="lt-gate-folder" list="custom-gate-folder-list" placeholder="(none)"></label>
+      </div>
+      <div class="lt-table-wrap"></div>
+      <div class="lt-footer">
+        <div class="lt-stats" id="lt-stats"></div>
+        <div style="display:flex;gap:8px;">
+          <button class="btn-cancel" onclick="closeLogicTable()">Cancel</button>
+          <button class="btn-primary" onclick="logicTableGenerate()">Generate Gate →</button>
+        </div>
+      </div>
+    </div>
+    <div id="lt-preview-view">
+      <h3>Preview: <span id="lt-preview-name"></span></h3>
+      <div class="lt-preview-stats" id="lt-preview-stats"></div>
+      <div class="lt-preview-scroll">
+        <div id="lt-preview-canvas"></div>
+      </div>
+      <div class="lt-footer">
+        <button class="btn-cancel" onclick="logicTableBackToEdit()">← Edit Table</button>
+        <button class="btn-primary" onclick="logicTableConfirmSave()">Save Custom Gate</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div id="toast-container"></div>
 
 <div id="toast-container"></div>
 
@@ -4518,6 +4784,7 @@ const LSET_DEFAULT = {
   /* NEW: toolbar action button colours */
   buttons: {
     customGate:'#8b5cf6',
+    logicTable:'#0891b2',
     pause:'#1f3a63', step:'#3b5b8c', reset:'#3d4653', theme:'#3b5b8c',
     settings:'#0f766e', clear:'#b91c1c', debug:'#1f3a63',
     tips:'#3d4653', toast:'#3d4653',
@@ -6203,6 +6470,737 @@ loadCustomPresets();
   body.addEventListener('change', onSettingsInput);
   body.addEventListener('click', onSettingsClick);
 })();
+/* ═══════════════════════════════════════════════════════════════
+   LOGIC TABLE — truth table → reusable custom gate
+   ═══════════════════════════════════════════════════════════════ */
+
+const LT_MAX_INPUTS  = 8;
+const LT_MAX_OUTPUTS = 4;
+
+let ltState = {
+    numInputs: 2,
+    numOutputs: 1,
+    inputNames: ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H'],
+    outputNames: ['O1', 'O2', 'O3', 'O4'],
+    values: [],
+    generatedDef: null
+};
+
+/* ── Boole's helper: Quine–McCluskey ─────────────────────── */
+
+function ltPopcount(n){
+    let c = 0;
+    while(n){ c += n & 1; n >>>= 1; }
+    return c;
+}
+
+/* Returns array of product terms. Each product is an array of
+   {var, negated}. Bit `v` of a minterm is variable `v`. */
+function ltMinimizeSOP(minterms, dontCares, numVars){
+    if(minterms.length === 0) return [];
+
+    // Build combined term list (minterms + don't cares), deduplicated.
+    const seen = new Set();
+    const terms = [];
+    for(const m of minterms) if(!seen.has(m)){ seen.add(m); terms.push({bits:m, mask:0}); }
+    for(const m of dontCares) if(!seen.has(m)){ seen.add(m); terms.push({bits:m, mask:0}); }
+
+    const primes = [];
+    let current = terms;
+
+    while(current.length > 0){
+        // Group by popcount of the unmasked bits.
+        const groups = new Map();
+        for(const t of current){
+            const pc = ltPopcount(t.bits & ~t.mask);
+            if(!groups.has(pc)) groups.set(pc, []);
+            groups.get(pc).push(t);
+        }
+
+        const nextMap = new Map();
+        const used = new Set();
+        const keys = [...groups.keys()].sort((a,b)=>a-b);
+
+        for(let gi = 0; gi < keys.length - 1; gi++){
+            const a = groups.get(keys[gi]);
+            const b = groups.get(keys[gi+1]);
+            for(const ta of a){
+                for(const tb of b){
+                    if(ta.mask !== tb.mask) continue;
+                    const diff = ta.bits ^ tb.bits;
+                    if(diff === 0 || (diff & (diff-1)) !== 0) continue;
+                    if(diff & ta.mask) continue;
+                    const newMask = ta.mask | diff;
+                    const newBits = ta.bits & ~diff;
+                    const key = newBits + '/' + newMask;
+                    if(!nextMap.has(key)) nextMap.set(key, {bits:newBits, mask:newMask});
+                    used.add(ta); used.add(tb);
+                }
+            }
+        }
+
+        for(const t of current){
+            if(!used.has(t)){
+                const key = t.bits + '/' + t.mask;
+                let dup = false;
+                for(const p of primes) if((p.bits + '/' + p.mask) === key){ dup = true; break; }
+                if(!dup) primes.push(t);
+            }
+        }
+
+        current = [...nextMap.values()];
+    }
+
+    // Greedy cover: repeatedly pick the prime implicant covering the
+    // most remaining minterms.
+    const covers = (pi, m) => (m & ~pi.mask) === pi.bits;
+    const remaining = new Set(minterms);
+    const selected = [];
+
+    while(remaining.size > 0){
+        let best = null, bestCount = 0;
+        for(const pi of primes){
+            let c = 0;
+            for(const m of remaining) if(covers(pi, m)) c++;
+            if(c > bestCount){ bestCount = c; best = pi; }
+        }
+        if(!best || bestCount === 0) break;
+        selected.push(best);
+        for(const m of [...remaining]) if(covers(best, m)) remaining.delete(m);
+    }
+
+    // Convert prime implicants to product terms.
+    return selected.map(pi => {
+        const lits = [];
+        for(let v = 0; v < numVars; v++){
+            const bit = 1 << v;
+            if(pi.mask & bit) continue;
+            lits.push({var:v, negated: !(pi.bits & bit)});
+        }
+        return lits;
+    });
+}
+
+/* ── Circuit generation ──────────────────────────────────── */
+
+/* Build a custom-gate def from the current ltState. Layout flows
+   left-to-right, each gate placed one column to the right of its
+   deepest input, vertically stacked in its own column. */
+function ltBuildDef(numInputs, outputs, gateName, gateColor, gateFolder){
+    const N = numInputs;
+    const numRows = 1 << N;
+
+    let nextId = 1;
+    const innerComps = [];
+    const innerWires = [];
+    const innerInputs = [];
+    const innerOutputs = [];
+
+    const gateCol = new Map();       // id -> column index
+    const colYs = {};                // col -> next Y
+    const Y_STEP = 100;
+    const X_STEP = 200;
+    const Y_START = 20;
+
+    function place(col, height){
+        const y = colYs[col] || Y_START;
+        colYs[col] = y + height + 20;
+        return { x: 20 + col * X_STEP, y };
+    }
+
+    // 1) INPUT components (col 0)
+    for(let i = 0; i < N; i++){
+        const {x, y} = place(0, 60);
+        const id = nextId++;
+        innerComps.push({
+            id, type:'INPUT', x, y,
+            state:0, outputVal:0,
+            inputs:[0],
+            customLabel: (ltState.inputNames && ltState.inputNames[i]) || String.fromCharCode(65 + i)
+        });
+        gateCol.set(id, 0);
+        innerInputs.push(id);
+    }
+
+    // Shared resources
+    const notCache    = new Map();  // varIdx -> NOT gate id
+    const termCache   = new Map();  // product signature -> gate id (or INPUT id)
+
+    function ensureNot(v){
+        if(notCache.has(v)) return notCache.get(v);
+        const {x, y} = place(1, 60);
+        const id = nextId++;
+        innerComps.push({
+            id, type:'NOT', x, y,
+            state:0, outputVal:0,
+            inputs:[0]
+        });
+        innerWires.push({ fromComp: innerInputs[v], fromPort:0, toComp: id, toPort:0 });
+        gateCol.set(id, 1);
+        notCache.set(v, id);
+        return id;
+    }
+
+    function litGateId(lit){
+        if(!lit.negated) return innerInputs[lit.var];
+        return ensureNot(lit.var);
+    }
+
+    /* Get (or create) the gate whose output is the given product term.
+       Returns { id, col }. */
+    function ensureProduct(product){
+        if(product.length === 0){
+            // Constant 1.
+            // Do NOT use an INPUT component — the custom-gate evaluator
+            // treats every INPUT in the subtree as a port, so an internal
+            // INPUT would steal a slot from the real ones.
+            // Instead: a NOT gate with no incoming wire. Unconnected
+            // inputs read as 0, and NOT(0) = 1.
+            if(termCache.has('_ONE_')){
+                const id = termCache.get('_ONE_');
+                return { id, col: gateCol.get(id) };
+            }
+            const {x, y} = place(2, 60);
+            const id = nextId++;
+            innerComps.push({
+                id, type:'NOT', x, y,
+                state:0, outputVal:0,
+                inputs:[0]
+            });
+            gateCol.set(id, 2);
+            termCache.set('_ONE_', id);
+            return { id, col: 2 };
+        }
+
+        const sig = product.map(l => l.var + (l.negated ? '!' : '')).sort().join('&');
+        if(termCache.has(sig)){
+            const id = termCache.get(sig);
+            return { id, col: gateCol.get(id) };
+        }
+
+        if(product.length === 1){
+            const lit = product[0];
+            const id = litGateId(lit);
+            termCache.set(sig, id);
+            return { id, col: gateCol.get(id) };
+        }
+
+        // Chain 2-input AND gates.
+        let accId  = litGateId(product[0]);
+        let accCol = gateCol.get(accId);
+        for(let k = 1; k < product.length; k++){
+            const litId  = litGateId(product[k]);
+            const litCol = gateCol.get(litId);
+            const col = Math.max(accCol, litCol) + 1;
+            const {x, y} = place(col, 80);
+            const andId = nextId++;
+            innerComps.push({
+                id: andId, type:'AND', x, y,
+                state:0, outputVal:0,
+                inputs:[0, 0]
+            });
+            innerWires.push({ fromComp: accId, fromPort:0, toComp: andId, toPort:0 });
+            innerWires.push({ fromComp: litId, fromPort:0, toComp: andId, toPort:1 });
+            gateCol.set(andId, col);
+            accId  = andId;
+            accCol = col;
+        }
+        termCache.set(sig, accId);
+        return { id: accId, col: accCol };
+    }
+
+    // 2) Per-output logic
+    for(let oi = 0; oi < outputs.length; oi++){
+        const out = outputs[oi];
+        const minterms  = [];
+        const dontCares = [];
+        for(let r = 0; r < numRows; r++){
+            const v = out.values[r];
+            if(v === 1) minterms.push(r);
+            else if(v === 'X') dontCares.push(r);
+        }
+
+        // Constant 0 is implemented by leaving the OUTPUT unconnected.
+        // evaluateCustomGate() reads an unwired input as 0, so the
+        // OUTPUT stays at 0 for every input combination. No extra
+        // component needed, and no spurious port.
+        let outSourceId  = null;
+        let outSourceCol = 0;
+
+        if(minterms.length > 0){
+            const products = ltMinimizeSOP(minterms, dontCares, N);
+            const gates = products.map(p => ensureProduct(p));
+
+            if(gates.length === 1){
+                outSourceId  = gates[0].id;
+                outSourceCol = gates[0].col;
+            } else if(gates.length > 1){
+                let accId  = gates[0].id;
+                let accCol = gates[0].col;
+                for(let k = 1; k < gates.length; k++){
+                    const col = Math.max(accCol, gates[k].col) + 1;
+                    const {x, y} = place(col, 80);
+                    const orId = nextId++;
+                    innerComps.push({
+                        id: orId, type:'OR', x, y,
+                        state:0, outputVal:0,
+                        inputs:[0, 0]
+                    });
+                    innerWires.push({ fromComp: accId,       fromPort:0, toComp: orId, toPort:0 });
+                    innerWires.push({ fromComp: gates[k].id, fromPort:0, toComp: orId, toPort:1 });
+                    gateCol.set(orId, col);
+                    accId  = orId;
+                    accCol = col;
+                }
+                outSourceId  = accId;
+                outSourceCol = accCol;
+            }
+        }
+
+        // Place the OUTPUT. Column is either after its source gate, or
+        // a small early column when it has no source (constant 0).
+        const outCol = (outSourceId === null) ? 2 : (outSourceCol + 1);
+        const {x, y} = place(outCol, 60);
+        const outId = nextId++;
+        innerComps.push({
+            id: outId, type:'OUTPUT', x, y,
+            state:0, outputVal:0,
+            inputs:[0],
+            customLabel: out.name || ('O' + (oi + 1))
+        });
+        if(outSourceId !== null){
+            innerWires.push({ fromComp: outSourceId, fromPort:0, toComp: outId, toPort:0 });
+        }
+        gateCol.set(outId, outCol);
+        innerOutputs.push(outId);
+    }
+
+    return {
+        name: gateName,
+        color: gateColor,
+        folder: (gateFolder || '').trim(),
+        inputsCount: N,
+        outputsCount: outputs.length,
+        inputInitials: innerInputs.map((_, i) =>
+            (ltState.inputNames && ltState.inputNames[i]) || String.fromCharCode(65 + i)),
+        outputInitials: innerOutputs.map((_, i) => outputs[i].name || ('O' + (i + 1))),
+        innerInputs: innerInputs.slice(),
+        innerOutputs: innerOutputs.slice(),
+        innerComps,
+        innerWires
+    };
+}
+
+/* ── UI ──────────────────────────────────────────────────── */
+
+function openLogicTable(){
+    const modal = document.getElementById('logic-table-modal');
+    modal.style.display = 'flex';
+
+    document.getElementById('lt-num-inputs').value  = ltState.numInputs;
+    document.getElementById('lt-num-outputs').value = ltState.numOutputs;
+    document.getElementById('lt-gate-name').value   = 'Custom Logic';
+    document.getElementById('lt-gate-color').value  = '#1f3a63';
+    document.getElementById('lt-gate-folder').value = '';
+
+    ltEnsureGrid();
+    ltRenderTable();
+    ltShowEdit();
+}
+
+function closeLogicTable(){
+    document.getElementById('logic-table-modal').style.display = 'none';
+    ltState.generatedDef = null;
+}
+
+function closeLogicTableOutside(e){
+    if(e.target.id === 'logic-table-modal') closeLogicTable();
+}
+
+function logicTableConfigChanged(){
+    const ni = Math.max(1, Math.min(LT_MAX_INPUTS,  parseInt(document.getElementById('lt-num-inputs').value,  10) || 1));
+    const no = Math.max(1, Math.min(LT_MAX_OUTPUTS, parseInt(document.getElementById('lt-num-outputs').value, 10) || 1));
+    document.getElementById('lt-num-inputs').value  = ni;
+    document.getElementById('lt-num-outputs').value = no;
+    ltState.numInputs  = ni;
+    ltState.numOutputs = no;
+    ltEnsureGrid();
+    ltRenderTable();
+}
+
+function ltEnsureGrid(){
+    const numRows = 1 << ltState.numInputs;
+    const numOuts = ltState.numOutputs;
+
+    while(ltState.outputNames.length < numOuts){
+        ltState.outputNames.push('O' + (ltState.outputNames.length + 1));
+    }
+    ltState.outputNames = ltState.outputNames.slice(0, numOuts);
+
+    // Ensure input name slots exist for the current input count.
+    while(ltState.inputNames.length < ltState.numInputs){
+        ltState.inputNames.push(String.fromCharCode(65 + ltState.inputNames.length));
+    }
+
+    const old = ltState.values;
+    const oldRows = old.length;
+    const oldOuts = old[0] ? old[0].length : 0;
+
+    const fresh = [];
+    for(let r = 0; r < numRows; r++){
+        const row = [];
+        for(let o = 0; o < numOuts; o++){
+            row.push((r < oldRows && o < oldOuts) ? old[r][o] : 0);
+        }
+        fresh.push(row);
+    }
+    ltState.values = fresh;
+}
+
+function ltRenderTable(){
+    const wrap = document.querySelector('.lt-table-wrap');
+    const ni = ltState.numInputs;
+    const no = ltState.numOutputs;
+    const numRows = 1 << ni;
+
+    // Helper: build one table's HTML for a range of rows.
+    function buildTableHtml(rowStart, rowEnd, showHeaders){
+        let html = '<table class="lt-table-el"><thead><tr>';
+        for(let i = 0; i < ni; i++){
+            const name = ltState.inputNames[i] || String.fromCharCode(65 + i);
+            if(showHeaders){
+                html += `<th class="lt-in-col"><input class="lt-in-name" type="text" data-in="${i}" value="${escapeHtml(name)}" maxlength="12"></th>`;
+            } else {
+                html += `<th class="lt-in-col"><span style="opacity:.7;">${escapeHtml(name)}</span></th>`;
+            }
+        }
+        for(let o = 0; o < no; o++){
+            const name = ltState.outputNames[o] || ('O' + (o + 1));
+            if(showHeaders){
+                html += `<th class="lt-out-col"><input class="lt-out-name" type="text" data-out="${o}" value="${escapeHtml(name)}" maxlength="12"></th>`;
+            } else {
+                html += `<th class="lt-out-col"><span style="opacity:.7;">${escapeHtml(name)}</span></th>`;
+            }
+        }
+        html += '</tr></thead><tbody>';
+        for(let r = rowStart; r < rowEnd; r++){
+            html += '<tr>';
+            for(let i = 0; i < ni; i++){
+                const bit = (r >> (ni - 1 - i)) & 1;
+                html += `<td>${bit}</td>`;
+            }
+            for(let o = 0; o < no; o++){
+                const v = ltState.values[r] ? ltState.values[r][o] : 0;
+                html += `<td class="lt-out-cell" data-row="${r}" data-out="${o}" data-val="${v}">${v}</td>`;
+            }
+            html += '</tr>';
+        }
+        html += '</tbody></table>';
+        return html;
+    }
+
+    // Decide: one table or two?
+    const split = numRows >= 24 ? Math.ceil(numRows / 2) : numRows;
+
+    if(split < numRows){
+        wrap.innerHTML =
+            '<div class="lt-table-cols">' +
+              '<div class="lt-table-col">' + buildTableHtml(0, split, true) + '</div>' +
+              '<div class="lt-table-col">' + buildTableHtml(split, numRows, false) + '</div>' +
+            '</div>';
+    } else {
+        wrap.innerHTML = '<div class="lt-table-cols lt-table-cols-single">' +
+                         '<div class="lt-table-col">' + buildTableHtml(0, numRows, true) + '</div>' +
+                         '</div>';
+    }
+
+    // Wire up interactions on all tables.
+    wrap.querySelectorAll('.lt-out-cell').forEach(cell => {
+        cell.addEventListener('click', () => {
+            const r = parseInt(cell.dataset.row, 10);
+            const o = parseInt(cell.dataset.out, 10);
+            const cur = ltState.values[r][o];
+            const next = cur === 0 ? 1 : cur === 1 ? 'X' : 0;
+            ltState.values[r][o] = next;
+            // Update every cell with the same row/out (there are two if split).
+            wrap.querySelectorAll(`.lt-out-cell[data-row="${r}"][data-out="${o}"]`).forEach(c => {
+                c.textContent = next;
+                c.dataset.val = String(next);
+            });
+        });
+    });
+
+    wrap.querySelectorAll('.lt-in-name').forEach(inp => {
+        inp.addEventListener('input', () => {
+            const i = parseInt(inp.dataset.in, 10);
+            const v = inp.value.trim() || String.fromCharCode(65 + i);
+            ltState.inputNames[i] = v;
+            // Mirror to the other table's header label, if present.
+            const other = wrap.querySelectorAll('.lt-table-el')[1];
+            if(other){
+                const th = other.querySelectorAll('thead th')[i];
+                if(th) th.innerHTML = `<span style="opacity:.7;">${escapeHtml(v)}</span>`;
+            }
+        });
+    });
+
+    wrap.querySelectorAll('.lt-out-name').forEach(inp => {
+        inp.addEventListener('input', () => {
+            const o = parseInt(inp.dataset.out, 10);
+            const v = inp.value.trim() || ('O' + (o + 1));
+            ltState.outputNames[o] = v;
+            const other = wrap.querySelectorAll('.lt-table-el')[1];
+            if(other){
+                const ths = other.querySelectorAll('thead th');
+                const idx = ni + o;
+                if(ths[idx]) ths[idx].innerHTML = `<span style="opacity:.7;">${escapeHtml(v)}</span>`;
+            }
+        });
+    });
+
+    ltUpdateStats();
+}
+
+function ltUpdateStats(){
+    const el = document.getElementById('lt-stats');
+    if(!el) return;
+    const ni = ltState.numInputs;
+    const no = ltState.numOutputs;
+    const rows = 1 << ni;
+    el.textContent = `${rows} row${rows === 1 ? '' : 's'}  ·  ${ni} input${ni === 1 ? '' : 's'}  ·  ${no} output${no === 1 ? '' : 's'}   (click any output cell to cycle 0 → 1 → X)`;
+}
+
+function ltShowEdit(){
+    document.getElementById('lt-edit-view').style.display = 'flex';
+    document.getElementById('lt-preview-view').style.display = 'none';
+}
+
+function logicTableBackToEdit(){
+    ltShowEdit();
+}
+
+function logicTableGenerate(){
+    // Read config.
+    ltState.numInputs  = Math.max(1, Math.min(LT_MAX_INPUTS,  parseInt(document.getElementById('lt-num-inputs').value,  10) || 1));
+    ltState.numOutputs = Math.max(1, Math.min(LT_MAX_OUTPUTS, parseInt(document.getElementById('lt-num-outputs').value, 10) || 1));
+    const name   = (document.getElementById('lt-gate-name').value || '').trim() || 'Custom Logic';
+    const color  = document.getElementById('lt-gate-color').value || '#1f3a63';
+    const folder = (document.getElementById('lt-gate-folder').value || '').trim();
+
+    // Build the outputs descriptor.
+    const outputs = [];
+    for(let o = 0; o < ltState.numOutputs; o++){
+        const values = [];
+        for(let r = 0; r < (1 << ltState.numInputs); r++){
+            values.push(ltState.values[r] ? ltState.values[r][o] : 0);
+        }
+        outputs.push({
+            name: (ltState.outputNames[o] || ('O' + (o + 1))).trim() || ('O' + (o + 1)),
+            values
+        });
+    }
+
+    let def;
+    try {
+        def = ltBuildDef(ltState.numInputs, outputs, name, color, folder);
+    } catch(err){
+        console.error('[logic-table] generation failed', err);
+        showToast('Could not generate gate: ' + (err.message || err), 'error', 4000);
+        return;
+    }
+
+    if(!def.innerInputs.length || !def.innerOutputs.length){
+        showToast('No inputs or outputs were generated.','error',3000);
+        return;
+    }
+
+    ltState.generatedDef = def;
+
+    // Render preview.
+    document.getElementById('lt-preview-name').textContent = name;
+    const stats = document.getElementById('lt-preview-stats');
+    const gateCounts = {};
+    for(const c of def.innerComps){
+        gateCounts[c.type] = (gateCounts[c.type] || 0) + 1;
+    }
+    const gateSummary = Object.keys(gateCounts).sort().map(k => `${gateCounts[k]}× ${k}`).join('   ');
+    stats.innerHTML = `
+        <b>${def.inputsCount}</b> input${def.inputsCount === 1 ? '' : 's'} &nbsp;·&nbsp;
+        <b>${def.outputsCount}</b> output${def.outputsCount === 1 ? '' : 's'} &nbsp;·&nbsp;
+        <b>${def.innerComps.length}</b> gates &nbsp;·&nbsp;
+        <b>${def.innerWires.length}</b> wires<br>
+        <span style="opacity:.7;">${escapeHtml(gateSummary)}</span>`;
+
+    ltRenderPreview(def);
+
+    document.getElementById('lt-edit-view').style.display = 'none';
+    document.getElementById('lt-preview-view').style.display = 'flex';
+}
+
+function ltRenderPreview(def){
+    const wrap = document.getElementById('lt-preview-canvas');
+    wrap.innerHTML = '';
+
+    // Bounds
+    let minX =  Infinity, minY =  Infinity;
+    let maxX = -Infinity, maxY = -Infinity;
+    for(const c of def.innerComps){
+        const h = getGateHeight(c) || 60;
+        const w = 140;
+        if(c.x < minX) minX = c.x;
+        if(c.y < minY) minY = c.y;
+        if(c.x + w > maxX) maxX = c.x + w;
+        if(c.y + h > maxY) maxY = c.y + h;
+    }
+    if(!isFinite(minX)){ minX = 0; minY = 0; maxX = 200; maxY = 200; }
+    const pad = 30;
+    const cw = maxX - minX + pad * 2;
+    const ch = maxY - minY + pad * 2;
+
+    wrap.style.width  = cw + 'px';
+    wrap.style.height = ch + 'px';
+
+    const offX = -minX + pad;
+    const offY = -minY + pad;
+
+    // Gate boxes
+    for(const c of def.innerComps){
+        const h = getGateHeight(c) || 60;
+        const col = getGateColorByName(c.type, null);
+        const el = document.createElement('div');
+        el.className = 'lt-preview-gate';
+        el.style.left = (c.x + offX) + 'px';
+        el.style.top  = (c.y + offY) + 'px';
+        el.style.width = '140px';
+        el.style.height = h + 'px';
+        el.style.borderColor = col;
+        el.style.background = 'var(--gate-bg)';
+
+        const hdr = document.createElement('div');
+        hdr.className = 'lt-preview-hdr';
+        hdr.style.background = col;
+        hdr.textContent = c.customLabel || c.type;
+        el.appendChild(hdr);
+
+        // Body with ports. Mirrors the runtime layout so the preview
+        // matches what the user will actually see on the canvas.
+        const body = document.createElement('div');
+        body.style.cssText = 'position:absolute;top:24px;left:0;right:0;bottom:0;display:flex;align-items:center;justify-content:space-between;padding:0 6px;box-sizing:border-box;';
+
+        const inCount = (c.inputs && c.inputs.length) || 0;
+        const inWrap = document.createElement('div');
+        inWrap.style.cssText = 'display:flex;flex-direction:column;justify-content:space-around;align-items:center;height:100%;';
+        for(let i = 0; i < inCount; i++){
+            const p = document.createElement('div');
+            p.style.cssText = 'width:9px;height:9px;border-radius:50%;background:var(--port-input-color,#e83e8c);border:2px solid var(--port-border-color,#fff);box-sizing:border-box;';
+            inWrap.appendChild(p);
+        }
+        body.appendChild(inWrap);
+
+        // Middle label (gate type) if there's room.
+        if(c.type !== 'INPUT' && c.type !== 'OUTPUT'){
+            const lbl = document.createElement('span');
+            lbl.textContent = c.type;
+            lbl.style.cssText = 'font-size:9px;font-weight:bold;color:var(--text-color);';
+            body.appendChild(lbl);
+        }
+
+        const outWrap = document.createElement('div');
+        outWrap.style.cssText = 'display:flex;flex-direction:column;justify-content:center;align-items:center;height:100%;';
+        const op = document.createElement('div');
+        op.style.cssText = 'width:9px;height:9px;border-radius:50%;background:var(--port-output-color,#3b5b8c);border:2px solid var(--port-border-color,#fff);box-sizing:border-box;';
+        outWrap.appendChild(op);
+        body.appendChild(outWrap);
+
+        el.appendChild(body);
+        wrap.appendChild(el);
+    }
+
+    // Wires
+    const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+    svg.setAttribute('width',  cw);
+    svg.setAttribute('height', ch);
+    svg.style.cssText = 'position:absolute;top:0;left:0;pointer-events:none;overflow:visible;';
+    wrap.appendChild(svg);
+
+    const compById = new Map();
+    for(const c of def.innerComps) compById.set(c.id, c);
+
+    // Approximate port positions using the same layout rules as the real renderer.
+    function outputPos(c){
+        const h = getGateHeight(c) || 60;
+        return { x: c.x + offX + 140, y: c.y + offY + h / 2 };
+    }
+    function inputPos(c, portIdx){
+        const h = getGateHeight(c) || 60;
+        const totalInputs = (c.inputs && c.inputs.length) || 0;
+        if(totalInputs <= 1){
+            return { x: c.x + offX, y: c.y + offY + h / 2 };
+        }
+        // Two inputs: symmetric around the center
+        const spacing = (h - 30) / 2;
+        const cy = c.y + offY + h / 2;
+        const y = (portIdx === 0) ? cy - spacing / 2 : cy + spacing / 2;
+        return { x: c.x + offX, y };
+    }
+
+    for(const w of def.innerWires){
+        const from = compById.get(w.fromComp);
+        const to   = compById.get(w.toComp);
+        if(!from || !to) continue;
+        const fp = outputPos(from);
+        const tp = inputPos(to, w.toPort);
+        const dx = Math.abs(tp.x - fp.x) * 0.5;
+        const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+        path.setAttribute('d', `M ${fp.x} ${fp.y} C ${fp.x + dx} ${fp.y}, ${tp.x - dx} ${tp.y}, ${tp.x} ${tp.y}`);
+        path.setAttribute('stroke', '#8b93a7');
+        path.setAttribute('stroke-width', '2');
+        path.setAttribute('fill', 'none');
+        path.setAttribute('stroke-linecap', 'round');
+        svg.appendChild(path);
+    }
+}
+
+function logicTableConfirmSave(){
+    const def = ltState.generatedDef;
+    if(!def){ showToast('Nothing to save.','error',2000); return; }
+
+    const name = (def.name || '').trim() || 'Custom Logic';
+
+    // Name collision check.
+    if(savedCustomGates[name]){
+        // Fall back to a unique name.
+        let i = 2;
+        let alt = name + ' ' + i;
+        while(savedCustomGates[alt]){ i++; alt = name + ' ' + i; }
+        def.name = alt;
+    }
+
+    // Ensure the folder exists.
+    if(def.folder && !savedFolders[def.folder]){
+        savedFolders[def.folder] = { name: def.folder, color: '#3d4653' };
+    }
+
+    savedCustomGates[def.name] = def;
+    updateCustomGatesToolbar();
+    forceSaveState();
+    runSimulation();
+    drawWires();
+    markPortPositionsDirty();
+
+    showToast(`Custom gate "${def.name}" created (${def.innerComps.length} gates).`, 'success', 2600);
+
+    ltState.generatedDef = null;
+    closeLogicTable();
+}
+
+window.openLogicTable           = openLogicTable;
+window.closeLogicTable          = closeLogicTable;
+window.closeLogicTableOutside   = closeLogicTableOutside;
+window.logicTableConfigChanged  = logicTableConfigChanged;
+window.logicTableGenerate       = logicTableGenerate;
+window.logicTableBackToEdit     = logicTableBackToEdit;
+window.logicTableConfirmSave    = logicTableConfirmSave;
 window.addEventListener('load',()=>{ try{ applySettings(); }catch(e){ console.warn('applySettings failed',e); } });
 
 /* ═══════════════════════════════════════════════════════════════
