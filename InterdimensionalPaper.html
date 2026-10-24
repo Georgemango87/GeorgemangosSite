@@ -1,0 +1,3430 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Interdimensional Paper — Handwritten Storytelling</title>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Caveat:wght@400;600&family=Patrick+Hand&family=Shadows+Into+Light&family=Indie+Flower&family=Kalam:wght@300;400&family=Dancing+Script:wght@400;600&family=Architects+Daughter&family=Gloria+Hallelujah&family=Reenie+Beanie&family=Just+Another+Hand&family=La+Belle+Aurore&family=Nothing+You+Could+Do&display=swap" rel="stylesheet">
+
+<style>
+/* ==========================================================================
+   1. DESIGN TOKENS
+   ========================================================================== */
+:root{
+  --bg-deep:#0b0a09;
+  --bg:#14120f;
+  --panel:#1a1714;
+  --panel-2:#211d19;
+  --panel-3:#2a251f;
+  --line:#332d26;
+  --line-soft:#292420;
+  --text:#ded6c7;
+  --text-dim:#a39a89;
+  --muted:#7d7568;
+  --accent:#c9a35b;
+  --accent-dim:#8a6f3c;
+  --accent-2:#7fa8a0;
+  --danger:#b4574a;
+  --topbar-h:58px;
+  --radius:9px;
+  --ui-font: ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  --mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+}
+
+/* ==========================================================================
+   2. BASE
+   ========================================================================== */
+*{ box-sizing:border-box; }
+html,body{ height:100%; }
+body{
+  margin:0;
+  font-family:var(--ui-font);
+  font-size:14px;
+  color:var(--text);
+  background:
+    radial-gradient(ellipse at 50% -10%, #221d17 0%, #100e0c 55%, #070606 100%);
+  overflow:hidden;
+  -webkit-font-smoothing:antialiased;
+}
+button, input, select, textarea{ font-family:inherit; font-size:inherit; color:inherit; }
+button{ cursor:pointer; }
+::-webkit-scrollbar{ width:10px; height:10px; }
+::-webkit-scrollbar-track{ background:transparent; }
+::-webkit-scrollbar-thumb{ background:#3a332b; border-radius:6px; border:2px solid transparent; background-clip:padding-box; }
+::-webkit-scrollbar-thumb:hover{ background:#4d4437; background-clip:padding-box; border:2px solid transparent; }
+.hidden{ display:none !important; }
+
+/* ==========================================================================
+   3. TOP BAR
+   ========================================================================== */
+.topbar{
+  height:var(--topbar-h);
+  display:flex; align-items:center; gap:16px;
+  padding:0 16px;
+  background:linear-gradient(#1c1916, #14120f);
+  border-bottom:1px solid var(--line);
+  position:relative; z-index:30;
+}
+.brand{
+  display:flex; align-items:center; gap:9px;
+  font-size:14px; letter-spacing:.09em; text-transform:uppercase;
+  color:var(--accent); font-weight:600; white-space:nowrap;
+}
+.brand .glyph{ font-size:18px; transform:translateY(-1px); }
+.storybar{ display:flex; align-items:center; gap:8px; flex:1; min-width:0; }
+.story-select{
+  background:var(--panel-2); border:1px solid var(--line); color:var(--text);
+  border-radius:6px; padding:6px 8px; max-width:210px; min-width:110px;
+  font-size:12.5px; outline:none;
+}
+.story-select:focus{ border-color:var(--accent-dim); }
+.story-title{
+  background:transparent; border:1px solid transparent; border-radius:6px;
+  padding:6px 9px; color:var(--text); font-size:14.5px; font-weight:500;
+  flex:1; min-width:80px; max-width:460px; outline:none;
+}
+.story-title:hover{ border-color:var(--line); }
+.story-title:focus{ border-color:var(--accent-dim); background:#100e0c; }
+.top-actions{ display:flex; gap:6px; flex-shrink:0; }
+
+/* ==========================================================================
+   4. BUTTONS
+   ========================================================================== */
+.btn{
+  background:var(--panel-2);
+  border:1px solid var(--line);
+  color:var(--text-dim);
+  padding:6px 11px;
+  border-radius:6px;
+  font-size:12.5px;
+  transition:background .15s, color .15s, border-color .15s;
+  white-space:nowrap;
+}
+.btn:hover{ background:var(--panel-3); color:var(--text); border-color:#443b31; }
+.btn:active{ transform:translateY(1px); }
+.btn.primary{ background:linear-gradient(#3d3222,#2c2419); border-color:#5a4a30; color:#e8d3a6; }
+.btn.primary:hover{ background:linear-gradient(#4b3d29,#352b1e); }
+.btn.danger:hover{ background:#3a211d; border-color:#6b352c; color:#e8b3a8; }
+.btn.small{ padding:4px 9px; font-size:12px; }
+.btn:disabled{ opacity:.35; cursor:not-allowed; }
+
+.mini{
+  background:transparent; border:1px solid transparent; color:var(--muted);
+  border-radius:5px; width:22px; height:22px; line-height:1; padding:0;
+  font-size:12px; display:inline-flex; align-items:center; justify-content:center;
+}
+.mini:hover{ background:#2e2822; color:var(--text); border-color:#423a31; }
+.mini.danger:hover{ background:#3a211d; color:#e8b3a8; }
+
+/* ==========================================================================
+   5. STUDIO LAYOUT
+   ========================================================================== */
+.studio{
+  height:calc(100vh - var(--topbar-h));
+  display:grid;
+  grid-template-columns:300px minmax(0,1fr) 344px;
+  overflow:hidden;
+}
+.panel{
+  background:linear-gradient(180deg,#181512,#12100e);
+  border-right:1px solid var(--line);
+  display:flex; flex-direction:column;
+  overflow:hidden;
+  min-height:0;
+}
+.panel-right{ border-right:none; border-left:1px solid var(--line); overflow-y:auto; }
+
+.tabs{ display:flex; border-bottom:1px solid var(--line); flex-shrink:0; }
+.tab{
+  flex:1; background:transparent; border:none; border-bottom:2px solid transparent;
+  color:var(--muted); padding:11px 6px 9px; font-size:12.5px; letter-spacing:.05em;
+  text-transform:uppercase; transition:color .15s, border-color .15s;
+}
+.tab:hover{ color:var(--text-dim); }
+.tab.active{ color:var(--accent); border-bottom-color:var(--accent); }
+.tabpane{ display:flex; flex-direction:column; min-height:0; flex:1; }
+.pane-head{
+  display:flex; align-items:center; justify-content:space-between;
+  padding:10px 12px; flex-shrink:0; gap:8px;
+}
+.pane-title{ font-size:11px; letter-spacing:.12em; text-transform:uppercase; color:var(--muted); }
+.pane-actions{ display:flex; gap:6px; flex-wrap:wrap; }
+.list{ overflow-y:auto; padding:0 10px 20px; flex:1; min-height:0; }
+
+.card{
+  border:1px solid var(--line-soft);
+  background:var(--panel);
+  border-radius:var(--radius);
+  padding:9px 10px;
+  margin-bottom:8px;
+  cursor:pointer;
+  transition:border-color .15s, background .15s, box-shadow .15s;
+  position:relative;
+}
+.card:hover{ border-color:#413931; background:var(--panel-2); }
+.card.selected{
+  border-color:var(--accent-dim);
+  box-shadow:0 0 0 1px rgba(201,163,91,.22), 0 2px 12px rgba(0,0,0,.35);
+  background:var(--panel-2);
+}
+.card-top{ display:flex; align-items:center; gap:7px; }
+.dot{ width:9px; height:9px; border-radius:50%; flex-shrink:0; box-shadow:0 0 0 1px rgba(255,255,255,.12) inset; }
+.card-name{ font-size:13.5px; font-weight:500; flex:1; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.card-tools{ display:flex; gap:1px; opacity:.25; transition:opacity .15s; }
+.card:hover .card-tools, .card.selected .card-tools{ opacity:1; }
+
+.hand-chip{
+  margin-top:7px;
+  background:linear-gradient(#f6eeda,#efe5cd);
+  border-radius:4px;
+  padding:5px 9px 7px;
+  font-size:16px;
+  line-height:1.25;
+  overflow:hidden; white-space:nowrap; text-overflow:ellipsis;
+  box-shadow:inset 0 0 0 1px rgba(120,100,70,.18), 0 1px 2px rgba(0,0,0,.3);
+}
+
+.msg-card{ padding:8px 9px; }
+.msg-card.dragging{ opacity:.4; }
+.msg-card.drag-over{ border-color:var(--accent); }
+.msg-head{ display:flex; align-items:center; gap:7px; }
+.idx{
+  font-family:var(--mono); font-size:10px; color:var(--muted);
+  background:#100e0c; border:1px solid var(--line-soft); border-radius:4px;
+  padding:1px 4px; min-width:20px; text-align:center;
+}
+.who{ font-size:13px; color:var(--text-dim); flex:1; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.msg-tools{ display:flex; gap:0; opacity:.25; transition:opacity .15s; }
+.msg-card:hover .msg-tools, .msg-card.selected .msg-tools{ opacity:1; }
+.msg-text{
+  margin-top:6px;
+  background:linear-gradient(#f6eeda,#efe5cd);
+  border-radius:4px;
+  padding:5px 9px 7px;
+  font-size:15px; line-height:1.3;
+  max-height:66px; overflow:hidden;
+  box-shadow:inset 0 0 0 1px rgba(120,100,70,.18), 0 1px 2px rgba(0,0,0,.3);
+  word-break:break-word;
+}
+.msg-text em{ color:#8a7f68; }
+.msg-text .drawing-tag{
+  display:inline-block; font-family:var(--mono); font-size:10.5px;
+  color:#8a6f3c; background:rgba(200,170,110,.15); border:1px solid rgba(160,130,80,.35);
+  border-radius:3px; padding:0 4px; margin:0 2px;
+}
+.msg-text.drawing-thumb{
+  display:flex; align-items:center; justify-content:center;
+  height:58px; padding:5px;
+}
+.msg-text.drawing-thumb .drawing-svg{ max-height:46px; width:100%; }
+.msg-dir{
+  margin-top:5px; font-size:11px; color:var(--muted); font-style:italic;
+  border-left:2px solid var(--line); padding-left:6px; line-height:1.4;
+}
+.badge-important{
+  color:var(--accent); font-size:10px; border:1px solid var(--accent-dim);
+  border-radius:4px; padding:0 4px; margin-left:4px;
+}
+.badge-drawing{
+  color:var(--accent-2); font-size:10px; border:1px solid #3f5b57;
+  border-radius:4px; padding:0 4px; margin-left:4px;
+}
+.empty{
+  text-align:center; color:var(--muted); font-size:12.5px; line-height:1.7;
+  padding:36px 14px; font-style:italic;
+}
+
+/* ==========================================================================
+   6. STAGE / PAPER
+   ========================================================================== */
+.stage-area{
+  display:flex; flex-direction:column; min-width:0; min-height:0;
+  background:
+    radial-gradient(ellipse at 50% 0%, #1b1713 0%, #0c0b0a 70%);
+  position:relative;
+}
+.paper-scroll{
+  flex:1; overflow-y:auto; overflow-x:auto; min-height:0;
+  scroll-behavior:smooth;
+  position:relative;
+}
+.paper-stack{
+  display:flex; flex-direction:column; align-items:center;
+  gap:30px;
+  padding:34px 20px 90px;
+  min-height:100%;
+}
+
+.paper{
+  position:relative;
+  isolation:isolate;
+  box-sizing:border-box;
+  width:760px; max-width:100%;
+  background-color:#f4ecdc;
+  background-repeat:repeat;
+  color:#1b2a4a;
+  border-radius:2px 5px 3px 4px / 4px 3px 5px 2px;
+  box-shadow:
+    0 1px 1px rgba(0,0,0,.35),
+    0 10px 22px rgba(0,0,0,.5),
+    0 26px 60px rgba(0,0,0,.55),
+    inset 0 0 90px rgba(150,125,80,.16);
+  transition:width .18s ease;
+}
+.paper::before{
+  content:"";
+  position:absolute;
+  inset:0;
+  border-radius:inherit;
+  pointer-events:none;
+  z-index:0;
+  opacity:var(--wrinkle, 0.45);
+  background-image:
+    linear-gradient(114deg, transparent 37%, rgba(46,32,14,0.18) 46%, rgba(255,255,255,0.6) 48.5%, transparent 55%),
+    linear-gradient(-71deg, transparent 60%, rgba(46,32,14,0.14) 67%, rgba(255,255,255,0.45) 69.5%, transparent 75%),
+    linear-gradient(168deg, transparent 26%, rgba(255,255,255,0.38) 38%, transparent 46%),
+    radial-gradient(ellipse 48% 30% at 75% 16%, rgba(46,32,14,0.12), transparent 72%),
+    radial-gradient(ellipse 40% 36% at 18% 76%, rgba(255,255,255,0.3), transparent 74%),
+    radial-gradient(ellipse 30% 22% at 88% 84%, rgba(46,32,14,0.1), transparent 70%);
+  background-repeat:no-repeat;
+}
+.paper > *{ position:relative; z-index:1; }
+.paper::after{
+  content:"";
+  position:absolute; inset:0; pointer-events:none;
+  border-radius:inherit;
+  box-shadow:inset 0 0 0 1px rgba(255,255,255,.35), inset 0 0 0 2px rgba(120,100,70,.07);
+}
+.paper.fixed{ overflow:hidden; }
+.paper.overflow{ height:auto !important; overflow:visible; }
+.paper[data-style="aged"]{ background-color:#f4ecdc; }
+.paper[data-style="cream"]{ background-color:#fbf7ec; }
+.paper[data-style="parchment"]{ background-color:#ece0c6; }
+.paper[data-style="blueprint"]{ background-color:#e7edf3; }
+.paper[data-style="rose"]{ background-color:#f7eae6; }
+
+.paper-hint{
+  font-family:var(--ui-font);
+  font-style:italic;
+  color:#a89b80;
+  text-align:center;
+  padding:60px 20px;
+  font-size:15px;
+  letter-spacing:.02em;
+}
+
+/* ---- ruled-paper alignment ---------------------------------------------- */
+.paper.ruled .msg-block{ line-height: var(--grid); }
+.paper.ruled .msg-body{
+  line-height: inherit;
+  transform: translateY(calc(var(--grid) * 0.5 - 0.35em));
+}
+.paper.ruled .stage-dir{ line-height: var(--grid); margin: 0; }
+.paper.ruled .msg-block.overwrite{ margin-top: calc(-1 * var(--grid)); }
+
+.msg-block{
+  display:flex;
+  flex-direction:column;
+  align-items:flex-start;
+  position:relative;
+  margin-bottom:26px;
+  animation:blockIn .28s ease both;
+}
+@keyframes blockIn{ from{ opacity:0; } to{ opacity:1; } }
+.msg-block.overwrite{ margin-top:-14px; z-index:2; }
+.msg-block.faded .msg-body{ opacity:.62; filter:blur(.25px); }
+.msg-block.faded{ opacity:.85; }
+
+.stage-dir{
+  font-family:var(--ui-font);
+  font-style:italic;
+  font-size:12.5px;
+  line-height:1.5;
+  color:#8a7c62;
+  opacity:.9;
+  margin:0 0 8px;
+  padding-left:10px;
+  border-left:2px solid rgba(140,120,85,.3);
+  max-width:100%;
+  animation:stageIn .6s ease both;
+}
+@keyframes stageIn{ from{ opacity:0; transform:translateX(-6px);} to{ opacity:.9; transform:none;} }
+
+.msg-body{
+  position:relative;
+  white-space:normal;
+  word-break:normal;
+  overflow-wrap:break-word;
+}
+.msg-block.important .msg-body::before{
+  content:"✧";
+  position:absolute;
+  left:-1.5em; top:.1em;
+  font-size:.8em;
+  opacity:.45;
+  color:currentColor;
+}
+
+.msg-block.crossed .msg-body::after{
+  content:"";
+  position:absolute;
+  left:-8px; right:-8px; top:52%;
+  height:0;
+  border-top:2px solid currentColor;
+  opacity:0;
+  transform:rotate(-.8deg) scaleX(0);
+  transform-origin:left center;
+  transition:transform .45s ease, opacity .3s ease;
+  pointer-events:none;
+}
+.msg-block.crossed.done .msg-body::after{
+  opacity:.55;
+  transform:rotate(-.8deg) scaleX(1);
+}
+
+/* ---- inline drawings ------------------------------------------------------ */
+.inline-drawing{
+  display: inline-block;
+  vertical-align: middle;
+  opacity: 0;
+  transition: opacity .45s ease;
+  margin: 0 4px;
+  line-height: 0;
+  position: relative;
+  top: -0.05em;
+}
+.inline-drawing.on{ opacity: 1; }
+.inline-drawing.missing{
+  font-family: var(--mono);
+  font-size: .65em;
+  line-height: 1.4;
+  color: #8a6f3c;
+  background: rgba(200,170,110,.15);
+  border: 1px dashed #a89060;
+  padding: 1px 6px;
+  border-radius: 4px;
+  top: 0;
+}
+
+/* The inline SVG is sized in em so it scales with the surrounding text.
+   vector-effect:non-scaling-stroke keeps line widths visible when the
+   drawing is shrunk down from the large drawing canvas. */
+.inline-drawing svg.drawing-svg{
+  display: inline-block;
+  vertical-align: middle;
+  height: 1.7em;
+  width: auto;
+  max-width: 6em;
+  max-height: 1.7em;
+  overflow: visible;
+}
+
+/* ---- standalone / legacy drawing blocks ---------------------------------- */
+.drawing-block .msg-drawing{
+  opacity: 0;
+  transition: opacity .55s ease;
+  max-width: 100%;
+}
+.drawing-block.shown .msg-drawing{ opacity: 1; }
+.drawing-block.faded .msg-drawing{ opacity: .62; }
+.msg-drawing .drawing-svg{
+  display: block;
+  max-width: 100%;
+  height: auto;
+}
+
+.w{ display:inline-block; }
+.ch{ opacity:0; white-space:pre; transition:opacity .11s linear; }
+.ch.on{ opacity:1; }
+
+/* ==========================================================================
+   7. TRANSPORT
+   ========================================================================== */
+.transport{
+  flex-shrink:0;
+  display:flex; align-items:center; justify-content:center; gap:8px;
+  padding:9px 14px;
+  background:linear-gradient(#16130f,#100e0c);
+  border-top:1px solid var(--line);
+  flex-wrap:wrap;
+}
+.tbtn{
+  background:var(--panel-2);
+  border:1px solid var(--line);
+  color:var(--text-dim);
+  border-radius:7px;
+  width:38px; height:34px;
+  display:inline-flex; align-items:center; justify-content:center;
+  font-size:14px;
+  transition:background .15s, color .15s, border-color .15s;
+}
+.tbtn:hover:not(:disabled){ background:var(--panel-3); color:var(--text); border-color:#463d33; }
+.tbtn:disabled{ opacity:.3; cursor:not-allowed; }
+.tbtn.play{
+  width:52px; height:38px; font-size:16px;
+  background:linear-gradient(#3d3222,#2b2318);
+  border-color:#5a4a30; color:#ecd8ab;
+}
+.tbtn.play:hover:not(:disabled){ background:linear-gradient(#4b3d29,#352b1e); }
+.tbtn.playing{ color:#e8b3a8; border-color:#6b352c; background:linear-gradient(#3a211d,#2a1815); }
+
+.speed{ display:flex; align-items:center; gap:6px; font-size:11.5px; color:var(--muted); letter-spacing:.06em; text-transform:uppercase; }
+.speed select{
+  background:var(--panel-2); border:1px solid var(--line); color:var(--text-dim);
+  border-radius:6px; padding:4px 6px; outline:none; font-size:12px;
+}
+.progress{
+  font-family:var(--mono); font-size:11.5px; color:var(--muted);
+  min-width:66px; text-align:center;
+}
+
+/* ==========================================================================
+   8. INSPECTOR
+   ========================================================================== */
+#inspector{ padding:14px 14px 40px; }
+.insp-head{
+  display:flex; align-items:center; justify-content:space-between;
+  margin-bottom:12px; padding-bottom:10px; border-bottom:1px solid var(--line);
+}
+.insp-title{ font-size:11px; letter-spacing:.14em; text-transform:uppercase; color:var(--accent); }
+.insp-sub{ font-size:11.5px; color:var(--muted); }
+
+.section{
+  border:1px solid var(--line-soft);
+  border-radius:var(--radius);
+  margin-bottom:12px;
+  background:var(--panel);
+  overflow:hidden;
+}
+.section > summary{
+  list-style:none;
+  cursor:pointer;
+  padding:9px 11px;
+  font-size:11px; letter-spacing:.11em; text-transform:uppercase;
+  color:var(--text-dim);
+  display:flex; align-items:center; justify-content:space-between;
+  user-select:none;
+}
+.section > summary::-webkit-details-marker{ display:none; }
+.section > summary::after{ content:"▾"; color:var(--muted); font-size:10px; transition:transform .15s; }
+.section:not([open]) > summary::after{ transform:rotate(-90deg); }
+.section > summary:hover{ color:var(--text); }
+.section-body{ padding:4px 11px 12px; }
+
+.field{ display:block; margin-bottom:11px; }
+.flabel{
+  display:block; font-size:11.5px; color:var(--muted);
+  margin-bottom:5px; letter-spacing:.03em;
+}
+.frow{ display:flex; align-items:center; gap:9px; }
+.frow input[type=range]{ flex:1; accent-color:var(--accent); min-width:0; }
+.frow .val{
+  font-family:var(--mono); font-size:11px; color:var(--text-dim);
+  min-width:52px; text-align:right;
+}
+input[type=text], input[type=number], select, textarea{
+  width:100%;
+  background:#100e0c;
+  border:1px solid var(--line);
+  border-radius:6px;
+  padding:7px 9px;
+  color:var(--text);
+  outline:none;
+  transition:border-color .15s;
+}
+input[type=text]:focus, input[type=number]:focus, select:focus, textarea:focus{ border-color:var(--accent-dim); }
+textarea{ resize:vertical; min-height:76px; line-height:1.55; }
+input[type=color]{
+  width:38px; height:30px; padding:0; border:1px solid var(--line);
+  border-radius:6px; background:#100e0c; cursor:pointer;
+}
+.swatches{ display:flex; flex-wrap:wrap; gap:5px; margin-top:7px; }
+.swatch{
+  width:20px; height:20px; border-radius:50%; border:1px solid rgba(255,255,255,.18);
+  cursor:pointer; transition:transform .12s;
+}
+.swatch:hover{ transform:scale(1.18); }
+.check{
+  display:flex; align-items:center; gap:8px;
+  font-size:12.5px; color:var(--text-dim);
+  margin-bottom:9px; cursor:pointer; user-select:none;
+}
+.check input{ accent-color:var(--accent); width:15px; height:15px; cursor:pointer; }
+.hint{ font-size:11.5px; color:var(--muted); line-height:1.55; margin-top:-4px; margin-bottom:10px; }
+.insp-actions{ display:flex; gap:7px; flex-wrap:wrap; margin-top:14px; }
+
+.inline-drawing-row{
+  display:flex; align-items:center; gap:6px;
+  padding:5px 0;
+  border-top:1px solid var(--line-soft);
+}
+.inline-drawing-row:first-of-type{ border-top:none; }
+.inline-thumb{
+  background:linear-gradient(#f6eeda,#efe5cd);
+  border-radius:4px;
+  width:54px; height:38px;
+  display:flex; align-items:center; justify-content:center;
+  box-shadow:inset 0 0 0 1px rgba(120,100,70,.18);
+  flex-shrink:0;
+  overflow:hidden;
+}
+.inline-thumb svg{ max-width:50px; max-height:34px; width:auto; height:auto; }
+.inline-token{
+  font-family:var(--mono); font-size:10.5px; color:var(--muted);
+  flex:1; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
+}
+
+.drawing-preview{
+  background:linear-gradient(#f6eeda,#efe5cd);
+  border-radius:5px;
+  padding:8px;
+  box-shadow:inset 0 0 0 1px rgba(120,100,70,.2);
+  display:flex; justify-content:center; align-items:center;
+  min-height:90px;
+}
+.drawing-preview .drawing-svg{ max-width:100%; height:auto; max-height:220px; }
+
+/* ==========================================================================
+   9. TOAST
+   ========================================================================== */
+.toast{
+  position:fixed; left:50%; bottom:28px; transform:translate(-50%,16px);
+  background:#241f19; border:1px solid #4a3f31; color:var(--text);
+  padding:10px 18px; border-radius:8px; font-size:13px;
+  box-shadow:0 8px 28px rgba(0,0,0,.6);
+  opacity:0; pointer-events:none; transition:opacity .25s, transform .25s;
+  z-index:200; max-width:80vw; text-align:center;
+}
+.toast.show{ opacity:1; transform:translate(-50%,0); }
+
+/* ==========================================================================
+   10. DRAWING MODAL
+   ========================================================================== */
+.modal-backdrop{
+  position:fixed; inset:0; z-index:300;
+  background:rgba(6,5,4,.72);
+  backdrop-filter:blur(4px);
+  display:flex; align-items:center; justify-content:center;
+  padding:20px;
+}
+.modal-backdrop[hidden]{ display:none; }
+.draw-modal{
+  width:min(980px,96vw); max-height:92vh;
+  background:#1a1714; border:1px solid #352e26; border-radius:12px;
+  box-shadow:0 30px 80px rgba(0,0,0,.7);
+  display:flex; flex-direction:column; overflow:hidden;
+}
+.modal-head{
+  display:flex; align-items:center; gap:16px; padding:12px 16px;
+  border-bottom:1px solid var(--line); flex-wrap:wrap;
+}
+.draw-tools{ display:flex; align-items:center; gap:12px; flex-wrap:wrap; flex:1; }
+.draw-tools label{ font-size:11.5px; color:var(--muted); display:flex; align-items:center; gap:6px; }
+.draw-tools input[type=range]{ width:100px; accent-color:var(--accent); }
+.draw-canvas-wrap{ padding:16px; display:flex; justify-content:center; background:#0f0d0b; overflow:auto; }
+#drawCanvas{
+  width:100%; max-width:900px; height:auto; aspect-ratio:9 / 5;
+  background:#f4ecdc;
+  border-radius:6px;
+  box-shadow:inset 0 0 40px rgba(150,125,80,.2), 0 6px 20px rgba(0,0,0,.5);
+  touch-action:none; cursor:crosshair;
+}
+.modal-actions{
+  display:flex; justify-content:flex-end; gap:8px;
+  padding:12px 16px; border-top:1px solid var(--line);
+}
+
+/* ==========================================================================
+   11. PRESENTATION MODE
+   ========================================================================== */
+body.present .topbar,
+body.present .panel-left,
+body.present .panel-right{ display:none !important; }
+body.present .studio{ grid-template-columns:1fr; height:100vh; }
+body.present .stage-area{ border:none; }
+body.present .paper-stack{ padding-top:46px; padding-bottom:120px; }
+body.present .transport{
+  border-top:none;
+  position:fixed;
+  bottom:18px; left:50%; transform:translateX(-50%);
+  background:rgba(20,17,14,.9);
+  border:1px solid #352e26;
+  border-radius:12px;
+  padding:8px 14px;
+  backdrop-filter:blur(8px);
+  box-shadow:0 10px 34px rgba(0,0,0,.6);
+  z-index:50;
+  opacity:.28;
+  transition:opacity .3s;
+}
+body.present .transport:hover{ opacity:1; }
+#btnExitPresent{ display:none; }
+body.present #btnExitPresent{ display:inline-flex; }
+
+/* ==========================================================================
+   12. RESPONSIVE
+   ========================================================================== */
+@media (max-width:1180px){
+  .studio{ grid-template-columns:262px minmax(0,1fr) 310px; }
+}
+@media (max-width:900px){
+  body{ overflow:auto; }
+  .studio{
+    display:flex; flex-direction:column;
+    height:auto; min-height:calc(100vh - var(--topbar-h));
+  }
+  .stage-area{ order:-1; height:66vh; min-height:420px; }
+  .panel{ border:none; border-top:1px solid var(--line); max-height:none; }
+  .panel-right{ border-left:none; }
+  .list{ max-height:340px; }
+  .topbar{ flex-wrap:wrap; height:auto; padding:8px 10px; gap:8px; }
+  .storybar{ order:3; width:100%; }
+  .paper-stack{ padding:18px 10px 70px; }
+  .paper{ padding-left:26px !important; padding-right:26px !important; }
+}
+</style>
+</head>
+<body>
+
+<header class="topbar">
+  <div class="brand"><span class="glyph">✒</span> Interdimensional Paper</div>
+  <div class="storybar">
+    <select id="storySelect" class="story-select" title="Switch story"></select>
+    <input id="storyTitle" class="story-title" type="text" placeholder="Untitled story" spellcheck="false">
+  </div>
+  <div class="top-actions">
+    <button class="btn" id="btnNew" title="Start a new, empty story">New</button>
+    <button class="btn" id="btnDup" title="Duplicate this story">Duplicate</button>
+    <button class="btn" id="btnExport" title="Download this story as JSON">Export</button>
+    <button class="btn" id="btnImport" title="Load a story from a JSON file">Import</button>
+    <button class="btn danger" id="btnClear" title="Clear all messages and characters">Clear</button>
+    <button class="btn primary" id="btnPresent" title="Presentation mode (fullscreen)">Presentation</button>
+  </div>
+</header>
+<input type="file" id="fileInput" accept="application/json,.json" hidden>
+
+<main class="studio" id="studio">
+
+  <aside class="panel panel-left">
+    <div class="tabs">
+      <button class="tab active" data-tab="chars">Characters</button>
+      <button class="tab" data-tab="msgs">Conversation</button>
+    </div>
+
+    <div class="tabpane" id="paneChars">
+      <div class="pane-head">
+        <span class="pane-title">Cast</span>
+        <button class="btn small" id="btnAddChar">+ Character</button>
+      </div>
+      <div class="list" id="charList"></div>
+    </div>
+
+    <div class="tabpane hidden" id="paneMsgs">
+      <div class="pane-head">
+        <span class="pane-title">Messages</span>
+        <span class="pane-actions">
+          <button class="btn small" id="btnAddMsg" title="Add a new message">+ Message</button>
+          <button class="btn small" id="btnAddDrawing" title="Add a message with a drawing">+ Drawing</button>
+        </span>
+      </div>
+      <div class="list" id="msgList"></div>
+    </div>
+  </aside>
+
+  <section class="stage-area">
+    <div class="paper-scroll" id="paperScroll">
+      <div class="paper-stack" id="paperStack"></div>
+    </div>
+
+    <div class="transport" id="transport">
+      <button class="tbtn" id="btnRestart" title="Restart (R)">⏮</button>
+      <button class="tbtn" id="btnPrev" title="Previous message (←)">⏪</button>
+      <button class="tbtn play" id="btnPlay" title="Play / Pause (Space)">▶</button>
+      <button class="tbtn" id="btnNext" title="Next message (→)">⏩</button>
+      <button class="tbtn" id="btnEnd" title="Skip to the end">⏭</button>
+      <label class="speed">Speed
+        <select id="speedSel">
+          <option value="0.5">0.5×</option>
+          <option value="0.75">0.75×</option>
+          <option value="1" selected>1×</option>
+          <option value="1.5">1.5×</option>
+          <option value="2">2×</option>
+          <option value="3">3×</option>
+        </select>
+      </label>
+      <span class="progress" id="progressLabel">—</span>
+      <button class="tbtn" id="btnExitPresent" title="Exit presentation">✕</button>
+    </div>
+  </section>
+
+  <aside class="panel panel-right">
+    <div id="inspector"></div>
+  </aside>
+
+</main>
+
+<div class="toast" id="toast"></div>
+
+<div class="modal-backdrop" id="drawBackdrop" hidden>
+  <div class="draw-modal" role="dialog" aria-modal="true" aria-label="Drawing editor">
+    <div class="modal-head">
+      <span class="insp-title" style="flex-shrink:0" id="drawTitle">Draw</span>
+      <div class="draw-tools">
+        <input type="color" id="drawColor" value="#1b2a4a" title="Ink colour">
+        <div class="swatches" id="drawSwatches"></div>
+        <label>Size <input type="range" id="drawSize" min="1" max="14" value="3" step="1"></label>
+        <button class="btn small" id="drawUndo">Undo</button>
+        <button class="btn small" id="drawClear">Clear</button>
+      </div>
+    </div>
+    <div class="draw-canvas-wrap">
+      <canvas id="drawCanvas" width="900" height="500"></canvas>
+    </div>
+    <div class="modal-actions">
+      <button class="btn" id="drawCancel">Cancel</button>
+      <button class="btn primary" id="drawInsert">Insert drawing</button>
+    </div>
+  </div>
+</div>
+
+<script>
+"use strict";
+/* ==========================================================================
+   SECTION 0 — UTILITIES
+   ========================================================================== */
+const $  = (sel, root = document) => root.querySelector(sel);
+const $$ = (sel, root = document) => Array.prototype.slice.call(root.querySelectorAll(sel));
+
+const SVGNS = "http://www.w3.org/2000/svg";
+const DRAWING_TOKEN_RE = /\{\{d:([a-zA-Z0-9_]+)\}\}/g;
+
+const uid = (prefix = "id") =>
+  prefix + "_" + Math.random().toString(36).slice(2, 9) + Date.now().toString(36).slice(-4);
+
+const clamp = (v, min, max) => Math.min(max, Math.max(min, v));
+const num = (v, fallback = 0) => (isFinite(Number(v)) ? Number(v) : fallback);
+
+const esc = (s) =>
+  String(s == null ? "" : s).replace(/[&<>"']/g, (c) => ({
+    "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;"
+  }[c]));
+
+const debounce = (fn, ms) => {
+  let t = null;
+  return function (...args) {
+    clearTimeout(t);
+    t = setTimeout(() => fn.apply(this, args), ms);
+  };
+};
+
+const deepCopy = (o) => JSON.parse(JSON.stringify(o));
+
+let toastTimer = null;
+function toast(msg) {
+  const el = $("#toast");
+  el.textContent = msg;
+  el.classList.add("show");
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => el.classList.remove("show"), 2400);
+}
+
+function previewText(text) {
+  if (!text) return "";
+  return String(text).replace(DRAWING_TOKEN_RE, " [drawing] ");
+}
+
+/* ==========================================================================
+   SECTION 1 — DATA MODEL
+   ========================================================================== */
+
+const FONTS = [
+  { label: "Caveat",                 stack: "'Caveat', 'Segoe Script', 'Bradley Hand', cursive" },
+  { label: "Patrick Hand",           stack: "'Patrick Hand', 'Comic Sans MS', 'Segoe Print', cursive" },
+  { label: "Shadows Into Light",     stack: "'Shadows Into Light', 'Bradley Hand', 'Comic Sans MS', cursive" },
+  { label: "Indie Flower",           stack: "'Indie Flower', 'Comic Sans MS', cursive" },
+  { label: "Kalam",                  stack: "'Kalam', 'Comic Sans MS', cursive" },
+  { label: "Dancing Script",         stack: "'Dancing Script', 'Brush Script MT', cursive" },
+  { label: "Architects Daughter",    stack: "'Architects Daughter', 'Comic Sans MS', cursive" },
+  { label: "Gloria Hallelujah",      stack: "'Gloria Hallelujah', 'Comic Sans MS', cursive" },
+  { label: "Reenie Beanie",          stack: "'Reenie Beanie', 'Segoe Script', cursive" },
+  { label: "Just Another Hand",      stack: "'Just Another Hand', 'Segoe Print', cursive" },
+  { label: "La Belle Aurore",        stack: "'La Belle Aurore', 'Segoe Script', cursive" },
+  { label: "Nothing You Could Do",   stack: "'Nothing You Could Do', 'Bradley Hand', cursive" },
+  { label: "System · Segoe Script",  stack: "'Segoe Script', 'Bradley Hand', cursive" },
+  { label: "System · Bradley Hand",  stack: "'Bradley Hand', 'Chalkboard SE', cursive" },
+  { label: "System · Marker Felt",   stack: "'Marker Felt', 'Comic Sans MS', cursive" },
+  { label: "System · Chalkboard",    stack: "'Chalkboard SE', 'Comic Sans MS', cursive" },
+  { label: "System · Brush Script",  stack: "'Brush Script MT', 'Segoe Script', cursive" },
+  { label: "System · Lucida Handwriting", stack: "'Lucida Handwriting', 'Segoe Script', cursive" },
+  { label: "System · KaiTi (中文)",   stack: "'KaiTi', 'STKaiti', 'Kaiti SC', serif" },
+  { label: "System · Comic Sans",    stack: "'Comic Sans MS', 'Comic Sans', cursive" }
+];
+
+const PRESETS = {
+  neat: {
+    label: "Neat & precise",
+    font: FONTS[0].stack, size: 22, speed: 15,
+    lineSpacing: 1.72, letterSpacing: 0.4, jitter: 0.15
+  },
+  casual: {
+    label: "Casual handwriting",
+    font: FONTS[1].stack, size: 23, speed: 13,
+    lineSpacing: 1.75, letterSpacing: 0.2, jitter: 0.45
+  },
+  messy: {
+    label: "Messy & hurried",
+    font: FONTS[2].stack, size: 24, speed: 20,
+    lineSpacing: 1.6, letterSpacing: 0, jitter: 1.1
+  },
+  elegant: {
+    label: "Elegant cursive",
+    font: FONTS[5].stack, size: 28, speed: 11,
+    lineSpacing: 1.6, letterSpacing: 0.3, jitter: 0.25
+  },
+  bold: {
+    label: "Bold & angular",
+    font: FONTS[4].stack, size: 22, speed: 16,
+    lineSpacing: 1.7, letterSpacing: 0.5, jitter: 0.5
+  },
+  childlike: {
+    label: "Childlike",
+    font: FONTS[7].stack, size: 21, speed: 9,
+    lineSpacing: 1.9, letterSpacing: 0.6, jitter: 1.2
+  }
+};
+
+const INKS = [
+  "#1b2a4a", "#141414", "#3b2a1a", "#7a1f1f", "#1f4a33",
+  "#4a2a5a", "#0f4457", "#6b4a00", "#2d2d2d", "#8a3b12"
+];
+
+const PUNCT_PAUSE = {
+  ",": 190, ";": 240, ":": 220,
+  ".": 300, "!": 320, "?": 340,
+  "—": 270, "–": 240, "…": 380,
+  "·": 120, "¡": 200, "¿": 220
+};
+
+const APP_TAG = "interdimensional-paper";
+const SCHEMA_VERSION = 4;
+const STORE_KEY = "idpaper.library.v1";
+
+function makeCharacter(presetKey = "casual", name = "New Character") {
+  const p = PRESETS[presetKey] || PRESETS.casual;
+  return {
+    id: uid("ch"),
+    name: name,
+    preset: presetKey,
+    font: p.font,
+    color: INKS[Math.floor(Math.random() * INKS.length)],
+    fontSize: p.size,
+    speed: p.speed,
+    lineSpacing: p.lineSpacing,
+    letterSpacing: p.letterSpacing,
+    jitter: p.jitter,
+    description: ""
+  };
+}
+
+function makeMessage(characterId, text = "") {
+  return {
+    id: uid("msg"),
+    kind: "text",
+    strokes: [],
+    inlineDrawings: {},
+    characterId: characterId || "",
+    text: text,
+    direction: "",
+    delay: 600,
+    pause: 900,
+    important: false,
+    fontOverride: "",
+    colorOverride: "",
+    effects: {
+      hesitate: false,
+      slow: false,
+      crossed: false,
+      faded: false,
+      overwrite: false
+    }
+  };
+}
+
+function defaultSettings() {
+  return {
+    paperStyle: "aged",
+    paperWidth: 760,
+    pageMode: "continuous",
+    pageHeight: 1050,
+    marginX: 64,
+    marginY: 56,
+    fontScale: 1,
+    messageSpacing: 26,
+    paperWrinkles: 45,
+    separators: false,
+    autoScroll: true,
+    ruledLines: true
+  };
+}
+
+function makeProject(name) {
+  const a = makeCharacter("neat", "Elara");
+  a.color = "#1b2a4a";
+  a.description = "Writes from a quiet archive that smells of dust and rain.";
+
+  const b = makeCharacter("messy", "Kade");
+  b.color = "#7a1f1f";
+  b.description = "Writes fast, from a reality that is running out of time.";
+
+  const c = makeCharacter("elegant", "The Other");
+  c.color = "#1f4a33";
+  c.description = "Never signs a name. The handwriting is too elegant to trust.";
+
+  const p = {
+    id: uid("story"),
+    name: name || "A Conversation Across Realities",
+    characters: [a, b, c],
+    messages: [],
+    settings: defaultSettings()
+  };
+
+  const m = (charId, text, extra) =>
+    Object.assign(makeMessage(charId, text), extra || {});
+
+  p.messages = [
+    m(a.id, "Is anyone there? I found the paper again, folded inside a book that has no title.",
+      { delay: 500, pause: 1400, direction: "The page is blank for a long moment." }),
+    m(b.id, "I'm here. Don't press too hard — the ink bleeds through on my side.",
+      { delay: 900, pause: 1200 }),
+    m(a.id, "You're the one who left the note about the thirteenth door.",
+      { delay: 800, pause: 1500 }),
+    m(b.id, "That wasn't me.",
+      { delay: 1800, pause: 2200 }),
+    m(c.id, "It was neither of you.",
+      { delay: 2600, pause: 1600, important: true,
+        direction: "The next words are written in a hand neither of them recognises." }),
+    m(a.id, "Who is this?",
+      { delay: 700, pause: 1800 }),
+    m(c.id, "Someone who has been reading this page for a very long time. Please — keep writing. I am almost through.",
+      { delay: 2200, pause: 2400, effects: { hesitate: true, slow: false, crossed: false, faded: true, overwrite: false } })
+  ];
+
+  return p;
+}
+
+/* ==========================================================================
+   SECTION 2 — APPLICATION STATE
+   ========================================================================== */
+let library = { currentId: null, stories: {} };
+let project = null;
+
+const ui = {
+  tab: "chars",
+  selection: { type: "paper", id: null },
+  presenting: false
+};
+
+function getChar(id) {
+  return project.characters.find((c) => c.id === id) || null;
+}
+function getMessage(id) {
+  return project.messages.find((m) => m.id === id) || null;
+}
+function msgIndexById(id) {
+  return project.messages.findIndex((m) => m.id === id);
+}
+
+function gridGap(s) {
+  s = s || project.settings;
+  let maxF = 20;
+  if (project && Array.isArray(project.characters)) {
+    project.characters.forEach((c) => { if (c.fontSize > maxF) maxF = c.fontSize; });
+  }
+  const scale = s.fontScale || 1;
+  return Math.max(20, Math.round(Math.max(36 * scale, maxF * scale * 1.3)));
+}
+
+/* ==========================================================================
+   SECTION 3 — PERSISTENCE
+   ========================================================================== */
+const saveLibrary = debounce(function () {
+  try {
+    localStorage.setItem(STORE_KEY, JSON.stringify(library));
+  } catch (err) {
+    console.warn("Could not save to localStorage:", err);
+    toast("Warning: could not save (storage may be full).");
+  }
+}, 350);
+
+function loadLibrary() {
+  try {
+    const raw = localStorage.getItem(STORE_KEY);
+    if (raw) {
+      const data = JSON.parse(raw);
+      if (data && data.stories && typeof data.stories === "object" && data.currentId && data.stories[data.currentId]) {
+        library = data;
+        return;
+      }
+    }
+  } catch (err) {
+    console.warn("Could not read saved library:", err);
+  }
+  const p = makeProject();
+  library = { currentId: p.id, stories: { [p.id]: p } };
+}
+
+function sanitizeStrokes(rawStrokes) {
+  if (!Array.isArray(rawStrokes)) return [];
+  return rawStrokes.slice(0, 300).map((st) => ({
+    color: (typeof st.color === "string" && /^#[0-9a-fA-F]{3,8}$/.test(st.color)) ? st.color : "#1b2a4a",
+    size: clamp(num(st.size, 3), 1, 40),
+    points: Array.isArray(st.points)
+      ? st.points.slice(0, 6000)
+          .filter((p) => p && isFinite(p.x) && isFinite(p.y))
+          .map((p) => ({ x: num(p.x), y: num(p.y) }))
+      : []
+  })).filter((st) => st.points.length);
+}
+
+function validateProject(raw) {
+  if (!raw || typeof raw !== "object") throw new Error("The file does not contain a story object.");
+
+  const src = (raw.project && typeof raw.project === "object") ? raw.project : raw;
+  if (!src || typeof src !== "object") throw new Error("Missing project data.");
+
+  const out = {
+    id: typeof src.id === "string" ? src.id : uid("story"),
+    name: typeof src.name === "string" && src.name.trim() ? src.name.trim().slice(0, 120) : "Imported story",
+    characters: [],
+    messages: [],
+    settings: Object.assign(defaultSettings(), {})
+  };
+
+  const s = (src.settings && typeof src.settings === "object") ? src.settings : {};
+  const d = defaultSettings();
+  out.settings.paperStyle = typeof s.paperStyle === "string" ? s.paperStyle : d.paperStyle;
+  out.settings.paperWidth = clamp(num(s.paperWidth, d.paperWidth), 320, 1400);
+  out.settings.pageMode = (s.pageMode === "pages") ? "pages" : "continuous";
+  out.settings.pageHeight = clamp(num(s.pageHeight, d.pageHeight), 400, 3000);
+  out.settings.marginX = clamp(num(s.marginX, d.marginX), 10, 200);
+  out.settings.marginY = clamp(num(s.marginY, d.marginY), 10, 200);
+  out.settings.fontScale = clamp(num(s.fontScale, d.fontScale), 0.5, 2.5);
+  out.settings.messageSpacing = clamp(num(s.messageSpacing, d.messageSpacing), 0, 120);
+  out.settings.paperWrinkles = clamp(num(s.paperWrinkles, d.paperWrinkles), 0, 100);
+  out.settings.separators = !!s.separators;
+  out.settings.autoScroll = s.autoScroll !== false;
+  out.settings.ruledLines = s.ruledLines !== false;
+
+  const chars = Array.isArray(src.characters) ? src.characters : [];
+  chars.forEach((c) => {
+    if (!c || typeof c !== "object") return;
+    const base = makeCharacter("casual", "Unnamed");
+    out.characters.push({
+      id: typeof c.id === "string" && c.id ? c.id : uid("ch"),
+      name: (typeof c.name === "string" && c.name.trim()) ? c.name.trim().slice(0, 60) : "Unnamed",
+      preset: typeof c.preset === "string" ? c.preset : "custom",
+      font: (typeof c.font === "string" && c.font) ? c.font : base.font,
+      color: (typeof c.color === "string" && /^#[0-9a-fA-F]{3,8}$/.test(c.color)) ? c.color : base.color,
+      fontSize: clamp(num(c.fontSize, base.fontSize), 10, 72),
+      speed: clamp(num(c.speed, base.speed), 1, 120),
+      lineSpacing: clamp(num(c.lineSpacing, base.lineSpacing), 1, 3),
+      letterSpacing: clamp(num(c.letterSpacing, base.letterSpacing), -2, 8),
+      jitter: clamp(num(c.jitter, base.jitter), 0, 3),
+      description: typeof c.description === "string" ? c.description.slice(0, 800) : ""
+    });
+  });
+  if (!out.characters.length) out.characters.push(makeCharacter("neat", "Elara"));
+
+  const charIds = new Set(out.characters.map((c) => c.id));
+
+  const msgs = Array.isArray(src.messages) ? src.messages : [];
+  msgs.forEach((m) => {
+    if (!m || typeof m !== "object") return;
+    const fx = (m.effects && typeof m.effects === "object") ? m.effects : {};
+    const kind = (m.kind === "drawing") ? "drawing" : "text";
+
+    const inlineDrawings = {};
+    if (m.inlineDrawings && typeof m.inlineDrawings === "object") {
+      Object.keys(m.inlineDrawings).forEach((id) => {
+        const strokes = sanitizeStrokes(m.inlineDrawings[id]);
+        if (strokes.length) inlineDrawings[id] = strokes;
+      });
+    }
+
+    out.messages.push({
+      id: typeof m.id === "string" && m.id ? m.id : uid("msg"),
+      kind: kind,
+      strokes: kind === "drawing" ? sanitizeStrokes(m.strokes) : [],
+      inlineDrawings: inlineDrawings,
+      characterId: charIds.has(m.characterId) ? m.characterId : out.characters[0].id,
+      text: typeof m.text === "string" ? m.text.slice(0, 12000) : "",
+      direction: typeof m.direction === "string" ? m.direction.slice(0, 400) : "",
+      delay: clamp(num(m.delay, 600), 0, 60000),
+      pause: clamp(num(m.pause, 900), 0, 60000),
+      important: !!m.important,
+      fontOverride: typeof m.fontOverride === "string" ? m.fontOverride : "",
+      colorOverride: (typeof m.colorOverride === "string" && /^#[0-9a-fA-F]{3,8}$/.test(m.colorOverride)) ? m.colorOverride : "",
+      effects: {
+        hesitate: !!fx.hesitate,
+        slow: !!fx.slow,
+        crossed: !!fx.crossed,
+        faded: !!fx.faded,
+        overwrite: !!fx.overwrite
+      }
+    });
+  });
+
+  return out;
+}
+
+function exportProject() {
+  const payload = {
+    app: APP_TAG,
+    version: SCHEMA_VERSION,
+    exportedAt: new Date().toISOString(),
+    project: project
+  };
+  const blob = new Blob([JSON.stringify(payload, null, 2)], { type: "application/json" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  const safe = (project.name || "story").replace(/[^a-z0-9\-_ ]/gi, "").trim().replace(/\s+/g, "-").toLowerCase();
+  a.href = url;
+  a.download = (safe || "story") + ".json";
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  setTimeout(() => URL.revokeObjectURL(url), 1500);
+  toast("Story exported.");
+}
+
+function importProjectFile(file) {
+  const reader = new FileReader();
+  reader.onload = () => {
+    let parsed;
+    try {
+      parsed = JSON.parse(String(reader.result));
+    } catch (err) {
+      toast("That file is not valid JSON.");
+      return;
+    }
+    let validated;
+    try {
+      validated = validateProject(parsed);
+    } catch (err) {
+      toast("Import failed: " + err.message);
+      return;
+    }
+    const ok = confirm(
+      "Import \"" + validated.name + "\"?\n\n" +
+      "This will load the story as a separate entry in your library. " +
+      "Your current story will not be deleted."
+    );
+    if (!ok) return;
+
+    if (library.stories[validated.id]) validated.id = uid("story");
+    library.stories[validated.id] = validated;
+    library.currentId = validated.id;
+    project = validated;
+    saveLibrary();
+    stopPlayback();
+    resetPlaybackState();
+    renderEverything();
+    toast("Story imported: " + validated.name);
+  };
+  reader.onerror = () => toast("Could not read that file.");
+  reader.readAsText(file);
+}
+
+/* ==========================================================================
+   SECTION 4 — DRAWING HELPERS
+   ========================================================================== */
+
+function drawingBBox(strokes) {
+  let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+  strokes.forEach((s) => {
+    const r = (s.size || 3) / 2;
+    (s.points || []).forEach((p) => {
+      if (p.x - r < minX) minX = p.x - r;
+      if (p.y - r < minY) minY = p.y - r;
+      if (p.x + r > maxX) maxX = p.x + r;
+      if (p.y + r > maxY) maxY = p.y + r;
+    });
+  });
+  if (!isFinite(minX)) return { x: 0, y: 0, w: 10, h: 10 };
+  return {
+    x: minX,
+    y: minY,
+    w: Math.max(1, maxX - minX),
+    h: Math.max(1, maxY - minY)
+  };
+}
+
+function pathFromPoints(pts) {
+  if (!pts || !pts.length) return "";
+  if (pts.length === 1) return "M " + pts[0].x + " " + pts[0].y + " l 0.01 0";
+  let d = "M " + pts[0].x + " " + pts[0].y;
+  for (let i = 1; i < pts.length - 1; i++) {
+    const mx = (pts[i].x + pts[i + 1].x) / 2;
+    const my = (pts[i].y + pts[i + 1].y) / 2;
+    d += " Q " + pts[i].x + " " + pts[i].y + " " + mx + " " + my;
+  }
+  const last = pts[pts.length - 1];
+  d += " L " + last.x + " " + last.y;
+  return d;
+}
+
+/* Builds an SVG for the given strokes.
+   - opts.cssSized: true  → used inside flowing text; CSS controls the size
+   - opts.cssSized: false → standalone drawing; explicit pixel dimensions
+   For inline drawings we use vector-effect:non-scaling-stroke so the line
+   weight stays visible even when the large canvas drawing is shrunk down
+   to a couple of em. */
+function buildDrawingSVG(strokes, opts) {
+  opts = opts || {};
+  strokes = strokes || [];
+  const bb = drawingBBox(strokes);
+  const pad = 6;
+  const vx = bb.x - pad;
+  const vy = bb.y - pad;
+  const vw = bb.w + pad * 2;
+  const vh = bb.h + pad * 2;
+
+  const svg = document.createElementNS(SVGNS, "svg");
+  svg.setAttribute("viewBox", vx + " " + vy + " " + vw + " " + vh);
+  svg.setAttribute("preserveAspectRatio", "xMidYMid meet");
+  svg.setAttribute("width", String(Math.max(1, Math.round(vw))));
+  svg.setAttribute("height", String(Math.max(1, Math.round(vh))));
+  svg.classList.add("drawing-svg");
+
+  const inline = !!opts.cssSized;
+
+  strokes.forEach((s) => {
+    if (!s.points || !s.points.length) return;
+    const path = document.createElementNS(SVGNS, "path");
+    path.setAttribute("d", pathFromPoints(s.points));
+    path.setAttribute("stroke", s.color || "#1b2a4a");
+    if (inline) {
+      /* keep lines legible at small sizes */
+      path.setAttribute("stroke-width", clamp((s.size || 3) * 0.7, 0.8, 3).toFixed(2));
+      path.setAttribute("vector-effect", "non-scaling-stroke");
+    } else {
+      path.setAttribute("stroke-width", s.size || 3);
+    }
+    path.setAttribute("fill", "none");
+    path.setAttribute("stroke-linecap", "round");
+    path.setAttribute("stroke-linejoin", "round");
+    svg.appendChild(path);
+  });
+
+  return svg;
+}
+
+/* ==========================================================================
+   SECTION 5 — PAPER RENDERING
+   ========================================================================== */
+
+const NOISE_URI =
+  "url(\"data:image/svg+xml;utf8," +
+  "<svg xmlns='http://www.w3.org/2000/svg' width='220' height='220'>" +
+  "<filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='3' stitchTiles='stitch'/>" +
+  "<feColorMatrix type='saturate' values='0'/></filter>" +
+  "<rect width='220' height='220' filter='url(%23n)' opacity='0.155'/></svg>\")";
+
+const Paper = {
+  root: null,
+  pages: [],
+  current: null,
+  currentFull: false,
+  blocks: new Map(),
+
+  init() {
+    this.root = $("#paperStack");
+  },
+
+  stylePage(el) {
+    const s = project.settings;
+    const G = gridGap(s);
+
+    el.style.width = s.paperWidth + "px";
+    el.style.padding = s.marginY + "px " + s.marginX + "px";
+    el.dataset.style = s.paperStyle;
+    el.style.setProperty("--wrinkle", String(clamp(num(s.paperWrinkles, 45), 0, 100) / 100));
+    el.style.setProperty("--grid", G + "px");
+
+    if (s.pageMode === "pages") {
+      el.style.height = s.pageHeight + "px";
+      el.style.minHeight = "";
+      el.classList.add("fixed");
+    } else {
+      el.style.height = "";
+      el.style.minHeight = Math.min(s.pageHeight, 820) + "px";
+      el.classList.remove("fixed");
+      el.classList.remove("overflow");
+    }
+
+    if (s.ruledLines) {
+      el.classList.add("ruled");
+      const lineColor = "rgba(88,108,148,0.22)";
+      const tile =
+        "linear-gradient(to bottom, transparent 0 " + (G - 1) + "px, " +
+        lineColor + " " + (G - 1) + "px " + G + "px)";
+      el.style.backgroundImage = tile + ", " + NOISE_URI;
+      el.style.backgroundSize = "100% " + G + "px, 220px 220px";
+      el.style.backgroundRepeat = "repeat-y, repeat";
+      el.style.backgroundPosition = "0 " + s.marginY + "px, 0 0";
+    } else {
+      el.classList.remove("ruled");
+      el.style.backgroundImage = NOISE_URI;
+      el.style.backgroundSize = "220px 220px";
+      el.style.backgroundRepeat = "repeat";
+      el.style.backgroundPosition = "0 0";
+    }
+  },
+
+  newPage() {
+    const el = document.createElement("div");
+    el.className = "paper";
+    this.stylePage(el);
+    this.root.appendChild(el);
+    this.pages.push(el);
+    this.current = el;
+    this.currentFull = false;
+    return el;
+  },
+
+  reset() {
+    this.root.innerHTML = "";
+    this.pages = [];
+    this.blocks = new Map();
+    this.current = null;
+    this.newPage();
+  },
+
+  appendBlock(el) {
+    const s = project.settings;
+
+    if (s.pageMode !== "pages") {
+      this.current.appendChild(el);
+      return;
+    }
+
+    if (this.currentFull) this.newPage();
+
+    this.current.appendChild(el);
+
+    const overflows = () => this.current.scrollHeight > this.current.clientHeight + 2;
+
+    if (overflows()) {
+      if (this.current.children.length > 1) {
+        this.current.removeChild(el);
+        this.newPage();
+        this.current.appendChild(el);
+      }
+      if (overflows()) {
+        this.current.classList.add("overflow");
+        this.currentFull = true;
+      }
+    }
+  },
+
+  appendMessage(msg) {
+    const ch = getChar(msg.characterId);
+    const s = project.settings;
+    const G = gridGap(s);
+    const ruled = !!s.ruledLines;
+
+    const block = document.createElement("div");
+    block.className = "msg-block";
+    block.dataset.id = msg.id;
+    if (msg.important) block.classList.add("important");
+    if (msg.effects && msg.effects.overwrite) block.classList.add("overwrite");
+    if (msg.effects && msg.effects.faded) block.classList.add("faded");
+
+    const font = msg.fontOverride || (ch ? ch.font : FONTS[0].stack);
+    const color = msg.colorOverride || (ch ? ch.color : "#1b2a4a");
+    const size = (ch ? ch.fontSize : 22) * s.fontScale;
+
+    block.style.fontFamily = font;
+    block.style.color = color;
+    block.style.fontSize = size.toFixed(1) + "px";
+    block.style.letterSpacing = (ch ? ch.letterSpacing : 0) + "px";
+
+    if (!ruled) {
+      block.style.lineHeight = String(ch ? ch.lineSpacing : 1.7);
+    }
+
+    let mb;
+    if (ruled) {
+      mb = Math.max(0, Math.round(s.messageSpacing / G) * G);
+    } else {
+      mb = s.messageSpacing;
+    }
+    block.style.marginBottom = mb + "px";
+
+    if (msg.direction && msg.direction.trim()) {
+      const dir = document.createElement("div");
+      dir.className = "stage-dir";
+      dir.textContent = msg.direction.trim();
+      block.appendChild(dir);
+    }
+
+    let state = {
+      el: block,
+      body: null,
+      chars: [],
+      charText: [],
+      revealed: 0
+    };
+
+    if (msg.kind === "drawing") {
+      block.classList.add("drawing-block");
+      const wrap = document.createElement("div");
+      wrap.className = "msg-drawing";
+      wrap.appendChild(buildDrawingSVG(msg.strokes || []));
+      block.appendChild(wrap);
+    } else {
+      const body = document.createElement("div");
+      body.className = "msg-body";
+      block.appendChild(body);
+      const jitter = ch ? ch.jitter : 0.4;
+      const built = buildContent(body, msg, jitter);
+      state.body = body;
+      state.chars = built.chars;
+      state.charText = built.charText;
+    }
+
+    this.appendBlock(block);
+
+    if (ruled && msg.kind === "drawing") {
+      const h = block.offsetHeight;
+      const rem = h % G;
+      if (rem) block.style.marginBottom = (mb + (G - rem)) + "px";
+    }
+
+    this.blocks.set(msg.id, state);
+    return state;
+  },
+
+  reveal(msgId, n) {
+    const st = this.blocks.get(msgId);
+    if (!st) return;
+    const to = Math.min(n, st.chars.length);
+    for (let i = st.revealed; i < to; i++) st.chars[i].classList.add("on");
+    st.revealed = Math.max(st.revealed, to);
+    if (to > 0) st.lastChar = st.chars[to - 1];
+  },
+
+  showDrawing(msgId) {
+    const st = this.blocks.get(msgId);
+    if (st && st.el.classList.contains("drawing-block")) st.el.classList.add("shown");
+  },
+
+  scrollToElement(el) {
+    if (!el || !project.settings.autoScroll) return;
+    const scroller = $("#paperScroll");
+    const cr = scroller.getBoundingClientRect();
+    const r = el.getBoundingClientRect();
+    if (r.bottom > cr.bottom - 90) {
+      scroller.scrollTop += (r.bottom - cr.bottom) + 130;
+    } else if (r.top < cr.top + 40) {
+      scroller.scrollTop -= (cr.top + 40 - r.top);
+    }
+  },
+
+  scrollToMessage(msgId, force) {
+    if (!force && !project.settings.autoScroll) return;
+    const st = this.blocks.get(msgId);
+    if (!st) return;
+    const scroller = $("#paperScroll");
+    const cr = scroller.getBoundingClientRect();
+    const r = st.el.getBoundingClientRect();
+    scroller.scrollTop += (r.top - cr.top) - 60;
+  }
+};
+
+/* Splits message text on {{d:id}} tokens and builds a stream of revealable
+   items. Text runs become per-character spans; each token becomes a single
+   .inline-drawing span that fades in as one unit. */
+function buildContent(bodyEl, msg, jitter) {
+  const chars = [];
+  const charText = [];
+  const text = msg.text || "";
+  const inlineDrawings = msg.inlineDrawings || {};
+  const useJitter = jitter > 0.02 && text.length < 6000;
+
+  const segments = [];
+  let last = 0;
+  let match;
+  DRAWING_TOKEN_RE.lastIndex = 0;
+  while ((match = DRAWING_TOKEN_RE.exec(text)) !== null) {
+    if (match.index > last) segments.push({ type: "text", value: text.slice(last, match.index) });
+    segments.push({ type: "drawing", id: match[1] });
+    last = DRAWING_TOKEN_RE.lastIndex;
+  }
+  if (last < text.length) segments.push({ type: "text", value: text.slice(last) });
+  if (!segments.length) segments.push({ type: "text", value: text });
+
+  segments.forEach((seg) => {
+    if (seg.type === "drawing") {
+      const span = document.createElement("span");
+      span.className = "inline-drawing";
+      span.dataset.drawingId = seg.id;
+      const strokes = inlineDrawings[seg.id];
+      if (strokes && strokes.length) {
+        span.appendChild(buildDrawingSVG(strokes, { cssSized: true }));
+      } else {
+        span.classList.add("missing");
+        span.textContent = "[drawing]";
+      }
+      bodyEl.appendChild(span);
+      chars.push(span);
+      charText.push("{{d:" + seg.id + "}}");
+      return;
+    }
+
+    const lines = seg.value.split("\n");
+    lines.forEach((line, li) => {
+      if (li > 0) {
+        const br = document.createElement("br");
+        bodyEl.appendChild(br);
+        chars.push(br);
+        charText.push("\n");
+      }
+
+      let i = 0;
+      while (i < line.length) {
+        const c = line[i];
+
+        if (/\s/.test(c)) {
+          const w = document.createElement("span");
+          w.className = "w space";
+          const s = document.createElement("span");
+          s.className = "ch";
+          s.textContent = c;
+          w.appendChild(s);
+          bodyEl.appendChild(w);
+          chars.push(s);
+          charText.push(c);
+          i++;
+          continue;
+        }
+
+        let j = i;
+        while (j < line.length && !/\s/.test(line[j])) j++;
+        const word = line.slice(i, j);
+
+        const w = document.createElement("span");
+        w.className = "w";
+        if (useJitter) {
+          const rot = (Math.random() - 0.5) * jitter * 2.4;
+          const dy = (Math.random() - 0.5) * jitter * 2.0;
+          w.style.transform =
+            "rotate(" + rot.toFixed(2) + "deg) translateY(" + dy.toFixed(2) + "px)";
+        }
+
+        const iter = word[Symbol.iterator]();
+        let step = iter.next();
+        while (!step.done) {
+          const s = document.createElement("span");
+          s.className = "ch";
+          s.textContent = step.value;
+          w.appendChild(s);
+          chars.push(s);
+          charText.push(step.value);
+          step = iter.next();
+        }
+
+        bodyEl.appendChild(w);
+        i = j;
+      }
+    });
+  });
+
+  return { chars: chars, charText: charText };
+}
+
+function renderPaperFull() {
+  Paper.reset();
+  const s = project.settings;
+
+  if (!project.messages.length) {
+    const hint = document.createElement("div");
+    hint.className = "paper-hint";
+    hint.textContent = "The paper waits. Add a message to begin.";
+    Paper.current.appendChild(hint);
+  } else {
+    project.messages.forEach((msg) => {
+      const st = Paper.appendMessage(msg);
+      if (msg.kind === "drawing") {
+        Paper.showDrawing(msg.id);
+      } else {
+        Paper.reveal(msg.id, st.chars.length);
+      }
+      finishMessageVisual(msg);
+    });
+  }
+
+  applySeparators(s.separators);
+}
+
+function applySeparators(on) {
+  project.messages.forEach((msg, i) => {
+    const st = Paper.blocks.get(msg.id);
+    if (!st) return;
+    if (on && i > 0) {
+      st.el.style.boxShadow = "inset 0 1px 0 rgba(120,100,70,.28)";
+    } else {
+      st.el.style.boxShadow = "";
+    }
+  });
+}
+
+function finishMessageVisual(msg) {
+  const st = Paper.blocks.get(msg.id);
+  if (!st) return;
+  st.el.classList.add("done");
+}
+
+/* ==========================================================================
+   SECTION 6 — PLAYBACK ENGINE
+   ========================================================================== */
+const play = {
+  playing: false,
+  raf: null,
+  lastTs: 0,
+  speed: 1,
+  idx: -1,
+  phase: "idle",
+  elapsed: 0,
+  times: [],
+  reveal: 0,
+  currentId: null
+};
+
+function computeTimes(msg, charText) {
+  const ch = getChar(msg.characterId);
+  const baseCps = ch ? Math.max(1, ch.speed) : 14;
+  const fx = msg.effects || {};
+  const times = [];
+  let t = 0;
+
+  const len = charText.length;
+  const hesitateAt = fx.hesitate && len > 6
+    ? Math.floor(len * (0.3 + Math.random() * 0.4))
+    : -1;
+
+  for (let i = 0; i < len; i++) {
+    times.push(t);
+    const c = charText[i];
+
+    if (typeof c === "string" && c.indexOf("{{d:") === 0) {
+      t += fx.slow ? 900 : 500;
+      continue;
+    }
+
+    let d = 1000 / baseCps;
+    if (/\s/.test(c)) d *= 0.45;
+    d *= 0.7 + Math.random() * 0.6;
+
+    if (fx.slow) d *= 2.4;
+
+    if (c === "\n") {
+      d += 300;
+    } else {
+      const p = PUNCT_PAUSE[c];
+      if (p) d += fx.slow ? p * 1.4 : p;
+    }
+
+    if (i === hesitateAt) d += 1100;
+
+    t += d;
+  }
+  return times;
+}
+
+function updateTransportUI() {
+  const total = project.messages.length;
+  const btnPlay = $("#btnPlay");
+  btnPlay.textContent = play.playing ? "❚❚" : "▶";
+  btnPlay.classList.toggle("playing", play.playing);
+  btnPlay.disabled = total === 0;
+
+  $("#btnRestart").disabled = total === 0;
+  $("#btnPrev").disabled = total === 0;
+  $("#btnNext").disabled = total === 0;
+  $("#btnEnd").disabled = total === 0;
+
+  const label = $("#progressLabel");
+  if (!total) label.textContent = "—";
+  else if (play.phase === "done") label.textContent = total + " / " + total;
+  else if (play.idx >= 0) label.textContent = (play.idx + 1) + " / " + total;
+  else label.textContent = "0 / " + total;
+}
+
+function tick(ts) {
+  if (!play.playing) return;
+
+  if (!play.lastTs) play.lastTs = ts;
+  let dt = (ts - play.lastTs) * play.speed;
+  play.lastTs = ts;
+  if (dt < 0) dt = 0;
+  if (dt > 220) dt = 220;
+  play.elapsed += dt;
+
+  step();
+
+  if (play.playing) {
+    play.raf = requestAnimationFrame(tick);
+  }
+  updateTransportUI();
+}
+
+function step() {
+  let guard = 0;
+
+  while (play.playing && guard++ < 600) {
+    const msg = project.messages[play.idx];
+    if (!msg) { finishPlayback(); return; }
+
+    if (play.phase === "delay") {
+      const d = msg.delay || 0;
+      if (play.elapsed >= d) {
+        play.elapsed -= d;
+        play.phase = "write";
+      } else {
+        return;
+      }
+    } else if (play.phase === "write") {
+      const st = Paper.blocks.get(msg.id);
+      if (!st) { play.phase = "hold"; continue; }
+
+      if (msg.kind === "drawing") {
+        Paper.showDrawing(msg.id);
+        finishMessageVisual(msg);
+        play.elapsed = 0;
+        play.phase = "hold";
+        continue;
+      }
+
+      const times = play.times;
+      let n = play.reveal;
+      while (n < times.length && times[n] <= play.elapsed) n++;
+
+      if (n !== play.reveal) {
+        Paper.reveal(msg.id, n);
+        play.reveal = n;
+        if (st.chars[n - 1]) Paper.scrollToElement(st.chars[n - 1]);
+      }
+
+      if (n >= times.length) {
+        const lastT = times.length ? times[times.length - 1] : 0;
+        play.elapsed -= lastT;
+        if (play.elapsed < 0) play.elapsed = 0;
+        play.phase = "hold";
+        finishMessageVisual(msg);
+      } else {
+        return;
+      }
+    } else if (play.phase === "hold") {
+      const p = msg.pause || 0;
+      if (play.elapsed >= p) {
+        play.elapsed -= p;
+        advanceMessage();
+      } else {
+        return;
+      }
+    } else {
+      return;
+    }
+  }
+}
+
+function advanceMessage() {
+  play.idx++;
+  const msg = project.messages[play.idx];
+
+  if (!msg) { finishPlayback(); return; }
+
+  const st = Paper.appendMessage(msg);
+  play.currentId = msg.id;
+  play.reveal = 0;
+  play.times = computeTimes(msg, st.charText);
+  play.phase = "delay";
+  play.elapsed = 0;
+
+  if (project.settings.autoScroll) Paper.scrollToMessage(msg.id, true);
+  updateTransportUI();
+}
+
+function startPlayback(fromIndex) {
+  if (!project.messages.length) { toast("Add a message first."); return; }
+
+  stopPlayback();
+  Paper.reset();
+  applySeparators(project.settings.separators);
+
+  play.idx = (fromIndex || 0) - 1;
+  play.phase = "idle";
+  play.elapsed = 0;
+  play.reveal = 0;
+  play.currentId = null;
+  play.playing = true;
+  play.lastTs = 0;
+
+  advanceMessage();
+
+  play.lastTs = performance.now();
+  play.raf = requestAnimationFrame(tick);
+  updateTransportUI();
+}
+
+function stopPlayback() {
+  play.playing = false;
+  if (play.raf) cancelAnimationFrame(play.raf);
+  play.raf = null;
+  updateTransportUI();
+}
+
+function pausePlayback() {
+  if (!play.playing) return;
+  play.playing = false;
+  if (play.raf) cancelAnimationFrame(play.raf);
+  play.raf = null;
+  updateTransportUI();
+}
+
+function resumePlayback() {
+  if (play.playing) return;
+  if (play.phase === "done" || play.phase === "idle") {
+    startPlayback(0);
+    return;
+  }
+  play.playing = true;
+  play.lastTs = performance.now();
+  play.raf = requestAnimationFrame(tick);
+  updateTransportUI();
+}
+
+function finishPlayback() {
+  play.phase = "done";
+  play.playing = false;
+  if (play.raf) cancelAnimationFrame(play.raf);
+  play.raf = null;
+  updateTransportUI();
+}
+
+function resetPlaybackState() {
+  play.playing = false;
+  play.idx = -1;
+  play.phase = "idle";
+  play.elapsed = 0;
+  play.reveal = 0;
+  play.times = [];
+  play.currentId = null;
+  if (play.raf) cancelAnimationFrame(play.raf);
+  play.raf = null;
+}
+
+function jumpTo(index) {
+  const total = project.messages.length;
+  if (!total) return;
+  index = clamp(index, 0, total - 1);
+
+  stopPlayback();
+  Paper.reset();
+  applySeparators(project.settings.separators);
+
+  play.idx = -1;
+  play.phase = "idle";
+  play.elapsed = 0;
+  play.reveal = 0;
+
+  for (let i = 0; i < index; i++) {
+    const m = project.messages[i];
+    const st = Paper.appendMessage(m);
+    if (m.kind === "drawing") {
+      Paper.showDrawing(m.id);
+    } else {
+      Paper.reveal(m.id, st.chars.length);
+    }
+    finishMessageVisual(m);
+  }
+
+  play.idx = index - 1;
+  advanceMessage();
+  play.phase = "delay";
+  play.elapsed = 0;
+  play.playing = false;
+  updateTransportUI();
+  Paper.scrollToMessage(project.messages[index].id, true);
+}
+
+/* ==========================================================================
+   SECTION 7 — CHARACTERS UI
+   ========================================================================== */
+const PREVIEW_PHRASE = "The ink still remembers.";
+
+function renderCharacters() {
+  const list = $("#charList");
+  list.innerHTML = "";
+
+  if (!project.characters.length) {
+    list.innerHTML = '<div class="empty">No characters yet.<br>Add one to give the paper a voice.</div>';
+    return;
+  }
+
+  project.characters.forEach((ch) => {
+    const el = document.createElement("div");
+    el.className = "card char-card" +
+      (ui.selection.type === "character" && ui.selection.id === ch.id ? " selected" : "");
+    el.dataset.id = ch.id;
+
+    el.innerHTML =
+      '<div class="card-top">' +
+        '<span class="dot" style="background:' + esc(ch.color) + '"></span>' +
+        '<span class="card-name">' + esc(ch.name) + '</span>' +
+        '<span class="card-tools">' +
+          '<button class="mini" data-act="edit" title="Edit">✎</button>' +
+          '<button class="mini" data-act="dup" title="Duplicate">⧉</button>' +
+          '<button class="mini danger" data-act="del" title="Delete">✕</button>' +
+        '</span>' +
+      '</div>' +
+      '<div class="hand-chip" style="font-family:' + ch.font +
+        ';color:' + esc(ch.color) +
+        ';font-size:' + Math.min(ch.fontSize, 19) + 'px' +
+        ';letter-spacing:' + ch.letterSpacing + 'px">' +
+        esc(PREVIEW_PHRASE) +
+      '</div>';
+
+    el.addEventListener("click", (e) => {
+      const btn = e.target.closest("[data-act]");
+      if (btn) {
+        e.stopPropagation();
+        const act = btn.dataset.act;
+        if (act === "edit") selectCharacter(ch.id);
+        else if (act === "dup") duplicateCharacter(ch.id);
+        else if (act === "del") deleteCharacter(ch.id);
+        return;
+      }
+      selectCharacter(ch.id);
+    });
+
+    list.appendChild(el);
+  });
+}
+
+function selectCharacter(id) {
+  ui.selection = { type: "character", id: id };
+  renderCharacters();
+  renderMessages();
+  renderInspector();
+}
+
+function addCharacter() {
+  const ch = makeCharacter("casual", "New Character " + (project.characters.length + 1));
+  project.characters.push(ch);
+  ui.selection = { type: "character", id: ch.id };
+  onDataChanged();
+  toast("Character added.");
+}
+
+function duplicateCharacter(id) {
+  const src = getChar(id);
+  if (!src) return;
+  const copy = deepCopy(src);
+  copy.id = uid("ch");
+  copy.name = src.name + " (copy)";
+  const at = project.characters.indexOf(src);
+  project.characters.splice(at + 1, 0, copy);
+  ui.selection = { type: "character", id: copy.id };
+  onDataChanged();
+  toast("Character duplicated.");
+}
+
+function deleteCharacter(id) {
+  const ch = getChar(id);
+  if (!ch) return;
+
+  const used = project.messages.filter((m) => m.characterId === id).length;
+  const msg = used
+    ? '"' + ch.name + '" appears in ' + used + " message(s). Those messages will be reassigned to the first remaining character.\n\nDelete this character?"
+    : 'Delete "' + ch.name + '"?';
+  if (!confirm(msg)) return;
+
+  project.characters = project.characters.filter((c) => c.id !== id);
+
+  if (!project.characters.length) {
+    project.characters.push(makeCharacter("casual", "New Character"));
+  }
+
+  project.messages.forEach((m) => {
+    if (m.characterId === id) m.characterId = project.characters[0].id;
+  });
+
+  if (ui.selection.type === "character" && ui.selection.id === id) {
+    ui.selection = { type: "paper", id: null };
+  }
+  onDataChanged();
+  toast("Character deleted.");
+}
+
+/* ==========================================================================
+   SECTION 8 — MESSAGES UI
+   ========================================================================== */
+let dragSourceId = null;
+
+function renderMessages() {
+  const list = $("#msgList");
+  const scrollTop = list.scrollTop;
+  list.innerHTML = "";
+
+  if (!project.messages.length) {
+    list.innerHTML = '<div class="empty">No messages yet.<br>Add one to start the conversation.</div>';
+    return;
+  }
+
+  project.messages.forEach((m, i) => {
+    const ch = getChar(m.characterId);
+    const isDrawing = m.kind === "drawing";
+    const hasInlineDrawings = m.inlineDrawings && Object.keys(m.inlineDrawings).length > 0;
+    const el = document.createElement("div");
+    el.className = "card msg-card" +
+      (ui.selection.type === "message" && ui.selection.id === m.id ? " selected" : "");
+    el.dataset.id = m.id;
+    el.draggable = true;
+
+    const preview = previewText(m.text || "");
+    const previewTextSnippet = preview
+      ? (preview.length > 110 ? preview.slice(0, 110) + "…" : preview)
+      : "";
+
+    let bodyHtml;
+    if (isDrawing) {
+      bodyHtml = '<div class="msg-text drawing-thumb" data-role="thumb"></div>';
+    } else {
+      bodyHtml = '<div class="msg-text" style="font-family:' + (ch ? ch.font : "inherit") +
+        ';color:' + esc(m.colorOverride || (ch ? ch.color : "#3b2a1a")) + '">' +
+        (previewTextSnippet ? esc(previewTextSnippet) : '<em>empty message</em>') +
+      '</div>';
+    }
+
+    el.innerHTML =
+      '<div class="msg-head">' +
+        '<span class="idx">' + (i + 1) + '</span>' +
+        '<span class="who">' + esc(ch ? ch.name : "— no character —") +
+          (isDrawing ? '<span class="badge-drawing">drawing</span>' : "") +
+          (!isDrawing && hasInlineDrawings ? '<span class="badge-drawing">+ drawing</span>' : "") +
+          (m.important ? '<span class="badge-important">key</span>' : "") +
+        '</span>' +
+        '<span class="msg-tools">' +
+          '<button class="mini" data-act="up" title="Move up">↑</button>' +
+          '<button class="mini" data-act="down" title="Move down">↓</button>' +
+          '<button class="mini" data-act="dup" title="Duplicate">⧉</button>' +
+          '<button class="mini danger" data-act="del" title="Delete">✕</button>' +
+        '</span>' +
+      '</div>' +
+      bodyHtml +
+      (m.direction ? '<div class="msg-dir">[ ' + esc(m.direction) + ' ]</div>' : "");
+
+    if (isDrawing) {
+      const thumb = el.querySelector('[data-role="thumb"]');
+      if (thumb) {
+        if (m.strokes && m.strokes.length) {
+          const svg = buildDrawingSVG(m.strokes);
+          svg.setAttribute("width", "100%");
+          svg.setAttribute("height", "100%");
+          svg.setAttribute("preserveAspectRatio", "xMidYMid meet");
+          thumb.appendChild(svg);
+        } else {
+          thumb.innerHTML = '<em>empty drawing</em>';
+        }
+      }
+    }
+
+    el.addEventListener("click", (e) => {
+      const btn = e.target.closest("[data-act]");
+      if (btn) {
+        e.stopPropagation();
+        handleMessageAction(btn.dataset.act, m.id);
+        return;
+      }
+      selectMessage(m.id, true);
+    });
+
+    el.addEventListener("dragstart", (e) => {
+      dragSourceId = m.id;
+      el.classList.add("dragging");
+      try { e.dataTransfer.setData("text/plain", m.id); } catch (err) {}
+      e.dataTransfer.effectAllowed = "move";
+    });
+    el.addEventListener("dragend", () => {
+      el.classList.remove("dragging");
+      dragSourceId = null;
+      $$(".msg-card").forEach((c) => c.classList.remove("drag-over"));
+    });
+    el.addEventListener("dragover", (e) => {
+      if (!dragSourceId || dragSourceId === m.id) return;
+      e.preventDefault();
+      e.dataTransfer.dropEffect = "move";
+      el.classList.add("drag-over");
+    });
+    el.addEventListener("dragleave", () => el.classList.remove("drag-over"));
+    el.addEventListener("drop", (e) => {
+      e.preventDefault();
+      el.classList.remove("drag-over");
+      if (!dragSourceId || dragSourceId === m.id) return;
+      moveMessageBefore(dragSourceId, m.id);
+      dragSourceId = null;
+    });
+
+    list.appendChild(el);
+  });
+
+  list.scrollTop = scrollTop;
+}
+
+function handleMessageAction(act, id) {
+  const idx = msgIndexById(id);
+  if (idx < 0) return;
+
+  if (act === "up") {
+    if (idx === 0) return;
+    const [m] = project.messages.splice(idx, 1);
+    project.messages.splice(idx - 1, 0, m);
+    onDataChanged();
+  } else if (act === "down") {
+    if (idx === project.messages.length - 1) return;
+    const [m] = project.messages.splice(idx, 1);
+    project.messages.splice(idx + 1, 0, m);
+    onDataChanged();
+  } else if (act === "dup") {
+    const copy = deepCopy(project.messages[idx]);
+    copy.id = uid("msg");
+    if (copy.inlineDrawings) {
+      const newMap = {};
+      const replacements = [];
+      Object.keys(copy.inlineDrawings).forEach((oldId) => {
+        const newId = uid("d");
+        newMap[newId] = copy.inlineDrawings[oldId];
+        replacements.push({ oldId, newId });
+      });
+      copy.inlineDrawings = newMap;
+      replacements.forEach(({ oldId, newId }) => {
+        copy.text = (copy.text || "").split("{{d:" + oldId + "}}").join("{{d:" + newId + "}}");
+      });
+    }
+    project.messages.splice(idx + 1, 0, copy);
+    ui.selection = { type: "message", id: copy.id };
+    onDataChanged();
+    toast("Message duplicated.");
+  } else if (act === "del") {
+    if (!confirm("Delete this message?")) return;
+    project.messages.splice(idx, 1);
+    if (ui.selection.type === "message" && ui.selection.id === id) {
+      ui.selection = { type: "paper", id: null };
+    }
+    onDataChanged();
+  }
+}
+
+function moveMessageBefore(sourceId, targetId) {
+  const from = msgIndexById(sourceId);
+  const to = msgIndexById(targetId);
+  if (from < 0 || to < 0 || from === to) return;
+  const [m] = project.messages.splice(from, 1);
+  const insertAt = msgIndexById(targetId);
+  project.messages.splice(insertAt, 0, m);
+  onDataChanged();
+}
+
+function selectMessage(id, scrollToPaper) {
+  ui.selection = { type: "message", id: id };
+  renderMessages();
+  renderInspector();
+  if (scrollToPaper) {
+    if (play.playing) pausePlayback();
+    Paper.scrollToMessage(id, true);
+  }
+}
+
+function addMessage() {
+  let insertAt = project.messages.length;
+
+  if (ui.selection.type === "message") {
+    const idx = msgIndexById(ui.selection.id);
+    if (idx >= 0) insertAt = idx + 1;
+  }
+
+  const chId = project.characters.length ? project.characters[0].id : "";
+  const m = makeMessage(chId, "");
+  project.messages.splice(insertAt, 0, m);
+  ui.selection = { type: "message", id: m.id };
+  ui.tab = "msgs";
+  renderTabs();
+  onDataChanged();
+  const ta = $('#inspector textarea[data-field="text"]');
+  if (ta) { ta.focus(); ta.setSelectionRange(0, 0); }
+}
+
+/* Create a new message and open the drawing modal on it, so the drawing
+   and its associated text can live in the same message. */
+function addMessageWithDrawing() {
+  let insertAt = project.messages.length;
+
+  if (ui.selection.type === "message") {
+    const idx = msgIndexById(ui.selection.id);
+    if (idx >= 0) insertAt = idx + 1;
+  }
+
+  const chId = project.characters.length ? project.characters[0].id : "";
+  const m = makeMessage(chId, "");
+  project.messages.splice(insertAt, 0, m);
+  ui.selection = { type: "message", id: m.id };
+  ui.tab = "msgs";
+  renderTabs();
+  onDataChanged();
+
+  /* Open the drawing modal immediately for this new message. */
+  setTimeout(() => openDrawModalInline(m.id, null, 0), 30);
+}
+
+/* ==========================================================================
+   SECTION 9 — INSPECTOR
+   ========================================================================== */
+function fieldRange(label, scope, field, value, min, max, step, unit, hint) {
+  return '<label class="field">' +
+    '<span class="flabel">' + esc(label) + '</span>' +
+    '<span class="frow">' +
+      '<input type="range" min="' + min + '" max="' + max + '" step="' + step + '" value="' + value + '" ' +
+        'data-scope="' + scope + '" data-field="' + field + '">' +
+      '<output class="val">' + value + (unit || "") + '</output>' +
+    '</span>' +
+    (hint ? '<div class="hint">' + esc(hint) + '</div>' : '') +
+  '</label>';
+}
+
+function fieldText(label, scope, field, value, placeholder) {
+  return '<label class="field">' +
+    '<span class="flabel">' + esc(label) + '</span>' +
+    '<input type="text" value="' + esc(value) + '" placeholder="' + esc(placeholder || "") + '" ' +
+      'data-scope="' + scope + '" data-field="' + field + '" spellcheck="false">' +
+  '</label>';
+}
+
+function fieldSelect(label, scope, field, value, options) {
+  let opts = "";
+  options.forEach((o) => {
+    opts += '<option value="' + esc(o.value) + '"' + (String(o.value) === String(value) ? " selected" : "") + '>' +
+      esc(o.label) + '</option>';
+  });
+  return '<label class="field">' +
+    '<span class="flabel">' + esc(label) + '</span>' +
+    '<select data-scope="' + scope + '" data-field="' + field + '">' + opts + '</select>' +
+  '</label>';
+}
+
+function fieldCheck(label, scope, field, checked) {
+  return '<label class="check">' +
+    '<input type="checkbox" ' + (checked ? "checked" : "") +
+      ' data-scope="' + scope + '" data-field="' + field + '">' +
+    '<span>' + esc(label) + '</span>' +
+  '</label>';
+}
+
+function renderInspector() {
+  const box = $("#inspector");
+
+  if (ui.selection.type === "character") {
+    const ch = getChar(ui.selection.id);
+    if (!ch) { ui.selection = { type: "paper", id: null }; return renderInspector(); }
+    box.innerHTML = characterInspectorHTML(ch);
+    return;
+  }
+
+  if (ui.selection.type === "message") {
+    const m = getMessage(ui.selection.id);
+    if (!m) { ui.selection = { type: "paper", id: null }; return renderInspector(); }
+    if (m.kind === "drawing") {
+      box.innerHTML = drawingInspectorHTML(m);
+      decorateDrawingPreview();
+    } else {
+      box.innerHTML = messageInspectorHTML(m);
+      decorateInlineThumbs();
+    }
+    return;
+  }
+
+  box.innerHTML = paperInspectorHTML();
+}
+
+function decorateDrawingPreview() {
+  if (ui.selection.type !== "message") return;
+  const m = getMessage(ui.selection.id);
+  if (!m || m.kind !== "drawing") return;
+  const holder = $("#inspector .drawing-preview");
+  if (!holder) return;
+  holder.innerHTML = "";
+  if (m.strokes && m.strokes.length) {
+    holder.appendChild(buildDrawingSVG(m.strokes));
+  } else {
+    holder.innerHTML = '<span style="color:#8a7f68;font-style:italic">empty drawing</span>';
+  }
+}
+
+function decorateInlineThumbs() {
+  const box = $("#inspector");
+  const m = getMessage(ui.selection.id);
+  if (!m || m.kind !== "text") return;
+  const drawings = m.inlineDrawings || {};
+  $$(".inline-thumb", box).forEach((thumb) => {
+    const id = thumb.dataset.drawingId;
+    const strokes = drawings[id];
+    thumb.innerHTML = "";
+    if (strokes && strokes.length) {
+      const svg = buildDrawingSVG(strokes, { cssSized: true });
+      svg.setAttribute("preserveAspectRatio", "xMidYMid meet");
+      thumb.appendChild(svg);
+    }
+  });
+}
+
+function characterInspectorHTML(ch) {
+  const fontOptions = FONTS.map((f) => ({ value: f.stack, label: f.label }));
+  if (!FONTS.some((f) => f.stack === ch.font)) {
+    fontOptions.unshift({ value: ch.font, label: "Custom / unknown font" });
+  }
+  const presetOptions = Object.keys(PRESETS).map((k) => ({ value: k, label: PRESETS[k].label }));
+  presetOptions.push({ value: "custom", label: "Custom" });
+
+  let swatches = "";
+  INKS.forEach((c) => {
+    swatches += '<span class="swatch" data-scope="character" data-field="color" data-value="' + c +
+      '" style="background:' + c + '" title="' + c + '"></span>';
+  });
+
+  const msgCount = project.messages.filter((m) => m.characterId === ch.id).length;
+
+  return '' +
+    '<div class="insp-head">' +
+      '<span class="insp-title">Character</span>' +
+      '<span class="insp-sub">' + msgCount + ' message' + (msgCount === 1 ? "" : "s") + '</span>' +
+    '</div>' +
+
+    '<div class="section"><div class="section-body" style="padding-top:11px">' +
+      fieldText("Name", "character", "name", ch.name, "Character name") +
+      '<div class="field">' +
+        '<span class="flabel">Handwriting preview</span>' +
+        '<div class="hand-chip" style="font-family:' + ch.font + ';color:' + esc(ch.color) +
+          ';font-size:' + Math.min(ch.fontSize, 22) + 'px;letter-spacing:' + ch.letterSpacing + 'px">' +
+          esc(PREVIEW_PHRASE) +
+        '</div>' +
+      '</div>' +
+    '</div></div>' +
+
+    '<details class="section" open><summary>Handwriting</summary><div class="section-body">' +
+      fieldSelect("Preset", "character", "preset", ch.preset, presetOptions) +
+      '<div class="hint">Choosing a preset overwrites the settings below.</div>' +
+      fieldSelect("Font", "character", "font", ch.font, fontOptions) +
+      '<div class="field">' +
+        '<span class="flabel">Ink colour</span>' +
+        '<div class="frow">' +
+          '<input type="color" value="' + toHex6(ch.color) + '" data-scope="character" data-field="color">' +
+          '<span class="val" style="min-width:70px;text-align:left">' + esc(ch.color) + '</span>' +
+        '</div>' +
+        '<div class="swatches">' + swatches + '</div>' +
+      '</div>' +
+      fieldRange("Font size", "character", "fontSize", ch.fontSize, 10, 60, 1, "px") +
+      fieldRange("Writing speed", "character", "speed", ch.speed, 2, 60, 1, " c/s",
+        "Characters per second. Lower is more deliberate.") +
+      fieldRange("Line spacing (natural mode)", "character", "lineSpacing", ch.lineSpacing, 1, 2.6, 0.05, "") +
+      fieldRange("Letter spacing", "character", "letterSpacing", ch.letterSpacing, -1, 6, 0.1, "px") +
+      fieldRange("Handwriting irregularity", "character", "jitter", ch.jitter, 0, 2, 0.05, "",
+        "Adds tiny rotations and vertical wobble to words.") +
+    '</div></details>' +
+
+    '<details class="section"><summary>Notes</summary><div class="section-body">' +
+      '<label class="field"><span class="flabel">Description / personality</span>' +
+      '<textarea data-scope="character" data-field="description" rows="4" ' +
+        'placeholder="Who are they? Where do they write from?">' + esc(ch.description) + '</textarea></label>' +
+    '</div></details>' +
+
+    '<div class="insp-actions">' +
+      '<button class="btn small" data-action="dup-character">Duplicate</button>' +
+      '<button class="btn small danger" data-action="del-character">Delete character</button>' +
+    '</div>';
+}
+
+function toHex6(color) {
+  if (/^#[0-9a-f]{6}$/i.test(color)) return color;
+  if (/^#[0-9a-f]{3}$/i.test(color)) {
+    return "#" + color[1] + color[1] + color[2] + color[2] + color[3] + color[3];
+  }
+  return "#1b2a4a";
+}
+
+function inlineDrawingsListHTML(m) {
+  const drawings = m.inlineDrawings || {};
+  const ids = Object.keys(drawings);
+  if (!ids.length) return "";
+
+  let html = '<details class="section" open><summary>Inline drawings (' + ids.length + ')</summary><div class="section-body">';
+  ids.forEach((id) => {
+    html += '<div class="inline-drawing-row">' +
+      '<span class="inline-thumb" data-drawing-id="' + esc(id) + '"></span>' +
+      '<span class="inline-token">{{d:' + esc(id) + '}}</span>' +
+      '<button class="btn small" data-action="edit-inline-drawing" data-drawing-id="' + esc(id) + '">Edit</button>' +
+      '<button class="btn small danger" data-action="delete-inline-drawing" data-drawing-id="' + esc(id) + '">✕</button>' +
+    '</div>';
+  });
+  html += '</div></details>';
+  return html;
+}
+
+function messageInspectorHTML(m) {
+  const charOptions = project.characters.map((c) => ({ value: c.id, label: c.name }));
+  const fontOptions = [{ value: "", label: "— use character's hand —" }]
+    .concat(FONTS.map((f) => ({ value: f.stack, label: f.label })));
+  if (m.fontOverride && !FONTS.some((f) => f.stack === m.fontOverride)) {
+    fontOptions.push({ value: m.fontOverride, label: "Custom font" });
+  }
+
+  const fx = m.effects || {};
+
+  return '' +
+    '<div class="insp-head">' +
+      '<span class="insp-title">Message</span>' +
+      '<span class="insp-sub">#' + (msgIndexById(m.id) + 1) + ' of ' + project.messages.length + '</span>' +
+    '</div>' +
+
+    '<div class="section"><div class="section-body" style="padding-top:11px">' +
+      fieldSelect("Written by", "message", "characterId", m.characterId, charOptions) +
+      '<label class="field"><span class="flabel">Text</span>' +
+        '<textarea data-scope="message" data-field="text" rows="7" ' +
+          'placeholder="What does the paper say? Use the button below to drop a drawing beside the text.">' +
+          esc(m.text) + '</textarea></label>' +
+      '<div class="insp-actions" style="margin-top:0">' +
+        '<button class="btn small" data-action="insert-inline-drawing">✎ Insert drawing at cursor</button>' +
+      '</div>' +
+      '<div style="height:8px"></div>' +
+      fieldText("Stage direction", "message", "direction", m.direction,
+        "e.g. The pencil stops moving.") +
+      '<div class="hint">Shown as a subtle caption, never as dialogue.</div>' +
+    '</div></div>' +
+
+    inlineDrawingsListHTML(m) +
+
+    '<details class="section" open><summary>Timing</summary><div class="section-body">' +
+      fieldRange("Delay before writing", "message", "delay", m.delay, 0, 6000, 50, " ms") +
+      fieldRange("Pause after writing", "message", "pause", m.pause, 0, 6000, 50, " ms") +
+      fieldCheck("Mark as an important story moment", "message", "important", m.important) +
+    '</div></details>' +
+
+    '<details class="section"><summary>Storytelling effects</summary><div class="section-body">' +
+      fieldCheck("Hesitation — pauses mid-sentence", "message", "effects.hesitate", fx.hesitate) +
+      fieldCheck("Unusually slow writing", "message", "effects.slow", fx.slow) +
+      fieldCheck("Crossed out after writing", "message", "effects.crossed", fx.crossed) +
+      fieldCheck("Ink fades / smudges", "message", "effects.faded", fx.faded) +
+      fieldCheck("Written over the previous message", "message", "effects.overwrite", fx.overwrite) +
+    '</div></details>' +
+
+    '<details class="section"><summary>Handwriting override</summary><div class="section-body">' +
+      fieldSelect("Font", "message", "fontOverride", m.fontOverride, fontOptions) +
+      '<div class="field"><span class="flabel">Ink colour</span>' +
+        '<div class="frow">' +
+          '<input type="color" value="' + toHex6(m.colorOverride || "#1b2a4a") +
+            '" data-scope="message" data-field="colorOverride">' +
+          '<button class="btn small" data-action="clear-color">Use character ink</button>' +
+        '</div>' +
+      '</div>' +
+    '</div></details>' +
+
+    '<div class="insp-actions">' +
+      '<button class="btn small" data-action="msg-up">↑ Move up</button>' +
+      '<button class="btn small" data-action="msg-down">↓ Move down</button>' +
+      '<button class="btn small" data-action="msg-dup">Duplicate</button>' +
+      '<button class="btn small danger" data-action="msg-del">Delete</button>' +
+    '</div>';
+}
+
+function drawingInspectorHTML(m) {
+  const charOptions = project.characters.map((c) => ({ value: c.id, label: c.name }));
+  const fx = m.effects || {};
+
+  return '' +
+    '<div class="insp-head">' +
+      '<span class="insp-title">Drawing (legacy)</span>' +
+      '<span class="insp-sub">#' + (msgIndexById(m.id) + 1) + ' of ' + project.messages.length + '</span>' +
+    '</div>' +
+
+    '<div class="section"><div class="section-body" style="padding-top:11px">' +
+      '<div class="hint">This is a standalone drawing from an older project. New drawings are inserted inline within a text message via the + Drawing button.</div>' +
+      '<div class="field">' +
+        '<span class="flabel">Preview</span>' +
+        '<div class="drawing-preview" data-role="drawing-preview"></div>' +
+      '</div>' +
+      '<div class="insp-actions" style="margin-top:6px">' +
+        '<button class="btn small" data-action="redraw">Redraw</button>' +
+        '<button class="btn small danger" data-action="clear-strokes">Clear strokes</button>' +
+      '</div>' +
+      fieldSelect("Drawn by", "message", "characterId", m.characterId, charOptions) +
+      fieldText("Stage direction", "message", "direction", m.direction,
+        "e.g. A shape appears slowly.") +
+    '</div></div>' +
+
+    '<details class="section" open><summary>Timing</summary><div class="section-body">' +
+      fieldRange("Delay before appearing", "message", "delay", m.delay, 0, 6000, 50, " ms") +
+      fieldRange("Pause after appearing", "message", "pause", m.pause, 0, 6000, 50, " ms") +
+      fieldCheck("Mark as an important story moment", "message", "important", m.important) +
+    '</div></details>' +
+
+    '<details class="section"><summary>Storytelling effects</summary><div class="section-body">' +
+      fieldCheck("Crossed out after appearing", "message", "effects.crossed", fx.crossed) +
+      fieldCheck("Ink fades / smudges", "message", "effects.faded", fx.faded) +
+      fieldCheck("Drawn over the previous message", "message", "effects.overwrite", fx.overwrite) +
+    '</div></details>' +
+
+    '<div class="insp-actions">' +
+      '<button class="btn small" data-action="msg-up">↑ Move up</button>' +
+      '<button class="btn small" data-action="msg-down">↓ Move down</button>' +
+      '<button class="btn small" data-action="msg-dup">Duplicate</button>' +
+      '<button class="btn small danger" data-action="msg-del">Delete</button>' +
+    '</div>';
+}
+
+function paperInspectorHTML() {
+  const s = project.settings;
+  const styleOptions = [
+    { value: "aged", label: "Aged paper" },
+    { value: "cream", label: "Cream" },
+    { value: "parchment", label: "Parchment" },
+    { value: "blueprint", label: "Blueprint" },
+    { value: "rose", label: "Rose" }
+  ];
+
+  return '' +
+    '<div class="insp-head">' +
+      '<span class="insp-title">The Paper</span>' +
+      '<span class="insp-sub">' + project.messages.length + ' messages</span>' +
+    '</div>' +
+
+    '<details class="section" open><summary>Sheet</summary><div class="section-body">' +
+      fieldSelect("Paper style", "settings", "paperStyle", s.paperStyle, styleOptions) +
+      fieldRange("Paper width", "settings", "paperWidth", s.paperWidth, 320, 1200, 10, "px") +
+      fieldRange("Side margins", "settings", "marginX", s.marginX, 12, 160, 2, "px") +
+      fieldRange("Top / bottom margin", "settings", "marginY", s.marginY, 12, 160, 2, "px") +
+      fieldRange("Paper wrinkles", "settings", "paperWrinkles", s.paperWrinkles, 0, 100, 1, "%",
+        "Adds subtle folds and handling creases to the sheet.") +
+      fieldCheck("Ruled lines (text baseline sits on the rule)", "settings", "ruledLines", s.ruledLines) +
+    '</div></details>' +
+
+    '<details class="section" open><summary>Layout</summary><div class="section-body">' +
+      fieldSelect("Page behaviour", "settings", "pageMode", s.pageMode, [
+        { value: "continuous", label: "Continuous sheet" },
+        { value: "pages", label: "Separate pages" }
+      ]) +
+      fieldRange("Page height", "settings", "pageHeight", s.pageHeight, 400, 2400, 20, "px") +
+      fieldRange("Text scale", "settings", "fontScale", s.fontScale, 0.6, 2, 0.05, "×") +
+      fieldRange("Spacing between messages", "settings", "messageSpacing", s.messageSpacing, 0, 90, 1, "px") +
+      fieldCheck("Subtle separators between messages", "settings", "separators", s.separators) +
+      fieldCheck("Auto-scroll during playback", "settings", "autoScroll", s.autoScroll) +
+    '</div></details>' +
+
+    '<details class="section"><summary>Story</summary><div class="section-body">' +
+      fieldText("Story title", "project", "name", project.name, "Untitled story") +
+      '<div class="hint">Everything is saved automatically in this browser. ' +
+      'Use Export to keep a permanent copy.</div>' +
+    '</div></details>' +
+
+    '<div class="insp-actions">' +
+      '<button class="btn small" data-action="export">Export JSON</button>' +
+      '<button class="btn small" data-action="import">Import JSON</button>' +
+    '</div>';
+}
+
+function setNested(obj, path, value) {
+  const parts = path.split(".");
+  let cur = obj;
+  for (let i = 0; i < parts.length - 1; i++) {
+    if (typeof cur[parts[i]] !== "object" || cur[parts[i]] === null) cur[parts[i]] = {};
+    cur = cur[parts[i]];
+  }
+  cur[parts[parts.length - 1]] = value;
+}
+
+function updateCharacterPreviewChip(ch) {
+  const chip = $("#inspector .hand-chip");
+  if (!chip) return;
+  chip.style.fontFamily = ch.font;
+  chip.style.color = ch.color;
+  chip.style.fontSize = Math.min(ch.fontSize, 22) + "px";
+  chip.style.letterSpacing = ch.letterSpacing + "px";
+}
+
+function onInspectorInput(e) {
+  const t = e.target;
+  const field = t.dataset.field;
+  const scope = t.dataset.scope;
+  if (!field || !scope) return;
+
+  let value;
+  if (t.type === "checkbox") value = t.checked;
+  else if (t.type === "range" || t.type === "number") value = num(t.value, 0);
+  else value = t.value;
+
+  if (t.type === "range") {
+    const out = t.parentElement.querySelector(".val");
+    if (out) {
+      const unit = out.textContent.replace(/^[-0-9.]+/, "");
+      out.textContent = value + unit;
+    }
+  }
+
+  if (scope === "character") {
+    const ch = getChar(ui.selection.id);
+    if (!ch) return;
+    if (field === "preset") {
+      const p = PRESETS[value];
+      if (p) {
+        ch.preset = value;
+        ch.font = p.font;
+        ch.fontSize = p.size;
+        ch.speed = p.speed;
+        ch.lineSpacing = p.lineSpacing;
+        ch.letterSpacing = p.letterSpacing;
+        ch.jitter = p.jitter;
+      } else {
+        ch.preset = "custom";
+      }
+      renderInspector();
+    } else {
+      setNested(ch, field, value);
+      if (field !== "description" && field !== "name") ch.preset = "custom";
+      updateCharacterPreviewChip(ch);
+    }
+    scheduleRefresh();
+    saveLibrary();
+
+  } else if (scope === "message") {
+    const m = getMessage(ui.selection.id);
+    if (!m) return;
+    setNested(m, field, value);
+    scheduleRefresh();
+    saveLibrary();
+
+  } else if (scope === "settings") {
+    project.settings[field] = value;
+    scheduleRefresh();
+    saveLibrary();
+
+  } else if (scope === "project") {
+    if (field === "name") {
+      project.name = value;
+      $("#storyTitle").value = value;
+      renderStorySelect();
+      saveLibrary();
+    }
+  }
+}
+
+function onInspectorClick(e) {
+  const swatch = e.target.closest(".swatch");
+  if (swatch) {
+    const scope = swatch.dataset.scope;
+    const val = swatch.dataset.value;
+    if (scope === "character") {
+      const ch = getChar(ui.selection.id);
+      if (!ch) return;
+      ch.color = val;
+      ch.preset = "custom";
+      renderInspector();
+      onDataChanged();
+    }
+    return;
+  }
+
+  const btn = e.target.closest("[data-action]");
+  if (!btn) return;
+  const action = btn.dataset.action;
+
+  if (action === "dup-character") duplicateCharacter(ui.selection.id);
+  else if (action === "del-character") deleteCharacter(ui.selection.id);
+  else if (action === "msg-up") handleMessageAction("up", ui.selection.id);
+  else if (action === "msg-down") handleMessageAction("down", ui.selection.id);
+  else if (action === "msg-dup") handleMessageAction("dup", ui.selection.id);
+  else if (action === "msg-del") handleMessageAction("del", ui.selection.id);
+  else if (action === "clear-color") {
+    const m = getMessage(ui.selection.id);
+    if (m) { m.colorOverride = ""; renderInspector(); onDataChanged(); }
+  }
+  else if (action === "insert-inline-drawing") {
+    const m = getMessage(ui.selection.id);
+    if (!m) return;
+    const ta = $("#inspector textarea[data-field=\"text\"]");
+    let cursor = (m.text || "").length;
+    if (ta && typeof ta.selectionStart === "number") cursor = ta.selectionStart;
+    openDrawModalInline(m.id, null, cursor);
+  }
+  else if (action === "edit-inline-drawing") {
+    const drawingId = btn.dataset.drawingId;
+    openDrawModalInline(ui.selection.id, drawingId, 0);
+  }
+  else if (action === "delete-inline-drawing") {
+    const drawingId = btn.dataset.drawingId;
+    const m = getMessage(ui.selection.id);
+    if (!m || !m.inlineDrawings) return;
+    if (!confirm("Delete this drawing and remove its token from the text?")) return;
+    delete m.inlineDrawings[drawingId];
+    m.text = (m.text || "").split("{{d:" + drawingId + "}}").join("");
+    onDataChanged();
+    renderInspector();
+  }
+  else if (action === "redraw") {
+    const m = getMessage(ui.selection.id);
+    if (m && m.kind === "drawing") openDrawModalStandalone(m.id);
+  }
+  else if (action === "clear-strokes") {
+    const m = getMessage(ui.selection.id);
+    if (m && confirm("Remove all strokes from this drawing?")) {
+      m.strokes = [];
+      renderInspector();
+      onDataChanged();
+    }
+  }
+  else if (action === "export") exportProject();
+  else if (action === "import") $("#fileInput").click();
+}
+
+/* ==========================================================================
+   SECTION 10 — GLOBAL DATA CHANGE HANDLER
+   ========================================================================== */
+function stopPlaybackIfActive() {
+  if (play.playing || play.phase === "write" || play.phase === "delay" || play.phase === "hold") {
+    resetPlaybackState();
+    updateTransportUI();
+  }
+}
+
+function refreshAll() {
+  stopPlaybackIfActive();
+
+  const scroller = $("#paperScroll");
+  const st = scroller ? scroller.scrollTop : 0;
+
+  renderPaperFull();
+
+  if (scroller) scroller.scrollTop = st;
+
+  renderCharacters();
+  renderMessages();
+}
+
+function onDataChanged(opts) {
+  refreshAll();
+  renderInspector();
+  saveLibrary();
+}
+
+let refreshTimer = null;
+let lastRefreshTime = 0;
+
+function scheduleRefresh() {
+  if (refreshTimer) return;
+  const elapsed = Date.now() - lastRefreshTime;
+  const wait = Math.max(0, 100 - elapsed);
+  refreshTimer = setTimeout(() => {
+    refreshTimer = null;
+    lastRefreshTime = Date.now();
+    refreshAll();
+  }, wait);
+}
+
+/* ==========================================================================
+   SECTION 11 — RENDER ORCHESTRATION
+   ========================================================================== */
+function renderTabs() {
+  $$(".tab").forEach((t) => t.classList.toggle("active", t.dataset.tab === ui.tab));
+  $("#paneChars").classList.toggle("hidden", ui.tab !== "chars");
+  $("#paneMsgs").classList.toggle("hidden", ui.tab !== "msgs");
+}
+
+function renderStorySelect() {
+  const sel = $("#storySelect");
+  sel.innerHTML = "";
+  Object.keys(library.stories).forEach((id) => {
+    const p = library.stories[id];
+    const o = document.createElement("option");
+    o.value = id;
+    o.textContent = p.name || "Untitled story";
+    if (id === library.currentId) o.selected = true;
+    sel.appendChild(o);
+  });
+}
+
+function renderEverything() {
+  $("#storyTitle").value = project.name || "";
+  renderStorySelect();
+  renderTabs();
+  renderCharacters();
+  renderMessages();
+  renderInspector();
+  renderPaperFull();
+  updateTransportUI();
+}
+
+/* ==========================================================================
+   SECTION 12 — DRAWING MODAL
+   ========================================================================== */
+const drawState = {
+  open: false,
+  mode: "inline-create",
+  targetMessageId: null,
+  targetDrawingId: null,
+  cursorPos: 0,
+  strokes: [],
+  current: null,
+  drawing: false,
+  color: "#1b2a4a",
+  size: 3,
+  canvas: null,
+  ctx: null
+};
+
+function defaultInk() {
+  if (ui.selection.type === "message") {
+    const m = getMessage(ui.selection.id);
+    const c = m && getChar(m.characterId);
+    if (c) return c.color;
+  }
+  if (project.characters[0]) return project.characters[0].color;
+  return "#1b2a4a";
+}
+
+function openDrawModalInline(messageId, drawingId, cursorPos) {
+  const m = getMessage(messageId);
+  if (!m) return;
+
+  drawState.mode = drawingId ? "inline-edit" : "inline-create";
+  drawState.targetMessageId = messageId;
+  drawState.targetDrawingId = drawingId || null;
+  drawState.cursorPos = cursorPos || 0;
+
+  if (drawingId && m.inlineDrawings && m.inlineDrawings[drawingId]) {
+    drawState.strokes = deepCopy(m.inlineDrawings[drawingId]);
+  } else {
+    drawState.strokes = [];
+  }
+
+  finishOpeningModal();
+}
+
+function openDrawModalStandalone(messageId) {
+  const m = getMessage(messageId);
+  if (!m) return;
+
+  drawState.mode = "standalone-edit";
+  drawState.targetMessageId = messageId;
+  drawState.targetDrawingId = null;
+  drawState.cursorPos = 0;
+  drawState.strokes = deepCopy(m.strokes || []);
+
+  finishOpeningModal();
+}
+
+function finishOpeningModal() {
+  drawState.current = null;
+  drawState.drawing = false;
+
+  const canvas = $("#drawCanvas");
+  drawState.canvas = canvas;
+  drawState.ctx = canvas.getContext("2d");
+
+  const initialColor = (drawState.strokes[0] && drawState.strokes[0].color) || defaultInk();
+  drawState.color = initialColor;
+
+  $("#drawTitle").textContent =
+    drawState.mode === "inline-edit" ? "Edit inline drawing" :
+    drawState.mode === "standalone-edit" ? "Edit drawing" :
+    "Insert inline drawing";
+  $("#drawColor").value = toHex6(drawState.color);
+  $("#drawSize").value = drawState.size;
+  highlightDrawSwatch(drawState.color);
+
+  $("#drawBackdrop").hidden = false;
+  drawState.open = true;
+
+  redrawCanvas();
+}
+
+function closeDrawModal() {
+  $("#drawBackdrop").hidden = true;
+  drawState.open = false;
+  drawState.targetMessageId = null;
+  drawState.targetDrawingId = null;
+  drawState.strokes = [];
+  drawState.current = null;
+  drawState.drawing = false;
+  const canvas = drawState.canvas;
+  if (canvas) {
+    const ctx = canvas.getContext("2d");
+    if (ctx) ctx.clearRect(0, 0, canvas.width, canvas.height);
+  }
+}
+
+function highlightDrawSwatch(color) {
+  $$("#drawSwatches .swatch").forEach((sw) => {
+    sw.style.outline = sw.dataset.value === color ? "2px solid #e8d3a6" : "none";
+    sw.style.outlineOffset = "2px";
+  });
+}
+
+function canvasPoint(e) {
+  const c = drawState.canvas;
+  const r = c.getBoundingClientRect();
+  return {
+    x: (e.clientX - r.left) * (c.width / r.width),
+    y: (e.clientY - r.top) * (c.height / r.height)
+  };
+}
+
+function drawDot(p, s) {
+  const ctx = drawState.ctx;
+  if (!ctx) return;
+  ctx.beginPath();
+  ctx.arc(p.x, p.y, Math.max(0.6, (s.size || 3) / 2), 0, Math.PI * 2);
+  ctx.fillStyle = s.color;
+  ctx.fill();
+}
+
+function drawIncomingSegment(stroke) {
+  const ctx = drawState.ctx;
+  if (!ctx) return;
+  const pts = stroke.points;
+  const n = pts.length;
+  if (n < 2) return;
+
+  ctx.strokeStyle = stroke.color;
+  ctx.lineWidth = stroke.size;
+  ctx.lineCap = "round";
+  ctx.lineJoin = "round";
+
+  if (n === 2) {
+    ctx.beginPath();
+    ctx.moveTo(pts[0].x, pts[0].y);
+    ctx.lineTo(pts[1].x, pts[1].y);
+    ctx.stroke();
+    return;
+  }
+
+  const a = pts[n - 3], b = pts[n - 2], c = pts[n - 1];
+  const mid1x = (a.x + b.x) / 2, mid1y = (a.y + b.y) / 2;
+  const mid2x = (b.x + c.x) / 2, mid2y = (b.y + c.y) / 2;
+  ctx.beginPath();
+  ctx.moveTo(mid1x, mid1y);
+  ctx.quadraticCurveTo(b.x, b.y, mid2x, mid2y);
+  ctx.stroke();
+}
+
+function strokePathToCtx(ctx, pts) {
+  if (!pts.length) return;
+  if (pts.length === 1) {
+    ctx.beginPath();
+    ctx.arc(pts[0].x, pts[0].y, 0.6, 0, Math.PI * 2);
+    ctx.fill();
+    return;
+  }
+  if (pts.length === 2) {
+    ctx.beginPath();
+    ctx.moveTo(pts[0].x, pts[0].y);
+    ctx.lineTo(pts[1].x, pts[1].y);
+    ctx.stroke();
+    return;
+  }
+  ctx.beginPath();
+  ctx.moveTo(pts[0].x, pts[0].y);
+  for (let i = 1; i < pts.length - 1; i++) {
+    const mx = (pts[i].x + pts[i + 1].x) / 2;
+    const my = (pts[i].y + pts[i + 1].y) / 2;
+    ctx.quadraticCurveTo(pts[i].x, pts[i].y, mx, my);
+  }
+  const last = pts[pts.length - 1];
+  ctx.lineTo(last.x, last.y);
+  ctx.stroke();
+}
+
+function redrawCanvas() {
+  const canvas = drawState.canvas;
+  const ctx = drawState.ctx;
+  if (!canvas || !ctx) return;
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  drawState.strokes.forEach((s) => {
+    ctx.strokeStyle = s.color;
+    ctx.fillStyle = s.color;
+    ctx.lineWidth = s.size;
+    ctx.lineCap = "round";
+    ctx.lineJoin = "round";
+    strokePathToCtx(ctx, s.points || []);
+  });
+}
+
+function insertDrawing() {
+  const strokes = deepCopy(drawState.strokes).filter((s) => s.points && s.points.length);
+  if (!strokes.length) { toast("Draw something first."); return; }
+
+  const msg = getMessage(drawState.targetMessageId);
+  if (!msg) { closeDrawModal(); return; }
+
+  if (drawState.mode === "standalone-edit") {
+    msg.strokes = strokes;
+  } else {
+    if (!msg.inlineDrawings) msg.inlineDrawings = {};
+
+    if (drawState.mode === "inline-edit" && drawState.targetDrawingId) {
+      msg.inlineDrawings[drawState.targetDrawingId] = strokes;
+    } else {
+      const newId = uid("d");
+      msg.inlineDrawings[newId] = strokes;
+      const token = "{{d:" + newId + "}}";
+      const baseText = msg.text || "";
+      const cursor = clamp(drawState.cursorPos, 0, baseText.length);
+      msg.text = baseText.slice(0, cursor) + token + baseText.slice(cursor);
+    }
+  }
+
+  closeDrawModal();
+  onDataChanged();
+  renderInspector();
+  toast(drawState.mode === "inline-edit" ? "Drawing updated." : "Drawing inserted.");
+}
+
+function wireDrawingModal() {
+  const canvas = $("#drawCanvas");
+
+  canvas.addEventListener("pointerdown", (e) => {
+    if (e.pointerType === "mouse" && e.button !== 0) return;
+    e.preventDefault();
+    const p = canvasPoint(e);
+    const stroke = { color: drawState.color, size: drawState.size, points: [p] };
+    drawState.strokes.push(stroke);
+    drawState.current = stroke;
+    drawState.drawing = true;
+    try { canvas.setPointerCapture(e.pointerId); } catch (err) {}
+    drawDot(p, stroke);
+  });
+
+  canvas.addEventListener("pointermove", (e) => {
+    if (!drawState.drawing) return;
+    e.preventDefault();
+    const p = canvasPoint(e);
+    const s = drawState.current;
+    if (!s) return;
+    const pts = s.points;
+    const lastP = pts[pts.length - 1];
+    if (Math.hypot(p.x - lastP.x, p.y - lastP.y) < 0.7) return;
+    pts.push(p);
+    drawIncomingSegment(s);
+  });
+
+  const endStroke = () => {
+    drawState.drawing = false;
+    drawState.current = null;
+  };
+  canvas.addEventListener("pointerup", endStroke);
+  canvas.addEventListener("pointercancel", endStroke);
+  canvas.addEventListener("pointerleave", (e) => {
+    if (drawState.drawing && e.pointerType !== "mouse") endStroke();
+  });
+
+  $("#drawColor").addEventListener("input", (e) => {
+    drawState.color = e.target.value;
+    highlightDrawSwatch(drawState.color);
+  });
+
+  $("#drawSize").addEventListener("input", (e) => {
+    drawState.size = num(e.target.value, 3);
+  });
+
+  const sw = $("#drawSwatches");
+  INKS.forEach((c) => {
+    const el = document.createElement("span");
+    el.className = "swatch";
+    el.dataset.value = c;
+    el.style.background = c;
+    el.title = c;
+    el.addEventListener("click", () => {
+      drawState.color = c;
+      $("#drawColor").value = toHex6(c);
+      highlightDrawSwatch(c);
+    });
+    sw.appendChild(el);
+  });
+
+  $("#drawUndo").addEventListener("click", () => {
+    if (!drawState.strokes.length) return;
+    drawState.strokes.pop();
+    redrawCanvas();
+  });
+
+  $("#drawClear").addEventListener("click", () => {
+    drawState.strokes = [];
+    redrawCanvas();
+  });
+
+  $("#drawCancel").addEventListener("click", closeDrawModal);
+  $("#drawInsert").addEventListener("click", insertDrawing);
+
+  $("#drawBackdrop").addEventListener("pointerdown", (e) => {
+    if (e.target === $("#drawBackdrop")) closeDrawModal();
+  });
+}
+
+/* ==========================================================================
+   SECTION 13 — PROJECT / STORY MANAGEMENT
+   ========================================================================== */
+function switchToStory(id) {
+  if (!library.stories[id]) return;
+  library.currentId = id;
+  project = library.stories[id];
+  resetPlaybackState();
+  ui.selection = { type: "paper", id: null };
+  renderEverything();
+  saveLibrary();
+}
+
+function newStory() {
+  if (!confirm("Start a new, empty story?\n\nThe current story stays in your library (use the story menu to return to it).")) return;
+  const p = makeProject("Untitled Story");
+  p.characters = [makeCharacter("neat", "Character One")];
+  p.messages = [];
+  library.stories[p.id] = p;
+  library.currentId = p.id;
+  project = p;
+  resetPlaybackState();
+  ui.selection = { type: "paper", id: null };
+  renderEverything();
+  saveLibrary();
+  toast("New story created.");
+}
+
+function duplicateStory() {
+  const copy = deepCopy(project);
+  copy.id = uid("story");
+  copy.name = (project.name || "Untitled") + " (copy)";
+
+  const map = {};
+  copy.characters.forEach((c) => {
+    const old = c.id;
+    const nid = uid("ch");
+    map[old] = nid;
+    c.id = nid;
+  });
+  copy.messages.forEach((m) => {
+    m.id = uid("msg");
+    if (map[m.characterId]) m.characterId = map[m.characterId];
+  });
+
+  library.stories[copy.id] = copy;
+  library.currentId = copy.id;
+  project = copy;
+  resetPlaybackState();
+  ui.selection = { type: "paper", id: null };
+  renderEverything();
+  saveLibrary();
+  toast("Story duplicated.");
+}
+
+function clearProject() {
+  if (!confirm("Clear this story?\n\nThis removes all characters and messages from the current story. This cannot be undone (export first if you're unsure).")) return;
+
+  project.messages = [];
+  project.characters = [makeCharacter("neat", "Character One")];
+  resetPlaybackState();
+  ui.selection = { type: "paper", id: null };
+  renderEverything();
+  saveLibrary();
+  toast("Story cleared.");
+}
+
+/* ==========================================================================
+   SECTION 14 — PRESENTATION MODE
+   ========================================================================== */
+function togglePresentation(on) {
+  ui.presenting = on === undefined ? !ui.presenting : !!on;
+  document.body.classList.toggle("present", ui.presenting);
+
+  if (ui.presenting) {
+    if (document.documentElement.requestFullscreen) {
+      document.documentElement.requestFullscreen().catch(() => {});
+    }
+    Paper.scrollToElement(Paper.current ? Paper.current.firstElementChild : null);
+  } else {
+    if (document.fullscreenElement && document.exitFullscreen) {
+      document.exitFullscreen().catch(() => {});
+    }
+    renderEverything();
+  }
+}
+
+/* ==========================================================================
+   SECTION 15 — EVENT WIRING
+   ========================================================================== */
+function wireEvents() {
+  $$(".tab").forEach((tab) => {
+    tab.addEventListener("click", () => {
+      ui.tab = tab.dataset.tab;
+      renderTabs();
+    });
+  });
+
+  $("#btnAddChar").addEventListener("click", addCharacter);
+  $("#btnAddMsg").addEventListener("click", addMessage);
+  $("#btnAddDrawing").addEventListener("click", addMessageWithDrawing);
+
+  const insp = $("#inspector");
+  insp.addEventListener("input", onInspectorInput);
+  insp.addEventListener("change", onInspectorInput);
+  insp.addEventListener("click", onInspectorClick);
+
+  $("#storyTitle").addEventListener("input", (e) => {
+    project.name = e.target.value;
+    renderStorySelect();
+    saveLibrary();
+  });
+  $("#storySelect").addEventListener("change", (e) => switchToStory(e.target.value));
+
+  $("#btnNew").addEventListener("click", newStory);
+  $("#btnDup").addEventListener("click", duplicateStory);
+  $("#btnExport").addEventListener("click", exportProject);
+  $("#btnImport").addEventListener("click", () => $("#fileInput").click());
+  $("#btnClear").addEventListener("click", clearProject);
+  $("#fileInput").addEventListener("change", (e) => {
+    const f = e.target.files && e.target.files[0];
+    if (f) importProjectFile(f);
+    e.target.value = "";
+  });
+
+  $("#btnPresent").addEventListener("click", () => togglePresentation(true));
+  $("#btnExitPresent").addEventListener("click", () => togglePresentation(false));
+
+  $("#btnPlay").addEventListener("click", () => {
+    if (play.playing) pausePlayback();
+    else if (play.phase === "idle" || play.phase === "done") startPlayback(0);
+    else resumePlayback();
+  });
+
+  $("#btnRestart").addEventListener("click", () => {
+    startPlayback(0);
+  });
+
+  $("#btnPrev").addEventListener("click", () => {
+    if (!project.messages.length) return;
+    pausePlayback();
+    const target = Math.max(0, (play.idx < 0 ? 0 : play.idx) - 1);
+    jumpTo(target);
+  });
+
+  $("#btnNext").addEventListener("click", () => {
+    if (!project.messages.length) return;
+    if (play.playing) {
+      const msg = project.messages[play.idx];
+      if (msg) {
+        const st = Paper.blocks.get(msg.id);
+        if (st) {
+          if (msg.kind === "drawing") Paper.showDrawing(msg.id);
+          else Paper.reveal(msg.id, st.chars.length);
+          finishMessageVisual(msg);
+        }
+      }
+      play.elapsed = 0;
+      advanceMessage();
+    } else {
+      const target = Math.min(project.messages.length - 1, (play.idx < 0 ? -1 : play.idx) + 1);
+      jumpTo(target);
+    }
+  });
+
+  $("#btnEnd").addEventListener("click", () => {
+    if (!project.messages.length) return;
+    stopPlayback();
+    play.idx = project.messages.length - 1;
+    play.phase = "done";
+    renderPaperFull();
+    updateTransportUI();
+    const scroller = $("#paperScroll");
+    scroller.scrollTop = scroller.scrollHeight;
+  });
+
+  $("#speedSel").addEventListener("change", (e) => {
+    play.speed = num(e.target.value, 1) || 1;
+  });
+
+  document.addEventListener("keydown", (e) => {
+    if (drawState.open) {
+      if (e.key === "Escape") { e.preventDefault(); closeDrawModal(); }
+      return;
+    }
+
+    const tag = (e.target.tagName || "").toLowerCase();
+    const typing = tag === "input" || tag === "textarea" || tag === "select" || e.target.isContentEditable;
+    if (typing) return;
+
+    if (e.code === "Space") {
+      e.preventDefault();
+      $("#btnPlay").click();
+    } else if (e.key === "ArrowRight") {
+      e.preventDefault();
+      $("#btnNext").click();
+    } else if (e.key === "ArrowLeft") {
+      e.preventDefault();
+      $("#btnPrev").click();
+    } else if (e.key.toLowerCase() === "r") {
+      $("#btnRestart").click();
+    } else if (e.key === "Escape" && ui.presenting) {
+      togglePresentation(false);
+    } else if (e.key.toLowerCase() === "f") {
+      if (ui.presenting) togglePresentation(true);
+    }
+  });
+
+  window.addEventListener("beforeunload", () => {
+    try { localStorage.setItem(STORE_KEY, JSON.stringify(library)); } catch (err) {}
+  });
+}
+
+/* ==========================================================================
+   SECTION 16 — BOOT
+   ========================================================================== */
+function boot() {
+  loadLibrary();
+  project = library.stories[library.currentId];
+
+  Paper.init();
+  wireEvents();
+  wireDrawingModal();
+
+  play.speed = num($("#speedSel").value, 1) || 1;
+
+  renderEverything();
+  updateTransportUI();
+
+  $("#paperScroll").scrollTop = 0;
+
+  const onResize = debounce(() => {
+    if (play.playing) return;
+    if (project.settings.pageMode === "pages") renderPaperFull();
+  }, 260);
+  window.addEventListener("resize", onResize);
+
+  if (document.fonts && document.fonts.ready) {
+    document.fonts.ready.then(() => {
+      if (!play.playing) renderPaperFull();
+    }).catch(() => {});
+  }
+}
+
+document.addEventListener("DOMContentLoaded", boot);
+</script>
+</body>
+</html>
