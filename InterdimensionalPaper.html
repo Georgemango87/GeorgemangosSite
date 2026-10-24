@@ -2,7 +2,8 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#14120f">
 <title>Interdimensional Paper — Handwritten Storytelling</title>
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -38,7 +39,7 @@
    2. BASE
    ========================================================================== */
 *{ box-sizing:border-box; }
-html,body{ height:100%; }
+html{ height:100%; }
 body{
   margin:0;
   font-family:var(--ui-font);
@@ -48,19 +49,32 @@ body{
     radial-gradient(ellipse at 50% -10%, #221d17 0%, #100e0c 55%, #070606 100%);
   overflow:hidden;
   -webkit-font-smoothing:antialiased;
+  -webkit-tap-highlight-color:transparent;
+  display:flex;
+  flex-direction:column;
+  height:100vh;
+  height:100dvh;
 }
 button, input, select, textarea{ font-family:inherit; font-size:inherit; color:inherit; }
-button{ cursor:pointer; }
+button{ cursor:pointer; touch-action:manipulation; -webkit-tap-highlight-color:transparent; }
 ::-webkit-scrollbar{ width:10px; height:10px; }
 ::-webkit-scrollbar-track{ background:transparent; }
 ::-webkit-scrollbar-thumb{ background:#3a332b; border-radius:6px; border:2px solid transparent; background-clip:padding-box; }
 ::-webkit-scrollbar-thumb:hover{ background:#4d4437; background-clip:padding-box; border:2px solid transparent; }
 .hidden{ display:none !important; }
 
+/* Mobile-only UI (hidden by default) */
+.mobile-tabs{ display:none; }
+.mobile-only{ display:none !important; }
+.mobile-label{ display:none; }
+.brand-text{ display:inline; }
+.desktop-label{ display:inline; }
+
 /* ==========================================================================
    3. TOP BAR
    ========================================================================== */
 .topbar{
+  flex-shrink:0;
   height:var(--topbar-h);
   display:flex; align-items:center; gap:16px;
   padding:0 16px;
@@ -88,7 +102,46 @@ button{ cursor:pointer; }
 }
 .story-title:hover{ border-color:var(--line); }
 .story-title:focus{ border-color:var(--accent-dim); background:#100e0c; }
-.top-actions{ display:flex; gap:6px; flex-shrink:0; }
+.top-actions{ display:flex; gap:6px; flex-shrink:0; align-items:center; }
+
+/* Mobile top menu (absolute under the topbar) */
+.top-menu{
+  position:absolute;
+  top:calc(100% - 4px);
+  right:10px;
+  background:var(--panel-2);
+  border:1px solid var(--line);
+  border-radius:10px;
+  padding:6px;
+  box-shadow:0 14px 40px rgba(0,0,0,.7);
+  z-index:60;
+  min-width:230px;
+  display:flex;
+  flex-direction:column;
+  gap:2px;
+}
+.top-menu[hidden]{ display:none; }
+.top-menu-row{
+  display:flex; flex-direction:column; gap:6px;
+  padding:8px 10px 10px;
+  border-bottom:1px solid var(--line);
+  margin-bottom:4px;
+}
+.top-menu-label{
+  font-size:10.5px; text-transform:uppercase; letter-spacing:.1em; color:var(--muted);
+}
+.top-menu-row select{
+  background:#100e0c; border:1px solid var(--line); border-radius:6px;
+  padding:8px 10px; color:var(--text); font-size:14px; outline:none;
+}
+.top-menu-item{
+  background:transparent; border:none; text-align:left;
+  padding:11px 12px; border-radius:6px; color:var(--text-dim);
+  font-size:14px; min-height:42px;
+}
+.top-menu-item:hover{ background:var(--panel-3); color:var(--text); }
+.top-menu-item.danger{ color:#c98878; }
+.top-menu-item.danger:hover{ background:#3a211d; color:#e8b3a8; }
 
 /* ==========================================================================
    4. BUTTONS
@@ -123,7 +176,8 @@ button{ cursor:pointer; }
    5. STUDIO LAYOUT
    ========================================================================== */
 .studio{
-  height:calc(100vh - var(--topbar-h));
+  flex:1 1 auto;
+  min-height:0;
   display:grid;
   grid-template-columns:300px minmax(0,1fr) 344px;
   overflow:hidden;
@@ -152,7 +206,7 @@ button{ cursor:pointer; }
 }
 .pane-title{ font-size:11px; letter-spacing:.12em; text-transform:uppercase; color:var(--muted); }
 .pane-actions{ display:flex; gap:6px; flex-wrap:wrap; }
-.list{ overflow-y:auto; padding:0 10px 20px; flex:1; min-height:0; }
+.list{ overflow-y:auto; padding:0 10px 20px; flex:1; min-height:0; -webkit-overflow-scrolling:touch; }
 
 .card{
   border:1px solid var(--line-soft);
@@ -232,6 +286,10 @@ button{ cursor:pointer; }
   color:var(--accent-2); font-size:10px; border:1px solid #3f5b57;
   border-radius:4px; padding:0 4px; margin-left:4px;
 }
+.badge-delay{
+  color:#c9a35b; font-size:10px; border:1px solid #6b5a30;
+  border-radius:4px; padding:0 4px; margin-left:4px; font-family:var(--mono);
+}
 .empty{
   text-align:center; color:var(--muted); font-size:12.5px; line-height:1.7;
   padding:36px 14px; font-style:italic;
@@ -250,6 +308,7 @@ button{ cursor:pointer; }
   flex:1; overflow-y:auto; overflow-x:auto; min-height:0;
   scroll-behavior:smooth;
   position:relative;
+  -webkit-overflow-scrolling:touch;
 }
 .paper-stack{
   display:flex; flex-direction:column; align-items:center;
@@ -314,6 +373,43 @@ button{ cursor:pointer; }
   padding:60px 20px;
   font-size:15px;
   letter-spacing:.02em;
+}
+
+/* ---- time-passage label --------------------------------------------------- */
+.time-label{
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  gap:14px;
+  font-family:var(--ui-font);
+  font-style:italic;
+  font-size:12.5px;
+  letter-spacing:.08em;
+  color:#8a7c62;
+  text-align:center;
+  margin:14px 0 24px;
+  width:100%;
+  opacity:0.78;
+  animation:timeLabelIn 1.1s ease both;
+  text-transform:lowercase;
+}
+.time-label::before,
+.time-label::after{
+  content:"";
+  display:inline-block;
+  flex:0 0 auto;
+  width:32px;
+  height:1px;
+  background:rgba(140,120,85,.42);
+}
+.time-label > span{
+  flex:0 1 auto;
+  max-width:80%;
+  overflow-wrap:break-word;
+}
+@keyframes timeLabelIn{
+  from{ opacity:0; letter-spacing:.18em; }
+  to{ opacity:.78; letter-spacing:.08em; }
 }
 
 /* ---- ruled-paper alignment ---------------------------------------------- */
@@ -408,10 +504,6 @@ button{ cursor:pointer; }
   border-radius: 4px;
   top: 0;
 }
-
-/* The inline SVG is sized in em so it scales with the surrounding text.
-   vector-effect:non-scaling-stroke keeps line widths visible when the
-   drawing is shrunk down from the large drawing canvas. */
 .inline-drawing svg.drawing-svg{
   display: inline-block;
   vertical-align: middle;
@@ -521,9 +613,13 @@ button{ cursor:pointer; }
 }
 .frow{ display:flex; align-items:center; gap:9px; }
 .frow input[type=range]{ flex:1; accent-color:var(--accent); min-width:0; }
+.frow input[type=number]{ flex:1; min-width:0; }
 .frow .val{
   font-family:var(--mono); font-size:11px; color:var(--text-dim);
   min-width:52px; text-align:right;
+}
+.frow .unit{
+  font-size:12px; color:var(--muted); flex-shrink:0;
 }
 input[type=text], input[type=number], select, textarea{
   width:100%;
@@ -624,7 +720,7 @@ input[type=color]{
 .draw-tools{ display:flex; align-items:center; gap:12px; flex-wrap:wrap; flex:1; }
 .draw-tools label{ font-size:11.5px; color:var(--muted); display:flex; align-items:center; gap:6px; }
 .draw-tools input[type=range]{ width:100px; accent-color:var(--accent); }
-.draw-canvas-wrap{ padding:16px; display:flex; justify-content:center; background:#0f0d0b; overflow:auto; }
+.draw-canvas-wrap{ padding:16px; display:flex; justify-content:center; background:#0f0d0b; overflow:auto; flex:1; min-height:0; }
 #drawCanvas{
   width:100%; max-width:900px; height:auto; aspect-ratio:9 / 5;
   background:#f4ecdc;
@@ -642,14 +738,16 @@ input[type=color]{
    ========================================================================== */
 body.present .topbar,
 body.present .panel-left,
-body.present .panel-right{ display:none !important; }
-body.present .studio{ grid-template-columns:1fr; height:100vh; }
+body.present .panel-right,
+body.present .mobile-tabs{ display:none !important; }
+body.present .studio{ grid-template-columns:1fr; }
 body.present .stage-area{ border:none; }
 body.present .paper-stack{ padding-top:46px; padding-bottom:120px; }
 body.present .transport{
   border-top:none;
   position:fixed;
-  bottom:18px; left:50%; transform:translateX(-50%);
+  bottom:max(18px, calc(env(safe-area-inset-bottom, 0px) + 12px));
+  left:50%; transform:translateX(-50%);
   background:rgba(20,17,14,.9);
   border:1px solid #352e26;
   border-radius:12px;
@@ -659,38 +757,197 @@ body.present .transport{
   z-index:50;
   opacity:.28;
   transition:opacity .3s;
+  max-width:calc(100vw - 24px);
 }
 body.present .transport:hover{ opacity:1; }
 #btnExitPresent{ display:none; }
 body.present #btnExitPresent{ display:inline-flex; }
 
 /* ==========================================================================
-   12. RESPONSIVE
+   12. MOBILE TABS (base hidden, shown at mobile breakpoint)
+   ========================================================================== */
+.mobile-tabs{
+  flex-shrink:0;
+  background:#171411;
+  border-top:1px solid var(--line);
+  border-bottom:1px solid var(--line);
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+.mobile-tab{
+  flex:1;
+  background:transparent;
+  border:none;
+  border-bottom:2px solid transparent;
+  color:var(--muted);
+  padding:12px 6px 10px;
+  font-size:12px;
+  letter-spacing:.06em;
+  text-transform:uppercase;
+  min-height:48px;
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  transition:color .15s, border-color .15s, background .15s;
+}
+.mobile-tab:active{ background:#1f1b17; }
+.mobile-tab.active{
+  color:var(--accent);
+  border-bottom-color:var(--accent);
+}
+
+/* ==========================================================================
+   13. RESPONSIVE / MOBILE
    ========================================================================== */
 @media (max-width:1180px){
   .studio{ grid-template-columns:262px minmax(0,1fr) 310px; }
 }
-@media (max-width:900px){
-  body{ overflow:auto; }
-  .studio{
-    display:flex; flex-direction:column;
-    height:auto; min-height:calc(100vh - var(--topbar-h));
+
+@media (max-width: 900px){
+  :root{ --topbar-h:0; }
+
+  /* --- Compact topbar with menu --- */
+  .topbar{
+    height:auto;
+    min-height:0;
+    flex-wrap:wrap;
+    padding:8px 10px;
+    gap:8px;
   }
-  .stage-area{ order:-1; height:66vh; min-height:420px; }
-  .panel{ border:none; border-top:1px solid var(--line); max-height:none; }
-  .panel-right{ border-left:none; }
-  .list{ max-height:340px; }
-  .topbar{ flex-wrap:wrap; height:auto; padding:8px 10px; gap:8px; }
-  .storybar{ order:3; width:100%; }
-  .paper-stack{ padding:18px 10px 70px; }
-  .paper{ padding-left:26px !important; padding-right:26px !important; }
+  .brand{ font-size:20px; }
+  .brand-text{ display:none; }
+  .storybar{ order:3; width:100%; flex-basis:100%; }
+  .story-select{ display:none; }
+  .story-title{ font-size:16px; padding:8px 10px; max-width:none; }
+  .top-actions .btn:not(.mobile-only):not(#btnPresent){ display:none; }
+  .mobile-only{ display:inline-flex !important; }
+  .desktop-label{ display:none; }
+  .mobile-label{ display:inline; }
+  #btnPresent{ padding:8px 14px; font-size:14px; min-height:40px; }
+  #btnMenu{ padding:8px 12px; font-size:18px; min-height:40px; }
+
+  /* --- Studio becomes flex column: paper, tabs, active panel --- */
+  .studio{
+    display:flex;
+    flex-direction:column;
+    overflow:hidden;
+  }
+  .stage-area{
+    flex:0 0 auto;
+    height:46dvh;
+    min-height:220px;
+    max-height:58dvh;
+  }
+  .mobile-tabs{ display:flex; }
+  .panel{
+    flex:1 1 0;
+    min-height:0;
+    border:none;
+  }
+  .panel-left{ border-top:none; }
+  .panel-right{ border-top:none; }
+  body.mobile-chars .panel-left,
+  body.mobile-msgs  .panel-left{ display:flex; }
+  body.mobile-insp  .panel-left{ display:none; }
+  body.mobile-chars .panel-right,
+  body.mobile-msgs  .panel-right{ display:none; }
+  body.mobile-insp  .panel-right{ display:flex; }
+
+  /* Inner tab strip hidden on mobile (mobile-tabs replaces it) */
+  .panel-left .tabs{ display:none; }
+
+  /* Show the correct pane inside the left panel based on mobile tab */
+  body.mobile-chars #paneChars{ display:flex; }
+  body.mobile-chars #paneMsgs{ display:none; }
+  body.mobile-msgs  #paneChars{ display:none; }
+  body.mobile-msgs  #paneMsgs{ display:flex; }
+
+  /* Bigger touch targets */
+  .mini{ width:30px; height:30px; font-size:14px; }
+  .btn.small{ padding:7px 12px; font-size:13px; min-height:36px; }
+  .btn{ min-height:36px; }
+  .swatch{ width:26px; height:26px; }
+  .card{ padding:11px 12px; }
+  .card-tools, .msg-tools{ opacity:.55; }
+  .card.selected .card-tools, .card.selected .msg-tools{ opacity:1; }
+
+  /* Transport: smaller footprint, safe area */
+  .transport{
+    padding:8px 8px calc(8px + env(safe-area-inset-bottom, 0px));
+    gap:5px;
+  }
+  .tbtn{ width:38px; height:38px; font-size:14px; }
+  .tbtn.play{ width:50px; height:42px; }
+  .speed{ font-size:10.5px; }
+  .speed select{ font-size:12px; padding:5px 6px; }
+  .progress{ font-size:10.5px; min-width:52px; }
+
+  /* Paper padding gets a bit tighter to fit narrow screens */
+  .paper-stack{ padding:14px 8px 60px; }
+
+  /* Inspect area padding */
+  #inspector{ padding:12px 12px calc(32px + env(safe-area-inset-bottom, 0px)); }
+
+  /* Prevent iOS auto-zoom on focus */
+  input[type=text], input[type=number], select, textarea{ font-size:16px; }
+
+  /* Paper inspector header and section padding */
+  .section-body{ padding:4px 12px 14px; }
+  .insp-actions .btn.small{ padding:8px 14px; min-height:40px; font-size:13px; }
+
+  /* Fullscreen drawing modal on mobile */
+  .modal-backdrop{ padding:0; }
+  .draw-modal{
+    width:100vw;
+    height:100vh;
+    height:100dvh;
+    max-height:none;
+    border-radius:0;
+    border:none;
+  }
+  .modal-head{ padding:10px 12px; gap:10px; }
+  .draw-tools{ gap:8px; }
+  .draw-tools label{ font-size:11px; }
+  .draw-tools input[type=range]{ width:80px; }
+  .draw-canvas-wrap{ padding:8px; }
+  #drawCanvas{ aspect-ratio:4/3; max-height:52dvh; }
+  .modal-actions{
+    padding:10px 12px calc(12px + env(safe-area-inset-bottom, 0px));
+    gap:10px;
+  }
+  .modal-actions .btn{ flex:1; padding:12px 14px; font-size:14.5px; min-height:46px; }
+
+  /* Swatches wrap into a scrollable row inside the modal head */
+  #drawSwatches{
+    overflow-x:auto;
+    flex-wrap:nowrap;
+    padding-bottom:4px;
+    max-width:100%;
+    -webkit-overflow-scrolling:touch;
+  }
+
+  /* Mobile menu is shown via the ☰ button */
+  .top-menu{ right:8px; left:8px; min-width:0; }
+
+  /* Presentation transport on mobile */
+  body.present .transport{
+    bottom:max(14px, calc(env(safe-area-inset-bottom, 0px) + 10px));
+    padding:8px 12px;
+    gap:6px;
+  }
+}
+
+/* Landscape phone: give the paper more vertical space */
+@media (max-width: 900px) and (orientation: landscape) and (max-height: 480px){
+  .stage-area{ height:58dvh; min-height:180px; }
+  .paper-stack{ padding:10px 6px 40px; }
+  .mobile-tab{ padding:8px 4px; font-size:11px; min-height:40px; }
 }
 </style>
 </head>
 <body>
 
 <header class="topbar">
-  <div class="brand"><span class="glyph">✒</span> Interdimensional Paper</div>
+  <div class="brand"><span class="glyph">✒</span><span class="brand-text">Interdimensional Paper</span></div>
   <div class="storybar">
     <select id="storySelect" class="story-select" title="Switch story"></select>
     <input id="storyTitle" class="story-title" type="text" placeholder="Untitled story" spellcheck="false">
@@ -701,7 +958,22 @@ body.present #btnExitPresent{ display:inline-flex; }
     <button class="btn" id="btnExport" title="Download this story as JSON">Export</button>
     <button class="btn" id="btnImport" title="Load a story from a JSON file">Import</button>
     <button class="btn danger" id="btnClear" title="Clear all messages and characters">Clear</button>
-    <button class="btn primary" id="btnPresent" title="Presentation mode (fullscreen)">Presentation</button>
+    <button class="btn primary" id="btnPresent" title="Presentation mode (fullscreen)">
+      <span class="desktop-label">Presentation</span>
+      <span class="mobile-label">▶</span>
+    </button>
+    <button class="btn mobile-only" id="btnMenu" aria-label="More actions" aria-expanded="false">☰</button>
+  </div>
+  <div class="top-menu" id="topMenu" hidden>
+    <div class="top-menu-row">
+      <span class="top-menu-label">Story</span>
+      <select id="menuStorySelect"></select>
+    </div>
+    <button class="top-menu-item" data-act="new">New story</button>
+    <button class="top-menu-item" data-act="dup">Duplicate story</button>
+    <button class="top-menu-item" data-act="export">Export JSON</button>
+    <button class="top-menu-item" data-act="import">Import JSON</button>
+    <button class="top-menu-item danger" data-act="clear">Clear story</button>
   </div>
 </header>
 <input type="file" id="fileInput" accept="application/json,.json" hidden>
@@ -759,6 +1031,12 @@ body.present #btnExitPresent{ display:inline-flex; }
       <button class="tbtn" id="btnExitPresent" title="Exit presentation">✕</button>
     </div>
   </section>
+
+  <nav class="mobile-tabs" id="mobileTabs" aria-label="Mobile panels">
+    <button class="mobile-tab" data-mtab="chars">Characters</button>
+    <button class="mobile-tab" data-mtab="msgs">Messages</button>
+    <button class="mobile-tab" data-mtab="inspector">Edit</button>
+  </nav>
 
   <aside class="panel panel-right">
     <div id="inspector"></div>
@@ -938,6 +1216,7 @@ function makeMessage(characterId, text = "") {
     characterId: characterId || "",
     text: text,
     direction: "",
+    timeLabel: "",
     delay: 600,
     pause: 900,
     important: false,
@@ -1027,6 +1306,36 @@ const ui = {
   presenting: false
 };
 
+/* Mobile UI state */
+const mobileState = {
+  isMobile: false,
+  tab: "msgs"   // 'chars' | 'msgs' | 'inspector'
+};
+
+function checkMobileState() {
+  mobileState.isMobile = window.matchMedia("(max-width: 900px)").matches;
+  return mobileState.isMobile;
+}
+
+function setMobileTab(tab) {
+  mobileState.tab = tab;
+  applyMobileLayout();
+}
+
+function applyMobileLayout() {
+  document.body.classList.remove("mobile-chars", "mobile-msgs", "mobile-insp");
+  if (mobileState.isMobile) {
+    document.body.classList.add("mobile-" + mobileState.tab);
+  }
+  $$(".mobile-tab").forEach((b) => {
+    b.classList.toggle("active", b.dataset.mtab === mobileState.tab);
+  });
+}
+
+function maybeSwitchToInspectorOnMobile() {
+  if (mobileState.isMobile) setMobileTab("inspector");
+}
+
 function getChar(id) {
   return project.characters.find((c) => c.id === id) || null;
 }
@@ -1059,6 +1368,24 @@ const saveLibrary = debounce(function () {
   }
 }, 350);
 
+function migrateMessageInPlace(m) {
+  if (!m || typeof m !== "object") return;
+  if (typeof m.timeLabel !== "string") m.timeLabel = "";
+  if (typeof m.delay !== "number" || !isFinite(m.delay)) m.delay = 600;
+  if (typeof m.pause !== "number" || !isFinite(m.pause)) m.pause = 900;
+  if (typeof m.kind !== "string") m.kind = "text";
+  if (!Array.isArray(m.strokes)) m.strokes = [];
+  if (!m.inlineDrawings || typeof m.inlineDrawings !== "object") m.inlineDrawings = {};
+  if (!m.effects || typeof m.effects !== "object") {
+    m.effects = { hesitate: false, slow: false, crossed: false, faded: false, overwrite: false };
+  }
+}
+
+function migrateProjectInPlace(p) {
+  if (!p || !Array.isArray(p.messages)) return;
+  p.messages.forEach(migrateMessageInPlace);
+}
+
 function loadLibrary() {
   try {
     const raw = localStorage.getItem(STORE_KEY);
@@ -1066,6 +1393,7 @@ function loadLibrary() {
       const data = JSON.parse(raw);
       if (data && data.stories && typeof data.stories === "object" && data.currentId && data.stories[data.currentId]) {
         library = data;
+        Object.keys(library.stories).forEach((id) => migrateProjectInPlace(library.stories[id]));
         return;
       }
     }
@@ -1162,8 +1490,9 @@ function validateProject(raw) {
       characterId: charIds.has(m.characterId) ? m.characterId : out.characters[0].id,
       text: typeof m.text === "string" ? m.text.slice(0, 12000) : "",
       direction: typeof m.direction === "string" ? m.direction.slice(0, 400) : "",
-      delay: clamp(num(m.delay, 600), 0, 60000),
-      pause: clamp(num(m.pause, 900), 0, 60000),
+      timeLabel: typeof m.timeLabel === "string" ? m.timeLabel.slice(0, 120) : "",
+      delay: clamp(num(m.delay, 600), 0, 3600000),
+      pause: clamp(num(m.pause, 900), 0, 3600000),
       important: !!m.important,
       fontOverride: typeof m.fontOverride === "string" ? m.fontOverride : "",
       colorOverride: (typeof m.colorOverride === "string" && /^#[0-9a-fA-F]{3,8}$/.test(m.colorOverride)) ? m.colorOverride : "",
@@ -1276,12 +1605,6 @@ function pathFromPoints(pts) {
   return d;
 }
 
-/* Builds an SVG for the given strokes.
-   - opts.cssSized: true  → used inside flowing text; CSS controls the size
-   - opts.cssSized: false → standalone drawing; explicit pixel dimensions
-   For inline drawings we use vector-effect:non-scaling-stroke so the line
-   weight stays visible even when the large canvas drawing is shrunk down
-   to a couple of em. */
 function buildDrawingSVG(strokes, opts) {
   opts = opts || {};
   strokes = strokes || [];
@@ -1307,7 +1630,6 @@ function buildDrawingSVG(strokes, opts) {
     path.setAttribute("d", pathFromPoints(s.points));
     path.setAttribute("stroke", s.color || "#1b2a4a");
     if (inline) {
-      /* keep lines legible at small sizes */
       path.setAttribute("stroke-width", clamp((s.size || 3) * 0.7, 0.8, 3).toFixed(2));
       path.setAttribute("vector-effect", "non-scaling-stroke");
     } else {
@@ -1332,6 +1654,16 @@ const NOISE_URI =
   "<filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='3' stitchTiles='stitch'/>" +
   "<feColorMatrix type='saturate' values='0'/></filter>" +
   "<rect width='220' height='220' filter='url(%23n)' opacity='0.155'/></svg>\")";
+
+function appendTimeLabel(text) {
+  if (!text) return;
+  const el = document.createElement("div");
+  el.className = "time-label";
+  const inner = document.createElement("span");
+  inner.textContent = text;
+  el.appendChild(inner);
+  Paper.appendBlock(el);
+}
 
 const Paper = {
   root: null,
@@ -1542,12 +1874,15 @@ const Paper = {
     const cr = scroller.getBoundingClientRect();
     const r = st.el.getBoundingClientRect();
     scroller.scrollTop += (r.top - cr.top) - 60;
+  },
+
+  scrollToBottom() {
+    if (!project.settings.autoScroll) return;
+    const scroller = $("#paperScroll");
+    scroller.scrollTop = scroller.scrollHeight;
   }
 };
 
-/* Splits message text on {{d:id}} tokens and builds a stream of revealable
-   items. Text runs become per-character spans; each token becomes a single
-   .inline-drawing span that fades in as one unit. */
 function buildContent(bodyEl, msg, jitter) {
   const chars = [];
   const charText = [];
@@ -1657,12 +1992,10 @@ function renderPaperFull() {
     Paper.current.appendChild(hint);
   } else {
     project.messages.forEach((msg) => {
+      if (msg.timeLabel && msg.timeLabel.trim()) appendTimeLabel(msg.timeLabel.trim());
       const st = Paper.appendMessage(msg);
-      if (msg.kind === "drawing") {
-        Paper.showDrawing(msg.id);
-      } else {
-        Paper.reveal(msg.id, st.chars.length);
-      }
+      if (msg.kind === "drawing") Paper.showDrawing(msg.id);
+      else Paper.reveal(msg.id, st.chars.length);
       finishMessageVisual(msg);
     });
   }
@@ -1674,11 +2007,7 @@ function applySeparators(on) {
   project.messages.forEach((msg, i) => {
     const st = Paper.blocks.get(msg.id);
     if (!st) return;
-    if (on && i > 0) {
-      st.el.style.boxShadow = "inset 0 1px 0 rgba(120,100,70,.28)";
-    } else {
-      st.el.style.boxShadow = "";
-    }
+    st.el.style.boxShadow = (on && i > 0) ? "inset 0 1px 0 rgba(120,100,70,.28)" : "";
   });
 }
 
@@ -1697,7 +2026,7 @@ const play = {
   lastTs: 0,
   speed: 1,
   idx: -1,
-  phase: "idle",
+  phase: "idle",       // idle | delay | write | hold | done
   elapsed: 0,
   times: [],
   reveal: 0,
@@ -1793,7 +2122,11 @@ function step() {
       const d = msg.delay || 0;
       if (play.elapsed >= d) {
         play.elapsed -= d;
+        const st = Paper.appendMessage(msg);
+        play.times = computeTimes(msg, st.charText);
+        play.reveal = 0;
         play.phase = "write";
+        if (project.settings.autoScroll) Paper.scrollToMessage(msg.id, true);
       } else {
         return;
       }
@@ -1848,14 +2181,17 @@ function advanceMessage() {
 
   if (!msg) { finishPlayback(); return; }
 
-  const st = Paper.appendMessage(msg);
+  if (msg.timeLabel && msg.timeLabel.trim()) {
+    appendTimeLabel(msg.timeLabel.trim());
+  }
+
   play.currentId = msg.id;
   play.reveal = 0;
-  play.times = computeTimes(msg, st.charText);
+  play.times = null;
   play.phase = "delay";
   play.elapsed = 0;
 
-  if (project.settings.autoScroll) Paper.scrollToMessage(msg.id, true);
+  if (project.settings.autoScroll) Paper.scrollToBottom();
   updateTransportUI();
 }
 
@@ -1944,22 +2280,26 @@ function jumpTo(index) {
 
   for (let i = 0; i < index; i++) {
     const m = project.messages[i];
+    if (m.timeLabel && m.timeLabel.trim()) appendTimeLabel(m.timeLabel.trim());
     const st = Paper.appendMessage(m);
-    if (m.kind === "drawing") {
-      Paper.showDrawing(m.id);
-    } else {
-      Paper.reveal(m.id, st.chars.length);
-    }
+    if (m.kind === "drawing") Paper.showDrawing(m.id);
+    else Paper.reveal(m.id, st.chars.length);
     finishMessageVisual(m);
   }
 
-  play.idx = index - 1;
-  advanceMessage();
-  play.phase = "delay";
+  const target = project.messages[index];
+  if (target.timeLabel && target.timeLabel.trim()) appendTimeLabel(target.timeLabel.trim());
+  const st = Paper.appendMessage(target);
+  play.idx = index;
+  play.currentId = target.id;
+  play.times = target.kind === "drawing" ? [] : computeTimes(target, st.charText);
+  play.reveal = 0;
+  play.phase = "write";
   play.elapsed = 0;
   play.playing = false;
+
   updateTransportUI();
-  Paper.scrollToMessage(project.messages[index].id, true);
+  Paper.scrollToMessage(target.id, true);
 }
 
 /* ==========================================================================
@@ -2021,6 +2361,7 @@ function selectCharacter(id) {
   renderCharacters();
   renderMessages();
   renderInspector();
+  maybeSwitchToInspectorOnMobile();
 }
 
 function addCharacter() {
@@ -2028,6 +2369,7 @@ function addCharacter() {
   project.characters.push(ch);
   ui.selection = { type: "character", id: ch.id };
   onDataChanged();
+  maybeSwitchToInspectorOnMobile();
   toast("Character added.");
 }
 
@@ -2101,6 +2443,13 @@ function renderMessages() {
       ? (preview.length > 110 ? preview.slice(0, 110) + "…" : preview)
       : "";
 
+    let delayBadge = "";
+    if (m.delay && m.delay > 0) {
+      const ds = (m.delay / 1000);
+      const txt = ds >= 10 ? Math.round(ds) + "s" : (Math.round(ds * 10) / 10) + "s";
+      delayBadge = '<span class="badge-delay" title="Delay before writing">+' + txt + '</span>';
+    }
+
     let bodyHtml;
     if (isDrawing) {
       bodyHtml = '<div class="msg-text drawing-thumb" data-role="thumb"></div>';
@@ -2118,6 +2467,7 @@ function renderMessages() {
           (isDrawing ? '<span class="badge-drawing">drawing</span>' : "") +
           (!isDrawing && hasInlineDrawings ? '<span class="badge-drawing">+ drawing</span>' : "") +
           (m.important ? '<span class="badge-important">key</span>' : "") +
+          delayBadge +
         '</span>' +
         '<span class="msg-tools">' +
           '<button class="mini" data-act="up" title="Move up">↑</button>' +
@@ -2127,7 +2477,11 @@ function renderMessages() {
         '</span>' +
       '</div>' +
       bodyHtml +
-      (m.direction ? '<div class="msg-dir">[ ' + esc(m.direction) + ' ]</div>' : "");
+      (m.direction ? '<div class="msg-dir">[ ' + esc(m.direction) + ' ]</div>' : "") +
+      (m.timeLabel && m.timeLabel.trim()
+        ? '<div class="msg-dir" style="border-left-color:rgba(160,130,80,.4);color:#a89060">' +
+          '⏳ ' + esc(m.timeLabel.trim()) + '</div>'
+        : "");
 
     if (isDrawing) {
       const thumb = el.querySelector('[data-role="thumb"]');
@@ -2248,6 +2602,7 @@ function selectMessage(id, scrollToPaper) {
     if (play.playing) pausePlayback();
     Paper.scrollToMessage(id, true);
   }
+  maybeSwitchToInspectorOnMobile();
 }
 
 function addMessage() {
@@ -2265,12 +2620,11 @@ function addMessage() {
   ui.tab = "msgs";
   renderTabs();
   onDataChanged();
+  maybeSwitchToInspectorOnMobile();
   const ta = $('#inspector textarea[data-field="text"]');
   if (ta) { ta.focus(); ta.setSelectionRange(0, 0); }
 }
 
-/* Create a new message and open the drawing modal on it, so the drawing
-   and its associated text can live in the same message. */
 function addMessageWithDrawing() {
   let insertAt = project.messages.length;
 
@@ -2286,8 +2640,8 @@ function addMessageWithDrawing() {
   ui.tab = "msgs";
   renderTabs();
   onDataChanged();
+  maybeSwitchToInspectorOnMobile();
 
-  /* Open the drawing modal immediately for this new message. */
   setTimeout(() => openDrawModalInline(m.id, null, 0), 30);
 }
 
@@ -2306,11 +2660,24 @@ function fieldRange(label, scope, field, value, min, max, step, unit, hint) {
   '</label>';
 }
 
-function fieldText(label, scope, field, value, placeholder) {
+function fieldNumber(label, scope, field, value, min, max, unit, hint) {
+  return '<label class="field">' +
+    '<span class="flabel">' + esc(label) + '</span>' +
+    '<span class="frow">' +
+      '<input type="number" min="' + min + '" max="' + max + '" step="any" value="' + value + '" ' +
+        'data-scope="' + scope + '" data-field="' + field + '">' +
+      (unit ? '<span class="unit">' + esc(unit) + '</span>' : '') +
+    '</span>' +
+    (hint ? '<div class="hint">' + esc(hint) + '</div>' : '') +
+  '</label>';
+}
+
+function fieldText(label, scope, field, value, placeholder, hint) {
   return '<label class="field">' +
     '<span class="flabel">' + esc(label) + '</span>' +
     '<input type="text" value="' + esc(value) + '" placeholder="' + esc(placeholder || "") + '" ' +
       'data-scope="' + scope + '" data-field="' + field + '" spellcheck="false">' +
+    (hint ? '<div class="hint">' + esc(hint) + '</div>' : '') +
   '</label>';
 }
 
@@ -2492,6 +2859,8 @@ function messageInspectorHTML(m) {
   }
 
   const fx = m.effects || {};
+  const delaySec = (num(m.delay, 0) / 1000);
+  const pauseSec = (num(m.pause, 0) / 1000);
 
   return '' +
     '<div class="insp-head">' +
@@ -2516,9 +2885,14 @@ function messageInspectorHTML(m) {
 
     inlineDrawingsListHTML(m) +
 
-    '<details class="section" open><summary>Timing</summary><div class="section-body">' +
-      fieldRange("Delay before writing", "message", "delay", m.delay, 0, 6000, 50, " ms") +
-      fieldRange("Pause after writing", "message", "pause", m.pause, 0, 6000, 50, " ms") +
+    '<details class="section" open><summary>Pacing</summary><div class="section-body">' +
+      fieldNumber("Delay before writing", "message", "delaySeconds", delaySec, 0, 3600, "s",
+        "Seconds the paper waits before this message begins. 0 = immediately. Long values let time pass off-page.") +
+      fieldText("Time-passage label", "message", "timeLabel", m.timeLabel || "",
+        "e.g. Twenty minutes later...",
+        "Shown subtly above this message. Leave empty for nothing.") +
+      fieldNumber("Pause after writing", "message", "pauseSeconds", pauseSec, 0, 300, "s",
+        "Seconds to wait after this message finishes before the next one begins.") +
       fieldCheck("Mark as an important story moment", "message", "important", m.important) +
     '</div></details>' +
 
@@ -2552,6 +2926,8 @@ function messageInspectorHTML(m) {
 function drawingInspectorHTML(m) {
   const charOptions = project.characters.map((c) => ({ value: c.id, label: c.name }));
   const fx = m.effects || {};
+  const delaySec = (num(m.delay, 0) / 1000);
+  const pauseSec = (num(m.pause, 0) / 1000);
 
   return '' +
     '<div class="insp-head">' +
@@ -2574,9 +2950,13 @@ function drawingInspectorHTML(m) {
         "e.g. A shape appears slowly.") +
     '</div></div>' +
 
-    '<details class="section" open><summary>Timing</summary><div class="section-body">' +
-      fieldRange("Delay before appearing", "message", "delay", m.delay, 0, 6000, 50, " ms") +
-      fieldRange("Pause after appearing", "message", "pause", m.pause, 0, 6000, 50, " ms") +
+    '<details class="section" open><summary>Pacing</summary><div class="section-body">' +
+      fieldNumber("Delay before appearing", "message", "delaySeconds", delaySec, 0, 3600, "s",
+        "Seconds the paper waits before this drawing appears.") +
+      fieldText("Time-passage label", "message", "timeLabel", m.timeLabel || "",
+        "e.g. Twenty minutes later...",
+        "Shown subtly above this drawing. Leave empty for nothing.") +
+      fieldNumber("Pause after appearing", "message", "pauseSeconds", pauseSec, 0, 300, "s") +
       fieldCheck("Mark as an important story moment", "message", "important", m.important) +
     '</div></details>' +
 
@@ -2710,6 +3090,24 @@ function onInspectorInput(e) {
   } else if (scope === "message") {
     const m = getMessage(ui.selection.id);
     if (!m) return;
+    if (field === "delaySeconds") {
+      m.delay = Math.round(Math.max(0, value) * 1000);
+      scheduleRefresh();
+      saveLibrary();
+      return;
+    }
+    if (field === "pauseSeconds") {
+      m.pause = Math.round(Math.max(0, value) * 1000);
+      scheduleRefresh();
+      saveLibrary();
+      return;
+    }
+    if (field === "timeLabel") {
+      m.timeLabel = String(value || "").slice(0, 120);
+      scheduleRefresh();
+      saveLibrary();
+      return;
+    }
     setNested(m, field, value);
     scheduleRefresh();
     saveLibrary();
@@ -2819,6 +3217,7 @@ function refreshAll() {
 
   renderCharacters();
   renderMessages();
+  applyMobileLayout();
 }
 
 function onDataChanged(opts) {
@@ -2853,13 +3252,24 @@ function renderTabs() {
 function renderStorySelect() {
   const sel = $("#storySelect");
   sel.innerHTML = "";
+  const menuSel = $("#menuStorySelect");
+  if (menuSel) menuSel.innerHTML = "";
+
   Object.keys(library.stories).forEach((id) => {
     const p = library.stories[id];
-    const o = document.createElement("option");
-    o.value = id;
-    o.textContent = p.name || "Untitled story";
-    if (id === library.currentId) o.selected = true;
-    sel.appendChild(o);
+    const o1 = document.createElement("option");
+    o1.value = id;
+    o1.textContent = p.name || "Untitled story";
+    if (id === library.currentId) o1.selected = true;
+    sel.appendChild(o1);
+
+    if (menuSel) {
+      const o2 = document.createElement("option");
+      o2.value = id;
+      o2.textContent = p.name || "Untitled story";
+      if (id === library.currentId) o2.selected = true;
+      menuSel.appendChild(o2);
+    }
   });
 }
 
@@ -2871,6 +3281,7 @@ function renderEverything() {
   renderMessages();
   renderInspector();
   renderPaperFull();
+  applyMobileLayout();
   updateTransportUI();
 }
 
@@ -3187,6 +3598,7 @@ function switchToStory(id) {
   if (!library.stories[id]) return;
   library.currentId = id;
   project = library.stories[id];
+  migrateProjectInPlace(project);
   resetPlaybackState();
   ui.selection = { type: "paper", id: null };
   renderEverything();
@@ -3268,12 +3680,42 @@ function togglePresentation(on) {
 }
 
 /* ==========================================================================
-   SECTION 15 — EVENT WIRING
+   SECTION 15 — TOP MENU
+   ========================================================================== */
+function closeTopMenu() {
+  const menu = $("#topMenu");
+  if (menu) menu.hidden = true;
+  const btn = $("#btnMenu");
+  if (btn) btn.setAttribute("aria-expanded", "false");
+}
+
+function toggleTopMenu() {
+  const menu = $("#topMenu");
+  if (!menu) return;
+  const willOpen = menu.hidden;
+  menu.hidden = !willOpen;
+  const btn = $("#btnMenu");
+  if (btn) btn.setAttribute("aria-expanded", String(willOpen));
+}
+
+/* ==========================================================================
+   SECTION 16 — EVENT WIRING
    ========================================================================== */
 function wireEvents() {
   $$(".tab").forEach((tab) => {
     tab.addEventListener("click", () => {
       ui.tab = tab.dataset.tab;
+      renderTabs();
+    });
+  });
+
+  /* Mobile tab bar */
+  $$(".mobile-tab").forEach((tab) => {
+    tab.addEventListener("click", () => {
+      const mtab = tab.dataset.mtab;
+      setMobileTab(mtab);
+      if (mtab === "chars") ui.tab = "chars";
+      if (mtab === "msgs") ui.tab = "msgs";
       renderTabs();
     });
   });
@@ -3308,6 +3750,44 @@ function wireEvents() {
   $("#btnPresent").addEventListener("click", () => togglePresentation(true));
   $("#btnExitPresent").addEventListener("click", () => togglePresentation(false));
 
+  /* Top menu (mobile) */
+  const btnMenu = $("#btnMenu");
+  if (btnMenu) {
+    btnMenu.addEventListener("click", (e) => {
+      e.stopPropagation();
+      toggleTopMenu();
+    });
+  }
+  const topMenu = $("#topMenu");
+  if (topMenu) {
+    topMenu.addEventListener("click", (e) => {
+      const item = e.target.closest("[data-act]");
+      if (!item) return;
+      const act = item.dataset.act;
+      closeTopMenu();
+      if (act === "new") newStory();
+      else if (act === "dup") duplicateStory();
+      else if (act === "export") exportProject();
+      else if (act === "import") $("#fileInput").click();
+      else if (act === "clear") clearProject();
+    });
+  }
+  const menuSel = $("#menuStorySelect");
+  if (menuSel) {
+    menuSel.addEventListener("change", (e) => {
+      switchToStory(e.target.value);
+      closeTopMenu();
+    });
+  }
+
+  /* Close menu when clicking/tapping outside */
+  document.addEventListener("click", (e) => {
+    const menu = $("#topMenu");
+    if (!menu || menu.hidden) return;
+    if (menu.contains(e.target) || (btnMenu && btnMenu.contains(e.target))) return;
+    closeTopMenu();
+  });
+
   $("#btnPlay").addEventListener("click", () => {
     if (play.playing) pausePlayback();
     else if (play.phase === "idle" || play.phase === "done") startPlayback(0);
@@ -3330,12 +3810,19 @@ function wireEvents() {
     if (play.playing) {
       const msg = project.messages[play.idx];
       if (msg) {
-        const st = Paper.blocks.get(msg.id);
-        if (st) {
-          if (msg.kind === "drawing") Paper.showDrawing(msg.id);
-          else Paper.reveal(msg.id, st.chars.length);
-          finishMessageVisual(msg);
+        let st = Paper.blocks.get(msg.id);
+        if (!st) {
+          st = Paper.appendMessage(msg);
+          if (msg.kind !== "drawing") {
+            play.times = computeTimes(msg, st.charText);
+          }
         }
+        if (msg.kind === "drawing") {
+          Paper.showDrawing(msg.id);
+        } else {
+          Paper.reveal(msg.id, st.chars.length);
+        }
+        finishMessageVisual(msg);
       }
       play.elapsed = 0;
       advanceMessage();
@@ -3365,6 +3852,10 @@ function wireEvents() {
       if (e.key === "Escape") { e.preventDefault(); closeDrawModal(); }
       return;
     }
+    if (!topMenu.hidden && e.key === "Escape") {
+      closeTopMenu();
+      return;
+    }
 
     const tag = (e.target.tagName || "").toLowerCase();
     const typing = tag === "input" || tag === "textarea" || tag === "select" || e.target.isContentEditable;
@@ -3388,17 +3879,36 @@ function wireEvents() {
     }
   });
 
+  /* React to orientation changes / viewport changes */
+  const onResizeMobile = debounce(() => {
+    const wasMobile = mobileState.isMobile;
+    checkMobileState();
+    if (mobileState.isMobile && !wasMobile) {
+      /* Switched into mobile: pick a sensible default tab */
+      if (ui.selection.type === "message" || ui.selection.type === "character") {
+        setMobileTab("inspector");
+      } else {
+        setMobileTab(ui.tab === "chars" ? "chars" : "msgs");
+      }
+    }
+    applyMobileLayout();
+    if (!play.playing && project.settings.pageMode === "pages") renderPaperFull();
+  }, 200);
+  window.addEventListener("resize", onResizeMobile);
+  window.addEventListener("orientationchange", onResizeMobile);
+
   window.addEventListener("beforeunload", () => {
     try { localStorage.setItem(STORE_KEY, JSON.stringify(library)); } catch (err) {}
   });
 }
 
 /* ==========================================================================
-   SECTION 16 — BOOT
+   SECTION 17 — BOOT
    ========================================================================== */
 function boot() {
   loadLibrary();
   project = library.stories[library.currentId];
+  migrateProjectInPlace(project);
 
   Paper.init();
   wireEvents();
@@ -3407,15 +3917,20 @@ function boot() {
   play.speed = num($("#speedSel").value, 1) || 1;
 
   renderEverything();
+
+  /* Initialize mobile tab state */
+  checkMobileState();
+  if (mobileState.isMobile) {
+    if (ui.selection.type === "message" || ui.selection.type === "character") {
+      setMobileTab("inspector");
+    } else {
+      setMobileTab("msgs");
+    }
+  }
+  applyMobileLayout();
+
   updateTransportUI();
-
   $("#paperScroll").scrollTop = 0;
-
-  const onResize = debounce(() => {
-    if (play.playing) return;
-    if (project.settings.pageMode === "pages") renderPaperFull();
-  }, 260);
-  window.addEventListener("resize", onResize);
 
   if (document.fonts && document.fonts.ready) {
     document.fonts.ready.then(() => {
