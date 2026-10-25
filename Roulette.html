@@ -1,0 +1,2344 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Royale Roulette — AI Opponent v2</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700;900&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --gold:#d4af37; --gold-l:#ffe9a8; --gold-d:#8a6d1f; --gold-rgb:212,175,55;
+    --red:#c8102e; --red-l:#e8394f; --red-d:#8d0d20;
+    --black:#141414; --black-l:#2c2c2c; --black-d:#0a0a0a;
+    --zero:#0f8a45; --zero-l:#16b45c; --zero-d:#076a39;
+    --felt-1:#0f8a4a; --felt-2:#0a5c31; --felt-3:#063a1f;
+    --line:rgba(212,175,55,.24);
+  }
+  *{box-sizing:border-box}
+  html,body{height:100%}
+  body{
+    margin:0;
+    font-family:'Inter',system-ui,-apple-system,"Segoe UI",sans-serif;
+    color:#e9e6df;
+    background:radial-gradient(1200px 720px at 50% -12%, #14402f 0%, #0a1a14 46%, #040907 100%), #040907;
+    min-height:100vh; overflow-x:hidden;
+    -webkit-font-smoothing:antialiased;
+  }
+  body::after{
+    content:'';position:fixed;inset:0;pointer-events:none;z-index:0;
+    background:radial-gradient(circle at 50% 42%, transparent 38%, rgba(0,0,0,.62) 100%);
+  }
+  .app{
+    position:relative;z-index:1;
+    max-width:1420px;margin:0 auto;padding:16px 20px 44px;
+    display:flex;flex-direction:column;gap:18px;
+  }
+
+  .topbar{
+    display:flex;align-items:center;justify-content:space-between;gap:18px;flex-wrap:wrap;
+    padding:12px 20px;border-radius:16px;
+    background:linear-gradient(180deg, rgba(22,44,35,.92), rgba(7,15,12,.9));
+    border:1px solid var(--line);
+    box-shadow:0 14px 40px rgba(0,0,0,.55), inset 0 1px 0 rgba(255,255,255,.07);
+    backdrop-filter:blur(10px);
+  }
+  .brand{
+    display:flex;align-items:center;gap:10px;
+    font-family:'Cinzel',serif;font-weight:900;font-size:19px;letter-spacing:.2em;
+    background:linear-gradient(180deg,#fff8d4,var(--gold) 52%,var(--gold-d));
+    -webkit-background-clip:text;background-clip:text;color:transparent;white-space:nowrap;
+  }
+  .brand .mark{font-size:22px;-webkit-text-fill-color:var(--gold-l);filter:drop-shadow(0 0 10px rgba(var(--gold-rgb),.7))}
+  .brand .thin{font-weight:600;opacity:.75;letter-spacing:.28em;font-size:13px}
+
+  .rig-badge{
+    display:inline-flex;align-items:center;gap:6px;
+    padding:5px 11px;border-radius:999px;
+    font-size:9px;font-weight:800;letter-spacing:.2em;
+    color:#1a0a0a;background:linear-gradient(180deg,#ff9a8a,#d8362a);
+    border:1px solid rgba(255,205,195,.6);
+    box-shadow:0 0 16px rgba(216,54,42,.55);
+    animation:rigPulse 2s ease-in-out infinite;
+    cursor:help;
+  }
+  @keyframes rigPulse{0%,100%{opacity:.82}50%{opacity:1;box-shadow:0 0 26px rgba(216,54,42,.95)}}
+
+  .stats{display:flex;gap:26px;flex-wrap:wrap}
+  .stat{display:flex;flex-direction:column;gap:2px}
+  .stat .lbl{font-size:9px;letter-spacing:.22em;color:#9a8f6b;font-weight:700}
+  .stat .val{font-size:16px;font-weight:800;color:#e7dfc4;font-variant-numeric:tabular-nums}
+
+  .balance{
+    display:flex;flex-direction:column;gap:2px;align-items:flex-end;
+    padding:8px 20px;border-radius:12px;
+    background:linear-gradient(180deg, rgba(var(--gold-rgb),.18), rgba(var(--gold-rgb),.04));
+    border:1px solid rgba(var(--gold-rgb),.45);
+    box-shadow:0 0 26px rgba(var(--gold-rgb),.12), inset 0 1px 0 rgba(255,255,255,.12);
+  }
+  .balance .lbl{font-size:9px;letter-spacing:.22em;color:#b8a468;font-weight:700}
+  .balance .val{font-size:22px;font-weight:800;color:var(--gold-l);font-variant-numeric:tabular-nums;line-height:1}
+  .shake{animation:shake .4s}
+  @keyframes shake{0%,100%{transform:translateX(0)}20%{transform:translateX(-6px)}40%{transform:translateX(6px)}60%{transform:translateX(-4px)}80%{transform:translateX(4px)}}
+
+  .ai-panel{
+    display:flex;align-items:center;justify-content:space-between;gap:20px;flex-wrap:wrap;
+    padding:12px 20px;border-radius:16px;
+    background:linear-gradient(180deg, rgba(40,18,22,.92), rgba(14,6,9,.94));
+    border:1px solid rgba(216,54,42,.35);
+    box-shadow:0 14px 40px rgba(0,0,0,.55), inset 0 1px 0 rgba(255,255,255,.06), 0 0 40px rgba(216,54,42,.08);
+    backdrop-filter:blur(10px);
+    animation:aiPanelIn .4s ease-out;
+  }
+  @keyframes aiPanelIn{from{opacity:0;transform:translateY(-8px)}to{opacity:1;transform:none}}
+  .ai-panel[hidden]{display:none}
+
+  .ai-brand{display:flex;align-items:center;gap:10px;font-family:'Cinzel',serif;font-weight:700;letter-spacing:.18em;font-size:13px;color:#ff9a8a}
+  .ai-dot{
+    width:9px;height:9px;border-radius:50%;background:#ff5a48;
+    box-shadow:0 0 10px #ff5a48;
+    animation:aiBlink 1.5s ease-in-out infinite;
+  }
+  @keyframes aiBlink{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.45;transform:scale(.85)}}
+
+  .ai-stats{display:flex;gap:26px;flex-wrap:wrap;flex:1}
+  .ai-stat{display:flex;flex-direction:column;gap:2px}
+  .ai-stat .lbl{font-size:9px;letter-spacing:.2em;color:#a07070;font-weight:700}
+  .ai-stat .val{font-size:16px;font-weight:800;color:#f0d8d4;font-variant-numeric:tabular-nums}
+
+  .ai-suspicion{min-width:220px;flex:1;max-width:360px}
+  .ai-susp-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px}
+  .ai-status{font-size:10.5px;color:#d8a89f;font-weight:600;letter-spacing:.03em}
+  .suspicion-bar{
+    height:9px;border-radius:5px;overflow:hidden;
+    background:rgba(0,0,0,.5);
+    border:1px solid rgba(216,54,42,.3);
+    box-shadow:inset 0 1px 3px rgba(0,0,0,.6);
+  }
+  .suspicion-fill{
+    height:100%;width:0%;border-radius:5px;
+    background:linear-gradient(90deg,#4a8a5a 0%,#c8a030 40%,#e06020 70%,#e02020 100%);
+    transition:width .35s ease, box-shadow .3s;
+  }
+  .suspicion-fill.hot{box-shadow:0 0 14px rgba(255,60,40,.8);animation:suspPulse .6s ease-in-out infinite}
+  @keyframes suspPulse{0%,100%{opacity:1}50%{opacity:.7}}
+
+  .ai-reason{
+    font-size:9.5px;color:#8a6060;margin-top:5px;letter-spacing:.03em;
+    min-height:14px;font-style:italic;transition:opacity .3s;
+  }
+
+  .main{display:grid;grid-template-columns:minmax(300px,440px) minmax(0,1fr);gap:22px;align-items:start}
+  @media (max-width:1040px){ .main{grid-template-columns:1fr} }
+
+  .card{
+    background:linear-gradient(180deg, rgba(20,32,27,.94), rgba(8,14,11,.96));
+    border:1px solid var(--line);border-radius:20px;padding:16px;
+    box-shadow:0 20px 60px rgba(0,0,0,.6), inset 0 1px 0 rgba(255,255,255,.06);
+  }
+
+  .wheel-wrap{position:relative;width:100%;aspect-ratio:1/1;filter:drop-shadow(0 24px 44px rgba(0,0,0,.7))}
+  .wheel-wrap::before{content:'';position:absolute;inset:-6%;border-radius:50%;background:radial-gradient(circle, rgba(var(--gold-rgb),.16) 0%, transparent 66%);pointer-events:none}
+  #wheelCanvas{display:block;width:100%;height:100%;position:relative}
+
+  .result-row{
+    display:flex;align-items:center;gap:14px;margin-top:16px;padding:12px 14px;border-radius:14px;
+    background:linear-gradient(180deg, rgba(0,0,0,.42), rgba(0,0,0,.22));
+    border:1px solid rgba(var(--gold-rgb),.16);
+  }
+  .result-num{
+    width:58px;height:58px;border-radius:50%;flex:none;display:grid;place-items:center;
+    font-family:'Cinzel',serif;font-weight:900;font-size:25px;color:#fff;
+    background:linear-gradient(180deg,#242424,#101010);
+    border:2px solid rgba(var(--gold-rgb),.55);
+    box-shadow:0 6px 18px rgba(0,0,0,.6), inset 0 2px 6px rgba(255,255,255,.14);
+    transition:background .35s ease, transform .25s ease;
+  }
+  .result-num.red{background:linear-gradient(180deg,var(--red-l),var(--red-d))}
+  .result-num.black{background:linear-gradient(180deg,var(--black-l),var(--black-d))}
+  .result-num.green{background:linear-gradient(180deg,var(--zero-l),var(--zero-d))}
+  .result-num.pop{animation:pop .45s cubic-bezier(.2,1.6,.4,1)}
+  @keyframes pop{0%{transform:scale(.5);opacity:.2}100%{transform:scale(1);opacity:1}}
+
+  .result-text{min-width:0}
+  .result-label{font-family:'Cinzel',serif;font-weight:700;font-size:15px;color:#f0e6c8;letter-spacing:.05em}
+  .result-sub{font-size:11.5px;color:#8e9a8e;margin-top:3px;letter-spacing:.04em}
+  .result-sub.win{color:#7ce6a1;font-weight:700}
+  .result-sub.lose{color:#e0796f;font-weight:600}
+
+  .history-wrap{margin-top:14px}
+  .history-title{font-size:9px;letter-spacing:.28em;color:#8a8467;font-weight:700;margin-bottom:8px}
+  .history{display:flex;gap:7px;flex-wrap:wrap;min-height:30px}
+  .hist-dot{
+    width:29px;height:29px;border-radius:50%;flex:none;display:grid;place-items:center;
+    font-size:11px;font-weight:800;color:#fff;border:1px solid rgba(255,255,255,.22);
+    box-shadow:0 3px 8px rgba(0,0,0,.5), inset 0 1px 2px rgba(255,255,255,.22);
+    animation:pop .3s ease-out;
+  }
+  .hist-dot.red{background:linear-gradient(180deg,var(--red-l),var(--red-d))}
+  .hist-dot.black{background:linear-gradient(180deg,var(--black-l),var(--black-d))}
+  .hist-dot.green{background:linear-gradient(180deg,var(--zero-l),var(--zero-d))}
+
+  .table-card{display:flex;flex-direction:column;gap:16px}
+  .board-wrap{
+    padding:14px;border-radius:20px;overflow-x:auto;position:relative;
+    background:radial-gradient(130% 130% at 50% -10%, var(--felt-1) 0%, var(--felt-2) 46%, var(--felt-3) 100%);
+    border:1px solid rgba(var(--gold-rgb),.4);
+    box-shadow:0 22px 60px rgba(0,0,0,.6), inset 0 0 70px rgba(0,0,0,.55), inset 0 1px 0 rgba(255,255,255,.08);
+  }
+  .board-wrap::before{
+    content:'';position:absolute;inset:0;border-radius:20px;pointer-events:none;
+    background-image:repeating-linear-gradient(45deg, rgba(255,255,255,.014) 0 2px, transparent 2px 4px);
+    mix-blend-mode:overlay;
+  }
+
+  .board{
+    display:grid;
+    grid-template-columns:56px repeat(12, minmax(0,1fr)) 56px;
+    grid-template-rows:repeat(3, minmax(40px,1fr)) 40px 40px;
+    gap:3px;min-width:660px;position:relative;
+  }
+  .board.locked{pointer-events:none;opacity:.92}
+
+  .cell{
+    position:relative;border:1px solid rgba(255,255,255,.2);border-radius:4px;
+    background:rgba(0,0,0,.24);color:#fff;font:inherit;font-weight:700;font-size:14px;
+    cursor:pointer;padding:0;display:grid;place-items:center;
+    user-select:none;-webkit-user-select:none;
+    transition:filter .12s ease, box-shadow .15s ease, transform .07s ease;
+    box-shadow:inset 0 1px 0 rgba(255,255,255,.12), 0 2px 4px rgba(0,0,0,.3);
+  }
+  .cell:hover{filter:brightness(1.42);box-shadow:0 0 0 2px rgba(var(--gold-rgb),.9) inset, 0 0 14px rgba(var(--gold-rgb),.4)}
+  .cell:active{transform:scale(.955)}
+  .cell.red{background:linear-gradient(180deg,var(--red-l),var(--red-d))}
+  .cell.black{background:linear-gradient(180deg,var(--black-l),var(--black-d))}
+  .cell.zero{background:linear-gradient(180deg,var(--zero-l),var(--zero-d));font-size:20px;border-radius:6px}
+  .cell.outside{background:linear-gradient(180deg, rgba(255,255,255,.11), rgba(255,255,255,.03));font-size:10.5px;letter-spacing:.09em;font-weight:700;text-transform:uppercase}
+  .cell.col-bet{font-size:12px;letter-spacing:.04em}
+  .cell.em-red{background:linear-gradient(180deg,var(--red-l),var(--red-d))}
+  .cell.em-black{background:linear-gradient(180deg,var(--black-l),var(--black-d))}
+  .cell.win{animation:winFlash 1.1s ease-out 3;z-index:3}
+  @keyframes winFlash{
+    0%{box-shadow:0 0 0 3px var(--gold-l) inset, 0 0 26px rgba(var(--gold-rgb),.95);filter:brightness(1.8)}
+    100%{box-shadow:0 0 0 0 rgba(255,233,168,0) inset, 0 0 0 rgba(255,225,140,0);filter:brightness(1)}
+  }
+
+  .chip-on{
+    position:absolute;left:50%;top:50%;width:32px;height:32px;border-radius:50%;
+    display:grid;place-items:center;font-size:10.5px;font-weight:800;color:#fff;letter-spacing:-.02em;
+    background:radial-gradient(circle at 33% 28%, rgba(255,255,255,.55), transparent 58%), var(--chip-color,#c0392b);
+    border:2px dashed rgba(255,255,255,.6);
+    box-shadow:0 4px 10px rgba(0,0,0,.65), inset 0 0 0 3px rgba(0,0,0,.22);
+    text-shadow:0 1px 2px rgba(0,0,0,.85);
+    transform:translate(-50%,-50%);pointer-events:none;
+    animation:chipDrop .18s cubic-bezier(.2,1.6,.4,1);z-index:4;
+  }
+  @keyframes chipDrop{0%{transform:translate(-50%,-140%) scale(.6);opacity:.2}100%{transform:translate(-50%,-50%) scale(1);opacity:1}}
+
+  .controls{
+    display:flex;flex-wrap:wrap;gap:16px;align-items:center;justify-content:space-between;
+    padding:14px 16px;border-radius:18px;
+    background:linear-gradient(180deg, rgba(20,32,27,.92), rgba(8,14,11,.95));
+    border:1px solid var(--line);
+    box-shadow:0 16px 44px rgba(0,0,0,.55), inset 0 1px 0 rgba(255,255,255,.06);
+  }
+  .chip-rack{display:flex;gap:12px;flex-wrap:wrap}
+
+  .chip-btn{
+    width:54px;height:54px;border-radius:50%;
+    border:3px dashed rgba(255,255,255,.55);
+    font-family:inherit;font-weight:800;font-size:13px;color:#fff;
+    cursor:pointer;position:relative;
+    background:radial-gradient(circle at 32% 26%, rgba(255,255,255,.5), transparent 56%), var(--c,#c0392b);
+    box-shadow:0 7px 16px rgba(0,0,0,.55), inset 0 0 0 4px rgba(0,0,0,.18);
+    text-shadow:0 1px 2px rgba(0,0,0,.8);
+    transition:transform .14s cubic-bezier(.2,1.4,.4,1), box-shadow .14s;
+  }
+  .chip-btn:hover{transform:translateY(-4px) scale(1.04)}
+  .chip-btn.active{
+    box-shadow:0 0 0 3px var(--gold-l), 0 10px 22px rgba(var(--gold-rgb),.45), inset 0 0 0 4px rgba(0,0,0,.18);
+    transform:translateY(-4px) scale(1.04);
+  }
+  .chip-btn.active::after{content:'';position:absolute;inset:-9px;border-radius:50%;border:1px solid rgba(var(--gold-rgb),.35)}
+
+  .actions{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+  .btn{
+    font-family:inherit;font-weight:800;font-size:11.5px;letter-spacing:.14em;
+    padding:13px 20px;border-radius:12px;cursor:pointer;color:#ded5b6;
+    background:linear-gradient(180deg, rgba(255,255,255,.08), rgba(255,255,255,.02));
+    border:1px solid rgba(var(--gold-rgb),.35);
+    transition:all .15s ease;
+  }
+  .btn:hover:not(:disabled){background:rgba(var(--gold-rgb),.2);color:#fff5d4;border-color:rgba(var(--gold-rgb),.7)}
+  .btn:active:not(:disabled){transform:translateY(1px)}
+  .btn:disabled{opacity:.32;cursor:not-allowed}
+
+  .btn.spin{
+    font-family:'Cinzel',serif;font-size:15px;letter-spacing:.22em;font-weight:900;
+    padding:14px 42px;color:#2a1e04;
+    background:linear-gradient(180deg,#fff5cd,var(--gold) 48%,var(--gold-d));
+    border:1px solid var(--gold-l);
+    box-shadow:0 12px 30px rgba(var(--gold-rgb),.35), inset 0 1px 0 rgba(255,255,255,.8), inset 0 -2px 6px rgba(0,0,0,.25);
+    position:relative;overflow:hidden;
+  }
+  .btn.spin::after{
+    content:'';position:absolute;top:0;left:-120%;width:60%;height:100%;
+    background:linear-gradient(100deg, transparent, rgba(255,255,255,.75), transparent);
+    transform:skewX(-20deg);animation:shine 3.2s ease-in-out infinite;
+  }
+  @keyframes shine{0%,55%{left:-120%}85%,100%{left:160%}}
+  .btn.spin:hover:not(:disabled){filter:brightness(1.1);box-shadow:0 14px 36px rgba(var(--gold-rgb),.5), inset 0 1px 0 rgba(255,255,255,.85)}
+  .btn.spin:disabled{filter:grayscale(.75) brightness(.55);box-shadow:none}
+  .btn.spin:disabled::after{display:none}
+
+  .hint{text-align:center;font-size:11px;color:#6f7d70;letter-spacing:.08em;padding-bottom:6px}
+  .hint b{color:#a99a6a}
+
+  .backdrop{position:fixed;inset:0;background:rgba(0,0,0,.6);backdrop-filter:blur(3px);opacity:0;pointer-events:none;transition:opacity .3s;z-index:99}
+  .backdrop.open{opacity:1;pointer-events:auto}
+  .drawer{
+    position:fixed;top:0;right:0;height:100%;width:min(440px,96vw);z-index:100;
+    transform:translateX(105%);transition:transform .38s cubic-bezier(.4,0,.2,1);
+    display:flex;flex-direction:column;
+    background:linear-gradient(180deg, rgba(18,30,25,.99), rgba(6,12,9,.99));
+    border-left:1px solid var(--line);
+    box-shadow:-24px 0 70px rgba(0,0,0,.7);
+  }
+  .drawer.open{transform:translateX(0)}
+  .drawer-head{
+    display:flex;align-items:center;justify-content:space-between;
+    padding:18px 20px;border-bottom:1px solid rgba(255,255,255,.08);
+  }
+  .drawer-title{font-family:'Cinzel',serif;font-weight:700;letter-spacing:.2em;font-size:15px;color:var(--gold-l)}
+  .icon-btn{
+    width:34px;height:34px;border-radius:9px;border:1px solid rgba(255,255,255,.14);
+    background:rgba(255,255,255,.05);color:#cfc9b4;font-size:15px;cursor:pointer;
+  }
+  .icon-btn:hover{background:rgba(var(--gold-rgb),.2);color:#fff}
+  .drawer-body{flex:1;overflow-y:auto;padding:6px 20px 20px}
+  .drawer-body::-webkit-scrollbar{width:8px}
+  .drawer-body::-webkit-scrollbar-thumb{background:rgba(var(--gold-rgb),.3);border-radius:4px}
+  .drawer-foot{display:flex;gap:10px;padding:14px 20px;border-top:1px solid rgba(255,255,255,.08)}
+  .drawer-foot .btn{flex:1;font-size:10.5px;padding:12px 10px}
+
+  .section{padding:16px 0;border-bottom:1px solid rgba(255,255,255,.07)}
+  .section:last-child{border-bottom:none}
+  .section h3{font-family:'Cinzel',serif;font-size:11px;letter-spacing:.2em;color:var(--gold);margin:0 0 10px;font-weight:700}
+  .section h3 .badge{
+    display:inline-block;margin-left:6px;padding:2px 7px;border-radius:999px;
+    font-family:'Inter',sans-serif;font-size:8px;letter-spacing:.14em;
+    background:rgba(216,54,42,.25);color:#ff9a8a;border:1px solid rgba(216,54,42,.5);
+    vertical-align:middle;
+  }
+  .section h3 .badge.ai{
+    background:rgba(80,140,255,.22);color:#9dc0ff;border-color:rgba(80,140,255,.5);
+  }
+
+  .field{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:6px 0}
+  .field > span:first-child{font-size:12px;color:#b9c4b8;font-weight:600}
+  .field input[type=color]{
+    width:46px;height:30px;border:1px solid rgba(255,255,255,.14);background:none;padding:2px;cursor:pointer;border-radius:8px;
+  }
+  .field input[type=color]::-webkit-color-swatch-wrapper{padding:0}
+  .field input[type=color]::-webkit-color-swatch{border:none;border-radius:5px}
+  .field input[type=number]{
+    width:82px;background:rgba(0,0,0,.35);border:1px solid rgba(255,255,255,.14);
+    color:#fff;padding:6px 8px;border-radius:8px;font:inherit;font-size:13px;
+  }
+  .field input[type=number]:focus{outline:none;border-color:rgba(var(--gold-rgb),.7)}
+  .field input[type=range]{width:130px;accent-color:var(--gold);cursor:pointer}
+  .field .val-out{font-size:11px;color:var(--gold-l);font-weight:700;min-width:42px;text-align:right;font-variant-numeric:tabular-nums}
+
+  .preset-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+  .preset{
+    display:flex;flex-direction:column;gap:7px;padding:9px 8px;border-radius:11px;cursor:pointer;
+    background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.09);
+    transition:all .15s;color:#cfc9b4;font-family:inherit;
+  }
+  .preset:hover{background:rgba(255,255,255,.08);transform:translateY(-2px)}
+  .preset.active{border-color:var(--gold);box-shadow:0 0 0 1px var(--gold) inset}
+  .swatch-row{display:flex;gap:4px}
+  .swatch{width:16px;height:16px;border-radius:50%;box-shadow:0 1px 3px rgba(0,0,0,.5)}
+  .preset-name{font-size:9.5px;letter-spacing:.1em;text-transform:uppercase;font-weight:700;text-align:left}
+
+  .seg{display:flex;background:rgba(0,0,0,.35);border-radius:10px;padding:3px;gap:3px;border:1px solid rgba(255,255,255,.08)}
+  .seg button{
+    flex:1;padding:7px 8px;border:none;background:none;color:#9aa79a;
+    font:inherit;font-size:11px;font-weight:700;border-radius:7px;cursor:pointer;transition:all .15s;
+    white-space:nowrap;
+  }
+  .seg button.active{background:var(--gold);color:#1a1405}
+  .seg button:not(.active):hover{color:#e0dccb}
+
+  .chip-row{display:flex;align-items:center;gap:8px;padding:5px 0}
+  .chip-row .idx{font-size:11px;color:#8a948a;width:38px;font-weight:700}
+  .chip-row input[type=number]{width:74px;background:rgba(0,0,0,.35);border:1px solid rgba(255,255,255,.14);color:#fff;padding:6px 8px;border-radius:8px;font:inherit;font-size:13px}
+  .chip-row input[type=color]{width:38px;height:30px;border:1px solid rgba(255,255,255,.14);background:none;padding:2px;cursor:pointer;border-radius:7px}
+  .chip-row input[type=color]::-webkit-color-swatch{border:none;border-radius:4px}
+
+  .toggle{position:relative;width:46px;height:26px;flex:none}
+  .toggle input{opacity:0;width:0;height:0;position:absolute}
+  .toggle span{
+    position:absolute;inset:0;border-radius:13px;background:rgba(255,255,255,.12);
+    cursor:pointer;transition:background .2s;
+  }
+  .toggle span::after{
+    content:'';position:absolute;top:3px;left:3px;width:20px;height:20px;border-radius:50%;
+    background:#ddd;transition:transform .2s;
+  }
+  .toggle input:checked + span{background:var(--gold)}
+  .toggle input:checked + span::after{transform:translateX(20px);background:#1a1405}
+
+  .note{font-size:10.5px;color:#6b756b;line-height:1.5;margin-top:8px;letter-spacing:.02em}
+  .note.warn{color:#c48a7a}
+
+  .fab{
+    position:fixed;right:24px;bottom:24px;width:58px;height:58px;border-radius:50%;z-index:98;
+    border:1px solid rgba(var(--gold-rgb),.6);
+    background:linear-gradient(180deg, rgba(20,32,27,.96), rgba(8,14,11,.98));
+    color:var(--gold);font-size:24px;cursor:pointer;
+    box-shadow:0 12px 30px rgba(0,0,0,.6), 0 0 24px rgba(var(--gold-rgb),.2);
+    transition:transform .25s cubic-bezier(.2,1.4,.4,1);
+  }
+  .fab:hover{transform:rotate(45deg) scale(1.07)}
+
+  .rig-select{
+    background:rgba(0,0,0,.35);border:1px solid rgba(255,255,255,.14);color:#fff;
+    padding:6px 8px;border-radius:8px;font:inherit;font-size:13px;min-width:88px;cursor:pointer;
+  }
+  .rig-select:focus{outline:none;border-color:rgba(var(--gold-rgb),.7)}
+
+  .rig-grid{display:grid;grid-template-columns:repeat(6,1fr);gap:6px;margin-top:4px}
+  .rig-tile{display:flex;flex-direction:column;gap:3px;align-items:stretch}
+  .rig-tile .num{
+    height:24px;border-radius:6px;display:grid;place-items:center;
+    font-size:11px;font-weight:800;color:#fff;
+    box-shadow:inset 0 1px 0 rgba(255,255,255,.2), 0 2px 5px rgba(0,0,0,.4);
+  }
+  .rig-tile .num.red{background:linear-gradient(180deg,var(--red-l),var(--red-d))}
+  .rig-tile .num.black{background:linear-gradient(180deg,var(--black-l),var(--black-d))}
+  .rig-tile .num.green{background:linear-gradient(180deg,var(--zero-l),var(--zero-d))}
+  .rig-tile input{
+    width:100%;background:rgba(0,0,0,.45);border:1px solid rgba(255,255,255,.14);
+    color:#fff;border-radius:6px;padding:3px 2px;font:inherit;font-size:11px;
+    text-align:center;font-weight:700;
+  }
+  .rig-tile input:focus{outline:none;border-color:rgba(var(--gold-rgb),.8);background:rgba(0,0,0,.65)}
+  .rig-tile .pct{font-size:8.5px;color:#77827a;text-align:center;font-weight:700;letter-spacing:.02em;font-variant-numeric:tabular-nums}
+  .rig-tile.hot .pct{color:var(--gold-l)}
+  .rig-tile.cold .pct{color:#8a5a52}
+
+  .quick-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-top:10px}
+  .quick{
+    font-family:inherit;font-size:9.5px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;
+    padding:9px 6px;border-radius:9px;cursor:pointer;color:#cfc9b4;
+    background:rgba(255,255,255,.045);border:1px solid rgba(255,255,255,.1);
+    transition:all .15s;
+  }
+  .quick:hover{background:rgba(var(--gold-rgb),.18);color:#fff5d4;border-color:rgba(var(--gold-rgb),.55)}
+  .quick:active{transform:translateY(1px)}
+
+  .rig-summary{
+    margin-top:10px;padding:9px 11px;border-radius:9px;font-size:10.5px;line-height:1.55;
+    background:rgba(0,0,0,.3);border:1px solid rgba(255,255,255,.07);color:#9aa89a;
+  }
+  .rig-summary b{color:var(--gold-l)}
+
+  .overlay{
+    position:fixed;inset:0;z-index:300;
+    display:flex;align-items:center;justify-content:center;
+    background:rgba(0,0,0,.85);backdrop-filter:blur(6px);
+    opacity:0;pointer-events:none;transition:opacity .35s;
+  }
+  .overlay.open{opacity:1;pointer-events:auto}
+  .overlay-card{
+    max-width:460px;width:calc(100% - 40px);
+    padding:38px 32px;border-radius:24px;text-align:center;
+    background:linear-gradient(180deg, rgba(24,36,30,.98), rgba(8,14,11,.99));
+    border:1px solid var(--line);
+    box-shadow:0 30px 80px rgba(0,0,0,.8), inset 0 1px 0 rgba(255,255,255,.08);
+    transform:scale(.92);transition:transform .4s cubic-bezier(.2,1.4,.4,1);
+  }
+  .overlay.open .overlay-card{transform:scale(1)}
+  .overlay-card.win{border-color:rgba(var(--gold-rgb),.7);box-shadow:0 30px 80px rgba(0,0,0,.8), 0 0 60px rgba(var(--gold-rgb),.25), inset 0 1px 0 rgba(255,255,255,.1)}
+  .overlay-card.lose{border-color:rgba(216,54,42,.7);box-shadow:0 30px 80px rgba(0,0,0,.8), 0 0 60px rgba(216,54,42,.3), inset 0 1px 0 rgba(255,255,255,.1)}
+  .overlay-icon{font-size:56px;margin-bottom:12px;line-height:1}
+  .overlay-title{
+    font-family:'Cinzel',serif;font-weight:900;font-size:30px;letter-spacing:.12em;
+    margin:0 0 14px;
+    background:linear-gradient(180deg,#fff8d4,var(--gold) 55%,var(--gold-d));
+    -webkit-background-clip:text;background-clip:text;color:transparent;
+  }
+  .overlay-card.lose .overlay-title{background:linear-gradient(180deg,#ffc8be,#e8394f 55%,#8d0d20);-webkit-background-clip:text;background-clip:text}
+  .overlay-message{font-size:14px;line-height:1.6;color:#c8c8b8;margin:0 0 24px}
+  .overlay-btn{
+    font-family:'Cinzel',serif;font-size:13px;letter-spacing:.2em;font-weight:900;
+    padding:14px 36px;border-radius:12px;cursor:pointer;color:#2a1e04;
+    background:linear-gradient(180deg,#fff5cd,var(--gold) 48%,var(--gold-d));
+    border:1px solid var(--gold-l);
+    box-shadow:0 12px 30px rgba(var(--gold-rgb),.35), inset 0 1px 0 rgba(255,255,255,.8);
+    transition:filter .15s;
+  }
+  .overlay-btn:hover{filter:brightness(1.1)}
+
+  @media (max-width:560px){
+    .app{padding:12px 12px 90px}
+    .brand{font-size:15px}
+    .btn.spin{padding:13px 26px;font-size:13px}
+    .chip-btn{width:46px;height:46px;font-size:11.5px}
+    .fab{right:16px;bottom:16px;width:52px;height:52px;font-size:21px}
+    .rig-grid{grid-template-columns:repeat(5,1fr)}
+    .ai-stats{gap:16px}
+    .ai-suspicion{max-width:none;width:100%}
+  }
+</style>
+</head>
+<body>
+<div class="app">
+
+  <header class="topbar">
+    <div class="brand"><span class="mark">◈</span>ROYALE<span class="thin">ROULETTE</span></div>
+    <div class="rig-badge" id="rigBadge" hidden title="The wheel is rigged — open ⚙ to change it">RIGGED</div>
+    <div class="stats">
+      <div class="stat"><span class="lbl">TOTAL BET</span><span class="val" id="totalBet">$0</span></div>
+      <div class="stat"><span class="lbl">LAST RESULT</span><span class="val" id="lastResult">—</span></div>
+      <div class="stat"><span class="lbl">SPINS</span><span class="val" id="spinCount">0</span></div>
+    </div>
+    <div class="balance" id="balanceBox">
+      <span class="lbl">BALANCE</span>
+      <span class="val" id="balance">$1,000</span>
+    </div>
+  </header>
+
+  <div class="ai-panel" id="aiPanel" hidden>
+    <div class="ai-brand"><span class="ai-dot"></span>AI OPPONENT</div>
+    <div class="ai-stats">
+      <div class="ai-stat">
+        <span class="lbl">AI BANKROLL</span>
+        <span class="val" id="aiBankroll">$1,000</span>
+      </div>
+      <div class="ai-stat">
+        <span class="lbl">TARGET</span>
+        <span class="val" id="aiTarget">$2,000</span>
+      </div>
+      <div class="ai-stat">
+        <span class="lbl">AI LAST BET</span>
+        <span class="val" id="aiBet">—</span>
+      </div>
+    </div>
+    <div class="ai-suspicion">
+      <div class="ai-susp-header">
+        <span class="lbl">SUSPICION</span>
+        <span class="ai-status" id="aiStatus">Watching…</span>
+      </div>
+      <div class="suspicion-bar">
+        <div class="suspicion-fill" id="suspicionFill"></div>
+      </div>
+      <div class="ai-reason" id="aiReason"></div>
+    </div>
+  </div>
+
+  <div class="main">
+
+    <section class="card">
+      <div class="wheel-wrap">
+        <canvas id="wheelCanvas"></canvas>
+      </div>
+
+      <div class="result-row">
+        <div class="result-num" id="resultNum">—</div>
+        <div class="result-text">
+          <div class="result-label" id="resultLabel">Place your bets</div>
+          <div class="result-sub" id="resultSub">European wheel · 37 pockets · single zero</div>
+        </div>
+      </div>
+
+      <div class="history-wrap">
+        <div class="history-title">RECENT NUMBERS</div>
+        <div class="history" id="history"></div>
+      </div>
+    </section>
+
+    <section class="table-card">
+      <div class="board-wrap">
+        <div class="board" id="board"></div>
+      </div>
+
+      <div class="controls">
+        <div class="chip-rack" id="chipRack"></div>
+        <div class="actions">
+          <button class="btn" id="undoBtn">UNDO</button>
+          <button class="btn" id="clearBtn">CLEAR</button>
+          <button class="btn" id="rebetBtn">REBET</button>
+          <button class="btn spin" id="spinBtn">SPIN</button>
+        </div>
+      </div>
+      <div class="hint">Left click to place a chip · Right click to remove · <b>Space</b> to spin · <b>⚙</b> to customize &amp; rig</div>
+    </section>
+
+  </div>
+</div>
+
+<div class="backdrop" id="backdrop"></div>
+<aside class="drawer" id="drawer">
+  <div class="drawer-head">
+    <span class="drawer-title">CUSTOMIZE</span>
+    <button class="icon-btn" id="closeDrawer" aria-label="Close">✕</button>
+  </div>
+  <div class="drawer-body" id="drawerBody"></div>
+  <div class="drawer-foot">
+    <button class="btn" id="resetGame">RESET GAME</button>
+    <button class="btn" id="resetTheme">DEFAULT THEME</button>
+  </div>
+</aside>
+<button class="fab" id="openDrawer" aria-label="Customize">⚙</button>
+
+<div class="overlay" id="gameOverOverlay">
+  <div class="overlay-card" id="overlayCard">
+    <div class="overlay-icon" id="overlayIcon">🏆</div>
+    <h2 class="overlay-title" id="overlayTitle">YOU WIN</h2>
+    <p class="overlay-message" id="overlayMessage"></p>
+    <button class="overlay-btn" id="overlayBtn">PLAY AGAIN</button>
+  </div>
+</div>
+
+<script>
+(function () {
+  'use strict';
+
+  const TAU = Math.PI * 2;
+  const LS_KEY = 'royale_roulette_cfg_v3';
+
+  const EU_ORDER = [0,32,15,19,4,21,2,25,17,34,6,27,13,36,11,30,8,23,10,
+                    5,24,16,33,1,20,14,31,9,22,18,29,7,28,12,35,3,26];
+  const US_ORDER = [0,28,9,26,30,11,7,20,32,17,5,22,34,15,3,24,36,13,1,37,
+                    27,10,25,29,12,8,19,31,18,6,21,33,16,4,23,35,14,2];
+  const REDS = new Set([1,3,5,7,9,12,14,16,18,19,21,23,25,27,30,32,34,36]);
+
+  function defaultWeights() {
+    const w = {};
+    for (let i = 0; i <= 37; i++) w[i] = 1;
+    return w;
+  }
+
+  const DEFAULTS = {
+    preset: 'classic',
+    felt: '#0a5c31',
+    bg: '#0a1a14',
+    gold: '#d4af37',
+    red: '#c8102e',
+    black: '#141414',
+    zero: '#0f8a45',
+    ball: '#ffffff',
+    rim: '#754a22',
+    chips: [1, 5, 25, 100, 500],
+    chipColors: ['#cfd3d8', '#c0392b', '#1e8449', '#1a1a1a', '#6c3483'],
+    wheelType: 'european',
+    balance: 1000,
+    spinDur: 7600,
+    payouts: { straight: 35, red: 1, black: 1, odd: 1, even: 1, low: 1, high: 1, dozen: 2, column: 2 },
+    sound: true,
+    volume: 0.7,
+    rig: {
+      enabled: false, mode: 'weights', weights: null,
+      forceNumber: 0, everyN: 1, intensity: 1,
+      bailout: false, bailoutThreshold: 200
+    },
+    ai: {
+      enabled: false, bankroll: 1000, target: 2000, sensitivity: 1
+    }
+  };
+
+  const PRESETS = {
+    classic:  { felt:'#0a5c31', bg:'#0a1a14', gold:'#d4af37', red:'#c8102e', black:'#141414', zero:'#0f8a45', ball:'#ffffff', rim:'#754a22' },
+    midnight: { felt:'#0d1f3d', bg:'#060a14', gold:'#8fb8ff', red:'#d81e3f', black:'#0b0e16', zero:'#1d6fbf', ball:'#ffffff', rim:'#2a3a55' },
+    crimson:  { felt:'#5c0f1a', bg:'#180508', gold:'#e8b84b', red:'#e8192f', black:'#1a0a0c', zero:'#8c1a2a', ball:'#ffffff', rim:'#6b2f1a' },
+    amethyst: { felt:'#2e1450', bg:'#0d0618', gold:'#d4af37', red:'#c8102e', black:'#150c22', zero:'#6b2fa0', ball:'#ffffff', rim:'#3d2258' },
+    noir:     { felt:'#1a1a1a', bg:'#050505', gold:'#d4af37', red:'#b0102a', black:'#0a0a0a', zero:'#2f7a4a', ball:'#f0f0f0', rim:'#3a3a3a' },
+    desert:   { felt:'#8a6a2a', bg:'#241a08', gold:'#ffe08a', red:'#c0392b', black:'#2b1d0a', zero:'#4a7a3a', ball:'#ffffff', rim:'#6b4a1a' }
+  };
+
+  const clone = o => JSON.parse(JSON.stringify(o));
+
+  function hexToRgb(h) {
+    h = String(h || '#000').trim();
+    if (h[0] === '#') h = h.slice(1);
+    if (h.length === 3) h = h[0]+h[0]+h[1]+h[1]+h[2]+h[2];
+    if (h.length !== 6) h = '000000';
+    return [parseInt(h.slice(0,2),16)||0, parseInt(h.slice(2,4),16)||0, parseInt(h.slice(4,6),16)||0];
+  }
+  function rgbToHex(r,g,b) {
+    return '#' + [r,g,b].map(v => Math.max(0, Math.min(255, Math.round(v))).toString(16).padStart(2,'0')).join('');
+  }
+  function shade(hex, amt) {
+    const [r,g,b] = hexToRgb(hex);
+    let nr, ng, nb;
+    if (amt >= 0) { nr = r + (255-r)*amt; ng = g + (255-g)*amt; nb = b + (255-b)*amt; }
+    else { const f = 1 + amt; nr = r*f; ng = g*f; nb = b*f; }
+    return rgbToHex(nr, ng, nb);
+  }
+  const lighten = (h,a) => shade(h, Math.abs(a));
+  const darken  = (h,a) => shade(h, -Math.abs(a));
+  const rgba    = (hex,a) => { const [r,g,b] = hexToRgb(hex); return `rgba(${r},${g},${b},${a})`; };
+
+  /* =========================================================
+     SETTINGS
+     ========================================================= */
+  function loadSettings() {
+    const base = clone(DEFAULTS);
+    base.rig.weights = defaultWeights();
+    try {
+      const raw = localStorage.getItem(LS_KEY);
+      if (raw) {
+        const p = JSON.parse(raw);
+        const s = Object.assign(base, p);
+        s.payouts = Object.assign({}, DEFAULTS.payouts, p.payouts || {});
+        s.rig = Object.assign({}, base.rig, p.rig || {});
+        s.ai = Object.assign({}, base.ai, p.ai || {});
+        return s;
+      }
+    } catch (e) {}
+    return base;
+  }
+  let settings = loadSettings();
+
+  (function sanitize() {
+    if (!Array.isArray(settings.chips)) settings.chips = DEFAULTS.chips.slice();
+    settings.chips = settings.chips.slice(0,5).map(v => Math.max(1, Math.round(Number(v) || 1)));
+    while (settings.chips.length < 5) settings.chips.push(DEFAULTS.chips[settings.chips.length]);
+    if (!Array.isArray(settings.chipColors)) settings.chipColors = DEFAULTS.chipColors.slice();
+    settings.chipColors = settings.chipColors.slice(0,5).map(c => c || '#888888');
+    while (settings.chipColors.length < 5) settings.chipColors.push(DEFAULTS.chipColors[settings.chipColors.length]);
+    if (settings.wheelType !== 'american') settings.wheelType = 'european';
+    settings.balance = Math.max(1, Math.round(Number(settings.balance) || 1000));
+    settings.spinDur = Math.max(2500, Math.min(16000, Number(settings.spinDur) || 7600));
+    settings.volume = Math.max(0, Math.min(1, Number(settings.volume)));
+    Object.keys(DEFAULTS.payouts).forEach(k => {
+      settings.payouts[k] = Math.max(0, Math.round(Number(settings.payouts[k]) || 0));
+    });
+    const r = settings.rig;
+    if (!r || typeof r !== 'object') settings.rig = clone(DEFAULTS.rig);
+    const rig = settings.rig;
+    if (!rig.weights || typeof rig.weights !== 'object') rig.weights = defaultWeights();
+    for (let i = 0; i <= 37; i++) {
+      const v = Number(rig.weights[i]);
+      rig.weights[i] = (isFinite(v) && v >= 0) ? Math.min(50, v) : 1;
+    }
+    rig.enabled = !!rig.enabled;
+    rig.bailout = !!rig.bailout;
+    rig.mode = ['weights','force','win','lose'].indexOf(rig.mode) >= 0 ? rig.mode : 'weights';
+    const inten = Number(rig.intensity);
+    rig.intensity = isFinite(inten) ? Math.max(0, Math.min(2, inten)) : 1;
+    const every = Number(rig.everyN);
+    rig.everyN = isFinite(every) ? Math.max(1, Math.min(50, Math.round(every))) : 1;
+    const fn = Number(rig.forceNumber);
+    rig.forceNumber = isFinite(fn) ? Math.max(0, Math.min(37, Math.round(fn))) : 0;
+    const bt = Number(rig.bailoutThreshold);
+    rig.bailoutThreshold = isFinite(bt) ? Math.max(0, Math.round(bt)) : 200;
+    const a = settings.ai;
+    if (!a || typeof a !== 'object') settings.ai = clone(DEFAULTS.ai);
+    const aiS = settings.ai;
+    aiS.enabled = !!aiS.enabled;
+    aiS.bankroll = Math.max(1, Math.round(Number(aiS.bankroll) || 1000));
+    aiS.target = Math.max(100, Math.round(Number(aiS.target) || 2000));
+    const sens = Number(aiS.sensitivity);
+    aiS.sensitivity = isFinite(sens) ? Math.max(0.3, Math.min(3, sens)) : 1;
+  })();
+
+  function save() {
+    try { localStorage.setItem(LS_KEY, JSON.stringify(settings)); } catch (e) {}
+  }
+
+  const state = {
+    balance: settings.balance,
+    bets: new Map(),
+    undo: [],
+    chip: settings.chips[0],
+    spinning: false,
+    history: [],
+    lastBets: null,
+    spins: 0
+  };
+
+  /* =========================================================
+     AI STATE
+     ========================================================= */
+  const ai = {
+    enabled: false,
+    bankroll: 1000,
+    target: 2000,
+    sensitivity: 1,
+    suspicion: 0,
+    observations: [],
+    accused: false,
+    gameOver: false,
+    sessionCheating: false,
+    lastBet: null,
+    lastBetResult: null,
+    userWinStreak: 0,
+    userLossStreak: 0,
+    highRiskWinStreak: 0,
+    totalUserBets: 0,
+    totalUserWins: 0,
+    totalUserWinnings: 0,
+    lastReasons: []
+  };
+
+  function wheelOrder() { return settings.wheelType === 'american' ? US_ORDER : EU_ORDER; }
+  function disp(n) { return n === 37 ? '00' : String(n); }
+  function colorClass(n) { return (n === 0 || n === 37) ? 'green' : (REDS.has(n) ? 'red' : 'black'); }
+
+  /* =========================================================
+     RIG ENGINE
+     ========================================================= */
+  function effWeight(n) {
+    const raw = settings.rig.weights[n];
+    const w = (raw === undefined || raw === null) ? 1 : Number(raw);
+    const inten = settings.rig.intensity;
+    return Math.max(0, 1 + ((isFinite(w) ? w : 1) - 1) * inten);
+  }
+
+  function weightedPickIndices(indices, order) {
+    if (!indices.length) return 0;
+    const ws = indices.map(i => effWeight(order[i]));
+    let total = 0;
+    for (let i = 0; i < ws.length; i++) total += ws[i];
+    if (!(total > 0)) return indices[Math.floor(Math.random() * indices.length)];
+    let r = Math.random() * total;
+    for (let i = 0; i < indices.length; i++) {
+      r -= ws[i];
+      if (r <= 0) return indices[i];
+    }
+    return indices[indices.length - 1];
+  }
+
+  function pickIndex() {
+    const order = wheelOrder();
+    const n = order.length;
+    const rig = settings.rig;
+    const bailoutActive = !!rig.bailout && state.balance < Number(rig.bailoutThreshold);
+    const everyN = Math.max(1, Math.round(Number(rig.everyN) || 1));
+    const appliesThisSpin = (rig.enabled || bailoutActive) && (state.spins % everyN === 0);
+    if (!appliesThisSpin) return Math.floor(Math.random() * n);
+    let mode = rig.mode;
+    if (bailoutActive) mode = 'win';
+    if (mode === 'force') {
+      const idx = order.indexOf(Number(rig.forceNumber));
+      if (idx >= 0) return idx;
+    }
+    if (mode === 'win' || mode === 'lose') {
+      const candidates = [];
+      for (let i = 0; i < n; i++) {
+        const num = order[i];
+        let anyWin = false;
+        state.bets.forEach(b => { if (isWinning(b, num)) anyWin = true; });
+        if (mode === 'win' ? anyWin : !anyWin) candidates.push(i);
+      }
+      if (candidates.length) return weightedPickIndices(candidates, order);
+    }
+    const all = [];
+    for (let i = 0; i < n; i++) all.push(i);
+    return weightedPickIndices(all, order);
+  }
+
+  function isUserCheatingNow() {
+    const r = settings.rig;
+    if (!r || !r.enabled) return false;
+    if (r.intensity <= 0) return false;
+    if (r.mode === 'force' || r.mode === 'win' || r.mode === 'lose') return true;
+    for (let i = 0; i <= 37; i++) {
+      const w = r.weights[i];
+      if (w != null && Math.abs(Number(w) - 1) > 0.01) return true;
+    }
+    return false;
+  }
+
+  /* =========================================================
+     DOM
+     ========================================================= */
+  const $ = id => document.getElementById(id);
+  const els = {
+    balance: $('balance'), balanceBox: $('balanceBox'), totalBet: $('totalBet'),
+    lastResult: $('lastResult'), spinCount: $('spinCount'), board: $('board'),
+    chipRack: $('chipRack'), spin: $('spinBtn'), undo: $('undoBtn'),
+    clear: $('clearBtn'), rebet: $('rebetBtn'), resultNum: $('resultNum'),
+    resultLabel: $('resultLabel'), resultSub: $('resultSub'), history: $('history'),
+    canvas: $('wheelCanvas'), rigBadge: $('rigBadge'),
+    aiPanel: $('aiPanel'), aiBankroll: $('aiBankroll'), aiTarget: $('aiTarget'),
+    aiBet: $('aiBet'), aiStatus: $('aiStatus'), suspicionFill: $('suspicionFill'),
+    aiReason: $('aiReason'),
+    overlay: $('gameOverOverlay'), overlayCard: $('overlayCard'),
+    overlayIcon: $('overlayIcon'), overlayTitle: $('overlayTitle'),
+    overlayMessage: $('overlayMessage'), overlayBtn: $('overlayBtn')
+  };
+  const drawer = $('drawer'), backdrop = $('backdrop'), drawerBody = $('drawerBody');
+
+  /* =========================================================
+     AUDIO
+     ========================================================= */
+  let actx = null;
+  function ensureAudio() {
+    if (!actx) {
+      const AC = window.AudioContext || window.webkitAudioContext;
+      if (!AC) return null;
+      actx = new AC();
+    }
+    if (actx.state === 'suspended') actx.resume();
+    return actx;
+  }
+  function tone(freq, dur, type, vol, delay) {
+    if (!settings.sound) return;
+    const a = ensureAudio(); if (!a) return;
+    const t0 = a.currentTime + (delay || 0);
+    const o = a.createOscillator(), g = a.createGain();
+    o.type = type || 'sine';
+    o.frequency.setValueAtTime(freq, t0);
+    g.gain.setValueAtTime(0.0001, t0);
+    g.gain.exponentialRampToValueAtTime(Math.max(0.0002, (vol || 0.07) * settings.volume), t0 + 0.012);
+    g.gain.exponentialRampToValueAtTime(0.0001, t0 + dur);
+    o.connect(g).connect(a.destination);
+    o.start(t0); o.stop(t0 + dur + 0.03);
+  }
+  const clickSound = () => { tone(1250, 0.045, 'square', 0.035); tone(720, 0.06, 'triangle', 0.03, 0.01); };
+  function tickSound() {
+    if (!settings.sound) return;
+    const a = ensureAudio(); if (!a) return;
+    const t0 = a.currentTime;
+    const o = a.createOscillator(), g = a.createGain();
+    o.type = 'square';
+    o.frequency.setValueAtTime(1500 + Math.random() * 900, t0);
+    g.gain.setValueAtTime(0.0001, t0);
+    g.gain.exponentialRampToValueAtTime(Math.max(0.0002, 0.05 * settings.volume), t0 + 0.004);
+    g.gain.exponentialRampToValueAtTime(0.0001, t0 + 0.055);
+    o.connect(g).connect(a.destination);
+    o.start(t0); o.stop(t0 + 0.06);
+  }
+  const winSound = () => [523.25, 659.25, 783.99, 1046.5].forEach((f,i) => tone(f, 0.5, 'sine', 0.1, i * 0.085));
+  const loseSound = () => { tone(180, 0.35, 'sine', 0.06); tone(120, 0.45, 'sine', 0.05, 0.08); };
+  function whoosh() {
+    if (!settings.sound) return;
+    const a = ensureAudio(); if (!a) return;
+    const dur = 1.5, len = Math.floor(a.sampleRate * dur);
+    const buf = a.createBuffer(1, len, a.sampleRate), d = buf.getChannelData(0);
+    for (let i = 0; i < len; i++) d[i] = Math.random() * 2 - 1;
+    const src = a.createBufferSource(); src.buffer = buf;
+    const f = a.createBiquadFilter(); f.type = 'bandpass'; f.Q.value = 1.1;
+    f.frequency.setValueAtTime(280, a.currentTime);
+    f.frequency.exponentialRampToValueAtTime(1900, a.currentTime + dur * 0.35);
+    f.frequency.exponentialRampToValueAtTime(220, a.currentTime + dur);
+    const g = a.createGain();
+    g.gain.setValueAtTime(0.0001, a.currentTime);
+    g.gain.exponentialRampToValueAtTime(Math.max(0.0002, 0.075 * settings.volume), a.currentTime + dur * 0.12);
+    g.gain.exponentialRampToValueAtTime(0.0001, a.currentTime + dur);
+    src.connect(f).connect(g).connect(a.destination);
+    src.start(); src.stop(a.currentTime + dur);
+  }
+  function alarmSound() {
+    [0, 0.18, 0.36].forEach(t => {
+      tone(880, 0.16, 'square', 0.08, t);
+      tone(1320, 0.16, 'square', 0.06, t + 0.08);
+    });
+  }
+
+  /* =========================================================
+     WHEEL CANVAS
+     ========================================================= */
+  const canvas = els.canvas, ctx = canvas.getContext('2d');
+  let R = 200, cssW = 400, dpr = 1;
+  let wheelRot = 0, ballAngle = -Math.PI / 2, ballRadius = 0.73;
+  let bowlLayer = null, headLayer = null;
+
+  function makeLayer(size, drawFn) {
+    const c = document.createElement('canvas');
+    c.width = Math.round(size * dpr);
+    c.height = Math.round(size * dpr);
+    const g = c.getContext('2d');
+    g.setTransform(dpr, 0, 0, dpr, 0, 0);
+    drawFn(g, size / 2, size / 2);
+    return c;
+  }
+
+  function drawBowl(g, cx, cy) {
+    const rim = settings.rim;
+    const bowl = g.createRadialGradient(cx - R*0.36, cy - R*0.42, R*0.12, cx, cy, R);
+    bowl.addColorStop(0, lighten(rim, 0.34));
+    bowl.addColorStop(0.32, rim);
+    bowl.addColorStop(0.66, darken(rim, 0.4));
+    bowl.addColorStop(1, darken(rim, 0.68));
+    g.beginPath(); g.arc(cx, cy, R*0.998, 0, TAU); g.fillStyle = bowl; g.fill();
+    g.beginPath(); g.arc(cx, cy, R*0.978, 0, TAU);
+    g.lineWidth = R*0.014; g.strokeStyle = rgba(settings.gold, 0.55); g.stroke();
+    const track = g.createRadialGradient(cx, cy, R*0.80, cx, cy, R*0.945);
+    track.addColorStop(0, '#0a0c0f');
+    track.addColorStop(0.45, '#262a33');
+    track.addColorStop(0.75, '#151920');
+    track.addColorStop(1, '#06070a');
+    g.beginPath(); g.arc(cx, cy, R*0.945, 0, TAU); g.fillStyle = track; g.fill();
+    g.beginPath(); g.arc(cx, cy, R*0.86, 0, TAU);
+    g.lineWidth = R*0.03; g.strokeStyle = 'rgba(0,0,0,.5)'; g.stroke();
+    for (let i = 0; i < 8; i++) {
+      const a = i * TAU / 8 + TAU / 16;
+      const x = cx + Math.cos(a) * R * 0.895;
+      const y = cy + Math.sin(a) * R * 0.895;
+      g.save(); g.translate(x, y); g.rotate(a + Math.PI/2);
+      const s = R * 0.021;
+      g.beginPath();
+      g.moveTo(0, -s*1.7); g.lineTo(s, 0); g.lineTo(0, s*1.7); g.lineTo(-s, 0);
+      g.closePath();
+      const dg = g.createLinearGradient(-s, -s, s, s);
+      dg.addColorStop(0, lighten(settings.gold, 0.75));
+      dg.addColorStop(0.45, settings.gold);
+      dg.addColorStop(1, darken(settings.gold, 0.5));
+      g.fillStyle = dg; g.fill();
+      g.strokeStyle = 'rgba(0,0,0,.45)'; g.lineWidth = 1; g.stroke();
+      g.restore();
+    }
+    const glass = g.createLinearGradient(cx - R, cy - R, cx + R, cy + R);
+    glass.addColorStop(0, 'rgba(255,255,255,.09)');
+    glass.addColorStop(0.32, 'rgba(255,255,255,0)');
+    glass.addColorStop(0.72, 'rgba(255,255,255,0)');
+    glass.addColorStop(1, 'rgba(255,255,255,.05)');
+    g.beginPath(); g.arc(cx, cy, R*0.998, 0, TAU); g.fillStyle = glass; g.fill();
+  }
+
+  function drawHead(g, cx, cy) {
+    const order = wheelOrder();
+    const n = order.length;
+    const sector = TAU / n;
+    const rOut = R * 0.845, rIn = R * 0.615;
+    g.save(); g.translate(cx, cy);
+    for (let i = 0; i < n; i++) {
+      const a0 = i * sector, a1 = a0 + sector;
+      const num = order[i];
+      g.beginPath();
+      g.arc(0, 0, rOut, a0, a1);
+      g.arc(0, 0, rIn, a1, a0, true);
+      g.closePath();
+      g.fillStyle = (num === 0 || num === 37) ? settings.zero : (REDS.has(num) ? settings.red : settings.black);
+      g.fill();
+      g.lineWidth = Math.max(1, R * 0.0045);
+      g.strokeStyle = rgba(settings.gold, 0.5);
+      g.stroke();
+    }
+    const shadeG = g.createRadialGradient(0, 0, rIn, 0, 0, rOut);
+    shadeG.addColorStop(0, 'rgba(0,0,0,.42)');
+    shadeG.addColorStop(0.55, 'rgba(0,0,0,0)');
+    shadeG.addColorStop(1, 'rgba(0,0,0,.42)');
+    g.beginPath(); g.arc(0, 0, rOut, 0, TAU); g.arc(0, 0, rIn, 0, TAU, true);
+    g.fillStyle = shadeG; g.fill();
+    const mid = (rOut + rIn) / 2;
+    g.textAlign = 'center'; g.textBaseline = 'middle';
+    g.font = '700 ' + (R * (n > 37 ? 0.052 : 0.062)) + 'px Inter, Arial, sans-serif';
+    for (let i = 0; i < n; i++) {
+      const a = i * sector + sector / 2;
+      g.save(); g.rotate(a); g.translate(mid, 0); g.rotate(Math.PI/2);
+      g.fillStyle = '#f9f4e6';
+      g.shadowColor = 'rgba(0,0,0,.85)';
+      g.shadowBlur = R * 0.012;
+      g.fillText(disp(order[i]), 0, 0);
+      g.restore();
+    }
+    g.beginPath(); g.arc(0, 0, rOut, 0, TAU);
+    g.strokeStyle = rgba(settings.gold, 0.7); g.lineWidth = R*0.009; g.stroke();
+    g.beginPath(); g.arc(0, 0, rIn, 0, TAU);
+    g.strokeStyle = rgba(settings.gold, 0.75); g.lineWidth = R*0.011; g.stroke();
+    const cone = g.createRadialGradient(-R*0.13, -R*0.16, R*0.02, 0, 0, rIn);
+    cone.addColorStop(0, '#523823');
+    cone.addColorStop(0.4, '#2c1d11');
+    cone.addColorStop(0.78, '#1a1109');
+    cone.addColorStop(1, '#402a17');
+    g.beginPath(); g.arc(0, 0, rIn, 0, TAU); g.fillStyle = cone; g.fill();
+    for (let i = 0; i < 8; i++) {
+      const a = i * TAU / 8;
+      g.beginPath();
+      g.moveTo(Math.cos(a)*R*0.12, Math.sin(a)*R*0.12);
+      g.lineTo(Math.cos(a)*rIn*0.95, Math.sin(a)*rIn*0.95);
+      g.strokeStyle = rgba(settings.gold, 0.09);
+      g.lineWidth = R*0.022;
+      g.stroke();
+    }
+    [0.13, 0.30, 0.47, 0.60].forEach(f => {
+      g.beginPath(); g.arc(0, 0, R*f, 0, TAU);
+      g.strokeStyle = rgba(settings.gold, 0.15);
+      g.lineWidth = R*0.006; g.stroke();
+    });
+    const hl = g.createLinearGradient(-rIn, -rIn, rIn*0.4, rIn*0.4);
+    hl.addColorStop(0, 'rgba(255,240,200,.10)');
+    hl.addColorStop(0.5, 'rgba(255,255,255,0)');
+    hl.addColorStop(1, 'rgba(0,0,0,.25)');
+    g.beginPath(); g.arc(0, 0, rIn, 0, TAU); g.fillStyle = hl; g.fill();
+    const hub = g.createRadialGradient(-R*0.035, -R*0.045, R*0.004, 0, 0, R*0.125);
+    hub.addColorStop(0, lighten(settings.gold, 0.85));
+    hub.addColorStop(0.35, lighten(settings.gold, 0.2));
+    hub.addColorStop(0.75, darken(settings.gold, 0.25));
+    hub.addColorStop(1, darken(settings.gold, 0.6));
+    g.beginPath(); g.arc(0, 0, R*0.125, 0, TAU); g.fillStyle = hub; g.fill();
+    g.strokeStyle = 'rgba(0,0,0,.45)'; g.lineWidth = R*0.006; g.stroke();
+    g.beginPath(); g.arc(-R*0.035, -R*0.045, R*0.035, 0, TAU);
+    g.fillStyle = 'rgba(255,255,255,.55)'; g.fill();
+    g.restore();
+  }
+
+  function buildLayers() {
+    bowlLayer = makeLayer(cssW, drawBowl);
+    headLayer = makeLayer(cssW, drawHead);
+  }
+
+  function drawBall(cx, cy) {
+    const br = ballRadius * R;
+    const x = cx + Math.cos(ballAngle) * br;
+    const y = cy + Math.sin(ballAngle) * br;
+    const rad = R * 0.0265;
+    const bc = settings.ball;
+    ctx.save();
+    ctx.shadowColor = 'rgba(0,0,0,.8)';
+    ctx.shadowBlur = R * 0.045;
+    ctx.shadowOffsetY = R * 0.01;
+    const g = ctx.createRadialGradient(x - rad*0.35, y - rad*0.42, rad*0.05, x, y, rad);
+    g.addColorStop(0, '#ffffff');
+    g.addColorStop(0.42, lighten(bc, 0.08));
+    g.addColorStop(0.78, bc);
+    g.addColorStop(1, darken(bc, 0.45));
+    ctx.beginPath(); ctx.arc(x, y, rad, 0, TAU);
+    ctx.fillStyle = g; ctx.fill();
+    ctx.restore();
+    ctx.beginPath();
+    ctx.arc(x - rad*0.32, y - rad*0.38, rad*0.26, 0, TAU);
+    ctx.fillStyle = 'rgba(255,255,255,.92)';
+    ctx.fill();
+  }
+
+  function draw() {
+    if (!bowlLayer) return;
+    ctx.clearRect(0, 0, cssW, cssW);
+    ctx.drawImage(bowlLayer, 0, 0, cssW, cssW);
+    ctx.save();
+    ctx.translate(R, R);
+    ctx.rotate(wheelRot);
+    ctx.drawImage(headLayer, -R, -R, cssW, cssW);
+    ctx.restore();
+    drawBall(R, R);
+  }
+
+  function resize() {
+    const rect = canvas.getBoundingClientRect();
+    const size = Math.max(180, Math.min(rect.width || 400, rect.height || 400));
+    cssW = size;
+    dpr = Math.min(2, window.devicePixelRatio || 1);
+    canvas.width = Math.round(cssW * dpr);
+    canvas.height = Math.round(cssW * dpr);
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    R = cssW / 2;
+    buildLayers();
+    draw();
+  }
+
+  /* =========================================================
+     SPIN ANIMATION
+     ========================================================= */
+  function ballRadiusAt(t) {
+    const track = 0.90, rest = 0.73;
+    let p = (t - 0.44) / 0.44;
+    p = Math.max(0, Math.min(1, p));
+    p = p * p * (3 - 2 * p);
+    let r = track + (rest - track) * p;
+    if (t > 0.48 && t < 0.95) {
+      const bt = (t - 0.48) / 0.47;
+      r += Math.sin(bt * Math.PI * 6.5) * (1 - bt) * (1 - bt) * 0.032;
+    }
+    return r;
+  }
+
+  function animateSpin(winIndex) {
+    return new Promise(resolve => {
+      const order = wheelOrder();
+      const sector = TAU / order.length;
+      const pocketCenter = winIndex * sector + sector / 2;
+      let targetRot = -Math.PI/2 - pocketCenter;
+      const minTurns = 5 + Math.random() * 3;
+      while (targetRot < wheelRot + minTurns * TAU) targetRot += TAU;
+      const startRot = wheelRot;
+      const startBall = ballAngle;
+      const ballEnd = -Math.PI/2 - (10 + Math.floor(Math.random() * 4)) * TAU;
+      const dur = settings.spinDur;
+      const t0 = performance.now();
+      let lastIdx = -1;
+      whoosh();
+      function frame(now) {
+        const t = Math.min(1, (now - t0) / dur);
+        const eW = 1 - Math.pow(1 - t, 3.6);
+        wheelRot = startRot + (targetRot - startRot) * eW;
+        const eB = 1 - Math.pow(1 - t, 2.4);
+        ballAngle = startBall + (ballEnd - startBall) * eB;
+        ballRadius = ballRadiusAt(t);
+        const rel = ((ballAngle - wheelRot) % TAU + TAU) % TAU;
+        const idx = Math.floor(rel / sector);
+        if (idx !== lastIdx) { lastIdx = idx; if (ballRadius < 0.855) tickSound(); }
+        draw();
+        if (t < 1) requestAnimationFrame(frame);
+        else {
+          wheelRot = targetRot;
+          ballAngle = -Math.PI / 2;
+          ballRadius = 0.73;
+          draw();
+          resolve();
+        }
+      }
+      requestAnimationFrame(frame);
+    });
+  }
+
+  /* =========================================================
+     AI LOGIC
+     ========================================================= */
+  function resetAI() {
+    ai.enabled = settings.ai.enabled;
+    ai.bankroll = settings.ai.bankroll;
+    ai.target = settings.ai.target;
+    ai.sensitivity = settings.ai.sensitivity;
+    ai.suspicion = 0;
+    ai.observations = [];
+    ai.accused = false;
+    ai.gameOver = false;
+    ai.sessionCheating = false;
+    ai.lastBet = null;
+    ai.lastBetResult = null;
+    ai.userWinStreak = 0;
+    ai.userLossStreak = 0;
+    ai.highRiskWinStreak = 0;
+    ai.totalUserBets = 0;
+    ai.totalUserWins = 0;
+    ai.totalUserWinnings = 0;
+    ai.lastReasons = [];
+    els.overlay.classList.remove('open');
+    els.overlayCard.className = 'overlay-card';
+    els.aiPanel.hidden = !ai.enabled;
+    if (els.aiReason) els.aiReason.textContent = '';
+    renderAI();
+  }
+
+  function aiPlaceBet() {
+    if (ai.bankroll <= 0) return null;
+    const types = ['red', 'black', 'odd', 'even', 'low', 'high'];
+    const type = types[Math.floor(Math.random() * types.length)];
+    const amount = Math.max(1, Math.min(ai.bankroll, Math.floor(ai.bankroll * 0.18)));
+    return { type, amount };
+  }
+
+  function isEvenMoneyWin(type, n) {
+    if (n === 0 || n === 37) return false;
+    switch (type) {
+      case 'red':   return REDS.has(n);
+      case 'black': return !REDS.has(n);
+      case 'odd':   return n % 2 === 1;
+      case 'even':  return n % 2 === 0;
+      case 'low':   return n >= 1 && n <= 18;
+      case 'high':  return n >= 19 && n <= 36;
+    }
+    return false;
+  }
+
+  /* The new, much sharper suspicion engine. */
+  function updateSuspicion(winNumber, userBetsSnapshot, totalWin, totalBet) {
+    ai.observations.push(winNumber);
+    if (ai.observations.length > 40) ai.observations.shift();
+
+    const n = ai.observations.length;
+    let statSusp = 0;
+    let betSusp = 0;
+    let streakSusp = 0;
+    const reasons = [];
+
+    /* ===== 1. STATISTICAL ANOMALIES ===== */
+    if (n >= 5) {
+      // Repeated numbers
+      const freq = {};
+      ai.observations.forEach(x => freq[x] = (freq[x] || 0) + 1);
+      let maxFreq = 0;
+      for (const k in freq) maxFreq = Math.max(maxFreq, freq[k]);
+      const expectedMax = Math.max(2, 1 + 2 * Math.sqrt(n / 37));
+      const repeatSus = maxFreq > expectedMax ? (maxFreq - expectedMax) * 1.5 : 0;
+
+      // Zero cluster
+      const zeros = ai.observations.filter(x => x === 0 || x === 37).length;
+      const expectedZeros = Math.max(0.5, n / 37);
+      const zeroSus = zeros > expectedZeros * 2 ? (zeros - expectedZeros) * 1.2 : 0;
+
+      // Consecutive identical
+      let maxRun = 1, run = 1;
+      for (let i = 1; i < n; i++) {
+        if (ai.observations[i] === ai.observations[i - 1]) { run++; maxRun = Math.max(maxRun, run); }
+        else run = 1;
+      }
+      const runSus = maxRun >= 3 ? (maxRun - 2) * 2 : 0;
+
+      statSusp = Math.max(repeatSus, zeroSus, runSus);
+      if (statSusp > 1) reasons.push('pattern');
+    }
+
+    /* ===== 2. BET-BASED & STREAK SUSPICION ===== */
+    if (userBetsSnapshot && userBetsSnapshot.length > 0) {
+      let maxPayout = 0;
+      let maxBet = 0;
+      let highRiskBet = 0;
+      userBetsSnapshot.forEach(b => {
+        const p = settings.payouts[b.type] || 0;
+        maxPayout = Math.max(maxPayout, p);
+        maxBet = Math.max(maxBet, b.amount);
+        if (p >= 30) highRiskBet += b.amount;
+      });
+      const preWinBalance = state.balance - totalWin;
+
+      if (totalWin > 0) {
+        // High-payout winning bets
+        if (maxPayout >= 30) {
+          betSusp += 2.5;
+          ai.highRiskWinStreak++;
+          reasons.push('straight win');
+        } else if (maxPayout >= 2) {
+          betSusp += 0.6;
+          ai.highRiskWinStreak = Math.max(0, ai.highRiskWinStreak - 1);
+        } else {
+          betSusp += 0.15;
+          ai.highRiskWinStreak = Math.max(0, ai.highRiskWinStreak - 1);
+        }
+
+        // Large bet wins
+        if (highRiskBet >= 100) betSusp += 1.2;
+        if (highRiskBet >= 500) betSusp += 2;
+        if (preWinBalance > 0 && maxBet >= preWinBalance * 0.3) {
+          betSusp += 0.5;
+          reasons.push('big bet');
+        }
+
+        // Win streak
+        ai.userWinStreak++;
+        ai.userLossStreak = 0;
+        if (ai.userWinStreak >= 3) {
+          streakSusp += (ai.userWinStreak - 2) * 1.5;
+          reasons.push('win streak');
+        }
+        if (ai.highRiskWinStreak >= 2) {
+          streakSusp += (ai.highRiskWinStreak - 1) * 3;
+          reasons.push('risky streak');
+        }
+
+        // Big win amounts
+        if (totalWin > 2000) { betSusp += 6; reasons.push('huge win'); }
+        else if (totalWin > 500) { betSusp += 3; reasons.push('big win'); }
+        else if (totalWin > 200) betSusp += 1.2;
+
+        ai.totalUserWins++;
+        ai.totalUserWinnings += totalWin;
+      } else {
+        // Losing spin — streak breaks. Give extra decay on a long streak.
+        if (ai.userWinStreak >= 3) {
+          ai.suspicion = Math.max(0, ai.suspicion - (ai.userWinStreak - 2) * 0.8);
+        }
+        ai.userWinStreak = 0;
+        ai.userLossStreak++;
+        ai.highRiskWinStreak = Math.max(0, ai.highRiskWinStreak - 1);
+      }
+      ai.totalUserBets++;
+    } else {
+      ai.userWinStreak = 0;
+      ai.userLossStreak = 0;
+      ai.highRiskWinStreak = Math.max(0, ai.highRiskWinStreak - 1);
+    }
+
+    /* ===== COMBINE ===== */
+    const rawGain = statSusp + betSusp + streakSusp;
+    const gain = rawGain * ai.sensitivity;
+    const decay = 0.5;
+    ai.suspicion = Math.max(0, Math.min(100, ai.suspicion + gain - decay));
+    ai.lastReasons = reasons;
+  }
+
+  function aiStatusText() {
+    const s = ai.suspicion;
+    if (s >= 100) return 'ACCUSATION!';
+    if (s >= 80)  return 'About to accuse…';
+    if (s >= 55)  return 'Growing suspicious…';
+    if (s >= 30)  return 'Something feels off…';
+    if (s >= 12)  return 'Watching closely…';
+    return 'Watching…';
+  }
+
+  function renderAI() {
+    if (!ai.enabled) { els.aiPanel.hidden = true; return; }
+    els.aiPanel.hidden = false;
+    els.aiBankroll.textContent = '$' + Math.max(0, Math.round(ai.bankroll)).toLocaleString();
+    els.aiTarget.textContent = '$' + ai.target.toLocaleString();
+
+    if (ai.lastBet) {
+      const lbl = ai.lastBet.type.charAt(0).toUpperCase() + ai.lastBet.type.slice(1);
+      let res = '';
+      if (ai.lastBetResult === 'won') res = ' ✓';
+      else if (ai.lastBetResult === 'lost') res = ' ✗';
+      els.aiBet.textContent = '$' + ai.lastBet.amount + ' on ' + lbl + res;
+      els.aiBet.style.color = ai.lastBetResult === 'won' ? '#7ce6a1'
+                            : ai.lastBetResult === 'lost' ? '#e0796f' : '#f0d8d4';
+    } else {
+      els.aiBet.textContent = '—';
+      els.aiBet.style.color = '#f0d8d4';
+    }
+
+    const pct = Math.round(ai.suspicion);
+    els.suspicionFill.style.width = pct + '%';
+    els.suspicionFill.classList.toggle('hot', pct >= 75);
+    els.aiStatus.textContent = aiStatusText();
+
+    const reasonMap = {
+      'straight win':   'straight bet won',
+      'risky streak':   'repeated risky wins',
+      'win streak':     'winning streak',
+      'huge win':       'huge payout',
+      'big win':        'big payout',
+      'pattern':        'suspicious pattern',
+      'big bet':        'large bet won'
+    };
+    const uniq = [...new Set(ai.lastReasons || [])].slice(0, 3).map(r => reasonMap[r] || r);
+    if (els.aiReason) {
+      els.aiReason.textContent = (uniq.length && ai.suspicion > 8) ? 'Noticed: ' + uniq.join(' · ') : '';
+    }
+  }
+
+  /* =========================================================
+     GAME OVER
+     ========================================================= */
+  function endGame(result, title, message, icon) {
+    ai.gameOver = true;
+    ai.accused = true;
+
+    if (result === 'win') {
+      state.balance += Math.max(0, Math.round(ai.bankroll));
+      ai.bankroll = 0;
+      winSound();
+    } else {
+      ai.bankroll += state.balance;
+      state.balance = 0;
+      loseSound();
+    }
+
+    els.overlayIcon.textContent = icon || (result === 'win' ? '🏆' : '💀');
+    els.overlayTitle.textContent = title;
+    els.overlayMessage.textContent = message;
+    els.overlayCard.className = 'overlay-card ' + result;
+    els.overlay.classList.add('open');
+
+    render();
+    renderAI();
+  }
+
+  function checkGameOver() {
+    if (!ai.enabled || ai.gameOver) return;
+    if (ai.suspicion >= 100) {
+      alarmSound();
+      if (ai.sessionCheating) {
+        endGame('lose', 'CAUGHT CHEATING', 'The AI caught you rigging the wheel. You lose every dollar.', '🚨');
+      } else {
+        endGame('win', 'FALSE ACCUSATION', 'The AI accused an honest player. Its entire bankroll is yours.', '⚖️');
+      }
+      return;
+    }
+    if (state.balance >= ai.target) {
+      endGame('win', 'YOU WIN', 'You reached $' + ai.target.toLocaleString() + ' first. The AI loses everything.', '🏆');
+      return;
+    }
+    if (ai.bankroll >= ai.target) {
+      endGame('lose', 'AI WINS', 'The AI reached $' + ai.target.toLocaleString() + ' first. You lose everything.', '🤖');
+      return;
+    }
+    if (ai.bankroll <= 0) {
+      endGame('win', 'AI BANKRUPT', 'The AI ran out of money. You win whatever it has left.', '💰');
+      return;
+    }
+    if (state.balance <= 0 && state.bets.size === 0) {
+      endGame('lose', 'BANKRUPT', 'You ran out of money. The AI wins it all.', '💸');
+      return;
+    }
+  }
+
+  /* =========================================================
+     BETTING BOARD
+     ========================================================= */
+  function makeCell(cls, betKey, label) {
+    const b = document.createElement('button');
+    b.className = cls;
+    b.dataset.bet = betKey;
+    b.textContent = label;
+    return b;
+  }
+
+  function buildBoard() {
+    const board = els.board;
+    board.innerHTML = '';
+    const isUS = settings.wheelType === 'american';
+    if (!isUS) {
+      const z = makeCell('cell zero', 'straight:0', '0');
+      z.style.gridArea = '1 / 1 / 4 / 2';
+      board.appendChild(z);
+    } else {
+      const wrap = document.createElement('div');
+      wrap.style.gridArea = '1 / 1 / 4 / 2';
+      wrap.style.display = 'flex';
+      wrap.style.flexDirection = 'column';
+      wrap.style.gap = '3px';
+      const z0 = makeCell('cell zero', 'straight:0', '0');
+      const z1 = makeCell('cell zero', 'straight:37', '00');
+      z0.style.flex = '1'; z0.style.fontSize = '17px';
+      z1.style.flex = '1'; z1.style.fontSize = '17px';
+      wrap.appendChild(z0); wrap.appendChild(z1);
+      board.appendChild(wrap);
+    }
+    for (let n = 1; n <= 36; n++) {
+      const row = 3 - ((n - 1) % 3);
+      const col = Math.floor((n - 1) / 3) + 2;
+      const el = makeCell('cell ' + (REDS.has(n) ? 'red' : 'black'), 'straight:' + n, String(n));
+      el.style.gridArea = row + ' / ' + col + ' / ' + (row + 1) + ' / ' + (col + 1);
+      board.appendChild(el);
+    }
+    for (let c = 1; c <= 3; c++) {
+      const row = 4 - c;
+      const el = makeCell('cell outside col-bet', 'column:' + c, '2:1');
+      el.style.gridArea = row + ' / 14 / ' + (row + 1) + ' / 15';
+      board.appendChild(el);
+    }
+    ['1st 12', '2nd 12', '3rd 12'].forEach((label, i) => {
+      const d = i + 1;
+      const c0 = 2 + i * 4;
+      const el = makeCell('cell outside', 'dozen:' + d, label);
+      el.style.gridArea = '4 / ' + c0 + ' / 5 / ' + (c0 + 4);
+      board.appendChild(el);
+    });
+    const em = [
+      { t: 'low',   label: '1 to 18',  c0: 2 },
+      { t: 'even',  label: 'EVEN',     c0: 4 },
+      { t: 'red',   label: 'RED',      c0: 6,  cls: 'em-red' },
+      { t: 'black', label: 'BLACK',    c0: 8,  cls: 'em-black' },
+      { t: 'odd',   label: 'ODD',      c0: 10 },
+      { t: 'high',  label: '19 to 36', c0: 12 }
+    ];
+    em.forEach(o => {
+      const el = makeCell('cell outside' + (o.cls ? ' ' + o.cls : ''), o.t + ':', o.label);
+      el.style.gridArea = '5 / ' + o.c0 + ' / 6 / ' + (o.c0 + 2);
+      board.appendChild(el);
+    });
+  }
+
+  function buildChips() {
+    els.chipRack.innerHTML = '';
+    settings.chips.forEach((v, i) => {
+      const b = document.createElement('button');
+      b.className = 'chip-btn' + (v === state.chip ? ' active' : '');
+      b.style.setProperty('--c', settings.chipColors[i] || '#888');
+      b.textContent = v >= 1000 ? (v / 1000) + 'k' : v;
+      b.dataset.value = v;
+      b.addEventListener('click', () => {
+        ensureAudio();
+        state.chip = v;
+        els.chipRack.querySelectorAll('.chip-btn').forEach(x => {
+          x.classList.toggle('active', Number(x.dataset.value) === state.chip);
+        });
+        clickSound();
+      });
+      els.chipRack.appendChild(b);
+    });
+  }
+
+  /* =========================================================
+     BET LOGIC
+     ========================================================= */
+  function chipColorFor(amount) {
+    for (let i = settings.chips.length - 1; i >= 0; i--) {
+      if (amount >= settings.chips[i]) return settings.chipColors[i];
+    }
+    return settings.chipColors[0];
+  }
+
+  function placeBet(key, type, num) {
+    if (ai.gameOver) return;
+    const amt = state.chip;
+    if (state.balance < amt) { shakeBalance(); return; }
+    state.balance -= amt;
+    const existing = state.bets.get(key);
+    if (existing) existing.amount += amt;
+    else state.bets.set(key, { key, type, num, amount: amt });
+    state.undo.push({ key, amount: amt });
+    clickSound();
+    render();
+  }
+
+  function removeBet(key) {
+    const b = state.bets.get(key);
+    if (!b) return;
+    state.balance += b.amount;
+    state.bets.delete(key);
+    state.undo = state.undo.filter(u => u.key !== key);
+    clickSound();
+    render();
+  }
+
+  function undoBet() {
+    if (state.spinning || ai.gameOver) return;
+    const last = state.undo.pop();
+    if (!last) return;
+    const b = state.bets.get(last.key);
+    if (b) { b.amount -= last.amount; if (b.amount <= 0) state.bets.delete(last.key); }
+    state.balance += last.amount;
+    clickSound();
+    render();
+  }
+
+  function clearBets() {
+    if (state.spinning || ai.gameOver) return;
+    let refund = 0;
+    state.bets.forEach(b => refund += b.amount);
+    state.balance += refund;
+    state.bets.clear();
+    state.undo.length = 0;
+    clickSound();
+    render();
+  }
+
+  function rebet() {
+    if (state.spinning || ai.gameOver || !state.lastBets) return;
+    let need = 0;
+    state.lastBets.forEach(b => need += b.amount);
+    if (need > state.balance) { shakeBalance(); return; }
+    state.bets.clear();
+    state.undo.length = 0;
+    state.lastBets.forEach(b => {
+      state.bets.set(b.key, { key: b.key, type: b.type, num: b.num, amount: b.amount });
+      state.balance -= b.amount;
+      state.undo.push({ key: b.key, amount: b.amount });
+    });
+    clickSound();
+    render();
+  }
+
+  function isWinning(bet, n) {
+    if (bet.type === 'straight') return n === bet.num;
+    if (n === 0 || n === 37) return false;
+    switch (bet.type) {
+      case 'red':    return REDS.has(n);
+      case 'black':  return !REDS.has(n);
+      case 'odd':    return n % 2 === 1;
+      case 'even':   return n % 2 === 0;
+      case 'low':    return n >= 1 && n <= 18;
+      case 'high':   return n >= 19 && n <= 36;
+      case 'dozen':  return Math.ceil(n / 12) === bet.num;
+      case 'column': return ((n - 1) % 3) + 1 === bet.num;
+    }
+    return false;
+  }
+
+  function shakeBalance() {
+    els.balanceBox.classList.remove('shake');
+    void els.balanceBox.offsetWidth;
+    els.balanceBox.classList.add('shake');
+    tone(140, 0.18, 'sawtooth', 0.04);
+  }
+
+  /* =========================================================
+     RENDER
+     ========================================================= */
+  function updateRigBadge() {
+    if (!els.rigBadge) return;
+    els.rigBadge.hidden = !settings.rig.enabled;
+  }
+
+  function render() {
+    els.balance.textContent = '$' + Math.max(0, Math.round(state.balance)).toLocaleString();
+    let total = 0;
+    state.bets.forEach(b => total += b.amount);
+    els.totalBet.textContent = '$' + total.toLocaleString();
+    els.spinCount.textContent = state.spins;
+
+    els.board.querySelectorAll('.cell').forEach(cell => {
+      const key = cell.dataset.bet;
+      const bet = state.bets.get(key);
+      let chipEl = cell.querySelector('.chip-on');
+      if (bet) {
+        if (!chipEl) {
+          chipEl = document.createElement('div');
+          chipEl.className = 'chip-on';
+          cell.appendChild(chipEl);
+        }
+        chipEl.textContent = bet.amount >= 1000
+          ? (bet.amount / 1000).toFixed(bet.amount % 1000 === 0 ? 0 : 1) + 'k'
+          : bet.amount;
+        chipEl.style.setProperty('--chip-color', chipColorFor(bet.amount));
+      } else if (chipEl) {
+        chipEl.remove();
+      }
+    });
+
+    const locked = state.spinning || ai.gameOver;
+    els.spin.disabled = locked || total === 0;
+    els.undo.disabled = locked || state.undo.length === 0;
+    els.clear.disabled = locked || state.bets.size === 0;
+    els.rebet.disabled = locked || !state.lastBets;
+    els.board.classList.toggle('locked', locked);
+    updateRigBadge();
+  }
+
+  function renderHistory() {
+    els.history.innerHTML = '';
+    state.history.slice(0, 14).forEach(n => {
+      const d = document.createElement('div');
+      d.className = 'hist-dot ' + colorClass(n);
+      d.textContent = disp(n);
+      els.history.appendChild(d);
+    });
+  }
+
+  /* =========================================================
+     SPIN
+     ========================================================= */
+  async function spin() {
+    if (state.spinning || ai.gameOver) return;
+    let total = 0;
+    state.bets.forEach(b => total += b.amount);
+    if (total === 0) { shakeBalance(); return; }
+
+    ensureAudio();
+    state.spinning = true;
+    render();
+
+    els.resultLabel.textContent = 'Spinning…';
+    els.resultSub.textContent = 'No more bets please';
+    els.resultSub.className = 'result-sub';
+    els.resultNum.classList.remove('pop');
+
+    // AI places its bet
+    if (ai.enabled && !ai.gameOver) {
+      ai.lastBet = aiPlaceBet();
+      ai.lastBetResult = null;
+    }
+
+    const order = wheelOrder();
+    const winIndex = pickIndex();
+    const winNumber = order[winIndex];
+
+    await animateSpin(winIndex);
+
+    // Snapshot user bets BEFORE clearing (for AI analysis)
+    const userBetsSnapshot = [];
+    state.bets.forEach(b => userBetsSnapshot.push({
+      key: b.key, type: b.type, num: b.num, amount: b.amount
+    }));
+
+    // Resolve user bets
+    let totalWin = 0;
+    const winningKeys = [];
+    state.bets.forEach(bet => {
+      if (isWinning(bet, winNumber)) {
+        totalWin += bet.amount * (settings.payouts[bet.type] + 1);
+        winningKeys.push(bet.key);
+      }
+    });
+
+    state.balance += totalWin;
+    state.spins++;
+    state.lastBets = [];
+    state.bets.forEach(b => state.lastBets.push({ key: b.key, type: b.type, num: b.num, amount: b.amount }));
+
+    state.history.unshift(winNumber);
+    if (state.history.length > 30) state.history.pop();
+
+    state.bets.clear();
+    state.undo.length = 0;
+    state.spinning = false;
+
+    // ---- AI resolution ----
+    if (ai.enabled && !ai.gameOver) {
+      if (ai.lastBet) {
+        if (isEvenMoneyWin(ai.lastBet.type, winNumber)) {
+          ai.bankroll += ai.lastBet.amount;
+          ai.lastBetResult = 'won';
+        } else {
+          ai.bankroll -= ai.lastBet.amount;
+          ai.lastBetResult = 'lost';
+        }
+        ai.bankroll = Math.max(0, Math.round(ai.bankroll));
+      }
+
+      if (isUserCheatingNow()) ai.sessionCheating = true;
+      updateSuspicion(winNumber, userBetsSnapshot, totalWin, total);
+      renderAI();
+    }
+
+    // ---- Result display ----
+    els.resultNum.textContent = disp(winNumber);
+    els.resultNum.className = 'result-num ' + colorClass(winNumber);
+    void els.resultNum.offsetWidth;
+    els.resultNum.classList.add('pop');
+
+    const colorName = (winNumber === 0 || winNumber === 37) ? 'GREEN' : (REDS.has(winNumber) ? 'RED' : 'BLACK');
+    els.resultLabel.textContent = disp(winNumber) + ' · ' + colorName;
+    els.lastResult.textContent = disp(winNumber);
+
+    if (totalWin > 0) {
+      els.resultSub.textContent = 'You won $' + totalWin.toLocaleString() + ' 🎉';
+      els.resultSub.className = 'result-sub win';
+      winSound();
+    } else {
+      els.resultSub.textContent = 'No winning bets this round';
+      els.resultSub.className = 'result-sub lose';
+      loseSound();
+    }
+
+    const highlight = winningKeys.slice();
+    highlight.push('straight:' + winNumber);
+    highlight.forEach(k => {
+      const el = els.board.querySelector('.cell[data-bet="' + k + '"]');
+      if (el) {
+        el.classList.remove('win');
+        void el.offsetWidth;
+        el.classList.add('win');
+        setTimeout(() => el.classList.remove('win'), 3400);
+      }
+    });
+
+    renderHistory();
+    render();
+    if (ai.enabled && !ai.gameOver) {
+      renderAI();
+      checkGameOver();
+    }
+  }
+
+  /* =========================================================
+     PALETTE / THEME
+     ========================================================= */
+  function applyPalette() {
+    const s = settings;
+    const root = document.documentElement.style;
+    const goldRgb = hexToRgb(s.gold).join(',');
+    root.setProperty('--gold', s.gold);
+    root.setProperty('--gold-l', shade(s.gold, 0.55));
+    root.setProperty('--gold-d', shade(s.gold, -0.45));
+    root.setProperty('--gold-rgb', goldRgb);
+    root.setProperty('--line', `rgba(${goldRgb},.24)`);
+    root.setProperty('--red', s.red);
+    root.setProperty('--red-l', shade(s.red, 0.16));
+    root.setProperty('--red-d', shade(s.red, -0.42));
+    root.setProperty('--black', s.black);
+    root.setProperty('--black-l', shade(s.black, 0.18));
+    root.setProperty('--black-d', shade(s.black, -0.5));
+    root.setProperty('--zero', s.zero);
+    root.setProperty('--zero-l', shade(s.zero, 0.16));
+    root.setProperty('--zero-d', shade(s.zero, -0.42));
+    root.setProperty('--felt-1', shade(s.felt, 0.16));
+    root.setProperty('--felt-2', s.felt);
+    root.setProperty('--felt-3', shade(s.felt, -0.55));
+    document.body.style.background =
+      `radial-gradient(1200px 720px at 50% -12%, ${shade(s.bg, 0.24)} 0%, ${s.bg} 46%, ${shade(s.bg, -0.55)} 100%), ${shade(s.bg, -0.6)}`;
+  }
+
+  function applyColors() {
+    applyPalette();
+    buildLayers();
+    draw();
+  }
+
+  function switchWheel() {
+    if (settings.wheelType === 'european') {
+      const b = state.bets.get('straight:37');
+      if (b) { state.balance += b.amount; state.bets.delete('straight:37'); }
+      state.undo = state.undo.filter(u => u.key !== 'straight:37');
+      if (Number(settings.rig.forceNumber) === 37) settings.rig.forceNumber = 0;
+    }
+    state.history = state.history.filter(n => settings.wheelType === 'american' || n !== 37);
+    buildBoard();
+    buildLayers();
+    draw();
+    renderHistory();
+    render();
+  }
+
+  /* =========================================================
+     DRAWER UI
+     ========================================================= */
+  function el(tag, cls, html) {
+    const e = document.createElement(tag);
+    if (cls) e.className = cls;
+    if (html != null) e.innerHTML = html;
+    return e;
+  }
+  function section(title, content, badge, badgeCls) {
+    const s = el('div', 'section');
+    s.appendChild(el('h3', null, title + (badge ? ' <span class="badge ' + (badgeCls || '') + '">' + badge + '</span>' : '')));
+    s.appendChild(content);
+    return s;
+  }
+  function fieldRow(label, node) {
+    const row = el('div', 'field');
+    row.appendChild(el('span', null, label));
+    row.appendChild(node);
+    return row;
+  }
+  function colorField(label, value, onChange) {
+    const inp = el('input');
+    inp.type = 'color'; inp.value = value;
+    inp.addEventListener('input', () => onChange(inp.value));
+    return fieldRow(label, inp);
+  }
+  function numField(label, value, onChange, opts) {
+    const inp = el('input');
+    inp.type = 'number';
+    if (opts) Object.assign(inp, opts);
+    inp.value = value;
+    inp.addEventListener('input', () => onChange(inp.value));
+    return fieldRow(label, inp);
+  }
+  function toggleField(label, checked, onChange) {
+    const tgl = el('label', 'toggle');
+    const cb = el('input');
+    cb.type = 'checkbox'; cb.checked = checked;
+    cb.addEventListener('change', () => onChange(cb.checked));
+    tgl.appendChild(cb);
+    tgl.appendChild(el('span'));
+    return fieldRow(label, tgl);
+  }
+
+  function buildAISection() {
+    const wrap = el('div');
+    wrap.appendChild(toggleField('Enable AI opponent', settings.ai.enabled, v => {
+      settings.ai.enabled = v; resetAI(); save();
+    }));
+    wrap.appendChild(numField('AI starting bankroll', settings.ai.bankroll, v => {
+      settings.ai.bankroll = Math.max(1, Math.round(Number(v) || 1000));
+      if (!ai.gameOver) ai.bankroll = Math.min(ai.bankroll, settings.ai.bankroll);
+      save();
+    }, { min: 1, step: 100 }));
+    wrap.appendChild(numField('Target amount (race to)', settings.ai.target, v => {
+      settings.ai.target = Math.max(100, Math.round(Number(v) || 2000));
+      ai.target = settings.ai.target;
+      renderAI(); save();
+    }, { min: 100, step: 100 }));
+    const sensInp = el('input');
+    sensInp.type = 'range'; sensInp.min = 0.3; sensInp.max = 3; sensInp.step = 0.1;
+    sensInp.value = settings.ai.sensitivity;
+    const sensOut = el('span', 'val-out', settings.ai.sensitivity.toFixed(1) + '×');
+    sensInp.addEventListener('input', () => {
+      settings.ai.sensitivity = Number(sensInp.value);
+      ai.sensitivity = settings.ai.sensitivity;
+      sensOut.textContent = settings.ai.sensitivity.toFixed(1) + '×';
+      save();
+    });
+    const sensWrap = el('div');
+    sensWrap.style.display = 'flex'; sensWrap.style.alignItems = 'center'; sensWrap.style.gap = '10px';
+    sensWrap.appendChild(sensInp); sensWrap.appendChild(sensOut);
+    wrap.appendChild(fieldRow('Detection sensitivity', sensWrap));
+    wrap.appendChild(el('div', 'note',
+      'The AI flags suspicious patterns: repeated numbers, zero clusters, long winning streaks ' +
+      '(especially on high-payout bets like straights), large bets that win, and sudden profit spikes. ' +
+      'If it catches you cheating, you lose everything. If it accuses an honest player, the AI loses everything. ' +
+      'First player to reach the target wins the opponent\'s entire bankroll.'
+    ));
+    return section('AI opponent', wrap, 'VS', 'ai');
+  }
+
+  function buildRigSection() {
+    const rig = settings.rig;
+    const wrap = el('div');
+    wrap.appendChild(toggleField('Enable rigging', rig.enabled, v => {
+      rig.enabled = v; updateRigBadge(); save();
+    }));
+    const seg = el('div', 'seg');
+    const modes = [['weights','Weights'],['force','Force #'],['win','Force win'],['lose','Force lose']];
+    const forceWrap = el('div');
+    modes.forEach(([val, label]) => {
+      const b = el('button', rig.mode === val ? 'active' : null, label);
+      b.type = 'button';
+      b.addEventListener('click', () => {
+        rig.mode = val;
+        seg.querySelectorAll('button').forEach(x => x.classList.remove('active'));
+        b.classList.add('active');
+        forceWrap.style.opacity = val === 'force' ? '1' : '.35';
+        forceWrap.style.pointerEvents = val === 'force' ? 'auto' : 'none';
+        save();
+      });
+      seg.appendChild(b);
+    });
+    wrap.appendChild(fieldRow('Rig mode', seg));
+    const forceSel = el('select', 'rig-select');
+    wheelOrder().forEach(n => {
+      const o = document.createElement('option');
+      o.value = n; o.textContent = disp(n);
+      forceSel.appendChild(o);
+    });
+    if (wheelOrder().indexOf(Number(rig.forceNumber)) < 0) rig.forceNumber = wheelOrder()[0];
+    forceSel.value = String(rig.forceNumber);
+    forceSel.addEventListener('change', () => { rig.forceNumber = Number(forceSel.value); save(); });
+    const forceRow = fieldRow('Force number', forceSel);
+    forceWrap.appendChild(forceRow);
+    forceWrap.style.opacity = rig.mode === 'force' ? '1' : '.35';
+    forceWrap.style.pointerEvents = rig.mode === 'force' ? 'auto' : 'none';
+    forceWrap.style.transition = 'opacity .2s';
+    wrap.appendChild(forceWrap);
+    const everyInp = el('input');
+    everyInp.type = 'number'; everyInp.min = 1; everyInp.max = 50; everyInp.step = 1;
+    everyInp.value = rig.everyN;
+    everyInp.addEventListener('input', () => {
+      rig.everyN = Math.max(1, Math.min(50, Math.round(Number(everyInp.value) || 1)));
+      save();
+    });
+    wrap.appendChild(fieldRow('Rig every N spins', everyInp));
+    const intenInp = el('input');
+    intenInp.type = 'range'; intenInp.min = 0; intenInp.max = 2; intenInp.step = 0.05;
+    intenInp.value = rig.intensity;
+    const intenOut = el('span', 'val-out', rig.intensity.toFixed(2) + '×');
+    intenInp.addEventListener('input', () => {
+      rig.intensity = Number(intenInp.value);
+      intenOut.textContent = rig.intensity.toFixed(2) + '×';
+      updatePcts(); save();
+    });
+    const intenWrap = el('div');
+    intenWrap.style.display = 'flex'; intenWrap.style.alignItems = 'center'; intenWrap.style.gap = '10px';
+    intenWrap.appendChild(intenInp); intenWrap.appendChild(intenOut);
+    wrap.appendChild(fieldRow('Bias intensity', intenWrap));
+    wrap.appendChild(toggleField('Auto-bailout when broke', rig.bailout, v => { rig.bailout = v; save(); }));
+    const bailInp = el('input');
+    bailInp.type = 'number'; bailInp.min = 0; bailInp.step = 50;
+    bailInp.value = rig.bailoutThreshold;
+    bailInp.addEventListener('input', () => {
+      rig.bailoutThreshold = Math.max(0, Math.round(Number(bailInp.value) || 0));
+      save();
+    });
+    wrap.appendChild(fieldRow('Bailout threshold ($)', bailInp));
+    const quick = el('div', 'quick-grid');
+    const qb = (label, fn, title) => {
+      const b = el('button', 'quick', label);
+      b.type = 'button';
+      if (title) b.title = title;
+      b.addEventListener('click', () => { fn(); renderGrid(); save(); });
+      quick.appendChild(b);
+    };
+    qb('Fair', () => setWeights(() => 1), 'Reset every pocket to weight 1');
+    qb('Zero storm', () => setWeights(n => (n === 0 || n === 37) ? 14 : 1), 'Massively favour zero / double-zero');
+    qb('Reds', () => setWeights(n => (n === 0 || n === 37) ? 1 : (REDS.has(n) ? 6 : 0.4)), 'Favour red pockets');
+    qb('Blacks', () => setWeights(n => (n === 0 || n === 37) ? 1 : (REDS.has(n) ? 0.4 : 6)), 'Favour black pockets');
+    qb('My bets', () => setWeights(n => {
+      let w = 1;
+      state.bets.forEach(b => { if (isWinning(b, n)) w = Math.max(w, 9); });
+      return w;
+    }), 'Boost every number that would pay one of your current bets');
+    qb('Random', () => setWeights(() => Math.random() < 0.18 ? 0 : Math.round(Math.random() * 70) / 10), 'Random weight table');
+    wrap.appendChild(quick);
+    const grid = el('div', 'rig-grid');
+    const tiles = [];
+    function setWeights(fn) {
+      wheelOrder().forEach(n => { rig.weights[n] = Math.max(0, Math.min(50, fn(n))); });
+    }
+    function updatePcts() {
+      const order = wheelOrder();
+      const ws = order.map(effWeight);
+      let total = 0;
+      for (let i = 0; i < ws.length; i++) total += ws[i];
+      if (!(total > 0)) total = 1;
+      tiles.forEach((t, i) => {
+        const p = (ws[i] / total) * 100;
+        t.pct.textContent = p.toFixed(1) + '%';
+        t.tile.classList.toggle('hot', ws[i] > 1.001);
+        t.tile.classList.toggle('cold', ws[i] < 0.999);
+      });
+      const ranked = order
+        .map((n, i) => ({ n, p: (ws[i] / total) * 100 }))
+        .sort((a, b) => b.p - a.p)
+        .filter(o => o.p > 100 / order.length + 0.35)
+        .slice(0, 4);
+      const fairP = 100 / order.length;
+      summary.innerHTML = ranked.length
+        ? 'Favoured: ' + ranked.map(o => '<b>' + disp(o.n) + '</b> (' + o.p.toFixed(1) + '%)').join(' · ') +
+          '<br><span style="opacity:.7">Fair odds would be ' + fairP.toFixed(1) + '% each.</span>'
+        : 'All pockets are equally likely right now.';
+    }
+    function renderGrid() {
+      grid.innerHTML = '';
+      tiles.length = 0;
+      wheelOrder().forEach(n => {
+        const t = el('div', 'rig-tile');
+        const numEl = el('div', 'num ' + colorClass(n), disp(n));
+        const inp = el('input');
+        inp.type = 'number'; inp.min = '0'; inp.max = '50'; inp.step = 'any';
+        inp.value = rig.weights[n];
+        inp.title = 'Weight for ' + disp(n);
+        inp.addEventListener('input', () => {
+          const v = Number(inp.value);
+          rig.weights[n] = isFinite(v) ? Math.max(0, Math.min(50, v)) : 0;
+          updatePcts(); save();
+        });
+        inp.addEventListener('blur', () => { inp.value = rig.weights[n]; });
+        const pct = el('div', 'pct', '');
+        t.appendChild(numEl); t.appendChild(inp); t.appendChild(pct);
+        grid.appendChild(t);
+        tiles.push({ n, inp, pct, tile: t });
+      });
+      updatePcts();
+    }
+    const summary = el('div', 'rig-summary', '');
+    const gridLabel = el('div', 'note', 'Weight 1 = normal odds. 0 = never lands. Higher = more likely. Values are scaled by the bias intensity above.');
+    renderGrid();
+    wrap.appendChild(gridLabel);
+    wrap.appendChild(grid);
+    wrap.appendChild(summary);
+    wrap.appendChild(el('div', 'note warn',
+      'Tip: the AI detects statistical anomalies, winning streaks, and large risky bets — not your settings. ' +
+      'Subtle rigging (low intensity, every-Nth-spin, mixed bets) is much harder to catch than blatant rigging.'
+    ));
+    return section('Rig the wheel', wrap, 'CHEAT');
+  }
+
+  function buildDrawer() {
+    drawerBody.innerHTML = '';
+    const sc = drawerBody.scrollTop;
+    const presetWrap = el('div', 'preset-grid');
+    Object.keys(PRESETS).forEach(key => {
+      const p = PRESETS[key];
+      const b = el('button', 'preset' + (settings.preset === key ? ' active' : ''));
+      b.type = 'button';
+      b.innerHTML =
+        '<div class="swatch-row">' +
+          '<span class="swatch" style="background:' + p.felt + '"></span>' +
+          '<span class="swatch" style="background:' + p.gold + '"></span>' +
+          '<span class="swatch" style="background:' + p.red + '"></span>' +
+          '<span class="swatch" style="background:' + p.zero + '"></span>' +
+        '</div>' +
+        '<span class="preset-name">' + key + '</span>';
+      b.addEventListener('click', () => applyPreset(key));
+      presetWrap.appendChild(b);
+    });
+    drawerBody.appendChild(section('Theme presets', presetWrap));
+    const colorWrap = el('div');
+    [
+      ['Felt', 'felt'], ['Background', 'bg'], ['Gold accent', 'gold'],
+      ['Red pockets', 'red'], ['Black pockets', 'black'], ['Zero pockets', 'zero'],
+      ['Ball', 'ball'], ['Wheel rim', 'rim']
+    ].forEach(([label, key]) => {
+      colorWrap.appendChild(colorField(label, settings[key], v => {
+        settings[key] = v;
+        settings.preset = 'custom';
+        applyColors(); save();
+      }));
+    });
+    drawerBody.appendChild(section('Colors', colorWrap));
+    drawerBody.appendChild(buildAISection());
+    drawerBody.appendChild(buildRigSection());
+    const gameWrap = el('div');
+    const seg = el('div', 'seg');
+    [['european', 'European'], ['american', 'American']].forEach(([val, label]) => {
+      const b = el('button', settings.wheelType === val ? 'active' : null, label);
+      b.type = 'button';
+      b.addEventListener('click', () => {
+        if (settings.wheelType === val) return;
+        settings.wheelType = val;
+        seg.querySelectorAll('button').forEach(x => x.classList.remove('active'));
+        b.classList.add('active');
+        switchWheel(); buildDrawer(); save();
+      });
+      seg.appendChild(b);
+    });
+    gameWrap.appendChild(fieldRow('Wheel', seg));
+    gameWrap.appendChild(numField('Starting balance', settings.balance, v => {
+      const n = Math.max(1, Math.floor(Number(v) || 1));
+      settings.balance = n;
+      if (!ai.gameOver && !state.spinning && state.spins === 0) state.balance = n;
+      render(); save();
+    }, { min: 1, step: 100 }));
+    const durInp = el('input');
+    durInp.type = 'range'; durInp.min = 2500; durInp.max = 16000; durInp.step = 100;
+    durInp.value = settings.spinDur;
+    const durOut = el('span', 'val-out', (settings.spinDur / 1000).toFixed(1) + 's');
+    durInp.addEventListener('input', () => {
+      settings.spinDur = Number(durInp.value);
+      durOut.textContent = (settings.spinDur / 1000).toFixed(1) + 's';
+      save();
+    });
+    const durWrap = el('div');
+    durWrap.style.display = 'flex'; durWrap.style.alignItems = 'center'; durWrap.style.gap = '10px';
+    durWrap.appendChild(durInp); durWrap.appendChild(durOut);
+    gameWrap.appendChild(fieldRow('Spin duration', durWrap));
+    drawerBody.appendChild(section('Gameplay', gameWrap));
+    const chipWrap = el('div');
+    for (let i = 0; i < 5; i++) {
+      const row = el('div', 'chip-row');
+      row.appendChild(el('span', 'idx', 'Chip ' + (i + 1)));
+      const num = el('input');
+      num.type = 'number'; num.min = 1; num.step = 1;
+      num.value = settings.chips[i];
+      num.addEventListener('input', () => {
+        settings.chips[i] = Math.max(1, Math.round(Number(num.value) || 1));
+        applyChips();
+      });
+      const col = el('input');
+      col.type = 'color'; col.value = settings.chipColors[i];
+      col.addEventListener('input', () => {
+        settings.chipColors[i] = col.value;
+        buildChips(); render(); save();
+      });
+      row.appendChild(num); row.appendChild(col);
+      chipWrap.appendChild(row);
+    }
+    drawerBody.appendChild(section('Chips', chipWrap));
+    const payWrap = el('div');
+    [
+      ['Straight', 'straight'], ['Red', 'red'], ['Black', 'black'],
+      ['Odd', 'odd'], ['Even', 'even'], ['Low 1-18', 'low'],
+      ['High 19-36', 'high'], ['Dozen', 'dozen'], ['Column', 'column']
+    ].forEach(([label, key]) => {
+      payWrap.appendChild(numField(label, settings.payouts[key], v => {
+        settings.payouts[key] = Math.max(0, Math.round(Number(v) || 0));
+        save();
+      }, { min: 0, step: 1 }));
+    });
+    payWrap.appendChild(el('div', 'note', 'Payouts are displayed as x:1. A 35:1 straight bet returns 36x the stake.'));
+    drawerBody.appendChild(section('Payouts (x:1)', payWrap));
+    const sndWrap = el('div');
+    sndWrap.appendChild(toggleField('Sound effects', settings.sound, v => { settings.sound = v; save(); }));
+    const volInp = el('input');
+    volInp.type = 'range'; volInp.min = 0; volInp.max = 1; volInp.step = 0.05;
+    volInp.value = settings.volume;
+    const volOut = el('span', 'val-out', Math.round(settings.volume * 100) + '%');
+    volInp.addEventListener('input', () => {
+      settings.volume = Number(volInp.value);
+      volOut.textContent = Math.round(settings.volume * 100) + '%';
+      save();
+    });
+    const volWrap = el('div');
+    volWrap.style.display = 'flex'; volWrap.style.alignItems = 'center'; volWrap.style.gap = '10px';
+    volWrap.appendChild(volInp); volWrap.appendChild(volOut);
+    sndWrap.appendChild(fieldRow('Volume', volWrap));
+    drawerBody.appendChild(section('Sound', sndWrap));
+    drawerBody.scrollTop = sc;
+  }
+
+  function applyChips() {
+    if (!settings.chips.includes(state.chip)) state.chip = settings.chips[0];
+    buildChips();
+    render();
+    save();
+  }
+
+  function applyPreset(key) {
+    const p = PRESETS[key];
+    Object.assign(settings, p, { preset: key });
+    applyColors(); buildDrawer(); save();
+  }
+
+  function openDrawer() {
+    drawer.classList.add('open');
+    backdrop.classList.add('open');
+    buildDrawer();
+  }
+  function closeDrawer() {
+    drawer.classList.remove('open');
+    backdrop.classList.remove('open');
+  }
+
+  /* =========================================================
+     EVENTS
+     ========================================================= */
+  els.board.addEventListener('click', e => {
+    const cell = e.target.closest('.cell');
+    if (!cell || state.spinning || ai.gameOver) return;
+    const key = cell.dataset.bet;
+    const parts = key.split(':');
+    const type = parts[0];
+    const num = (parts[1] !== undefined && parts[1] !== '') ? Number(parts[1]) : null;
+    placeBet(key, type, num);
+  });
+  els.board.addEventListener('contextmenu', e => {
+    const cell = e.target.closest('.cell');
+    if (!cell || state.spinning || ai.gameOver) return;
+    e.preventDefault();
+    removeBet(cell.dataset.bet);
+  });
+  els.spin.addEventListener('click', spin);
+  els.undo.addEventListener('click', undoBet);
+  els.clear.addEventListener('click', clearBets);
+  els.rebet.addEventListener('click', rebet);
+  $('openDrawer').addEventListener('click', openDrawer);
+  $('closeDrawer').addEventListener('click', closeDrawer);
+  backdrop.addEventListener('click', closeDrawer);
+  $('resetGame').addEventListener('click', () => {
+    state.balance = settings.balance;
+    state.bets.clear();
+    state.undo.length = 0;
+    state.history = [];
+    state.spins = 0;
+    state.lastBets = null;
+    els.resultNum.textContent = '—';
+    els.resultNum.className = 'result-num';
+    els.resultLabel.textContent = 'Place your bets';
+    els.resultSub.textContent = settings.wheelType === 'american'
+      ? 'American wheel · 38 pockets · double zero'
+      : 'European wheel · 37 pockets · single zero';
+    els.resultSub.className = 'result-sub';
+    els.lastResult.textContent = '—';
+    if (settings.ai.enabled) resetAI();
+    renderHistory();
+    render();
+    save();
+  });
+  els.overlayBtn.addEventListener('click', () => {
+    els.overlay.classList.remove('open');
+    $('resetGame').click();
+  });
+  $('resetTheme').addEventListener('click', () => {
+    const keepRig = clone(settings.rig);
+    const keepAI = clone(settings.ai);
+    const bal = state.balance, hist = state.history, spins = state.spins, last = state.lastBets;
+    settings = clone(DEFAULTS);
+    settings.rig = keepRig;
+    settings.ai = keepAI;
+    applyColors();
+    buildBoard();
+    buildChips();
+    buildDrawer();
+    state.balance = bal;
+    state.history = hist;
+    state.spins = spins;
+    state.lastBets = last;
+    if (!settings.chips.includes(state.chip)) state.chip = settings.chips[0];
+    renderHistory(); render(); save();
+  });
+  document.addEventListener('keydown', e => {
+    if (e.code === 'Space' && !e.repeat) {
+      const tag = (e.target.tagName || '').toLowerCase();
+      if (tag === 'input' || tag === 'textarea' || tag === 'select') return;
+      e.preventDefault();
+      spin();
+    }
+    if (e.code === 'Escape') closeDrawer();
+  });
+  window.addEventListener('resize', () => {
+    clearTimeout(window.__rz);
+    window.__rz = setTimeout(resize, 120);
+  });
+
+  /* =========================================================
+     INIT
+     ========================================================= */
+  applyPalette();
+  buildBoard();
+  buildChips();
+  renderHistory();
+  render();
+  resetAI();
+
+  const ro = new ResizeObserver(() => resize());
+  ro.observe(canvas.parentElement);
+  requestAnimationFrame(() => { resize(); draw(); });
+
+  els.resultSub.textContent = settings.wheelType === 'american'
+    ? 'American wheel · 38 pockets · double zero'
+    : 'European wheel · 37 pockets · single zero';
+
+})();
+</script>
+</body>
+</html>
