@@ -2,8 +2,8 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Royale Roulette — AI Opponent v2</title>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Royale Roulette — AI Opponent (Mobile)</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700;900&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -25,6 +25,7 @@
     background:radial-gradient(1200px 720px at 50% -12%, #14402f 0%, #0a1a14 46%, #040907 100%), #040907;
     min-height:100vh; overflow-x:hidden;
     -webkit-font-smoothing:antialiased;
+    overscroll-behavior-y: none;
   }
   body::after{
     content:'';position:fixed;inset:0;pointer-events:none;z-index:0;
@@ -32,10 +33,20 @@
   }
   .app{
     position:relative;z-index:1;
-    max-width:1420px;margin:0 auto;padding:16px 20px 44px;
+    max-width:1420px;margin:0 auto;
+    padding:16px max(20px, env(safe-area-inset-right)) 44px max(20px, env(safe-area-inset-left));
     display:flex;flex-direction:column;gap:18px;
   }
 
+  /* Tap highlight reset */
+  .cell, .btn, .chip-btn, .icon-btn, .quick, .preset, .seg button, .toggle span, .fab, .overlay-btn, .chip-row input, .field input {
+    -webkit-tap-highlight-color: transparent;
+  }
+  .cell, .btn, .chip-btn, .icon-btn, .quick, .preset, .seg button, .fab, .overlay-btn {
+    touch-action: manipulation;
+  }
+
+  /* ============ TOP BAR ============ */
   .topbar{
     display:flex;align-items:center;justify-content:space-between;gap:18px;flex-wrap:wrap;
     padding:12px 20px;border-radius:16px;
@@ -82,6 +93,7 @@
   .shake{animation:shake .4s}
   @keyframes shake{0%,100%{transform:translateX(0)}20%{transform:translateX(-6px)}40%{transform:translateX(6px)}60%{transform:translateX(-4px)}80%{transform:translateX(4px)}}
 
+  /* ============ AI PANEL ============ */
   .ai-panel{
     display:flex;align-items:center;justify-content:space-between;gap:20px;flex-wrap:wrap;
     padding:12px 20px;border-radius:16px;
@@ -129,6 +141,7 @@
     min-height:14px;font-style:italic;transition:opacity .3s;
   }
 
+  /* ============ LAYOUT ============ */
   .main{display:grid;grid-template-columns:minmax(300px,440px) minmax(0,1fr);gap:22px;align-items:start}
   @media (max-width:1040px){ .main{grid-template-columns:1fr} }
 
@@ -138,6 +151,7 @@
     box-shadow:0 20px 60px rgba(0,0,0,.6), inset 0 1px 0 rgba(255,255,255,.06);
   }
 
+  /* ============ WHEEL ============ */
   .wheel-wrap{position:relative;width:100%;aspect-ratio:1/1;filter:drop-shadow(0 24px 44px rgba(0,0,0,.7))}
   .wheel-wrap::before{content:'';position:absolute;inset:-6%;border-radius:50%;background:radial-gradient(circle, rgba(var(--gold-rgb),.16) 0%, transparent 66%);pointer-events:none}
   #wheelCanvas{display:block;width:100%;height:100%;position:relative}
@@ -180,12 +194,15 @@
   .hist-dot.black{background:linear-gradient(180deg,var(--black-l),var(--black-d))}
   .hist-dot.green{background:linear-gradient(180deg,var(--zero-l),var(--zero-d))}
 
+  /* ============ TABLE ============ */
   .table-card{display:flex;flex-direction:column;gap:16px}
   .board-wrap{
     padding:14px;border-radius:20px;overflow-x:auto;position:relative;
     background:radial-gradient(130% 130% at 50% -10%, var(--felt-1) 0%, var(--felt-2) 46%, var(--felt-3) 100%);
     border:1px solid rgba(var(--gold-rgb),.4);
     box-shadow:0 22px 60px rgba(0,0,0,.6), inset 0 0 70px rgba(0,0,0,.55), inset 0 1px 0 rgba(255,255,255,.08);
+    -webkit-overflow-scrolling:touch;
+    overscroll-behavior-x:contain;
   }
   .board-wrap::before{
     content:'';position:absolute;inset:0;border-radius:20px;pointer-events:none;
@@ -208,6 +225,7 @@
     user-select:none;-webkit-user-select:none;
     transition:filter .12s ease, box-shadow .15s ease, transform .07s ease;
     box-shadow:inset 0 1px 0 rgba(255,255,255,.12), 0 2px 4px rgba(0,0,0,.3);
+    -webkit-touch-callout:none;
   }
   .cell:hover{filter:brightness(1.42);box-shadow:0 0 0 2px rgba(var(--gold-rgb),.9) inset, 0 0 14px rgba(var(--gold-rgb),.4)}
   .cell:active{transform:scale(.955)}
@@ -236,6 +254,13 @@
   }
   @keyframes chipDrop{0%{transform:translate(-50%,-140%) scale(.6);opacity:.2}100%{transform:translate(-50%,-50%) scale(1);opacity:1}}
 
+  .mobile-hint{
+    display:none;
+    text-align:center;font-size:10px;color:#8a8467;
+    letter-spacing:.12em;padding:4px 0;
+  }
+
+  /* ============ CONTROLS ============ */
   .controls{
     display:flex;flex-wrap:wrap;gap:16px;align-items:center;justify-content:space-between;
     padding:14px 16px;border-radius:18px;
@@ -295,6 +320,7 @@
   .hint{text-align:center;font-size:11px;color:#6f7d70;letter-spacing:.08em;padding-bottom:6px}
   .hint b{color:#a99a6a}
 
+  /* ============ DRAWER ============ */
   .backdrop{position:fixed;inset:0;background:rgba(0,0,0,.6);backdrop-filter:blur(3px);opacity:0;pointer-events:none;transition:opacity .3s;z-index:99}
   .backdrop.open{opacity:1;pointer-events:auto}
   .drawer{
@@ -304,6 +330,7 @@
     background:linear-gradient(180deg, rgba(18,30,25,.99), rgba(6,12,9,.99));
     border-left:1px solid var(--line);
     box-shadow:-24px 0 70px rgba(0,0,0,.7);
+    padding-bottom:env(safe-area-inset-bottom);
   }
   .drawer.open{transform:translateX(0)}
   .drawer-head{
@@ -316,7 +343,7 @@
     background:rgba(255,255,255,.05);color:#cfc9b4;font-size:15px;cursor:pointer;
   }
   .icon-btn:hover{background:rgba(var(--gold-rgb),.2);color:#fff}
-  .drawer-body{flex:1;overflow-y:auto;padding:6px 20px 20px}
+  .drawer-body{flex:1;overflow-y:auto;padding:6px 20px 20px;-webkit-overflow-scrolling:touch}
   .drawer-body::-webkit-scrollbar{width:8px}
   .drawer-body::-webkit-scrollbar-thumb{background:rgba(var(--gold-rgb),.3);border-radius:4px}
   .drawer-foot{display:flex;gap:10px;padding:14px 20px;border-top:1px solid rgba(255,255,255,.08)}
@@ -445,15 +472,17 @@
   }
   .rig-summary b{color:var(--gold-l)}
 
+  /* ============ OVERLAY ============ */
   .overlay{
     position:fixed;inset:0;z-index:300;
     display:flex;align-items:center;justify-content:center;
     background:rgba(0,0,0,.85);backdrop-filter:blur(6px);
     opacity:0;pointer-events:none;transition:opacity .35s;
+    padding:20px;
   }
   .overlay.open{opacity:1;pointer-events:auto}
   .overlay-card{
-    max-width:460px;width:calc(100% - 40px);
+    max-width:460px;width:100%;
     padding:38px 32px;border-radius:24px;text-align:center;
     background:linear-gradient(180deg, rgba(24,36,30,.98), rgba(8,14,11,.99));
     border:1px solid var(--line);
@@ -482,15 +511,141 @@
   }
   .overlay-btn:hover{filter:brightness(1.1)}
 
-  @media (max-width:560px){
-    .app{padding:12px 12px 90px}
-    .brand{font-size:15px}
-    .btn.spin{padding:13px 26px;font-size:13px}
-    .chip-btn{width:46px;height:46px;font-size:11.5px}
-    .fab{right:16px;bottom:16px;width:52px;height:52px;font-size:21px}
-    .rig-grid{grid-template-columns:repeat(5,1fr)}
+  /* =========================================================
+     MOBILE
+     ========================================================= */
+  @media (max-width: 700px) {
+    .app{
+      padding:10px max(10px, env(safe-area-inset-right)) 100px max(10px, env(safe-area-inset-left));
+      gap:12px;
+    }
+    .main{gap:12px}
+    .card{padding:10px;border-radius:16px}
+    .table-card{gap:10px}
+
+    /* Topbar */
+    .topbar{padding:10px 14px;gap:10px}
+    .brand{font-size:14px;letter-spacing:.14em;flex:1}
+    .brand .mark{font-size:18px}
+    .brand .thin{font-size:10px;letter-spacing:.2em}
+    .rig-badge{font-size:8px;padding:4px 9px;letter-spacing:.16em}
+    .balance{padding:6px 14px}
+    .balance .lbl{font-size:8px;letter-spacing:.16em}
+    .balance .val{font-size:18px}
+    .stats{flex-basis:100%;justify-content:space-between;gap:8px;order:3}
+    .stat .lbl{font-size:8px;letter-spacing:.16em}
+    .stat .val{font-size:13px}
+
+    /* AI panel */
+    .ai-panel{padding:10px 14px;gap:10px}
+    .ai-brand{font-size:11px;letter-spacing:.14em}
+    .ai-dot{width:8px;height:8px}
     .ai-stats{gap:16px}
-    .ai-suspicion{max-width:none;width:100%}
+    .ai-stat .lbl{font-size:8px;letter-spacing:.14em}
+    .ai-stat .val{font-size:13px}
+    .ai-suspicion{flex-basis:100%;max-width:none;min-width:0}
+    .ai-status{font-size:10px}
+    .ai-reason{font-size:9px}
+
+    /* Wheel */
+    .wheel-wrap{max-width:280px;margin:0 auto}
+    .result-row{margin-top:10px;padding:8px 10px;gap:10px}
+    .result-num{width:46px;height:46px;font-size:20px}
+    .result-label{font-size:13px}
+    .result-sub{font-size:10px}
+    .history-wrap{margin-top:10px}
+    .history-title{font-size:8px;margin-bottom:6px}
+    .hist-dot{width:24px;height:24px;font-size:9px;border-width:1px}
+    .history{gap:5px}
+
+    /* Board */
+    .board-wrap{padding:8px;border-radius:14px}
+    .board{
+      min-width:420px;
+      grid-template-columns:32px repeat(12, minmax(0, 1fr)) 34px;
+      grid-template-rows:repeat(3, 42px) 32px 32px;
+      gap:2px;
+    }
+    .cell{font-size:12px;border-radius:3px}
+    .cell.zero{font-size:16px;border-radius:4px}
+    .cell.outside{
+      font-size:8px;letter-spacing:.02em;padding:0 1px;
+      overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+    }
+    .cell.col-bet{font-size:10px}
+    .chip-on{width:24px;height:24px;font-size:8px;border-width:1.5px}
+    .mobile-hint{display:block}
+
+    /* Controls */
+    .controls{padding:10px 12px;gap:10px}
+    .chip-rack{gap:8px}
+    .chip-btn{width:46px;height:46px;font-size:11.5px;border-width:2px}
+    .chip-btn.active::after{inset:-6px}
+    .actions{flex-basis:100%;gap:6px}
+    .btn{padding:11px 12px;font-size:10px;flex:1;letter-spacing:.08em;min-width:0}
+    .btn.spin{padding:12px 18px;font-size:12px;flex:1.6;letter-spacing:.14em}
+
+    .hint{font-size:10px;padding:2px 0 4px;letter-spacing:.04em}
+
+    /* Drawer */
+    .drawer{width:100vw;border-left:none;box-shadow:none}
+    .drawer-head{padding:14px 16px}
+    .drawer-title{font-size:13px;letter-spacing:.16em}
+    .drawer-body{padding:6px 16px 16px}
+    .drawer-foot{padding:12px 16px;gap:8px}
+
+    .rig-grid{grid-template-columns:repeat(5,1fr);gap:5px}
+    .rig-tile input{font-size:12px;padding:4px 2px}
+    .rig-tile .num{height:22px;font-size:10px}
+    .rig-tile .pct{font-size:8px}
+
+    .quick-grid{gap:5px}
+    .quick{font-size:9px;padding:8px 5px;letter-spacing:.08em}
+
+    .preset-grid{gap:6px}
+    .preset{padding:7px 6px;gap:6px}
+    .preset-name{font-size:8.5px;letter-spacing:.08em}
+
+    .seg button{padding:7px 6px;font-size:10.5px}
+
+    /* Inputs: prevent iOS zoom */
+    .field input[type=number],
+    .field input[type=color],
+    .chip-row input[type=number],
+    .chip-row input[type=color],
+    .rig-tile input,
+    .rig-select {
+      font-size:16px;
+    }
+    .field input[type=number]{width:100px}
+    .chip-row input[type=number]{width:82px}
+    .rig-tile input{font-size:16px;padding:5px 1px}
+    .rig-select{font-size:16px;padding:8px}
+
+    /* FAB */
+    .fab{right:16px;bottom:16px;width:52px;height:52px;font-size:21px}
+
+    .overlay{padding:16px}
+    .overlay-card{padding:30px 22px}
+    .overlay-title{font-size:24px}
+    .overlay-icon{font-size:44px}
+    .overlay-message{font-size:13px}
+    .overlay-btn{padding:13px 28px;font-size:12px}
+  }
+
+  @media (max-width: 400px) {
+    .brand .thin{display:none}
+    .wheel-wrap{max-width:240px}
+    .board{
+      min-width:390px;
+      grid-template-columns:28px repeat(12, minmax(0, 1fr)) 32px;
+      grid-template-rows:repeat(3, 40px) 30px 30px;
+    }
+    .cell.outside{font-size:7.5px}
+    .chip-btn{width:42px;height:42px;font-size:10.5px}
+    .btn.spin{padding:11px 14px;font-size:11px}
+    .btn{padding:10px 8px;font-size:9px}
+    .rig-grid{grid-template-columns:repeat(4,1fr)}
   }
 </style>
 </head>
@@ -564,6 +719,7 @@
       <div class="board-wrap">
         <div class="board" id="board"></div>
       </div>
+      <div class="mobile-hint" id="mobileHint">← Swipe board to see all bets →</div>
 
       <div class="controls">
         <div class="chip-rack" id="chipRack"></div>
@@ -574,7 +730,7 @@
           <button class="btn spin" id="spinBtn">SPIN</button>
         </div>
       </div>
-      <div class="hint">Left click to place a chip · Right click to remove · <b>Space</b> to spin · <b>⚙</b> to customize &amp; rig</div>
+      <div class="hint" id="hintText">Left click to place a chip · Right click to remove · <b>Space</b> to spin · <b>⚙</b> to customize &amp; rig</div>
     </section>
 
   </div>
@@ -609,6 +765,7 @@
 
   const TAU = Math.PI * 2;
   const LS_KEY = 'royale_roulette_cfg_v3';
+  const IS_TOUCH = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
 
   const EU_ORDER = [0,32,15,19,4,21,2,25,17,34,6,27,13,36,11,30,8,23,10,
                     5,24,16,33,1,20,14,31,9,22,18,29,7,28,12,35,3,26];
@@ -682,9 +839,6 @@
   const darken  = (h,a) => shade(h, -Math.abs(a));
   const rgba    = (hex,a) => { const [r,g,b] = hexToRgb(hex); return `rgba(${r},${g},${b},${a})`; };
 
-  /* =========================================================
-     SETTINGS
-     ========================================================= */
   function loadSettings() {
     const base = clone(DEFAULTS);
     base.rig.weights = defaultWeights();
@@ -761,9 +915,6 @@
     spins: 0
   };
 
-  /* =========================================================
-     AI STATE
-     ========================================================= */
   const ai = {
     enabled: false,
     bankroll: 1000,
@@ -789,9 +940,6 @@
   function disp(n) { return n === 37 ? '00' : String(n); }
   function colorClass(n) { return (n === 0 || n === 37) ? 'green' : (REDS.has(n) ? 'red' : 'black'); }
 
-  /* =========================================================
-     RIG ENGINE
-     ========================================================= */
   function effWeight(n) {
     const raw = settings.rig.weights[n];
     const w = (raw === undefined || raw === null) ? 1 : Number(raw);
@@ -854,9 +1002,6 @@
     return false;
   }
 
-  /* =========================================================
-     DOM
-     ========================================================= */
   const $ = id => document.getElementById(id);
   const els = {
     balance: $('balance'), balanceBox: $('balanceBox'), totalBet: $('totalBet'),
@@ -867,16 +1012,13 @@
     canvas: $('wheelCanvas'), rigBadge: $('rigBadge'),
     aiPanel: $('aiPanel'), aiBankroll: $('aiBankroll'), aiTarget: $('aiTarget'),
     aiBet: $('aiBet'), aiStatus: $('aiStatus'), suspicionFill: $('suspicionFill'),
-    aiReason: $('aiReason'),
+    aiReason: $('aiReason'), hintText: $('hintText'), mobileHint: $('mobileHint'),
     overlay: $('gameOverOverlay'), overlayCard: $('overlayCard'),
     overlayIcon: $('overlayIcon'), overlayTitle: $('overlayTitle'),
     overlayMessage: $('overlayMessage'), overlayBtn: $('overlayBtn')
   };
   const drawer = $('drawer'), backdrop = $('backdrop'), drawerBody = $('drawerBody');
 
-  /* =========================================================
-     AUDIO
-     ========================================================= */
   let actx = null;
   function ensureAudio() {
     if (!actx) {
@@ -941,9 +1083,6 @@
     });
   }
 
-  /* =========================================================
-     WHEEL CANVAS
-     ========================================================= */
   const canvas = els.canvas, ctx = canvas.getContext('2d');
   let R = 200, cssW = 400, dpr = 1;
   let wheelRot = 0, ballAngle = -Math.PI / 2, ballRadius = 0.73;
@@ -1123,7 +1262,7 @@
 
   function resize() {
     const rect = canvas.getBoundingClientRect();
-    const size = Math.max(180, Math.min(rect.width || 400, rect.height || 400));
+    const size = Math.max(140, Math.min(rect.width || 400, rect.height || 400));
     cssW = size;
     dpr = Math.min(2, window.devicePixelRatio || 1);
     canvas.width = Math.round(cssW * dpr);
@@ -1134,9 +1273,6 @@
     draw();
   }
 
-  /* =========================================================
-     SPIN ANIMATION
-     ========================================================= */
   function ballRadiusAt(t) {
     const track = 0.90, rest = 0.73;
     let p = (t - 0.44) / 0.44;
@@ -1189,9 +1325,6 @@
     });
   }
 
-  /* =========================================================
-     AI LOGIC
-     ========================================================= */
   function resetAI() {
     ai.enabled = settings.ai.enabled;
     ai.bankroll = settings.ai.bankroll;
@@ -1239,49 +1372,35 @@
     return false;
   }
 
-  /* The new, much sharper suspicion engine. */
   function updateSuspicion(winNumber, userBetsSnapshot, totalWin, totalBet) {
     ai.observations.push(winNumber);
     if (ai.observations.length > 40) ai.observations.shift();
-
     const n = ai.observations.length;
-    let statSusp = 0;
-    let betSusp = 0;
-    let streakSusp = 0;
+    let statSusp = 0, betSusp = 0, streakSusp = 0;
     const reasons = [];
 
-    /* ===== 1. STATISTICAL ANOMALIES ===== */
     if (n >= 5) {
-      // Repeated numbers
       const freq = {};
       ai.observations.forEach(x => freq[x] = (freq[x] || 0) + 1);
       let maxFreq = 0;
       for (const k in freq) maxFreq = Math.max(maxFreq, freq[k]);
       const expectedMax = Math.max(2, 1 + 2 * Math.sqrt(n / 37));
       const repeatSus = maxFreq > expectedMax ? (maxFreq - expectedMax) * 1.5 : 0;
-
-      // Zero cluster
       const zeros = ai.observations.filter(x => x === 0 || x === 37).length;
       const expectedZeros = Math.max(0.5, n / 37);
       const zeroSus = zeros > expectedZeros * 2 ? (zeros - expectedZeros) * 1.2 : 0;
-
-      // Consecutive identical
       let maxRun = 1, run = 1;
       for (let i = 1; i < n; i++) {
         if (ai.observations[i] === ai.observations[i - 1]) { run++; maxRun = Math.max(maxRun, run); }
         else run = 1;
       }
       const runSus = maxRun >= 3 ? (maxRun - 2) * 2 : 0;
-
       statSusp = Math.max(repeatSus, zeroSus, runSus);
       if (statSusp > 1) reasons.push('pattern');
     }
 
-    /* ===== 2. BET-BASED & STREAK SUSPICION ===== */
     if (userBetsSnapshot && userBetsSnapshot.length > 0) {
-      let maxPayout = 0;
-      let maxBet = 0;
-      let highRiskBet = 0;
+      let maxPayout = 0, maxBet = 0, highRiskBet = 0;
       userBetsSnapshot.forEach(b => {
         const p = settings.payouts[b.type] || 0;
         maxPayout = Math.max(maxPayout, p);
@@ -1291,7 +1410,6 @@
       const preWinBalance = state.balance - totalWin;
 
       if (totalWin > 0) {
-        // High-payout winning bets
         if (maxPayout >= 30) {
           betSusp += 2.5;
           ai.highRiskWinStreak++;
@@ -1303,16 +1421,12 @@
           betSusp += 0.15;
           ai.highRiskWinStreak = Math.max(0, ai.highRiskWinStreak - 1);
         }
-
-        // Large bet wins
         if (highRiskBet >= 100) betSusp += 1.2;
         if (highRiskBet >= 500) betSusp += 2;
         if (preWinBalance > 0 && maxBet >= preWinBalance * 0.3) {
           betSusp += 0.5;
           reasons.push('big bet');
         }
-
-        // Win streak
         ai.userWinStreak++;
         ai.userLossStreak = 0;
         if (ai.userWinStreak >= 3) {
@@ -1323,16 +1437,12 @@
           streakSusp += (ai.highRiskWinStreak - 1) * 3;
           reasons.push('risky streak');
         }
-
-        // Big win amounts
         if (totalWin > 2000) { betSusp += 6; reasons.push('huge win'); }
         else if (totalWin > 500) { betSusp += 3; reasons.push('big win'); }
         else if (totalWin > 200) betSusp += 1.2;
-
         ai.totalUserWins++;
         ai.totalUserWinnings += totalWin;
       } else {
-        // Losing spin — streak breaks. Give extra decay on a long streak.
         if (ai.userWinStreak >= 3) {
           ai.suspicion = Math.max(0, ai.suspicion - (ai.userWinStreak - 2) * 0.8);
         }
@@ -1347,7 +1457,6 @@
       ai.highRiskWinStreak = Math.max(0, ai.highRiskWinStreak - 1);
     }
 
-    /* ===== COMBINE ===== */
     const rawGain = statSusp + betSusp + streakSusp;
     const gain = rawGain * ai.sensitivity;
     const decay = 0.5;
@@ -1370,7 +1479,6 @@
     els.aiPanel.hidden = false;
     els.aiBankroll.textContent = '$' + Math.max(0, Math.round(ai.bankroll)).toLocaleString();
     els.aiTarget.textContent = '$' + ai.target.toLocaleString();
-
     if (ai.lastBet) {
       const lbl = ai.lastBet.type.charAt(0).toUpperCase() + ai.lastBet.type.slice(1);
       let res = '';
@@ -1383,12 +1491,10 @@
       els.aiBet.textContent = '—';
       els.aiBet.style.color = '#f0d8d4';
     }
-
     const pct = Math.round(ai.suspicion);
     els.suspicionFill.style.width = pct + '%';
     els.suspicionFill.classList.toggle('hot', pct >= 75);
     els.aiStatus.textContent = aiStatusText();
-
     const reasonMap = {
       'straight win':   'straight bet won',
       'risky streak':   'repeated risky wins',
@@ -1404,13 +1510,9 @@
     }
   }
 
-  /* =========================================================
-     GAME OVER
-     ========================================================= */
   function endGame(result, title, message, icon) {
     ai.gameOver = true;
     ai.accused = true;
-
     if (result === 'win') {
       state.balance += Math.max(0, Math.round(ai.bankroll));
       ai.bankroll = 0;
@@ -1420,13 +1522,11 @@
       state.balance = 0;
       loseSound();
     }
-
     els.overlayIcon.textContent = icon || (result === 'win' ? '🏆' : '💀');
     els.overlayTitle.textContent = title;
     els.overlayMessage.textContent = message;
     els.overlayCard.className = 'overlay-card ' + result;
     els.overlay.classList.add('open');
-
     render();
     renderAI();
   }
@@ -1460,9 +1560,6 @@
     }
   }
 
-  /* =========================================================
-     BETTING BOARD
-     ========================================================= */
   function makeCell(cls, betKey, label) {
     const b = document.createElement('button');
     b.className = cls;
@@ -1525,6 +1622,7 @@
       el.style.gridArea = '5 / ' + o.c0 + ' / 6 / ' + (o.c0 + 2);
       board.appendChild(el);
     });
+    updateMobileElements();
   }
 
   function buildChips() {
@@ -1547,9 +1645,6 @@
     });
   }
 
-  /* =========================================================
-     BET LOGIC
-     ========================================================= */
   function chipColorFor(amount) {
     for (let i = settings.chips.length - 1; i >= 0; i--) {
       if (amount >= settings.chips[i]) return settings.chipColors[i];
@@ -1641,12 +1736,30 @@
     tone(140, 0.18, 'sawtooth', 0.04);
   }
 
-  /* =========================================================
-     RENDER
-     ========================================================= */
   function updateRigBadge() {
     if (!els.rigBadge) return;
     els.rigBadge.hidden = !settings.rig.enabled;
+  }
+
+  function updateMobileElements() {
+    const isMobile = window.innerWidth <= 700;
+    if (els.hintText) {
+      if (IS_TOUCH && isMobile) {
+        els.hintText.innerHTML = 'Tap to place · Long-press to remove · <b>⚙</b> to customize';
+      } else {
+        els.hintText.innerHTML = 'Left click to place a chip · Right click to remove · <b>Space</b> to spin · <b>⚙</b> to customize &amp; rig';
+      }
+    }
+    if (els.mobileHint) {
+      if (!isMobile) {
+        els.mobileHint.style.display = 'none';
+        return;
+      }
+      const wrap = document.querySelector('.board-wrap');
+      if (!wrap) return;
+      const hasScroll = wrap.scrollWidth > wrap.clientWidth + 4;
+      els.mobileHint.style.display = hasScroll ? 'block' : 'none';
+    }
   }
 
   function render() {
@@ -1655,7 +1768,6 @@
     state.bets.forEach(b => total += b.amount);
     els.totalBet.textContent = '$' + total.toLocaleString();
     els.spinCount.textContent = state.spins;
-
     els.board.querySelectorAll('.cell').forEach(cell => {
       const key = cell.dataset.bet;
       const bet = state.bets.get(key);
@@ -1674,7 +1786,6 @@
         chipEl.remove();
       }
     });
-
     const locked = state.spinning || ai.gameOver;
     els.spin.disabled = locked || total === 0;
     els.undo.disabled = locked || state.undo.length === 0;
@@ -1694,43 +1805,28 @@
     });
   }
 
-  /* =========================================================
-     SPIN
-     ========================================================= */
   async function spin() {
     if (state.spinning || ai.gameOver) return;
     let total = 0;
     state.bets.forEach(b => total += b.amount);
     if (total === 0) { shakeBalance(); return; }
-
     ensureAudio();
     state.spinning = true;
     render();
-
     els.resultLabel.textContent = 'Spinning…';
     els.resultSub.textContent = 'No more bets please';
     els.resultSub.className = 'result-sub';
     els.resultNum.classList.remove('pop');
-
-    // AI places its bet
     if (ai.enabled && !ai.gameOver) {
       ai.lastBet = aiPlaceBet();
       ai.lastBetResult = null;
     }
-
     const order = wheelOrder();
     const winIndex = pickIndex();
     const winNumber = order[winIndex];
-
     await animateSpin(winIndex);
-
-    // Snapshot user bets BEFORE clearing (for AI analysis)
     const userBetsSnapshot = [];
-    state.bets.forEach(b => userBetsSnapshot.push({
-      key: b.key, type: b.type, num: b.num, amount: b.amount
-    }));
-
-    // Resolve user bets
+    state.bets.forEach(b => userBetsSnapshot.push({ key: b.key, type: b.type, num: b.num, amount: b.amount }));
     let totalWin = 0;
     const winningKeys = [];
     state.bets.forEach(bet => {
@@ -1739,20 +1835,15 @@
         winningKeys.push(bet.key);
       }
     });
-
     state.balance += totalWin;
     state.spins++;
     state.lastBets = [];
     state.bets.forEach(b => state.lastBets.push({ key: b.key, type: b.type, num: b.num, amount: b.amount }));
-
     state.history.unshift(winNumber);
     if (state.history.length > 30) state.history.pop();
-
     state.bets.clear();
     state.undo.length = 0;
     state.spinning = false;
-
-    // ---- AI resolution ----
     if (ai.enabled && !ai.gameOver) {
       if (ai.lastBet) {
         if (isEvenMoneyWin(ai.lastBet.type, winNumber)) {
@@ -1764,22 +1855,17 @@
         }
         ai.bankroll = Math.max(0, Math.round(ai.bankroll));
       }
-
       if (isUserCheatingNow()) ai.sessionCheating = true;
       updateSuspicion(winNumber, userBetsSnapshot, totalWin, total);
       renderAI();
     }
-
-    // ---- Result display ----
     els.resultNum.textContent = disp(winNumber);
     els.resultNum.className = 'result-num ' + colorClass(winNumber);
     void els.resultNum.offsetWidth;
     els.resultNum.classList.add('pop');
-
     const colorName = (winNumber === 0 || winNumber === 37) ? 'GREEN' : (REDS.has(winNumber) ? 'RED' : 'BLACK');
     els.resultLabel.textContent = disp(winNumber) + ' · ' + colorName;
     els.lastResult.textContent = disp(winNumber);
-
     if (totalWin > 0) {
       els.resultSub.textContent = 'You won $' + totalWin.toLocaleString() + ' 🎉';
       els.resultSub.className = 'result-sub win';
@@ -1789,7 +1875,6 @@
       els.resultSub.className = 'result-sub lose';
       loseSound();
     }
-
     const highlight = winningKeys.slice();
     highlight.push('straight:' + winNumber);
     highlight.forEach(k => {
@@ -1801,7 +1886,6 @@
         setTimeout(() => el.classList.remove('win'), 3400);
       }
     });
-
     renderHistory();
     render();
     if (ai.enabled && !ai.gameOver) {
@@ -1810,9 +1894,6 @@
     }
   }
 
-  /* =========================================================
-     PALETTE / THEME
-     ========================================================= */
   function applyPalette() {
     const s = settings;
     const root = document.documentElement.style;
@@ -1859,9 +1940,6 @@
     render();
   }
 
-  /* =========================================================
-     DRAWER UI
-     ========================================================= */
   function el(tag, cls, html) {
     const e = document.createElement(tag);
     if (cls) e.className = cls;
@@ -1936,8 +2014,7 @@
     wrap.appendChild(el('div', 'note',
       'The AI flags suspicious patterns: repeated numbers, zero clusters, long winning streaks ' +
       '(especially on high-payout bets like straights), large bets that win, and sudden profit spikes. ' +
-      'If it catches you cheating, you lose everything. If it accuses an honest player, the AI loses everything. ' +
-      'First player to reach the target wins the opponent\'s entire bankroll.'
+      'If it catches you cheating, you lose everything. If it accuses an honest player, the AI loses everything.'
     ));
     return section('AI opponent', wrap, 'VS', 'ai');
   }
@@ -2088,7 +2165,7 @@
     wrap.appendChild(summary);
     wrap.appendChild(el('div', 'note warn',
       'Tip: the AI detects statistical anomalies, winning streaks, and large risky bets — not your settings. ' +
-      'Subtle rigging (low intensity, every-Nth-spin, mixed bets) is much harder to catch than blatant rigging.'
+      'Subtle rigging (low intensity, every-Nth-spin, mixed bets) is much harder to catch.'
     ));
     return section('Rig the wheel', wrap, 'CHEAT');
   }
@@ -2120,8 +2197,7 @@
       ['Ball', 'ball'], ['Wheel rim', 'rim']
     ].forEach(([label, key]) => {
       colorWrap.appendChild(colorField(label, settings[key], v => {
-        settings[key] = v;
-        settings.preset = 'custom';
+        settings[key] = v; settings.preset = 'custom';
         applyColors(); save();
       }));
     });
@@ -2218,9 +2294,7 @@
 
   function applyChips() {
     if (!settings.chips.includes(state.chip)) state.chip = settings.chips[0];
-    buildChips();
-    render();
-    save();
+    buildChips(); render(); save();
   }
 
   function applyPreset(key) {
@@ -2233,16 +2307,45 @@
     drawer.classList.add('open');
     backdrop.classList.add('open');
     buildDrawer();
+    document.body.style.overflow = 'hidden';
   }
   function closeDrawer() {
     drawer.classList.remove('open');
     backdrop.classList.remove('open');
+    document.body.style.overflow = '';
   }
 
   /* =========================================================
-     EVENTS
+     TOUCH: long-press to remove bets
      ========================================================= */
+  let pressTimer = null;
+  let longPressed = false;
+
+  els.board.addEventListener('pointerdown', e => {
+    if (e.pointerType === 'mouse') return;
+    if (state.spinning || ai.gameOver) return;
+    const cell = e.target.closest('.cell');
+    if (!cell) return;
+    longPressed = false;
+    pressTimer = setTimeout(() => {
+      longPressed = true;
+      removeBet(cell.dataset.bet);
+      if (navigator.vibrate) { try { navigator.vibrate(30); } catch (err) {} }
+    }, 450);
+  }, { passive: true });
+
+  els.board.addEventListener('pointerup', () => {
+    if (pressTimer) { clearTimeout(pressTimer); pressTimer = null; }
+  });
+  els.board.addEventListener('pointercancel', () => {
+    if (pressTimer) { clearTimeout(pressTimer); pressTimer = null; }
+  });
+  els.board.addEventListener('pointerleave', () => {
+    if (pressTimer) { clearTimeout(pressTimer); pressTimer = null; }
+  });
+
   els.board.addEventListener('click', e => {
+    if (longPressed) { longPressed = false; return; }
     const cell = e.target.closest('.cell');
     if (!cell || state.spinning || ai.gameOver) return;
     const key = cell.dataset.bet;
@@ -2251,12 +2354,14 @@
     const num = (parts[1] !== undefined && parts[1] !== '') ? Number(parts[1]) : null;
     placeBet(key, type, num);
   });
+
   els.board.addEventListener('contextmenu', e => {
     const cell = e.target.closest('.cell');
     if (!cell || state.spinning || ai.gameOver) return;
     e.preventDefault();
     removeBet(cell.dataset.bet);
   });
+
   els.spin.addEventListener('click', spin);
   els.undo.addEventListener('click', undoBet);
   els.clear.addEventListener('click', clearBets);
@@ -2264,6 +2369,7 @@
   $('openDrawer').addEventListener('click', openDrawer);
   $('closeDrawer').addEventListener('click', closeDrawer);
   backdrop.addEventListener('click', closeDrawer);
+
   $('resetGame').addEventListener('click', () => {
     state.balance = settings.balance;
     state.bets.clear();
@@ -2280,14 +2386,14 @@
     els.resultSub.className = 'result-sub';
     els.lastResult.textContent = '—';
     if (settings.ai.enabled) resetAI();
-    renderHistory();
-    render();
-    save();
+    renderHistory(); render(); save();
   });
+
   els.overlayBtn.addEventListener('click', () => {
     els.overlay.classList.remove('open');
     $('resetGame').click();
   });
+
   $('resetTheme').addEventListener('click', () => {
     const keepRig = clone(settings.rig);
     const keepAI = clone(settings.ai);
@@ -2295,17 +2401,12 @@
     settings = clone(DEFAULTS);
     settings.rig = keepRig;
     settings.ai = keepAI;
-    applyColors();
-    buildBoard();
-    buildChips();
-    buildDrawer();
-    state.balance = bal;
-    state.history = hist;
-    state.spins = spins;
-    state.lastBets = last;
+    applyColors(); buildBoard(); buildChips(); buildDrawer();
+    state.balance = bal; state.history = hist; state.spins = spins; state.lastBets = last;
     if (!settings.chips.includes(state.chip)) state.chip = settings.chips[0];
     renderHistory(); render(); save();
   });
+
   document.addEventListener('keydown', e => {
     if (e.code === 'Space' && !e.repeat) {
       const tag = (e.target.tagName || '').toLowerCase();
@@ -2315,24 +2416,23 @@
     }
     if (e.code === 'Escape') closeDrawer();
   });
+
   window.addEventListener('resize', () => {
     clearTimeout(window.__rz);
-    window.__rz = setTimeout(resize, 120);
+    window.__rz = setTimeout(() => { resize(); updateMobileElements(); }, 120);
   });
 
-  /* =========================================================
-     INIT
-     ========================================================= */
   applyPalette();
   buildBoard();
   buildChips();
   renderHistory();
   render();
   resetAI();
+  updateMobileElements();
 
   const ro = new ResizeObserver(() => resize());
   ro.observe(canvas.parentElement);
-  requestAnimationFrame(() => { resize(); draw(); });
+  requestAnimationFrame(() => { resize(); draw(); updateMobileElements(); });
 
   els.resultSub.textContent = settings.wheelType === 'american'
     ? 'American wheel · 38 pockets · double zero'
