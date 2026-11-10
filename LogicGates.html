@@ -735,6 +735,67 @@ body.no-animations *,body.no-animations *::before,body.no-animations *::after{
     overflow: hidden;
     text-overflow: ellipsis;
 }
+/* ═══════════════════════════════════════════════════════════
+   MULTI-BIT BUSES
+   ═══════════════════════════════════════════════════════════ */
+
+/* Bus ports render as rounded squares instead of circles */
+.port.bus-port{
+  width:18px;height:18px;border-radius:4px;
+  background:linear-gradient(135deg,#7c3aed,#5b21b6);
+  border:2px solid #fff;
+}
+.port.bus-port.output{
+  background:linear-gradient(135deg,#8b5cf6,#6d28d9);
+}
+.port.bus-port.active-port{
+  background:linear-gradient(135deg,#a78bfa,#7c3aed)!important;
+  box-shadow:0 0 12px #a78bfa!important;
+}
+.port.bus-port.pour-selected{
+  background:linear-gradient(135deg,#f59e0b,#b45309)!important;
+  box-shadow:0 0 16px #f59e0b,0 0 32px rgba(245,158,11,.35)!important;
+}
+
+/* Bus wires are ~2.2× thicker than single-bit wires */
+.wire-path.bus-wire{
+  stroke-width:calc(var(--wire-width,3.5) * 2.2);
+}
+.wire-path.bus-wire:hover{
+  stroke-width:calc(var(--wire-width,3.5) * 2.2 + 1);
+}
+.wire-path.bus-wire.selected{
+  stroke-width:calc(var(--wire-width,3.5) * 2.2 + 1.5)!important;
+}
+
+/* Small width selector in the gate header */
+.bus-width-select{
+  font-size:9px;
+  padding:0 1px;
+  height:16px;
+  line-height:14px;
+  border:1px solid rgba(255,255,255,.35);
+  border-radius:3px;
+  background:rgba(0,0,0,.35);
+  color:#fff;
+  cursor:pointer;
+  margin:0 3px;
+  max-width:46px;
+  font-family:inherit;
+  flex-shrink:0;
+}
+.bus-width-select:focus{outline:none;border-color:#fff}
+
+/* Red flash for width-mismatch rejection */
+@keyframes busErrPulse{
+  0%,100%{box-shadow:0 0 0 0 rgba(239,68,68,0)}
+  50%{box-shadow:0 0 20px 6px rgba(239,68,68,.55)}
+}
+.port.bus-error{
+  animation:busErrPulse .55s ease 1;
+  background:#ef4444!important;
+  border-color:#fca5a5!important;
+}
 </style>
 </head>
 <body>
@@ -757,6 +818,8 @@ body.no-animations *,body.no-animations *::before,body.no-animations *::after{
         <div class="tool-btn" data-gate-type="DELAY" style="background:#3d4653;" onmousedown="startGhostDrag(event,'DELAY')" ontouchstart="startGhostDrag(event,'DELAY')">DELAY</div>
         <div class="tool-btn" data-gate-type="CLOCK" style="background:#0d9488;" onmousedown="startGhostDrag(event,'CLOCK')" ontouchstart="startGhostDrag(event,'CLOCK')">CLOCK</div>
         <div class="tool-btn" data-gate-type="PULSE" style="background:#be123c;" onmousedown="startGhostDrag(event,'PULSE')" ontouchstart="startGhostDrag(event,'PULSE')">PULSE</div>
+        <div class="tool-btn" data-gate-type="JOINER" style="background:#7c3aed;" onmousedown="startGhostDrag(event,'JOINER')" ontouchstart="startGhostDrag(event,'JOINER')">Join</div>
+        <div class="tool-btn" data-gate-type="SPLITTER" style="background:#7c3aed;" onmousedown="startGhostDrag(event,'SPLITTER')" ontouchstart="startGhostDrag(event,'SPLITTER')">Split</div>
     </div>
     <div class="toolbar-group" style="border-left:2px solid var(--border-color);padding-left:5px;">
         <div class="tool-btn" data-gate-type="SCREEN" style="background:#d97706;" onmousedown="startGhostDrag(event,'SCREEN')" ontouchstart="startGhostDrag(event,'SCREEN')">Pixel</div>
@@ -1170,7 +1233,7 @@ let pendingSnapshotTimer=null;function snapValue(v){
     return Math.round(v/SNAP)*SNAP;
 }
 
-const GATE_COLORS={INPUT:'#1f3a63',PUSH:'#3d4653',OUTPUT:'#b45309',AND:'#15803d',OR:'#0f766e',XOR:'#6d28d9',NOT:'#b91c1c',NAND:'#134e4a',NOR:'#3730a3',XNOR:'#0369a1',DELAY:'#3d4653',CLOCK:'#0d9488',PULSE:'#be123c',SCREEN:'#d97706',COLOR:'#9d174d'};
+const GATE_COLORS={INPUT:'#1f3a63',PUSH:'#3d4653',OUTPUT:'#b45309',AND:'#15803d',OR:'#0f766e',XOR:'#6d28d9',NOT:'#b91c1c',NAND:'#134e4a',NOR:'#3730a3',XNOR:'#0369a1',DELAY:'#3d4653',CLOCK:'#0d9488',PULSE:'#be123c',SCREEN:'#d97706',COLOR:'#9d174d',JOINER:'#7c3aed',SPLITTER:'#7c3aed'};
 function getGateColor(c){if(c.isCustom)return(c.def&&c.def.color)||'#1f3a63';return GATE_COLORS[c.type]||'#007bff'}
 function getGateColorByName(t,d){if(d&&d.color)return d.color;return GATE_COLORS[t]||'#1f3a63'}
 
@@ -1210,6 +1273,18 @@ function initComponentInputs(comp){
     else if(t==='INPUT'||t==='OUTPUT'||t==='SCREEN'||t==='PUSH'||t==='NOT'||t==='DELAY'||t==='COLOR'||t==='PULSE'||t==='CLOCK'){
         if(!Array.isArray(comp.inputs)||comp.inputs.length!==1)comp.inputs=[0];
     }
+    else if(t==='JOINER'){
+        const n=Math.max(2,Math.min(16,comp.busWidth||4));
+        comp.busWidth=n;
+        if(!Array.isArray(comp.inputs)||comp.inputs.length!==n)comp.inputs=new Array(n).fill(0);
+        if(!Array.isArray(comp.busOutput)||comp.busOutput.length!==n)comp.busOutput=new Array(n).fill(0);
+    }
+    else if(t==='SPLITTER'){
+        const n=Math.max(2,Math.min(16,comp.busWidth||4));
+        comp.busWidth=n;
+        if(!Array.isArray(comp.inputs)||comp.inputs.length!==1)comp.inputs=[0];
+        if(!Array.isArray(comp.outputBits)||comp.outputBits.length!==n)comp.outputBits=new Array(n).fill(0);
+    }
     else{
         if(!Array.isArray(comp.inputs)||comp.inputs.length!==2)comp.inputs=[0,0];
     }
@@ -1229,6 +1304,45 @@ function initComponentInputs(comp){
         if(comp.state===undefined)comp.state=0;
         comp.outputVal=comp.state;
     }
+}
+
+/* ═══ MULTI-BIT BUS HELPERS ═══ */
+function getPortWidth(comp, dir, portIdx){
+    if(!comp) return 1;
+    if(comp.type === 'JOINER'   && dir === 'out') return comp.busWidth || 2;
+    if(comp.type === 'SPLITTER' && dir === 'in' ) return comp.busWidth || 2;
+    return 1;
+}
+function getOutputValue(src, fromPort){
+    if(!src) return 0;
+    if(src.isCustom){
+        return (src.outputsArray && src.outputsArray[fromPort] !== undefined)
+            ? src.outputsArray[fromPort] : 0;
+    }
+    if(src.type === 'JOINER')
+        return Array.isArray(src.busOutput) ? src.busOutput.slice() : [];
+    if(src.type === 'SPLITTER')
+        return (src.outputBits && src.outputBits[fromPort] !== undefined)
+            ? src.outputBits[fromPort] : 0;
+    return src.outputVal || 0;
+}
+function validateConnection(fromComp, fromPort, toComp, toPort){
+    if(!fromComp || !toComp) return { ok:false, msg:'Component missing.' };
+    const fromW = getPortWidth(fromComp, 'out', fromPort);
+    const toW   = getPortWidth(toComp,   'in',  toPort);
+    if(fromW === toW) return { ok:true, fromW, toW };
+    const hint = fromW > toW ? 'use a Splitter' : 'use a Joiner';
+    return { ok:false, fromW, toW,
+        msg:`Cannot connect ${fromW}-bit output → ${toW}-bit input (${hint}).` };
+}
+function flashPortError(portEl, msg){
+    if(portEl){
+        portEl.classList.remove('bus-error');
+        void portEl.offsetWidth;
+        portEl.classList.add('bus-error');
+        setTimeout(()=>portEl.classList.remove('bus-error'), 600);
+    }
+    if(msg) showToast(msg, 'error', 2200);
 }
 
 function showToast(m,t='info',d=2500){
@@ -1648,6 +1762,8 @@ function startGhostDrag(e,type,sourceFolder){
         else if(type==='CLOCK'){bc=`<div style="display:flex;justify-content:space-between;align-items:center;gap:3px;"><div class="port"></div><span style="font-size:9px;">⏱</span><input type="number" value="250" style="width:44px;font-size:10px;" disabled><div class="port output"></div></div>`}
         else if(type==='COLOR'){bc=`<div style="display:flex;justify-content:space-between;align-items:center;"><div class="port"></div><span style="font-size:9px;">🎨</span><div class="port output"></div></div>`}
         else if(type==='SCREEN'){bc=`<div style="width:40px;height:40px;background:var(--pixel-off);position:relative;"><div class="port" style="position:absolute;left:50%;top:50%;transform:translate(-50%,-50%) scale(.7);width:12px;height:12px;border-radius:50%;background:#007bff;border:2px solid #fff;opacity:.5;"></div></div>`;w=40;h=40}
+        else if(type==='JOINER'){bc=`<div style="display:flex;justify-content:space-between;align-items:center;gap:4px;"><div><div class="port" style="margin-bottom:3px;"></div><div class="port" style="margin-bottom:3px;"></div><div class="port"></div></div><span style="font-size:9px;">JOIN</span><div class="port output" style="width:16px;height:16px;border-radius:4px;"></div></div>`;h=120;w=140}
+        else if(type==='SPLITTER'){bc=`<div style="display:flex;justify-content:space-between;align-items:center;gap:4px;"><div class="port" style="width:16px;height:16px;border-radius:4px;"></div><span style="font-size:9px;">SPLIT</span><div><div class="port output" style="margin-bottom:3px;"></div><div class="port output" style="margin-bottom:3px;"></div><div class="port output"></div></div></div>`;h=120;w=140}
         else{bc=`<div style="display:flex;justify-content:space-between;align-items:center;"><div><div class="port" style="margin-bottom:3px;"></div><div class="port"></div></div><span style="font-size:10px;font-weight:bold;">${type}</span><div class="port output"></div></div>`}
     }
     ghostGate.style.setProperty('--gate-color',gc);ghostGate.style.width=w+'px';
@@ -1726,6 +1842,7 @@ function handleMove(cx,cy){
         let w=gwPx(),h=70;
         if(savedCustomGates[ghostType]){const d=savedCustomGates[ghostType];h=Math.max(50,Math.max((d.inputInitials||[]).length,(d.outputInitials||[]).length)*22+12)}
         if(ghostType==='SCREEN'){w=40;h=40}
+        if(ghostType==='JOINER'||ghostType==='SPLITTER'){h=120}
         updateGhostPosition(cx,cy,w,h);
         updateFolderDragHover(cx,cy);
     }
@@ -1771,9 +1888,16 @@ function handleEnd(cx,cy){
         const t=document.elementFromPoint(cx,cy);
         if(t&&t.classList.contains('port')&&t.getAttribute('data-type')==='in'){
             const tc=parseInt(t.getAttribute('data-comp')),tp=parseInt(t.getAttribute('data-port'));
-            wires=wires.filter(w=>!(w.toComp===tc&&w.toPort===tp));
-            wires.push(newWire(draggingWire.compId,draggingWire.portIndex,tc,tp));
-            runSimulation();drawWires();forceSaveState();
+            const fromComp=components.find(c=>c.id===draggingWire.compId);
+            const toComp=components.find(c=>c.id===tc);
+            const check=validateConnection(fromComp,draggingWire.portIndex,toComp,tp);
+            if(!check.ok){
+                flashPortError(t,check.msg);
+            }else{
+                wires=wires.filter(w=>!(w.toComp===tc&&w.toPort===tp));
+                wires.push(newWire(draggingWire.compId,draggingWire.portIndex,tc,tp));
+                runSimulation();drawWires();forceSaveState();
+            }
         }
         resetWiring();
     }
@@ -1791,6 +1915,14 @@ function exitWirePouring(){if(wirePouringState){const el=wirePouringState.el;if(
 function connectWireInPourMode(tc,tp){
     if(!wirePouringState)return false;
     const fc=wirePouringState.compId,fp=wirePouringState.portIndex;
+    const fromComp=components.find(c=>c.id===fc);
+    const toComp=components.find(c=>c.id===tc);
+    const check=validateConnection(fromComp,fp,toComp,tp);
+    if(!check.ok){
+        const ie=document.querySelector(`.port[data-comp="${tc}"][data-type="in"][data-port="${tp}"]`);
+        flashPortError(ie,check.msg);
+        return true;
+    }
     if(wires.some(w=>w.fromComp===fc&&w.fromPort===fp&&w.toComp===tc&&w.toPort===tp)){showToast('Wire already exists.','info',800);return false}
     wires=wires.filter(w=>!(w.toComp===tc&&w.toPort===tp));
     wires.push(newWire(fc,fp,tc,tp));
@@ -1802,6 +1934,13 @@ function connectWireInPourMode(tc,tp){
 function wireFromSelectedSource(tc,tp){
     const s=getNextSelectedSource();if(!s)return false;
     const fp=0;
+    const toComp=components.find(c=>c.id===tc);
+    const check=validateConnection(s,fp,toComp,tp);
+    if(!check.ok){
+        const ie=document.querySelector(`.port[data-comp="${tc}"][data-type="in"][data-port="${tp}"]`);
+        flashPortError(ie,check.msg);
+        return true;
+    }
     if(wires.some(w=>w.fromComp===s.id&&w.fromPort===fp&&w.toComp===tc&&w.toPort===tp)){showToast(`Wire from ${s.type||'gate'} already exists.`,'info',800);return true}
     wires=wires.filter(w=>!(w.toComp===tc&&w.toPort===tp));
     wires.push(newWire(s.id,fp,tc,tp));
@@ -1913,7 +2052,8 @@ function spawnComponentAt(type,x,y){
         pulseCounter:type==='PULSE'?0:undefined,pulsePrevInput:type==='PULSE'?0:undefined,
         clockMs:type==='CLOCK'?250:undefined,clockCounter:type==='CLOCK'?0:undefined,
         pixelColor:type==='COLOR'?'#22c55e':undefined,
-        pixelWidth:type==='SCREEN'?40:undefined,pixelHeight:type==='SCREEN'?40:undefined};
+        pixelWidth:type==='SCREEN'?40:undefined,pixelHeight:type==='SCREEN'?40:undefined,
+        busWidth:(type==='JOINER'||type==='SPLITTER')?4:undefined};
     initComponentInputs(comp);
     components.push(comp);renderComponent(comp);forceSaveState();runSimulation();
     localAddTimes.set(id, Date.now());
@@ -1981,17 +2121,83 @@ function renderComponent(comp){
         registerComponentDom(comp,el);
         return;
     }
+    else if(comp.type==='JOINER'){
+        const n = comp.busWidth || 4;
+        let ih = '';
+        for(let i=0;i<n;i++){
+            ih += `<div class="port-item">`
+                + `<div class="port" id="port-${comp.id}-in-${i}" data-comp="${comp.id}" data-type="in" data-port="${i}"></div>`
+                + `<span class="port-label">${i}</span></div>`;
+        }
+        bc = `<div class="custom-gate-ports">`
+           +   `<div class="port-list">${ih}</div>`
+           +   `<div class="port-list" style="text-align:right;"><div class="port-item">`
+           +     `<div class="port output bus-port" id="port-${comp.id}-out-0" data-comp="${comp.id}" data-type="out" data-port="0"></div>`
+           +     `<span class="port-label">${n}b</span>`
+           +   `</div></div>`
+           + `</div>`;
+    }
+    else if(comp.type==='SPLITTER'){
+        const n = comp.busWidth || 4;
+        let oh = '';
+        for(let i=0;i<n;i++){
+            oh += `<div class="port-item">`
+                + `<div class="port output" id="port-${comp.id}-out-${i}" data-comp="${comp.id}" data-type="out" data-port="${i}"></div>`
+                + `<span class="port-label">${i}</span></div>`;
+        }
+        bc = `<div class="custom-gate-ports">`
+           +   `<div class="port-list"><div class="port-item">`
+           +     `<div class="port bus-port" id="port-${comp.id}-in-0" data-comp="${comp.id}" data-type="in" data-port="0"></div>`
+           +     `<span class="port-label">${n}b</span>`
+           +   `</div></div>`
+           +   `<div class="port-list" style="text-align:right;">${oh}</div>`
+           + `</div>`;
+    }
     else{bc=`<div><div class="ports-in"><div class="port" id="port-${comp.id}-in-0" data-comp="${comp.id}" data-type="in" data-port="0"></div><div class="port" id="port-${comp.id}-in-1" data-comp="${comp.id}" data-type="in" data-port="1"></div></div><span class="gate-type-label">${comp.type}</span><div class="port output" id="port-${comp.id}-out-0" data-comp="${comp.id}" data-type="out" data-port="0"></div></div>`}
     let hr=`<button class="delete-btn" onclick="removeComponent(${comp.id})">×</button>`;
     const defaultLabel=comp.type==='INPUT'?'Toggle':comp.type==='PUSH'?'Push':comp.type;
     const displayLabel=(comp.customLabel||'').trim()||defaultLabel;
+    let busSel='';
+    if(comp.type==='JOINER'||comp.type==='SPLITTER'){
+        const bw=comp.busWidth||4;
+        busSel=`<select class="bus-width-select" id="bw-${comp.id}">`
+              +[2,4,8,16].map(n=>`<option value="${n}"${n===bw?' selected':''}>${n}b</option>`).join('')
+              +`</select>`;
+    }
     let ts=`<span class="gate-label" id="gate-label-${comp.id}">${escapeHtml(displayLabel)}</span>`;
-    el.innerHTML=`<div class="gate-header" onmousedown="startDragGate(event,${comp.id})" ontouchstart="startDragGate(event,${comp.id})">${ts}${hr}</div><div class="gate-body">${bc}</div>`;
+    el.innerHTML=`<div class="gate-header" onmousedown="startDragGate(event,${comp.id})" ontouchstart="startDragGate(event,${comp.id})">${ts}${busSel}${hr}</div><div class="gate-body">${bc}</div>`;
     if(comp.type==='INPUT'){const b=el.querySelector(`#sw-${comp.id}`);const tg=e=>{e.preventDefault();e.stopPropagation();toggleInput(comp.id)};b.addEventListener('click',tg);b.addEventListener('touchstart',tg,{passive:false})}
     if(comp.type==='PUSH'){const b=el.querySelector(`#push-${comp.id}`);const ps=e=>{e.preventDefault();e.stopPropagation();comp.state=1;comp.outputVal=1;b.classList.add('active');b.innerText='ON';runSimulation([comp.id]);forceSaveState()};const pe=e=>{e.preventDefault();e.stopPropagation();comp.state=0;comp.outputVal=0;b.classList.remove('active');b.innerText='PRESS';runSimulation([comp.id]);forceSaveState()};b.addEventListener('mousedown',ps);b.addEventListener('mouseup',pe);b.addEventListener('mouseleave',pe);b.addEventListener('touchstart',ps,{passive:false});b.addEventListener('touchend',pe,{passive:false});b.addEventListener('touchcancel',pe,{passive:false})}
     if(comp.type==='DELAY'){const dInp=el.querySelector(`#delay-val-${comp.id}`);dInp.addEventListener('change',e=>{e.stopPropagation();let v=parseInt(dInp.value)||150;v=Math.max(1,Math.min(TICK_MS*MAX_TICKS,v));comp.delayMs=Math.round(v);dInp.value=comp.delayMs;ensureDelayQueue(comp);forceSaveState()});dInp.addEventListener('mousedown',e=>e.stopPropagation())}
     if(comp.type==='CLOCK'){const cInp=el.querySelector(`#clock-val-${comp.id}`);cInp.addEventListener('change',e=>{e.stopPropagation();let v=parseInt(cInp.value)||250;v=Math.max(TICK_MS,Math.min(TICK_MS*MAX_TICKS,v));comp.clockMs=Math.round(v);cInp.value=comp.clockMs;comp.clockCounter=0;forceSaveState()});cInp.addEventListener('mousedown',e=>e.stopPropagation())}
     if(comp.type==='COLOR'){const cInp=el.querySelector(`#color-val-${comp.id}`);cInp.addEventListener('input',e=>{e.stopPropagation();comp.pixelColor=e.target.value;updateVisuals();forceSaveState()});cInp.addEventListener('mousedown',e=>e.stopPropagation())}
+    if(comp.type==='JOINER'||comp.type==='SPLITTER'){
+        const sel=el.querySelector(`#bw-${comp.id}`);
+        if(sel){
+            sel.addEventListener('mousedown',e=>e.stopPropagation());
+            sel.addEventListener('touchstart',e=>e.stopPropagation(),{passive:true});
+            sel.addEventListener('change',e=>{
+                e.stopPropagation();
+                const n=Math.max(2,Math.min(16,parseInt(sel.value,10)||4));
+                comp.busWidth=n;
+                if(comp.type==='JOINER'){
+                    wires=wires.filter(w=>!(w.toComp===comp.id&&w.toPort>=n));
+                    const old=comp.busOutput||[];
+                    comp.inputs=new Array(n).fill(0);
+                    comp.busOutput=new Array(n).fill(0);
+                    for(let i=0;i<Math.min(n,old.length);i++)comp.busOutput[i]=old[i];
+                }else{
+                    wires=wires.filter(w=>!(w.fromComp===comp.id&&w.fromPort>=n));
+                    const old=comp.outputBits||[];
+                    comp.outputBits=new Array(n).fill(0);
+                    for(let i=0;i<Math.min(n,old.length);i++)comp.outputBits[i]=old[i];
+                }
+                el.remove();compEls.delete(comp.id);compPortEls.delete(comp.id);
+                renderComponent(comp);
+                markPortPositionsDirty();runSimulation();drawWires();forceSaveState();
+            });
+        }
+    }
     attachPortHandlers(el,'main');
     canvas.appendChild(el);
     registerComponentDom(comp,el);
@@ -2163,9 +2369,15 @@ function attachPortHandlers(el,which){
                         const tc=parseInt(t.getAttribute('data-comp')),tp=parseInt(t.getAttribute('data-port'));
                         const ds=getDragState();
                         if(isMain){
-                            wires=wires.filter(w=>!(w.toComp===tc&&w.toPort===tp));
-                            wires.push(newWire(ds.compId,ds.portIndex,tc,tp));
-                            runSimulation();drawWires();forceSaveState();
+                            const fromComp=components.find(c=>c.id===ds.compId);
+                            const toComp=components.find(c=>c.id===tc);
+                            const check=validateConnection(fromComp,ds.portIndex,toComp,tp);
+                            if(!check.ok){ flashPortError(t,check.msg); }
+                            else{
+                                wires=wires.filter(w=>!(w.toComp===tc&&w.toPort===tp));
+                                wires.push(newWire(ds.compId,ds.portIndex,tc,tp));
+                                runSimulation();drawWires();forceSaveState();
+                            }
                         }else{
                             connectModalWire(ds.compId,ds.portIndex,tc,tp);
                         }
@@ -2340,7 +2552,7 @@ let isDraggingGate=false,activeComp=null,gateGrabOffsetX=0,gateGrabOffsetY=0;
 let groupDragStartPositions=null,groupDragAnchorStartX=0,groupDragAnchorStartY=0;
 function startDragGate(e,id){
     if(e.target.classList.contains('pixel-delete-btn'))return;
-    if(e.target.tagName==='BUTTON'||e.target.classList.contains('delete-btn')||e.target.tagName==='INPUT')return;
+    if(e.target.tagName==='BUTTON'||e.target.classList.contains('delete-btn')||e.target.tagName==='INPUT'||e.target.tagName==='SELECT')return;
     if(e.target.classList.contains('port'))return;
     if(e.target.classList.contains('pixel-resize-handle'))return;
     const comp=components.find(c=>c.id===id);if(!comp)return;
@@ -2446,7 +2658,81 @@ function toggleInput(id){
     runSimulation([id]);forceSaveState();
 }
 
+/* ═══════════════════════════════════════════════════════════
+   MULTI-BIT BUS HELPERS
+   ═══════════════════════════════════════════════════════════ */
+
+/* Width of a specific port. Joiner's output is N-bit; Splitter's
+   input is N-bit. Everything else is 1-bit. */
+function getPortWidth(comp, dir, portIdx){
+    if(!comp) return 1;
+    if(comp.type === 'JOINER'   && dir === 'out') return comp.busWidth || 2;
+    if(comp.type === 'SPLITTER' && dir === 'in' ) return comp.busWidth || 2;
+    return 1;
+}
+
+/* Value carried by one output port. Scalar for standard gates,
+   array-of-bits for a Joiner's bus output, scalar for a Splitter
+   (its per-port bit lives in outputBits[]). */
+function getOutputValue(src, fromPort){
+    if(!src) return 0;
+    if(src.isCustom){
+        return (src.outputsArray && src.outputsArray[fromPort] !== undefined)
+            ? src.outputsArray[fromPort] : 0;
+    }
+    if(src.type === 'JOINER'){
+        return Array.isArray(src.busOutput) ? src.busOutput.slice() : [];
+    }
+    if(src.type === 'SPLITTER'){
+        return (src.outputBits && src.outputBits[fromPort] !== undefined)
+            ? src.outputBits[fromPort] : 0;
+    }
+    return src.outputVal || 0;
+}
+
+/* Widths must match to connect. Returns { ok, msg, fromW, toW }. */
+function validateConnection(fromComp, fromPort, toComp, toPort){
+    if(!fromComp || !toComp) return { ok:false, msg:'Component missing.' };
+    const fromW = getPortWidth(fromComp, 'out', fromPort);
+    const toW   = getPortWidth(toComp,   'in',  toPort);
+    if(fromW === toW) return { ok:true, fromW, toW };
+    const hint = fromW > toW ? 'use a Splitter' : 'use a Joiner';
+    return {
+        ok:false, fromW, toW,
+        msg:`Cannot connect ${fromW}-bit output → ${toW}-bit input (${hint}).`
+    };
+}
+
+/* Red flash + toast on the destination port. */
+function flashPortError(portEl, msg){
+    if(portEl){
+        portEl.classList.remove('bus-error');
+        void portEl.offsetWidth;                 // restart animation
+        portEl.classList.add('bus-error');
+        setTimeout(()=>portEl.classList.remove('bus-error'), 600);
+    }
+    if(msg) showToast(msg, 'error', 2200);
+}
+
 function evaluateGate(comp,inputs){
+    if(comp.type==='JOINER'){
+        const n = comp.busWidth || inputs.length || 2;
+        const bits = [];
+        for(let i=0;i<n;i++){
+            const v = inputs[i];
+            bits.push(Array.isArray(v) ? (v[0] ? 1 : 0) : (v ? 1 : 0));
+        }
+        comp.busOutput = bits;
+        return bits.some(b => b) ? 1 : 0;
+    }
+    if(comp.type==='SPLITTER'){
+        const n = comp.busWidth || 2;
+        const raw = inputs[0];
+        const bits = Array.isArray(raw) ? raw.slice(0, n) : new Array(n).fill(0);
+        while(bits.length < n) bits.push(0);
+        comp.outputBits = bits;
+        return bits[0] ? 1 : 0;
+    }
     if(comp.type==='INPUT')return comp.state;
     if(comp.type==='PUSH')return comp.state;
     if(comp.type==='AND')return(inputs[0]===1&&inputs[1]===1)?1:0;
@@ -2673,9 +2959,7 @@ function runSimulationIncremental(comps,wr,seeds,updateFn){
             if(!w)continue;
             const src=byId.get(w.fromComp);
             if(!src)continue;
-            if(src.isCustom&&w.fromPort!==undefined)
-                ins[i]=src.outputsArray&&src.outputsArray[w.fromPort]!==undefined?src.outputsArray[w.fromPort]:0;
-            else ins[i]=src.outputVal||0;
+            ins[i]=getOutputValue(src, w.fromPort);
         }
         comp.inputs=ins;
         if(!comp.isCustom&&(comp.type==='CLOCK'||comp.type==='PULSE'))continue;
@@ -2700,10 +2984,31 @@ function runSimulationIncremental(comps,wr,seeds,updateFn){
                 if(list0)for(let i=0;i<list0.length;i++)enqueue(list0[i].toComp);
             }
         }else{
-            comp.outputVal=evaluateGate(comp,ins);
-            const changed=oldOut!==comp.outputVal;
+            const oldBus  = (comp.type==='JOINER'   && Array.isArray(comp.busOutput)) ? comp.busOutput.slice()  : null;
+            const oldBits = (comp.type==='SPLITTER' && Array.isArray(comp.outputBits))? comp.outputBits.slice() : null;
+
+            comp.outputVal = evaluateGate(comp, ins);
+
+            let changed = oldOut !== comp.outputVal;
+            if(!changed && oldBus && comp.busOutput){
+                if(oldBus.length !== comp.busOutput.length) changed = true;
+                else for(let i=0;i<oldBus.length;i++)
+                    if(oldBus[i] !== comp.busOutput[i]){changed=true;break;}
+            }
+            if(!changed && oldBits && comp.outputBits){
+                if(oldBits.length !== comp.outputBits.length) changed = true;
+                else for(let i=0;i<oldBits.length;i++)
+                    if(oldBits[i] !== comp.outputBits[i]){changed=true;break;}
+            }
+
             if(changed){
-                if(comp.outputsArray){
+                if(comp.type === 'SPLITTER'){
+                    const n = comp.outputBits ? comp.outputBits.length : (comp.busWidth||2);
+                    for(let pi=0;pi<n;pi++){
+                        const list=consumers.get(comp.id+':'+pi);
+                        if(list)for(let i=0;i<list.length;i++)enqueue(list[i].toComp);
+                    }
+                }else if(comp.outputsArray){
                     for(let pi=0;pi<comp.outputsArray.length;pi++){
                         const list=consumers.get(comp.id+':'+pi);
                         if(list)for(let i=0;i<list.length;i++)enqueue(list[i].toComp);
@@ -2923,10 +3228,17 @@ function updateVisuals(){
             const ins=comp.inputs||[];
             for(let j=0;j<ins.length;j++){
                 const p=pc.in[j];if(!p)continue;
-                const on=ins[j]===1;
+                const v = ins[j];
+                const on = Array.isArray(v) ? v.some(b => b === 1) : (v === 1);
                 if(p._ao!==on){p.classList.toggle('active-port',on);p._ao=on}
             }
-            if(comp.isCustom&&comp.outputsArray){
+            if(comp.type==='SPLITTER' && comp.outputBits){
+                for(let j=0;j<comp.outputBits.length;j++){
+                    const p=pc.out[j];if(!p)continue;
+                    const on = comp.outputBits[j] === 1;
+                    if(p._ao!==on){p.classList.toggle('active-port',on);p._ao=on}
+                }
+            }else if(comp.isCustom&&comp.outputsArray){
                 for(let j=0;j<comp.outputsArray.length;j++){
                     const p=pc.out[j];if(!p)continue;
                     const on=comp.outputsArray[j]===1;
@@ -2946,11 +3258,19 @@ function updateVisuals(){
         const p=wirePaths.get('wire-'+w.id);
         if(!p)continue;
         const s=byId.get(w.fromComp);if(!s)continue;
+
+        const fromW = getPortWidth(s, 'out', w.fromPort);
+        const isBus = fromW > 1;
+        if(p._isBus !== isBus){ p.classList.toggle('bus-wire', isBus); p._isBus = isBus; }
+
         let pw=false,color=null;
-        if(s.isCustom&&w.fromPort!==undefined){
-            pw=!!(s.outputsArray&&s.outputsArray[w.fromPort]===1);
+        if(s.isCustom && w.fromPort!==undefined){
+            pw=!!(s.outputsArray && s.outputsArray[w.fromPort]===1);
+        } else if(s.type==='SPLITTER'){
+            pw = !!(s.outputBits && s.outputBits[w.fromPort]);
         } else {
-            pw=s.outputVal===1;
+            const v = (s.type==='JOINER' && Array.isArray(s.busOutput)) ? s.busOutput : s.outputVal;
+            pw = Array.isArray(v) ? v.some(b=>b===1) : v===1;
             if(pw){
                 if(s.type==='COLOR') color=s.pixelColor||'#39ff14';
                 else if(s.outputColor) color=s.outputColor;
@@ -3040,6 +3360,8 @@ function drawModalWires(){
             p.setAttribute('stroke-width','3.5');
             p.setAttribute('stroke-linecap','round');
             p.dataset.wireId=w.id;
+            const fromCmp = modalComponents.find(c => c.id === w.fromComp);
+            if(fromCmp && getPortWidth(fromCmp,'out',w.fromPort) > 1) p.classList.add('bus-wire');
             p.addEventListener('click',onModalWireClick);
             p.addEventListener('dblclick',onModalWireDblClick);
             p.addEventListener('contextmenu',onModalWireContextMenu);
@@ -3967,7 +4289,9 @@ function setupModalToolbar(){
         {type:'CLOCK',  label:'CLOCK',  color:GATE_COLORS.CLOCK},
         {type:'PULSE',  label:'PULSE',  color:GATE_COLORS.PULSE},
         {type:'SCREEN', label:'Pixel',  color:GATE_COLORS.SCREEN},
-        {type:'COLOR',  label:'Color',  color:GATE_COLORS.COLOR}
+        {type:'COLOR',  label:'Color',  color:GATE_COLORS.COLOR},
+        {type:'JOINER', label:'Join',   color:GATE_COLORS.JOINER},
+        {type:'SPLITTER',label:'Split', color:GATE_COLORS.SPLITTER}
     ];
     std.forEach(g=>{const b=document.createElement('div');b.className='tool-btn';b.style.background=g.color;b.textContent=g.label;b.onmousedown=e=>startModalGhostDrag(e,g.type);b.ontouchstart=e=>startModalGhostDrag(e,g.type);tb.appendChild(b)});
     const folderMap=getGateFolders();
@@ -4291,6 +4615,38 @@ function renderModalComponent(comp){
         document.getElementById('custom-gate-modal-canvas').appendChild(el);
         attachPortHandlers(el,'modal');return;
     }
+    else if(comp.type==='JOINER'){
+        const n = comp.busWidth || 4;
+        let ih = '';
+        for(let i=0;i<n;i++){
+            ih += `<div class="port-item">`
+                + `<div class="port" id="modal-port-${comp.id}-in-${i}" data-comp="${comp.id}" data-type="in" data-port="${i}"></div>`
+                + `<span class="port-label">${i}</span></div>`;
+        }
+        bc = `<div class="custom-gate-ports">`
+           +   `<div class="port-list">${ih}</div>`
+           +   `<div class="port-list" style="text-align:right;"><div class="port-item">`
+           +     `<div class="port output bus-port" id="modal-port-${comp.id}-out-0" data-comp="${comp.id}" data-type="out" data-port="0"></div>`
+           +     `<span class="port-label">${n}b</span>`
+           +   `</div></div>`
+           + `</div>`;
+    }
+    else if(comp.type==='SPLITTER'){
+        const n = comp.busWidth || 4;
+        let oh = '';
+        for(let i=0;i<n;i++){
+            oh += `<div class="port-item">`
+                + `<div class="port output" id="modal-port-${comp.id}-out-${i}" data-comp="${comp.id}" data-type="out" data-port="${i}"></div>`
+                + `<span class="port-label">${i}</span></div>`;
+        }
+        bc = `<div class="custom-gate-ports">`
+           +   `<div class="port-list"><div class="port-item">`
+           +     `<div class="port bus-port" id="modal-port-${comp.id}-in-0" data-comp="${comp.id}" data-type="in" data-port="0"></div>`
+           +     `<span class="port-label">${n}b</span>`
+           +   `</div></div>`
+           +   `<div class="port-list" style="text-align:right;">${oh}</div>`
+           + `</div>`;
+    }
     else{bc=`<div><div class="ports-in"><div class="port" id="modal-port-${comp.id}-in-0" data-comp="${comp.id}" data-type="in" data-port="0"></div><div class="port" id="modal-port-${comp.id}-in-1" data-comp="${comp.id}" data-type="in" data-port="1"></div></div><span class="gate-type-label">${comp.type}</span><div class="port output" id="modal-port-${comp.id}-out-0" data-comp="${comp.id}" data-type="out" data-port="0"></div></div>`}
     const defaultLabel = comp.type==='INPUT'?'Toggle':comp.type==='PUSH'?'Push':comp.type==='OUTPUT'?'OUT':(comp.isCustom?comp.type:(comp.customLabel||'').trim()||comp.type);
     const displayLabel = (comp.customLabel||'').trim() || (comp.type==='INPUT'?'Toggle':comp.type==='PUSH'?'Push':comp.type==='OUTPUT'?'OUT':(comp.isCustom?comp.type:comp.type));
@@ -4326,6 +4682,14 @@ function renderModalComponent(comp){
     attachPortHandlers(el,'modal');
 }
 function connectModalWire(fc,fp,tc,tp){
+    const fromComp=modalComponents.find(c=>c.id===fc);
+    const toComp=modalComponents.find(c=>c.id===tc);
+    const check=validateConnection(fromComp,fp,toComp,tp);
+    if(!check.ok){
+        const portEl=document.querySelector(`#custom-gate-modal-canvas .port[data-comp="${tc}"][data-type="in"][data-port="${tp}"]`);
+        flashPortError(portEl,check.msg);
+        return;
+    }
     if(modalWires.some(w=>w.fromComp===fc&&w.fromPort===fp&&w.toComp===tc&&w.toPort===tp)){showToast('Wire already exists.','info',800);return}
     modalWires=modalWires.filter(w=>!(w.toComp===tc&&w.toPort===tp));
     modalWires.push(newModalWire(fc,fp,tc,tp));
@@ -4754,6 +5118,7 @@ const LSET_DEFAULT = {
     NAND:'#134e4a', NOR:'#3730a3', XNOR:'#0369a1',
     DELAY:'#3d4653', CLOCK:'#0d9488', PULSE:'#be123c',
     SCREEN:'#d97706', COLOR:'#9d174d',
+    JOINER:'#7c3aed', SPLITTER:'#7c3aed',
     CUSTOM_DEFAULT:'#1f3a63'
   },
   fonts: { ui:'', serif:'', mono:'', uiScale:1, brandScale:1 },
@@ -5338,6 +5703,10 @@ function getGateHeight(comp){
         const outN = (comp.def && comp.def.outputsCount) || 0;
         const rows = Math.max(inN, outN, 1);
         return 40 + rows * 20;
+    }
+    if(comp.type==='JOINER' || comp.type==='SPLITTER'){
+        const n = Math.max(2, comp.busWidth || 4);
+        return 40 + n * 20;
     }
     switch(comp.type){
         case 'AND': case 'OR': case 'XOR':
@@ -7248,6 +7617,7 @@ function compSig(c){
     return c.type + '|' + c.x + '|' + c.y + '|' + (c.state||0) + '|' + (c.outputVal||0)
          + '|' + (c.customLabel||'') + '|' + (c.pixelColor||'') + '|' + (c.pixelWidth||0)
          + '|' + (c.pixelHeight||0) + '|' + (c.delayMs||0) + '|' + (c.clockMs||0)
+         + '|' + (c.busWidth||0)
          + '|' + (c.isCustom?'C':'');
 }
 function wireSig(w){
