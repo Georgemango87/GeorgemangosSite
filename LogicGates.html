@@ -807,6 +807,11 @@ body.no-animations *,body.no-animations *::before,body.no-animations *::after{
 .wire-path.floating{stroke:var(--wire-float-color);stroke-dasharray:6,4}
 .wire-path.contention{stroke:var(--wire-error-color)!important;
   animation:wireFlash .5s ease-in-out infinite alternate}
+.wire-path.mismatch{
+    stroke:#ef4444 !important;
+    stroke-dasharray:6,4;
+    animation:wireFlash .5s ease-in-out infinite alternate;
+}
 .wire-path.low:hover{stroke:#1e40af;stroke-width:4.5}
 .wire-path.floating:hover{stroke:#9ca3af;stroke-width:4.5}
 .wire-path.contention:hover{stroke:#fca5a5!important;stroke-width:5}
@@ -1489,6 +1494,35 @@ function gateNormalize(v){
 }
 
 function resolveDrivers(vals){
+    // If any driver is a bus (array), resolve per-bit and return an array.
+    let hasArray = false;
+    for(let i = 0; i < vals.length; i++){
+        if(Array.isArray(vals[i])){ hasArray = true; break; }
+    }
+    if(hasArray){
+        let n = 1;
+        for(const v of vals) if(Array.isArray(v) && v.length > n) n = v.length;
+        const result = new Array(n).fill(STZ);
+        for(let b = 0; b < n; b++){
+            let hasLow = false, hasHigh = false, hasX = false;
+            for(const v of vals){
+                const bit = Array.isArray(v)
+                    ? (v[b] !== undefined ? v[b] : STZ)
+                    : v;
+                const c = coerceState(bit);
+                if(c === STX) hasX = true;
+                else if(c === ST1) hasHigh = true;
+                else if(c === ST0) hasLow = true;
+            }
+            if(hasX || (hasLow && hasHigh)) result[b] = STX;
+            else if(hasHigh) result[b] = ST1;
+            else if(hasLow)  result[b] = ST0;
+            else             result[b] = STZ;
+        }
+        return result;
+    }
+
+    // Scalar path — unchanged.
     let hasLow = false, hasHigh = false;
     for(let i = 0; i < vals.length; i++){
         const v = coerceState(vals[i]);
@@ -1515,7 +1549,8 @@ function getPortWidth(comp, dir, portIdx){
     if(!comp) return 1;
     if(comp.type === 'JOINER'   && dir === 'out') return comp.busWidth || 2;
     if(comp.type === 'SPLITTER' && dir === 'in' ) return comp.busWidth || 2;
-    return 1;
+    // Standard gates may be widened to N-bit via the header dropdown.
+    return comp.dataWidth || 1;
 }
 function getOutputValue(src, fromPort){
     if(!src) return STZ;
@@ -1528,6 +1563,9 @@ function getOutputValue(src, fromPort){
     if(src.type === 'SPLITTER')
         return (src.outputBits && src.outputBits[fromPort] !== undefined)
             ? coerceState(src.outputBits[fromPort]) : ST0;
+    // Standard gate widened to a bus via dataWidth → returns per-bit array
+    if(Array.isArray(src.outputBits))
+        return src.outputBits.map(coerceState);
     return src.outputVal === undefined ? STZ : coerceState(src.outputVal);
 }
 function validateConnection(fromComp, fromPort, toComp, toPort){
@@ -1545,6 +1583,21 @@ function flashPortError(portEl, msg){
         void portEl.offsetWidth;
         portEl.classList.add('bus-error');
         setTimeout(()=>portEl.classList.remove('bus-error'), 600);
+        // Also flag the parent wire(s) that already exist on that port.
+        const cid = portEl.getAttribute('data-comp');
+        const typ = portEl.getAttribute('data-type');
+        const idx = portEl.getAttribute('data-port');
+        if(cid && typ && idx !== null){
+            wires.forEach(w => {
+                const hit =
+                    (typ === 'in'  && String(w.toComp)   === cid && String(w.toPort)   === idx) ||
+                    (typ === 'out' && String(w.fromComp) === cid && String(w.fromPort) === idx);
+                if(hit){
+                    const p = wirePaths.get('wire-' + w.id);
+                    if(p){ p.classList.add('mismatch'); }
+                }
+            });
+        }
     }
     if(msg) showToast(msg, 'error', 2200);
 }
@@ -2516,9 +2569,16 @@ function renderComponent(comp){
     let busSel='';
     if(comp.type==='JOINER'||comp.type==='SPLITTER'){
         const bw=comp.busWidth||4;
-        busSel=`<select class="bus-width-select" id="bw-${comp.id}">`
+        busSel=`<select class="bus-width-select" id="bw-${comp.id}" title="Bus width">`
               +[2,4,8,16].map(n=>`<option value="${n}"${n===bw?' selected':''}>${n}b</option>`).join('')
               +`</select>`;
+    } else if(!comp.isCustom &&
+              ['AND','OR','XOR','NOT','NAND','NOR','XNOR',
+               'INPUT','OUTPUT','PUSH','DELAY','CLOCK','TRI'].includes(comp.type)){
+        const dw = comp.dataWidth || 1;
+        busSel = `<select class="bus-width-select" id="dw-${comp.id}" title="Data width">`
+              + [1,2,4,8,16].map(n => `<option value="${n}"${n===dw?' selected':''}>${n}b</option>`).join('')
+              + `</select>`;
     }
     let ts=`<span class="gate-label" id="gate-label-${comp.id}">${escapeHtml(displayLabel)}</span>`;
     el.innerHTML=`<div class="gate-header" onmousedown="startDragGate(event,${comp.id})" ontouchstart="startDragGate(event,${comp.id})">${ts}${busSel}${hr}</div><div class="gate-body">${bc}</div>`;
@@ -2551,6 +2611,38 @@ function renderComponent(comp){
                 el.remove();compEls.delete(comp.id);compPortEls.delete(comp.id);
                 renderComponent(comp);
                 markPortPositionsDirty();runSimulation();drawWires();forceSaveState();
+            });
+        }
+    }
+        // ── Data-width selector for standard gates ──────────
+    if(!comp.isCustom){
+        const dwSel = el.querySelector(`#dw-${comp.id}`);
+        if(dwSel){
+            dwSel.addEventListener('mousedown', e => e.stopPropagation());
+            dwSel.addEventListener('touchstart', e => e.stopPropagation(), {passive:true});
+            dwSel.addEventListener('click', e => e.stopPropagation());
+            dwSel.addEventListener('change', e => {
+                e.stopPropagation();
+                const n = Math.max(1, Math.min(16, parseInt(dwSel.value, 10) || 1));
+                comp.dataWidth = n;
+                wires = wires.filter(w => {
+                    if(w.fromComp === comp.id){
+                        return getPortWidth(comp, 'out', w.fromPort) === (w.width || 1);
+                    }
+                    if(w.toComp === comp.id){
+                        const src = components.find(c => c.id === w.fromComp);
+                        return (src ? getPortWidth(src, 'out', w.fromPort) : 1) === n;
+                    }
+                    return true;
+                });
+                if(n === 1) delete comp.outputBits;
+                el.remove();
+                compEls.delete(comp.id);
+                compPortEls.delete(comp.id);
+                renderComponent(comp);
+                markPortPositionsDirty();
+                updatePortPositions();          // ← force re-measure NOW so drops register
+                runSimulation(); drawWires(); forceSaveState();
             });
         }
     }
@@ -2807,13 +2899,20 @@ function ensureModalTempWire(){
     return tw;
 }
 function newWire(fromComp,fromPort,toComp,toPort){
-    return {id:nextWireId++,fromComp,fromPort,toComp,toPort};
+    const src = components.find(c => c.id === fromComp);
+    const width = src ? getPortWidth(src, 'out', fromPort) : 1;
+    return {id:nextWireId++,fromComp,fromPort,toComp,toPort,width};
 }
 function adoptWireIds(){
     let maxId=nextWireId-1;
     for(const w of wires){
         if(typeof w.id!=='number'||w.id<1)w.id=++maxId;
         else if(w.id>maxId)maxId=w.id;
+        // Backfill width on old saves.
+        if(typeof w.width !== 'number'){
+            const s = components.find(c => c.id === w.fromComp);
+            w.width = s ? getPortWidth(s, 'out', w.fromPort) : 1;
+        }
     }
     nextWireId=maxId+1;
 }
@@ -3070,62 +3169,6 @@ function toggleInput(id){
     runSimulation([id]);forceSaveState();
 }   
 
-/* ═══════════════════════════════════════════════════════════
-   MULTI-BIT BUS HELPERS
-   ═══════════════════════════════════════════════════════════ */
-
-/* Width of a specific port. Joiner's output is N-bit; Splitter's
-   input is N-bit. Everything else is 1-bit. */
-function getPortWidth(comp, dir, portIdx){
-    if(!comp) return 1;
-    if(comp.type === 'JOINER'   && dir === 'out') return comp.busWidth || 2;
-    if(comp.type === 'SPLITTER' && dir === 'in' ) return comp.busWidth || 2;
-    return 1;
-}
-
-/* Value carried by one output port. Scalar for standard gates,
-   array-of-bits for a Joiner's bus output, scalar for a Splitter
-   (its per-port bit lives in outputBits[]). */
-function getOutputValue(src, fromPort){
-    if(!src) return 0;
-    if(src.isCustom){
-        return (src.outputsArray && src.outputsArray[fromPort] !== undefined)
-            ? src.outputsArray[fromPort] : 0;
-    }
-    if(src.type === 'JOINER'){
-        return Array.isArray(src.busOutput) ? src.busOutput.slice() : [];
-    }
-    if(src.type === 'SPLITTER'){
-        return (src.outputBits && src.outputBits[fromPort] !== undefined)
-            ? src.outputBits[fromPort] : 0;
-    }
-    return src.outputVal || 0;
-}
-
-/* Widths must match to connect. Returns { ok, msg, fromW, toW }. */
-function validateConnection(fromComp, fromPort, toComp, toPort){
-    if(!fromComp || !toComp) return { ok:false, msg:'Component missing.' };
-    const fromW = getPortWidth(fromComp, 'out', fromPort);
-    const toW   = getPortWidth(toComp,   'in',  toPort);
-    if(fromW === toW) return { ok:true, fromW, toW };
-    const hint = fromW > toW ? 'use a Splitter' : 'use a Joiner';
-    return {
-        ok:false, fromW, toW,
-        msg:`Cannot connect ${fromW}-bit output → ${toW}-bit input (${hint}).`
-    };
-}
-
-/* Red flash + toast on the destination port. */
-function flashPortError(portEl, msg){
-    if(portEl){
-        portEl.classList.remove('bus-error');
-        void portEl.offsetWidth;                 // restart animation
-        portEl.classList.add('bus-error');
-        setTimeout(()=>portEl.classList.remove('bus-error'), 600);
-    }
-    if(msg) showToast(msg, 'error', 2200);
-}
-
 function evaluateGate(comp,inputs){
     /* ── Tri-state buffer: [D, E] → out ───────────────── */
     if(comp.type==='TRI'){
@@ -3156,6 +3199,42 @@ function evaluateGate(comp,inputs){
         while(bits.length < n) bits.push(ST0);
         comp.outputBits = bits;
         return bits[0];
+    }
+
+    /* ── Multi-bit standard gates ──────────────────────── */
+    // If either input is an array, run a per-bit operation and return
+    // an array. Scalar inputs are broadcast across all bits.
+    const rawA = inputs[0], rawB = inputs[1];
+    const aIsArr = Array.isArray(rawA);
+    const bIsArr = Array.isArray(rawB);
+    if(aIsArr || bIsArr){
+        const n = Math.max(
+            aIsArr ? rawA.length : 0,
+            bIsArr ? rawB.length : 0,
+            comp.dataWidth || 1
+        );
+        const aBits = aIsArr ? rawA : new Array(n).fill(rawA);
+        const bBits = bIsArr ? rawB : new Array(n).fill(rawB);
+        const out = new Array(n);
+        for(let i = 0; i < n; i++){
+            const ab = gateNormalize(aBits[i]);
+            const bb = gateNormalize(bBits[i]);
+            let r;
+            if(comp.type === 'NOT'){
+                r = (ab === STX) ? STX : (ab === ST1 ? ST0 : ST1);
+            } else if(ab === STX || bb === STX){
+                r = STX;
+            } else if(comp.type === 'AND')  r = (ab === ST1 && bb === ST1) ? ST1 : ST0;
+            else if(comp.type === 'OR')     r = (ab === ST1 || bb === ST1) ? ST1 : ST0;
+            else if(comp.type === 'XOR')    r = (ab !== bb)               ? ST1 : ST0;
+            else if(comp.type === 'NAND')   r = !(ab === ST1 && bb === ST1) ? ST1 : ST0;
+            else if(comp.type === 'NOR')    r = !(ab === ST1 || bb === ST1) ? ST1 : ST0;
+            else if(comp.type === 'XNOR')   r = (ab === bb)               ? ST1 : ST0;
+            else r = ST0;
+            out[i] = r;
+        }
+        comp.outputBits = out;
+        return out;
     }
 
     /* ── Standard scalar gates ────────────────────────── */
@@ -3437,7 +3516,7 @@ function runSimulationIncremental(comps,wr,seeds,updateFn){
             }
         }else{
             const oldBus  = (comp.type==='JOINER'   && Array.isArray(comp.busOutput)) ? comp.busOutput.slice()  : null;
-            const oldBits = (comp.type==='SPLITTER' && Array.isArray(comp.outputBits))? comp.outputBits.slice() : null;
+            const oldBits = Array.isArray(comp.outputBits) ? comp.outputBits.slice() : null;
 
             comp.outputVal = evaluateGate(comp, ins);
 
@@ -3819,7 +3898,7 @@ function updateModalVisuals(){
     }
 }
 
-let wireDrawPending=false;let wirePaths=new Map();
+let wireDrawPending=false;let wirePaths=new Map();let wireLabels=new Map();
 function drawWires(){
     if(wireDrawPending)return;wireDrawPending=true;
     requestAnimationFrame(()=>{
@@ -3850,9 +3929,41 @@ function drawWires(){
                 }
                 if(p._lastD!==d){p.setAttribute('d',d);p._lastD=d}
                 p.classList.toggle('selected',selectedWireIds.has(w.id));
+
+                // ── Bus-width label ────────────────────
+                const srcComp = components.find(c => c.id === w.fromComp);
+                const srcW = srcComp ? getPortWidth(srcComp, 'out', w.fromPort) : (w.width || 1);
+                if(srcW > 1){
+                    let lbl = wireLabels.get(wid);
+                    if(!lbl){
+                        lbl = document.createElementNS('http://www.w3.org/2000/svg','text');
+                        lbl.setAttribute('class','bus-wire-label');
+                        lbl.setAttribute('text-anchor','middle');
+                        lbl.setAttribute('font-size','10');
+                        lbl.setAttribute('font-weight','bold');
+                        lbl.setAttribute('font-family','ui-monospace,Menlo,Consolas,monospace');
+                        lbl.setAttribute('pointer-events','none');
+                        svgWires.insertBefore(lbl, tw);
+                        wireLabels.set(wid, lbl);
+                    }
+                    const mx = (fp.x + tp.x) / 2;
+                    const my = (fp.y + tp.y) / 2;
+                    lbl.setAttribute('x', mx);
+                    lbl.setAttribute('y', my - 4);
+                    lbl.textContent = '/' + srcW;
+                    const isSel = selectedWireIds.has(w.id);
+                    lbl.style.fill = isSel
+                        ? (getComputedStyle(document.body).getPropertyValue('--wire-selected-color').trim() || '#1f3a63')
+                        : (getComputedStyle(document.body).getPropertyValue('--muted').trim() || '#5b6472');
+                    lbl.style.opacity = isSel ? '1' : '0.75';
+                } else if(wireLabels.has(wid)){
+                    wireLabels.get(wid).remove();
+                    wireLabels.delete(wid);
+                }
             }else{const p=wirePaths.get(wid);if(p){p.remove();wirePaths.delete(wid)}}
         }
         for(const [wid,p] of wirePaths.entries())if(!seen.has(wid)){p.remove();wirePaths.delete(wid)}
+        for(const [wid,lbl] of wireLabels.entries())if(!seen.has(wid)){lbl.remove();wireLabels.delete(wid)}
         updateVisuals();
     });
 }
