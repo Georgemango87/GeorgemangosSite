@@ -858,6 +858,65 @@ body.no-animations *,body.no-animations *::before,body.no-animations *::after{
 }
 #timing-context-menu .tcm-item:hover{background:rgba(127,127,127,.18)}
 #timing-context-menu .tcm-item.tcm-danger{color:#ef4444}
+/* ═══ STICKY NOTE ═══ */
+.gate.note{
+    background:#fef08a;
+    border-color:#eab308;
+    border-radius:4px;
+    padding:0;
+    box-shadow:2px 2px 8px rgba(0,0,0,.18);
+    cursor:move;
+}
+.gate.note.selected{
+    outline:3px solid #1f3a63;
+    outline-offset:2px;
+}
+.gate.note .note-content{
+    flex:1;
+    padding:8px 10px;
+    font-family:system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;
+    font-size:12px;
+    line-height:1.45;
+    color:#422006;
+    overflow:auto;
+    outline:none;
+    box-sizing:border-box;
+    white-space:pre-wrap;
+    word-break:break-word;
+    cursor:grab;
+}
+.gate.note .note-content[contenteditable="true"]{
+    cursor:text;
+    user-select:text;
+    -webkit-user-select:text;
+    background:rgba(255,255,255,.25);
+}
+.gate.note .note-content:empty::before{
+    content:'Double-click to edit';
+    opacity:.4;
+    font-style:italic;
+    pointer-events:none;
+}
+.gate.note .note-delete-btn{
+    position:absolute;top:3px;right:3px;
+    width:20px;height:20px;padding:0;
+    background:transparent;color:#92400e;
+    border:none;border-radius:3px;
+    font-size:15px;line-height:18px;font-weight:bold;
+    cursor:pointer;opacity:0;
+    transition:opacity .12s,background .12s;
+    z-index:10;
+}
+.gate.note:hover .note-delete-btn{opacity:1}
+.gate.note .note-delete-btn:hover{background:rgba(239,68,68,.25);color:#dc2626}
+.gate.note .note-resize-handle{
+    position:absolute;right:-2px;bottom:-2px;
+    width:16px;height:16px;cursor:nwse-resize;
+    background:#eab308;border:2px solid #fff;
+    border-radius:0 0 4px 0;box-sizing:border-box;
+    display:none;z-index:10;
+}
+.gate.note:hover .note-resize-handle{display:block}
 </style>
 </head>
 <body>
@@ -887,6 +946,7 @@ body.no-animations *,body.no-animations *::before,body.no-animations *::after{
     <div class="toolbar-group" style="border-left:2px solid var(--border-color);padding-left:5px;">
         <div class="tool-btn" data-gate-type="SCREEN" style="background:#d97706;" onmousedown="startGhostDrag(event,'SCREEN')" ontouchstart="startGhostDrag(event,'SCREEN')">Pixel</div>
         <div class="tool-btn" data-gate-type="COLOR"  style="background:#9d174d;" onmousedown="startGhostDrag(event,'COLOR')"  ontouchstart="startGhostDrag(event,'COLOR')">Color</div>
+        <div class="tool-btn" data-gate-type="NOTE"   style="background:#eab308;color:#422006;" onmousedown="startGhostDrag(event,'NOTE')"  ontouchstart="startGhostDrag(event,'NOTE')">📝 Label</div>
     </div>
     <div class="toolbar-group" style="border-left:2px solid var(--border-color);padding-left:5px;">
         <div class="tool-btn" data-btn-id="customGate" style="background:#8b5cf6;" onclick="openCustomGateModal(null, false)">⚙️ Custom Gate</div>
@@ -1313,7 +1373,7 @@ let pendingSnapshotTimer=null;function snapValue(v){
     return Math.round(v/SNAP)*SNAP;
 }
 
-const GATE_COLORS={INPUT:'#1f3a63',PUSH:'#3d4653',OUTPUT:'#b45309',AND:'#15803d',OR:'#0f766e',XOR:'#6d28d9',NOT:'#b91c1c',NAND:'#134e4a',NOR:'#3730a3',XNOR:'#0369a1',DELAY:'#3d4653',CLOCK:'#0d9488',PULSE:'#be123c',SCREEN:'#d97706',COLOR:'#9d174d',JOINER:'#7c3aed',SPLITTER:'#7c3aed',TRI:'#0891b2'};
+const GATE_COLORS={INPUT:'#1f3a63',PUSH:'#3d4653',OUTPUT:'#b45309',AND:'#15803d',OR:'#0f766e',XOR:'#6d28d9',NOT:'#b91c1c',NAND:'#134e4a',NOR:'#3730a3',XNOR:'#0369a1',DELAY:'#3d4653',CLOCK:'#0d9488',PULSE:'#be123c',SCREEN:'#d97706',COLOR:'#9d174d',JOINER:'#7c3aed',SPLITTER:'#7c3aed',TRI:'#0891b2',NOTE:'#eab308'};
 function getGateColor(c){if(c.isCustom)return(c.def&&c.def.color)||'#1f3a63';return GATE_COLORS[c.type]||'#007bff'}
 function getGateColorByName(t,d){if(d&&d.color)return d.color;return GATE_COLORS[t]||'#1f3a63'}
 
@@ -1373,6 +1433,12 @@ function initComponentInputs(comp){
     }
     else if(t==='TRI'){
         if(!Array.isArray(comp.inputs)||comp.inputs.length!==2)comp.inputs=[STZ,STZ];
+    }
+    else if(t==='NOTE'){
+        comp.inputs = [];
+        if(typeof comp.width  !== 'number') comp.width  = 180;
+        if(typeof comp.height !== 'number') comp.height = 100;
+        if(typeof comp.text   !== 'string') comp.text   = '';
     }
     else if(t==='JOINER'){
         const n=Math.max(2,Math.min(16,comp.busWidth||4));
@@ -1850,7 +1916,16 @@ function pasteAtCursor(){
     const r=viewport.getBoundingClientRect();let cx=cursorCanvasX,cy=cursorCanvasY;
     if(cx===0&&cy===0){cx=(r.width/2-panX)/zoom;cy=(r.height/2-panY)/zoom}
     let minX=Infinity,minY=Infinity,maxX=-Infinity,maxY=-Infinity;
-    for(const c of clipboard.components){const w=c.type==='SCREEN'?(c.pixelWidth||40):140,h=c.type==='SCREEN'?(c.pixelHeight||40):60;if(c.x<minX)minX=c.x;if(c.y<minY)minY=c.y;if(c.x+w>maxX)maxX=c.x+w;if(c.y+h>maxY)maxY=c.y+h}
+    for(const c of clipboard.components){
+        const w = c.type==='NOTE'   ? (c.width ||180)
+                : c.type==='SCREEN' ? (c.pixelWidth ||40)
+                : 140;
+        const h = c.type==='NOTE'   ? (c.height||100)
+                : c.type==='SCREEN' ? (c.pixelHeight||40)
+                : 60;
+        if(c.x<minX)minX=c.x;if(c.y<minY)minY=c.y;
+        if(c.x+w>maxX)maxX=c.x+w;if(c.y+h>maxY)maxY=c.y+h;
+    }
     const ox=snapValue(cx-(minX+maxX)/2),oy=snapValue(cy-(minY+maxY)/2);
     const idMap={},nc=[];
     for(const c of clipboard.components){
@@ -1904,6 +1979,7 @@ function startGhostDrag(e,type,sourceFolder){
         else if(type==='JOINER'){bc=`<div style="display:flex;justify-content:space-between;align-items:center;gap:4px;"><div><div class="port" style="margin-bottom:3px;"></div><div class="port" style="margin-bottom:3px;"></div><div class="port"></div></div><span style="font-size:9px;">JOIN</span><div class="port output" style="width:16px;height:16px;border-radius:4px;"></div></div>`;h=120;w=140}
         else if(type==='SPLITTER'){bc=`<div style="display:flex;justify-content:space-between;align-items:center;gap:4px;"><div class="port" style="width:16px;height:16px;border-radius:4px;"></div><span style="font-size:9px;">SPLIT</span><div><div class="port output" style="margin-bottom:3px;"></div><div class="port output" style="margin-bottom:3px;"></div><div class="port output"></div></div></div>`;h=120;w=140}
         else if(type==='TRI'){bc=`<div style="display:flex;justify-content:space-between;align-items:center;gap:4px;"><div class="port"></div><span style="font-size:9px;">TRI</span><div class="port output"></div></div>`;h=80;w=140}
+        else if(type==='NOTE'){bc=`<div style="width:180px;height:100px;background:#fef08a;border-radius:4px;display:flex;align-items:center;justify-content:center;font-size:11px;color:#713f12;opacity:.85;">📝 Note</div>`;h=100;w=180}
         else{bc=`<div style="display:flex;justify-content:space-between;align-items:center;"><div><div class="port" style="margin-bottom:3px;"></div><div class="port"></div></div><span style="font-size:10px;font-weight:bold;">${type}</span><div class="port output"></div></div>`}
     }
     ghostGate.style.setProperty('--gate-color',gc);ghostGate.style.width=w+'px';
@@ -1983,6 +2059,7 @@ function handleMove(cx,cy){
         if(savedCustomGates[ghostType]){const d=savedCustomGates[ghostType];h=Math.max(50,Math.max((d.inputInitials||[]).length,(d.outputInitials||[]).length)*22+12)}
         if(ghostType==='SCREEN'){w=40;h=40}
         if(ghostType==='JOINER'||ghostType==='SPLITTER'){h=120}
+        if(ghostType==='NOTE'){w=180;h=100}
         updateGhostPosition(cx,cy,w,h);
         updateFolderDragHover(cx,cy);
     }
@@ -2122,8 +2199,32 @@ document.addEventListener('keydown',e=>{
     const ctrl=e.ctrlKey||e.metaKey;
     if(!mOpen&&!ctrl&&!e.altKey&&(e.key==='d'||e.key==='D')
        &&document.activeElement?.tagName!=='INPUT'
-       &&document.activeElement?.tagName!=='TEXTAREA'){
+       &&document.activeElement?.tagName!=='TEXTAREA'
+       &&!document.activeElement?.isContentEditable){
         e.preventDefault();toggleDebugMode();return;
+    }
+    /* ── Keyboard spawn hotkeys (A/O/N/X/S) ───────────── */
+    if(!mOpen&&!ctrl&&!e.altKey
+       &&document.activeElement?.tagName!=='INPUT'
+       &&document.activeElement?.tagName!=='TEXTAREA'
+       &&document.activeElement?.tagName!=='SELECT'
+       &&!document.activeElement?.isContentEditable){
+        const k=(e.key||'').toLowerCase();
+        const hotkeys={a:'AND',o:'OR',n:'NOT',x:'XOR',s:'INPUT'};
+        if(hotkeys[k]){
+            e.preventDefault();
+            const type=hotkeys[k];
+            let cx=cursorCanvasX, cy=cursorCanvasY;
+            if(cx===0&&cy===0){
+                const r=viewport.getBoundingClientRect();
+                cx=(r.width/2-panX)/zoom;
+                cy=(r.height/2-panY)/zoom;
+            }
+            const gh=(type==='AND'||type==='OR'||type==='XOR')?80:60;
+            spawnComponentAt(type, cx-70, cy-gh/2);
+            forceSaveState();
+            return;
+        }
     }
     if(mOpen){
         if(ctrl&&e.key==='c'){e.preventDefault();copyModalSelected();return}
@@ -2146,7 +2247,10 @@ document.addEventListener('keydown',e=>{
     if((ctrl&&e.key==='z'&&e.shiftKey)||(ctrl&&e.key==='y')){e.preventDefault();redo();return}
     if(ctrl&&e.key==='c'){e.preventDefault();copySelected();return}
     if(ctrl&&e.key==='v'){e.preventDefault();pasteAtCursor();return}
-    if((e.key==='Delete'||e.key==='Backspace')&&document.activeElement?.tagName!=='INPUT'){
+    if((e.key==='Delete'||e.key==='Backspace')
+       &&document.activeElement?.tagName!=='INPUT'
+       &&document.activeElement?.tagName!=='TEXTAREA'
+       &&!document.activeElement?.isContentEditable){
         if(selectedIds.size){
             e.preventDefault();
             const ids=Array.from(selectedIds);
@@ -2226,6 +2330,9 @@ function spawnComponentAt(type,x,y){
         pixelColor:type==='COLOR'?'#22c55e':undefined,
         pixelWidth:type==='SCREEN'?40:undefined,pixelHeight:type==='SCREEN'?40:undefined,
         busWidth:(type==='JOINER'||type==='SPLITTER')?4:undefined,
+        width: type==='NOTE'?180:undefined,
+        height:type==='NOTE'?100:undefined,
+        text:  type==='NOTE'?'':undefined,
         state:ST0, outputVal:ST0};
     initComponentInputs(comp);
     components.push(comp);renderComponent(comp);forceSaveState();runSimulation();
@@ -2255,6 +2362,66 @@ function spawnCustomGateInstance(gateName,x,y){
 function renderComponent(comp){
     const el=document.createElement('div');el.className='gate';el.id=`comp-${comp.id}`;
     el.style.setProperty('--gate-color',getGateColor(comp));
+    if(comp.type==='NOTE'){
+        el.classList.add('note');
+        const w = comp.width  || 180;
+        const h = comp.height || 100;
+        el.style.width     = w + 'px';
+        el.style.minWidth  = w + 'px';
+        el.style.height    = h + 'px';
+        el.style.minHeight = h + 'px';
+        el.style.left      = comp.x + 'px';
+        el.style.top       = comp.y + 'px';
+        el.innerHTML =
+            `<div class="note-content" id="note-content-${comp.id}">${escapeHtml(comp.text || '')}</div>` +
+            `<button class="note-delete-btn" type="button" title="Delete note">×</button>` +
+            `<div class="note-resize-handle" onmousedown="startResizeNote(event,${comp.id})" ontouchstart="startResizeNote(event,${comp.id})"></div>`;
+        const content = el.querySelector('.note-content');
+        el.addEventListener('mousedown', e => {
+            if(e.target.classList.contains('note-resize-handle')) return;
+            if(e.target.classList.contains('note-delete-btn')) return;
+            if(content.isContentEditable) return;
+            startDragGate(e, comp.id);
+        });
+        el.addEventListener('touchstart', e => {
+            if(e.target.classList.contains('note-resize-handle')) return;
+            if(e.target.classList.contains('note-delete-btn')) return;
+            if(content.isContentEditable) return;
+            startDragGate(e, comp.id);
+        });
+        content.addEventListener('dblclick', e => {
+            e.stopPropagation();
+            e.preventDefault();
+            content.contentEditable = 'true';
+            content.focus();
+            const range = document.createRange();
+            range.selectNodeContents(content);
+            const sel = window.getSelection();
+            sel.removeAllRanges();
+            sel.addRange(range);
+        });
+        content.addEventListener('blur', () => {
+            content.contentEditable = 'false';
+            comp.text = content.innerText || '';
+            forceSaveState();
+        });
+        content.addEventListener('keydown', e => {
+            e.stopPropagation();
+            if(e.key === 'Escape'){ e.preventDefault(); content.blur(); }
+        });
+        content.addEventListener('mousedown', e => {
+            if(content.isContentEditable) e.stopPropagation();
+        });
+        const delBtn = el.querySelector('.note-delete-btn');
+        if(delBtn){
+            const doDel = e => { e.stopPropagation(); e.preventDefault(); removeComponent(comp.id); };
+            delBtn.addEventListener('mousedown', doDel);
+            delBtn.addEventListener('touchstart', doDel, {passive:false});
+        }
+        canvas.appendChild(el);
+        registerComponentDom(comp, el);
+        return;
+    }
     if(comp.type==='SCREEN'){el.classList.add('gate-pixel');const w=comp.pixelWidth||40,h=comp.pixelHeight||40;
         el.style.setProperty('width',w+'px','important');
         el.style.setProperty('height',h+'px','important');
@@ -2759,6 +2926,39 @@ function startResizePixel(event,id){
 
 let isDraggingGate=false,activeComp=null,gateGrabOffsetX=0,gateGrabOffsetY=0;
 let groupDragStartPositions=null,groupDragAnchorStartX=0,groupDragAnchorStartY=0;
+function startResizeNote(event,id){
+    event.stopPropagation();
+    event.preventDefault();
+    const comp=components.find(c=>c.id===id);
+    if(!comp||comp.type!=='NOTE')return;
+    const sx=event.clientX||(event.touches&&event.touches[0].clientX);
+    const sy=event.clientY||(event.touches&&event.touches[0].clientY);
+    const sw=comp.width||180,sh=comp.height||100;
+    const onMove=(cx,cy)=>{
+        const dx=(cx-sx)/zoom,dy=(cy-sy)/zoom;
+        const nw=Math.max(120,Math.round((sw+dx)/SNAP)*SNAP);
+        const nh=Math.max( 80,Math.round((sh+dy)/SNAP)*SNAP);
+        comp.width=nw;comp.height=nh;
+        const el=compEls.get(id);
+        if(el){
+            el.style.width=nw+'px';el.style.minWidth=nw+'px';
+            el.style.height=nh+'px';el.style.minHeight=nh+'px';
+        }
+    };
+    const om=e=>onMove(e.clientX,e.clientY);
+    const ot=e=>{if(e.touches.length===1)onMove(e.touches[0].clientX,e.touches[0].clientY)};
+    const oe=()=>{
+        window.removeEventListener('mousemove',om);
+        window.removeEventListener('mouseup',oe);
+        window.removeEventListener('touchmove',ot);
+        window.removeEventListener('touchend',oe);
+        forceSaveState();
+    };
+    window.addEventListener('mousemove',om);
+    window.addEventListener('mouseup',oe);
+    window.addEventListener('touchmove',ot);
+    window.addEventListener('touchend',oe);
+}
 function startDragGate(e,id){
     if(e.target.classList.contains('pixel-delete-btn'))return;
     if(e.target.tagName==='BUTTON'||e.target.classList.contains('delete-btn')||e.target.tagName==='INPUT'||e.target.tagName==='SELECT')return;
@@ -3196,6 +3396,7 @@ function runSimulationIncremental(comps,wr,seeds,updateFn){
         const comp=byId.get(id);
         if(!comp)continue;
         if(comp.type==='INPUT'||comp.type==='PUSH')continue;
+        if(comp.type==='NOTE')continue;
 
         const oldOut=comp.outputVal;
         const oldOutputs=comp.outputsArray?comp.outputsArray.slice():null;
@@ -3455,6 +3656,7 @@ function updateVisuals(){
 
     for(let i=0;i<components.length;i++){
         const comp=components[i];
+        if(comp.type==='NOTE')continue;
         const el=compEls.get(comp.id);if(!el)continue;
         const pc=compPortEls.get(comp.id);
         let pw=comp.outputVal===1;
@@ -5318,6 +5520,7 @@ window.openICManager=openICManager;window.closeICManager=closeICManager;window.c
 window.renameIC=renameIC;window.setCustomGateColor=setCustomGateColor;window.deleteIC=deleteIC;
 window.removeCustomContainer=removeCustomContainer;window.removeComponent=removeComponent;
 window.startResizePixel=startResizePixel;window.updateContainerTitle=updateContainerTitle;
+window.startResizeNote=startResizeNote;
 window.startResizeContainer=startResizeContainer;window.startDragContainer=startDragContainer;
 window.startDragGate=startDragGate;window.toggleInput=toggleInput;window.startInlineRename=startInlineRename;window.startModalInlineRename=startModalInlineRename;
 window.closeConfirm=closeConfirm;window.closeConfirmOutside=closeConfirmOutside;
@@ -5453,7 +5656,7 @@ const LSET_DEFAULT = {
     NAND:'#134e4a', NOR:'#3730a3', XNOR:'#0369a1',
     DELAY:'#3d4653', CLOCK:'#0d9488', PULSE:'#be123c',
     SCREEN:'#d97706', COLOR:'#9d174d',
-    JOINER:'#7c3aed', SPLITTER:'#7c3aed', TRI:'#0891b2',
+    JOINER:'#7c3aed', SPLITTER:'#7c3aed', TRI:'#0891b2', NOTE:'#eab308',
     CUSTOM_DEFAULT:'#1f3a63'
   },
   fonts: { ui:'', serif:'', mono:'', uiScale:1, brandScale:1 },
@@ -7954,6 +8157,7 @@ function compSig(c){
          + '|' + (c.customLabel||'') + '|' + (c.pixelColor||'') + '|' + (c.pixelWidth||0)
          + '|' + (c.pixelHeight||0) + '|' + (c.delayMs||0) + '|' + (c.clockMs||0)
          + '|' + (c.busWidth||0)
+         + '|' + (c.width||0) + '|' + (c.height||0) + '|' + (c.text||'')
          + '|' + (c.isCustom?'C':'');
 }
 function wireSig(w){
