@@ -1321,6 +1321,44 @@ function buildWorldCache(){
     worldCache.consumers = consumers;
     return worldCache;
 }
+/* Same shape as buildWorldCache(), but parameterised so the modal can
+   build its own mini-world from modalComponents/modalWires. */
+function buildWorldFrom(comps, wr){
+    const byId = new Map();
+    const compsByType = new Map();
+    for(let i = 0; i < comps.length; i++){
+        const c = comps[i];
+        byId.set(c.id, c);
+        let arr = compsByType.get(c.type);
+        if(!arr){ arr = []; compsByType.set(c.type, arr); }
+        arr.push(c);
+    }
+    const wiresByToComp = new Map();
+    const iwm = new Map();
+    const iwmMulti = new Map();
+    for(let i = 0; i < wr.length; i++){
+        const w = wr[i];
+        if(!byId.has(w.fromComp) || !byId.has(w.toComp)) continue;
+        let list = wiresByToComp.get(w.toComp);
+        if(!list){ list = []; wiresByToComp.set(w.toComp, list); }
+        list.push(w);
+        const key = w.toComp + ':' + w.toPort;
+        if(!iwm.has(key)) iwm.set(key, w);
+        let mlist = iwmMulti.get(key);
+        if(!mlist){ mlist = []; iwmMulti.set(key, mlist); }
+        mlist.push(w);
+    }
+    const consumers = new Map();
+    for(let i = 0; i < wr.length; i++){
+        const w = wr[i];
+        if(!byId.has(w.fromComp) || !byId.has(w.toComp)) continue;
+        const key = w.fromComp + ':' + w.fromPort;
+        let list = consumers.get(key);
+        if(!list){ list = []; consumers.set(key, list); }
+        list.push({ toComp: w.toComp, toPort: w.toPort });
+    }
+    return { byId, compsByType, wiresByToComp, iwm, iwmMulti, consumers };
+}
 function getWorld(){
     if(worldCache.stamp !== worldStamp ||
        worldCache.nComp  !== components.length ||
@@ -1947,7 +1985,7 @@ function expandNestedCustomGate(sc,depth){
         }
         if(child.type==='CLOCK'){
             child.clockMs=child.clockMs||250;child.clockCounter=0;child.state=0;child.outputVal=0;
-            sc.clockStates[child.id]={counter:0,state:0,period:clockTicksFor(child)};
+            sc.clockStates[child.id]={counter:0,state:ST0,period:clockTicksFor(child)};
         }
         if(child.type==='SCREEN'){child.pixelWidth=child.pixelWidth||40;child.pixelHeight=child.pixelHeight||40}
         if(child.type==='COLOR')child.pixelColor=child.pixelColor||'#39ff14';
@@ -2404,7 +2442,7 @@ function spawnCustomGateInstance(gateName,x,y){
         if(sc.isCustom){expandNestedCustomGate(sc,0);return}
         initComponentInputs(sc);
         if(sc.type==='DELAY'){const v=delayTicksFor(sc);sc.delayQueue=new Array(v).fill(0);comp.delayStates[sc.id]={queue:new Array(v).fill(0),ptr:0}}
-        if(sc.type==='CLOCK'){sc.clockMs=sc.clockMs||250;comp.clockStates[sc.id]={counter:0,state:0,period:clockTicksFor(sc)};sc.outputVal=0}
+        if(sc.type==='CLOCK'){sc.clockMs=sc.clockMs||250;comp.clockStates[sc.id]={counter:0,state:ST0,period:clockTicksFor(sc)};sc.outputVal=ST0}
         if(sc.type==='SCREEN'){sc.pixelWidth=sc.pixelWidth||40;sc.pixelHeight=sc.pixelHeight||40}
         if(sc.type==='COLOR')sc.pixelColor=sc.pixelColor||'#39ff14';
     });
@@ -3259,11 +3297,203 @@ function evaluateGate(comp,inputs){
 
     if(comp.type==='OUTPUT'||comp.type==='SCREEN'||comp.type==='COLOR') return a;
 
-    if(comp.type==='CLOCK') return comp.state === ST1 ? ST1 : ST0;
-    if(comp.type==='PULSE') return comp.state === ST1 ? ST1 : ST0;
+    if(comp.type==='CLOCK') return coerceState(comp.state) === ST1 ? ST1 : ST0;
+    if(comp.type==='PULSE') return coerceState(comp.state) === ST1 ? ST1 : ST0;
     if(comp.type==='DELAY'){ ensureDelayQueue(comp); return coerceState(comp.outputVal); }
 
     return ST0;
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   GRAPH FLATTENING COMPILER
+   Produces a linear DAG of primitives from any nesting depth.
+   Output is pure data (JSON-safe) and safe to cache.
+   ═══════════════════════════════════════════════════════════════ */
+
+const COMPILE_MAX_DEPTH = 64;
+
+// Primitive types that can appear in a flat node list.
+// Anything outside this set forces a compile failure → recursive fallback.
+const FLAT_PRIMITIVES = new Set([
+    'AND','OR','XOR','NOT','NAND','NOR','XNOR',
+    'TRI','JOINER','SPLITTER','COLOR',
+    'DELAY','CLOCK','PULSE'
+]);
+
+// State-bearing primitives (break combinational cycles).
+const STATEFUL_TYPES = new Set(['DELAY','CLOCK','PULSE']);
+
+function compileGateDef(rootDefName, customGates) {
+    const rootDef = customGates[rootDefName];
+    if (!rootDef) throw new Error('No definition for "' + rootDefName + '"');
+
+    const nodes = [];          // flat primitive list, topologically sorted
+    let nextId = 0;
+    const newId = () => ++nextId;
+
+    // Flatten `def` in the context of `inputRefs` (what feeds each of its
+    // boundary inputs). Returns an array of refs for its boundary outputs.
+    //
+    // A `ref` is one of:
+    //   { input: i }             → boundary input at index i (flows all the way out)
+    //   { node: id, port: p }    → flat primitive output
+    //   { const: value }         → tie-off for unconnected inputs
+    function flatten(def, inputRefs, depth) {
+        if (depth > COMPILE_MAX_DEPTH) {
+            throw new Error('Nesting depth exceeded (' + COMPILE_MAX_DEPTH + ')');
+        }
+
+        const ins = def.innerComps
+            .filter(c => c.type === 'INPUT' || c.type === 'PUSH')
+            .sort((a, b) => a.y - b.y);
+        const outs = def.innerComps
+            .filter(c => c.type === 'OUTPUT')
+            .sort((a, b) => a.y - b.y);
+
+        // Map compId → array-of-refs (one per output port).
+        // Boundary INPUTs are seeded with the caller's inputRefs.
+        const outputOf = new Map();
+        ins.forEach((c, i) => {
+            outputOf.set(c.id, [inputRefs[i] || { const: STZ }]);
+        });
+
+        // Wire lookup: destKey → {fromComp, fromPort}
+        const wireFrom = new Map();
+        for (const w of def.innerWires || []) {
+            wireFrom.set(w.toComp + ':' + w.toPort, w);
+        }
+        function resolveInput(comp, port) {
+            const hit = wireFrom.get(comp.id + ':' + port);
+            if (!hit) return { const: STZ };
+            const srcOut = outputOf.get(hit.fromComp);
+            if (!srcOut) return { const: STZ };
+            return srcOut[hit.fromPort] || { const: STZ };
+        }
+
+        // Internal comps to process (INPUT/PUSH/OUTPUT are boundary only).
+        const comps = def.innerComps.filter(c =>
+            c.type !== 'INPUT' && c.type !== 'PUSH' && c.type !== 'OUTPUT');
+
+        // Validate primitives up front — cheaper to fail now than midway.
+        for (const c of comps) {
+            if (c.isCustom) continue;
+            if (!FLAT_PRIMITIVES.has(c.type)) {
+                throw new Error('Unsupported primitive "' + c.type + '"');
+            }
+        }
+
+        // Dependency graph. Stateful nodes contribute NO incoming edge
+        // (their output comes from cached state, so the cycle breaks).
+        const depOf = new Map();
+        const dependents = new Map();
+        for (const c of comps) {
+            depOf.set(c.id, new Set());
+            dependents.set(c.id, []);
+        }
+        for (const c of comps) {
+            if (STATEFUL_TYPES.has(c.type)) continue;
+            for (const w of def.innerWires || []) {
+                if (w.toComp !== c.id) continue;
+                if (!depOf.has(w.fromComp)) continue;
+                if (STATEFUL_TYPES.has(def.innerComps.find(x => x.id === w.fromComp)?.type)) continue;
+                depOf.get(c.id).add(w.fromComp);
+                dependents.get(w.fromComp).push(c.id);
+            }
+        }
+
+        // Kahn's topological sort.
+        const inDeg = new Map();
+        for (const [id, deps] of depOf) inDeg.set(id, deps.size);
+        const queue = [];
+        for (const [id, deg] of inDeg) if (deg === 0) queue.push(id);
+        const topo = [];
+        while (queue.length) {
+            const id = queue.shift();
+            topo.push(id);
+            for (const next of dependents.get(id)) {
+                inDeg.set(next, inDeg.get(next) - 1);
+                if (inDeg.get(next) === 0) queue.push(next);
+            }
+        }
+        if (topo.length !== comps.length) {
+            throw new Error('Combinational cycle — add a Delay to break it');
+        }
+
+        // Emit nodes in topological order.
+        for (const cid of topo) {
+            const c = def.innerComps.find(x => x.id === cid);
+            if (!c) continue;
+
+            const nIn = (c.inputs && c.inputs.length) || defaultInputCount(c);
+            const inputRefsForNode = [];
+            for (let i = 0; i < nIn; i++) inputRefsForNode.push(resolveInput(c, i));
+
+            if (c.isCustom) {
+                const innerName = c._defName || c.type;
+                const innerDef = customGates[innerName];
+                if (!innerDef) throw new Error('Missing nested def "' + innerName + '"');
+                const innerOuts = flatten(innerDef, inputRefsForNode, depth + 1);
+                outputOf.set(c.id, innerOuts);
+            } else {
+                const id = newId();
+                const node = {
+                    id,
+                    type: c.type,
+                    inputs: inputRefsForNode,
+                    stateKind: STATEFUL_TYPES.has(c.type) ? c.type.toLowerCase() : null,
+                    busWidth: c.dataWidth || c.busWidth || 1,
+                };
+                if (c.type === 'DELAY') node.delayTicks = delayTicksFor(c);
+                if (c.type === 'CLOCK') node.clockTicks = clockTicksFor(c);
+                nodes.push(node);
+
+                // Output ports. JOINER exposes 1 (bus). SPLITTER exposes N.
+                let portCount = 1;
+                if (c.type === 'SPLITTER') portCount = c.busWidth || 4;
+                const refs = [];
+                for (let p = 0; p < portCount; p++) refs.push({ node: id, port: p });
+                outputOf.set(c.id, refs);
+            }
+        }
+
+        // Resolve boundary outputs.
+        return outs.map(o => resolveInput(o, 0));
+    }
+
+    const rootInputs = rootDef.innerComps
+        .filter(c => c.type === 'INPUT' || c.type === 'PUSH')
+        .sort((a, b) => a.y - b.y)
+        .map((_, i) => ({ input: i }));
+
+    const outputs = flatten(rootDef, rootInputs, 0);
+    return {
+        nodes,                                 // topologically sorted
+        outputs,                               // refs, one per boundary output
+        inputCount: rootInputs.length,
+        outputCount: outputs.length,
+    };
+}
+
+function defaultInputCount(c) {
+    if (c.type === 'NOT' || c.type === 'DELAY' || c.type === 'CLOCK' ||
+        c.type === 'PULSE' || c.type === 'COLOR' || c.type === 'TRI') return c.type === 'TRI' ? 2 : 1;
+    if (c.type === 'JOINER') return c.busWidth || 4;
+    if (c.type === 'SPLITTER') return 1;
+    return 2;
+}
+
+function initInstanceState(compiled) {
+    const st = Object.create(null);
+    for (const node of compiled.nodes) {
+        if (node.stateKind === 'delay') {
+            st[node.id] = { queue: new Array(node.delayTicks).fill(ST0), ptr: 0 };
+        } else if (node.stateKind === 'clock') {
+            st[node.id] = { counter: 0, state: ST0, pendingTick: false };
+        } else if (node.stateKind === 'pulse') {
+            st[node.id] = { counter: 0, state: ST0, prevInput: false, lastInput: ST0 };
+        }
+    }
+    return st;
 }
 /* FIX 2: Resolve output ports from def.innerOutputs when it exactly
    matches the definition's output count, so unwired OUTPUTs and nested
@@ -3348,49 +3578,43 @@ function evaluateCustomGate(comp) {
         iter++;
         for (const sc of sub) {
             if (sc.type === 'INPUT' || sc.type === 'PUSH') continue;
-            if (sc.type === 'CLOCK') continue;
-
             const oldOut    = sc.outputVal;
             const oldOutputs = sc.outputsArray ? sc.outputsArray.slice() : [];
             const inputCount = (sc.inputs || []).length;
-            const ins = new Array(inputCount).fill(0);
+            const ins = new Array(inputCount).fill(STZ);
 
             for (let i = 0; i < inputCount; i++) {
                 const w = inputWireMap.get(sc.id + ':' + i);
                 if (!w) continue;
                 const src = byId.get(w.fromComp);
                 if (!src) continue;
-                if (src.isCustom && w.fromPort !== undefined) {
-                    ins[i] = src.outputsArray && src.outputsArray[w.fromPort] !== undefined
-                        ? coerceState(src.outputsArray[w.fromPort]) : STZ;
-                } else {
-                    ins[i] = src.outputVal === undefined ? STZ : coerceState(src.outputVal);
-                }
+                // getOutputValue() handles every source type uniformly:
+                //   • custom gates      → outputsArray[port]
+                //   • JOINER            → the full bus array
+                //   • SPLITTER          → the per-port bit
+                //   • widened standard  → the outputBits array
+                //   • everything else   → the scalar outputVal
+                ins[i] = getOutputValue(src, w.fromPort);
             }
             sc.inputs = ins;
 
             if (sc.isCustom) {
                 evaluateCustomGate(sc);
             } else if (sc.type === 'DELAY') {
-                if (comp.delayStates && comp.delayStates[sc.id]) {
-                    const st  = comp.delayStates[sc.id];
-                    const val = coerceState(st.queue[st.ptr] || ST0);
-                    st.queue[st.ptr] = gateNormalize(ins[0]);
-                    st.ptr = (st.ptr + 1) % st.queue.length;
-                    sc.outputVal = val;
-                } else {
+                // tickNestedTiming owns the queue pointer. Do NOT advance it
+                // here — this branch runs many times per tick and would
+                // collapse the delay to a passthrough.
+                if (!comp.delayStates) comp.delayStates = {};
+                if (!comp.delayStates[sc.id]) {
+                    const n = delayTicksFor(sc);
+                    comp.delayStates[sc.id] = { queue: new Array(n).fill(ST0), ptr: 0 };
                     sc.outputVal = ST0;
                 }
+                // sc.outputVal was set by the most recent tickNestedTiming call.
             } else if (sc.type === 'PULSE') {
-                const inp  = ins[0] === ST1 ? 1 : (ins[0] === STX ? 2 : 0);
-                const prev = sc.pulsePrevInput ? 1 : 0;
-                if (inp === 1 && prev === 0) { sc.state = ST1; sc.pulseCounter = 1; }
-                else if (inp !== 2 && (sc.pulseCounter || 0) > 0) {
-                    sc.pulseCounter--;
-                    if (sc.pulseCounter <= 0) { sc.pulseCounter = 0; sc.state = ST0; }
-                }
-                sc.pulsePrevInput = (inp === 1) ? 1 : 0;
-                sc.outputVal = sc.state === ST1 ? ST1 : ST0;
+                // Pulse state transitions live in tickNestedTiming().
+                // Here we only reflect the current state — never tick.
+                sc.outputVal = coerceState(sc.state);
             } else {
                 sc.outputVal = evaluateGate(sc, ins);
             }
@@ -3428,22 +3652,34 @@ function tickNestedClocksMain(comp){
         if(sc.isCustom&&sc.subComps&&sc.subComps.length){
             if(tickNestedClocksMain(sc))anyChanged=true;
         }else if(sc.type==='CLOCK'){
-            if(!Array.isArray(sc.inputs)||sc.inputs.length<1)sc.inputs=[0];
-            if(!comp.clockStates[sc.id])comp.clockStates[sc.id]={counter:0,state:sc.outputVal||0,period:clockTicksFor(sc)};
+            if(!Array.isArray(sc.inputs)||sc.inputs.length<1)sc.inputs=[ST0];
+            if(!comp.clockStates[sc.id])
+                comp.clockStates[sc.id]={counter:0,state:ST0,period:clockTicksFor(sc)};
             const st=comp.clockStates[sc.id];
-            if(!(sc.inputs[0]?1:0)){st.counter=0;st.state=0;sc.state=0;sc.outputVal=0;return}
-            st.period=clockTicksFor(sc);st.counter++;
-            const oldState=st.state;
-            if(st.counter>=st.period){st.counter=0;st.state=st.state===1?0:1}
-            sc.state=st.state;sc.outputVal=st.state;
-            if(oldState!==st.state){anyChanged=true;_timingClockFired=true;}
+            if(coerceState(sc.inputs[0]) !== ST1){
+                st.counter=0; st.state=ST0; sc.state=ST0; sc.outputVal=ST0;
+                return;
+            }
+            st.period=clockTicksFor(sc);
+            st.counter++;
+            const oldState=coerceState(st.state);
+            if(st.counter>=st.period){
+                st.counter=0;
+                st.state = (oldState === ST1) ? ST0 : ST1;   // stays a STRING
+            }
+            sc.state   = coerceState(st.state);
+            sc.outputVal = coerceState(st.state);
+            if(oldState !== sc.state){ anyChanged=true; _timingClockFired=true; }
         }
     });
     return anyChanged;
 }
 function runSimulationIncremental(comps,wr,seeds,updateFn){
     if(!comps.length){if(updateFn)updateFn();return}
-    const world=getWorld();
+    // If we're simulating the main canvas, use the shared cached world.
+    // Otherwise (modal), build a private world scoped to the passed-in arrays.
+    const isMain = (comps === components && wr === wires);
+    const world = isMain ? getWorld() : buildWorldFrom(comps, wr);
     const byId=world.byId;
     const iwm=world.iwm;
     const iwmMulti=world.iwmMulti;
@@ -3583,7 +3819,8 @@ function tickPulseComponent(comp){
         if(comp.pulseCounter<=0){comp.pulseCounter=0;comp.state=ST0;}
     }
     comp.pulsePrevInput=(inp===1)?1:0;
-    comp.outputVal=comp.state;
+    comp.state = coerceState(comp.state);
+    comp.outputVal = comp.state;
 }
 function hasNestedTiming(comp){
     const sub = comp.subComps || [];
@@ -3610,16 +3847,16 @@ function tickNestedTiming(container){
             const n=delayTicksFor(sc);
             let st=container.delayStates[sc.id];
             if(!st||!Array.isArray(st.queue)||st.queue.length!==n){
-                st={queue:new Array(n).fill(0),ptr:0};
+                st={queue:new Array(n).fill(ST0),ptr:0};
                 container.delayStates[sc.id]=st;
             }
-            const oldVal=sc.outputVal;
-            sc.outputVal=st.queue[st.ptr]?1:0;
-            st.queue[st.ptr]=(sc.inputs&&sc.inputs[0])?1:0;
+            const oldVal=coerceState(sc.outputVal);
+            sc.outputVal=coerceState(st.queue[st.ptr]);
+            st.queue[st.ptr]=(coerceState(sc.inputs && sc.inputs[0]) === ST1) ? ST1 : ST0;
             st.ptr=(st.ptr+1)%n;
             if(oldVal!==sc.outputVal)anyChanged=true;
         }else if(sc.type==='PULSE'){
-            const oldVal=sc.outputVal;
+            const oldVal=coerceState(sc.outputVal);
             tickPulseComponent(sc);
             if(oldVal!==sc.outputVal)anyChanged=true;
         }
@@ -3644,12 +3881,12 @@ function tickAll(){
             tickSingleClock(comp);
             if(old!==comp.outputVal)seeds.push(comp.id);
         }else if(comp.isCustom){
-            if(hasNestedTiming(comp)){
-                let innerChanged=tickNestedTiming(comp);
-                if(tickNestedClocksMain(comp))innerChanged=true;
-                if(innerChanged)seeds.push(comp.id);
-            }
-        }
+    if(hasNestedTiming(comp)){
+        let innerChanged=tickNestedTiming(comp);
+        if(tickNestedClocksMain(comp))innerChanged=true;
+        if(innerChanged)seeds.push(comp.id);
+    }
+}
     }
     if(seeds.length)runSimulationIncremental(components,wires,seeds,updateVisuals);
     // Clock edge fired this tick → capture a sample AFTER propagation
@@ -3738,8 +3975,9 @@ function updateVisuals(){
         if(comp.type==='NOTE')continue;
         const el=compEls.get(comp.id);if(!el)continue;
         const pc=compPortEls.get(comp.id);
-        let pw=comp.outputVal===1;
-        if(comp.isCustom&&comp.outputsArray&&comp.outputsArray.length)pw=comp.outputsArray.some(v=>v===1);
+        let pw = coerceState(comp.outputVal) === ST1;
+        if(comp.isCustom && comp.outputsArray && comp.outputsArray.length)
+            pw = comp.outputsArray.some(v => coerceState(v) === ST1);
         if(el._pw!==pw){el.classList.toggle('powered',pw);el._pw=pw}
         if(comp.type==='OUTPUT'){
             const b=el.querySelector('.bulb');
@@ -3869,11 +4107,29 @@ function updateVisuals(){
         else if(debugMouseX||debugMouseY)updateDebugHover();
     }
 }
+function applyModalWireState(w, p){
+    if(!p) return;
+    const src = modalComponents.find(c => c.id === w.fromComp);
+    if(!src) return;
+    const v = getOutputValue(src, w.fromPort);
+    if(Array.isArray(v)){
+        const anyHi = v.some(b => coerceState(b) === ST1);
+        p.classList.toggle('powered',    anyHi);
+        p.classList.toggle('contention', false);
+        p.classList.toggle('floating',   false);
+    } else {
+        const s = coerceState(v);
+        p.classList.toggle('powered',    s === ST1);
+        p.classList.toggle('contention', s === STX);
+        p.classList.toggle('floating',   s === STZ);
+    }
+}
 function updateModalVisuals(){
     for(let i=0;i<modalComponents.length;i++){
         const comp=modalComponents[i];const el=document.getElementById(`modal-comp-${comp.id}`);if(!el)continue;
-        let pw=comp.outputVal===1;
-        if(comp.isCustom&&comp.outputsArray&&comp.outputsArray.length)pw=comp.outputsArray.some(v=>v===1);
+        let pw = coerceState(comp.outputVal) === ST1;
+        if(comp.isCustom && comp.outputsArray && comp.outputsArray.length)
+            pw = comp.outputsArray.some(v => coerceState(v) === ST1);
         el.classList.toggle('powered',pw);
         if(comp.type==='OUTPUT'){
             const b=el.querySelector('.bulb');
@@ -3884,17 +4140,24 @@ function updateModalVisuals(){
         if(comp.type==='SCREEN'){
             const p=document.getElementById(`modal-pixel-${comp.id}`);
             if(p){
-                const v=(comp.inputs&&comp.inputs[0])?1:0;p.classList.toggle('on',v===1);
+                const v = coerceState(comp.inputs && comp.inputs[0]) === ST1 ? 1 : 0;
+                p.classList.toggle('on', v === 1);  
                 let cc=null;const iw=modalWires.find(w=>w.toComp===comp.id&&w.toPort===0);
                 if(iw){const s=modalComponents.find(c=>c.id===iw.fromComp);if(s&&s.type==='COLOR')cc=s.pixelColor||'#39ff14'}
                 if(v===1&&cc){p.style.background=cc;p.style.boxShadow=`0 0 15px ${cc}`}else{p.style.background='';p.style.boxShadow=''}
             }
         }
-        (comp.inputs||[]).forEach((v,idx)=>{const p=document.getElementById(`modal-port-${comp.id}-in-${idx}`);if(p)p.classList.toggle('active-port',v===1)});
-        if(comp.isCustom&&comp.outputsArray)comp.outputsArray.forEach((v,idx)=>{const p=document.getElementById(`modal-port-${comp.id}-out-${idx}`);if(p)p.classList.toggle('active-port',v===1)});
-        else if(comp.type!=='SCREEN'){const p=document.getElementById(`modal-port-${comp.id}-out-0`);if(p)p.classList.toggle('active-port',comp.outputVal===1)}
-        if(comp.type==='PUSH'){const b=el.querySelector('.push-btn');if(b){b.classList.toggle('active',comp.state===1);b.innerText=comp.state===1?'ON':'PRESS'}}
-        if(comp.type==='INPUT'){const b=el.querySelector('.switch-btn');if(b){b.classList.toggle('active',comp.state===1);b.innerText=comp.state===1?'ON':'OFF'}}
+        (comp.inputs||[]).forEach((v,idx)=>{const p=document.getElementById(`modal-port-${comp.id}-in-${idx}`);if(p)p.classList.toggle('active-port',coerceState(v)===ST1)});
+        if(comp.isCustom&&comp.outputsArray)comp.outputsArray.forEach((v,idx)=>{const p=document.getElementById(`modal-port-${comp.id}-out-${idx}`);if(p)p.classList.toggle('active-port',coerceState(v)===ST1)});
+        else if(comp.type!=='SCREEN'){const p=document.getElementById(`modal-port-${comp.id}-out-0`);if(p)p.classList.toggle('active-port',coerceState(comp.outputVal)===ST1)}
+        if(comp.type==='PUSH'){const b=el.querySelector('.push-btn');if(b){const on=coerceState(comp.state)===ST1;b.classList.toggle('active',on);b.innerText=on?'ON':'PRESS'}}
+        if(comp.type==='INPUT'){const b=el.querySelector('.switch-btn');if(b){const on=coerceState(comp.state)===ST1;b.classList.toggle('active',on);b.innerText=on?'ON':'OFF'}}
+    }
+        // ── Wire colours ──
+    for(let i = 0; i < modalWires.length; i++){
+        const w = modalWires[i];
+        const p = document.getElementById(`modal-wire-${w.id}`);
+        if(p) applyModalWireState(w, p);
     }
 }
 
@@ -3979,9 +4242,11 @@ function drawModalWires(){
             p.setAttribute('d',`M ${fp.x} ${fp.y} C ${fp.x+dx} ${fp.y}, ${tp.x-dx} ${tp.y}, ${tp.x} ${tp.y}`);
             p.setAttribute('stroke-width','3.5');
             p.setAttribute('stroke-linecap','round');
+            p.setAttribute('id', `modal-wire-${w.id}`);
             p.dataset.wireId=w.id;
             const fromCmp = modalComponents.find(c => c.id === w.fromComp);
             if(fromCmp && getPortWidth(fromCmp,'out',w.fromPort) > 1) p.classList.add('bus-wire');
+            applyModalWireState(w, p);
             p.addEventListener('click',onModalWireClick);
             p.addEventListener('dblclick',onModalWireDblClick);
             p.addEventListener('contextmenu',onModalWireContextMenu);
@@ -4376,8 +4641,10 @@ function refreshAllInstances(gateName,newDef){
         instance.subWires=(freshDef.innerWires||[]).slice();
         instance.def=freshDef;
         if(instance.delayStates){const nds={};for(const sc of newSubComps)if(sc.type==='DELAY'){const v=delayTicksFor(sc);const old=oldStateMap.get(sc.id);const q=(old&&old.delayQueueRaw&&old.delayQueueRaw.length===v)?old.delayQueueRaw.slice():new Array(v).fill(0);nds[sc.id]={queue:q,ptr:0}}instance.delayStates=nds}
-        if(instance.clockStates){const ncs={};for(const sc of newSubComps)if(sc.type==='CLOCK'){const old=oldStateMap.get(sc.id);ncs[sc.id]={counter:(old&&old.clockCounter)||0,state:(old&&old.state)||0,period:clockTicksFor(sc)}}instance.clockStates=ncs}
+        if(instance.clockStates){const ncs={};for(const sc of newSubComps)if(sc.type==='CLOCK'){const old=oldStateMap.get(sc.id);ncs[sc.id]={counter:(old&&old.clockCounter)||0,state:coerceState((old&&old.state)||ST0),period:clockTicksFor(sc)}}instance.clockStates=ncs}
         if(instance.outputsArray)instance.outputsArray=new Array(freshDef.outputsCount||0).fill(0);
+        instance.compiled = null;         // recompile on next tick
+        instance.state = null;            // internal state lost — see note below
         const el=compEls.get(instance.id);
         if(el){el.remove();compEls.delete(instance.id);compPortEls.delete(instance.id)}
         renderComponent(instance);
@@ -4664,6 +4931,7 @@ function applyLoadedState(state){
     });
     components.forEach(comp=>{
         if(comp.isCustom&&comp.type&&savedCustomGates[comp.type])comp.def=savedCustomGates[comp.type];
+        if(comp.isCustom){comp.compiled=null;}   // force recompile against the current def
         if(comp.subComps)comp.subComps.forEach(sc=>{
             if(sc.isCustom){expandNestedCustomGate(sc,0);return}
             initComponentInputs(sc);
@@ -5298,8 +5566,22 @@ function renderModalComponent(comp){
     else{bc=`<div><div class="ports-in"><div class="port" id="modal-port-${comp.id}-in-0" data-comp="${comp.id}" data-type="in" data-port="0"></div><div class="port" id="modal-port-${comp.id}-in-1" data-comp="${comp.id}" data-type="in" data-port="1"></div></div><span class="gate-type-label">${comp.type}</span><div class="port output" id="modal-port-${comp.id}-out-0" data-comp="${comp.id}" data-type="out" data-port="0"></div></div>`}
     const defaultLabel = comp.type==='INPUT'?'Toggle':comp.type==='PUSH'?'Push':comp.type==='OUTPUT'?'OUT':(comp.isCustom?comp.type:(comp.customLabel||'').trim()||comp.type);
     const displayLabel = (comp.customLabel||'').trim() || (comp.type==='INPUT'?'Toggle':comp.type==='PUSH'?'Push':comp.type==='OUTPUT'?'OUT':(comp.isCustom?comp.type:comp.type));
+    let busSel = '';
+    if (comp.type === 'JOINER' || comp.type === 'SPLITTER') {
+        const bw = comp.busWidth || 4;
+        busSel = `<select class="bus-width-select" id="bw-${comp.id}" title="Bus width">`
+               + [2,4,8,16].map(n => `<option value="${n}"${n===bw?' selected':''}>${n}b</option>`).join('')
+               + `</select>`;
+    } else if (!comp.isCustom &&
+               ['AND','OR','XOR','NOT','NAND','NOR','XNOR',
+                'INPUT','OUTPUT','PUSH','DELAY','CLOCK','TRI'].includes(comp.type)) {
+        const dw = comp.dataWidth || 1;
+        busSel = `<select class="bus-width-select" id="dw-${comp.id}" title="Data width">`
+               + [1,2,4,8,16].map(n => `<option value="${n}"${n===dw?' selected':''}>${n}b</option>`).join('')
+               + `</select>`;
+    }
     const hr=`<button class="delete-btn" data-modal-delete="${comp.id}">×</button>`;
-    el.innerHTML=`<div class="gate-header" onmousedown="startDragModalGate(event,${comp.id})" ontouchstart="startDragModalGate(event,${comp.id})"><span class="gate-label" id="modal-gate-label-${comp.id}">${escapeHtml(displayLabel)}</span>${hr}</div><div class="gate-body">${bc}</div>`;
+    el.innerHTML=`<div class="gate-header" onmousedown="startDragModalGate(event,${comp.id})" ontouchstart="startDragModalGate(event,${comp.id})"><span class="gate-label" id="modal-gate-label-${comp.id}">${escapeHtml(displayLabel)}</span>${busSel}${hr}</div><div class="gate-body">${bc}</div>`;
 
     // Right-click or double-click the header to rename (same as main canvas)
     const hdr = el.querySelector('.gate-header');
@@ -5326,6 +5608,64 @@ function renderModalComponent(comp){
     if(comp.type==='DELAY'){const i=el.querySelector(`#modal-delay-val-${comp.id}`);i.addEventListener('change',e=>{e.stopPropagation();let v=parseInt(i.value)||150;v=Math.max(1,Math.min(TICK_MS*MAX_TICKS,v));comp.delayMs=Math.round(v);i.value=comp.delayMs;ensureDelayQueue(comp)});i.addEventListener('mousedown',e=>e.stopPropagation())}
     if(comp.type==='CLOCK'){const i=el.querySelector(`#modal-clock-val-${comp.id}`);i.addEventListener('change',e=>{e.stopPropagation();let v=parseInt(i.value)||250;v=Math.max(TICK_MS,Math.min(TICK_MS*MAX_TICKS,v));comp.clockMs=Math.round(v);i.value=comp.clockMs;comp.clockCounter=0});i.addEventListener('mousedown',e=>e.stopPropagation())}
     if(comp.type==='COLOR'){const i=el.querySelector(`#modal-color-val-${comp.id}`);i.addEventListener('input',e=>{e.stopPropagation();comp.pixelColor=e.target.value});i.addEventListener('mousedown',e=>e.stopPropagation())}
+        if (comp.type === 'JOINER' || comp.type === 'SPLITTER') {
+        const sel = el.querySelector(`#bw-${comp.id}`);
+        if (sel) {
+            sel.addEventListener('mousedown', e => e.stopPropagation());
+            sel.addEventListener('touchstart', e => e.stopPropagation(), {passive:true});
+            sel.addEventListener('change', e => {
+                e.stopPropagation();
+                const n = Math.max(2, Math.min(16, parseInt(sel.value, 10) || 4));
+                comp.busWidth = n;
+                if (comp.type === 'JOINER') {
+                    modalWires = modalWires.filter(w => !(w.toComp === comp.id && w.toPort >= n));
+                    const old = comp.busOutput || [];
+                    comp.inputs = new Array(n).fill(ST0);
+                    comp.busOutput = new Array(n).fill(ST0);
+                    for (let i = 0; i < Math.min(n, old.length); i++) comp.busOutput[i] = old[i];
+                } else {
+                    modalWires = modalWires.filter(w => !(w.fromComp === comp.id && w.fromPort >= n));
+                    const old = comp.outputBits || [];
+                    comp.outputBits = new Array(n).fill(ST0);
+                    for (let i = 0; i < Math.min(n, old.length); i++) comp.outputBits[i] = old[i];
+                }
+                el.remove();
+                renderModalComponent(comp);
+                markModalPortPositionsDirty();
+                drawModalWires();
+                runModalSimulation();
+            });
+        }
+    }
+    if (!comp.isCustom) {
+        const dwSel = el.querySelector(`#dw-${comp.id}`);
+        if (dwSel) {
+            dwSel.addEventListener('mousedown', e => e.stopPropagation());
+            dwSel.addEventListener('touchstart', e => e.stopPropagation(), {passive:true});
+            dwSel.addEventListener('click', e => e.stopPropagation());
+            dwSel.addEventListener('change', e => {
+                e.stopPropagation();
+                const n = Math.max(1, Math.min(16, parseInt(dwSel.value, 10) || 1));
+                comp.dataWidth = n;
+                modalWires = modalWires.filter(w => {
+                    if (w.fromComp === comp.id) {
+                        return getPortWidth(comp, 'out', w.fromPort) === (w.width || 1);
+                    }
+                    if (w.toComp === comp.id) {
+                        const src = modalComponents.find(c => c.id === w.fromComp);
+                        return (src ? getPortWidth(src, 'out', w.fromPort) : 1) === n;
+                    }
+                    return true;
+                });
+                if (n === 1) delete comp.outputBits;
+                el.remove();
+                renderModalComponent(comp);
+                markModalPortPositionsDirty();
+                drawModalWires();
+                runModalSimulation();
+            });
+        }
+    }
     document.getElementById('custom-gate-modal-canvas').appendChild(el);
     attachPortHandlers(el,'modal');
 }
@@ -8579,7 +8919,11 @@ function joinFirebaseRoom(code){
             normalizeCustomGateDef(savedCustomGates[n]);
         });
         components.forEach(c => {
-            if(c.isCustom && c.type && savedCustomGates[c.type]) c.def = savedCustomGates[c.type];
+            if(c.isCustom && c.type && savedCustomGates[c.type]){
+                c.def = savedCustomGates[c.type];
+                c.compiled = null;         // recompile lazily
+                c.state = null;            // reset internal state
+            }
         });
         updateCustomGatesToolbar();
     }));
