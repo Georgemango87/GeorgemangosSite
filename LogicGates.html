@@ -828,6 +828,36 @@ body.no-animations *,body.no-animations *::before,body.no-animations *::after{
 
 #debug-tooltip .dbg-err-inline{color:#f87171;font-weight:bold}
 #debug-tooltip .dbg-z{color:#9ca3af;font-style:italic}
+/* ═══ TIMING DIAGRAM PANEL ═══ */
+#timing-panel{
+    position:fixed;left:0;right:0;bottom:0;height:220px;
+    background:var(--toolbar-bg);border-top:2px solid var(--accent);
+    box-shadow:0 -6px 20px rgba(0,0,0,.25);
+    display:none;flex-direction:column;z-index:150;
+}
+#timing-panel.open{display:flex}
+#timing-panel .timing-header{
+    height:34px;padding:0 10px;display:flex;align-items:center;gap:8px;
+    border-bottom:1px solid var(--border-color);flex-shrink:0;
+    background:var(--toolbar-bg);
+}
+#timing-panel .timing-header strong{font-size:11px}
+#timing-panel .timing-header button{font-size:10px;padding:3px 9px;flex-shrink:0}
+#timing-panel .timing-header .timing-info{font-size:10px;opacity:.6;font-variant-numeric:tabular-nums}
+#timing-canvas{flex:1;width:100%;min-height:0;display:block;background:var(--bg-color)}
+
+/* Context menu shared by ports and wires */
+#timing-context-menu{
+    position:fixed;z-index:2800;background:var(--toolbar-bg);color:var(--text-color);
+    border:1px solid var(--border-color);border-radius:6px;
+    box-shadow:0 8px 24px rgba(0,0,0,.3);padding:4px;min-width:200px;
+    display:flex;flex-direction:column;gap:2px;font-size:11px;
+}
+#timing-context-menu .tcm-item{
+    padding:7px 10px;border-radius:4px;cursor:pointer;white-space:nowrap;user-select:none;
+}
+#timing-context-menu .tcm-item:hover{background:rgba(127,127,127,.18)}
+#timing-context-menu .tcm-item.tcm-danger{color:#ef4444}
 </style>
 </head>
 <body>
@@ -867,6 +897,8 @@ body.no-animations *,body.no-animations *::before,body.no-animations *::after{
         <button id="pause-btn" data-btn-id="pause" onclick="togglePause()" style="background:#1f3a63;">Pause</button>
         <button data-btn-id="step" onclick="stepSimulation()" style="background:#3b5b8c;">Step</button>
         <button data-btn-id="reset" onclick="resetView()" style="background:#3d4653;">Reset</button>
+        <button onclick="clearTimeline()" style="background:#b91c1c;" title="Clear timing diagram history">🗑 Timeline</button>
+        <button onclick="toggleTimingPanel()" style="background:#0d9488;" title="Toggle timing diagram panel">📈 Timing</button>
         <button data-btn-id="theme" onclick="toggleTheme()" style="background:#3b5b8c;">Theme</button>
         <button data-btn-id="settings" onclick="openSettingsModal()" style="background:#0f766e;" title="Colours, fonts, layout &amp; presets">⚙️ Settings</button>
         <button data-btn-id="clear" onclick="clearAll()" style="background:#b91c1c;">Clear</button>
@@ -1109,7 +1141,16 @@ body.no-animations *,body.no-animations *::before,body.no-animations *::after{
   </div>
 </div>
 
-<div id="toast-container"></div>
+<div id="timing-panel">
+    <div class="timing-header">
+        <strong>📈 Timing Diagram</strong>
+        <span class="timing-info" id="timing-info">No nodes tracked</span>
+        <div style="flex:1;"></div>
+        <button onclick="clearTimeline()" style="background:#b91c1c;">Clear</button>
+        <button onclick="toggleTimingPanel()" style="background:#3d4653;">✕</button>
+    </div>
+    <canvas id="timing-canvas"></canvas>
+</div>
 
 <div id="toast-container"></div>
 
@@ -1610,6 +1651,7 @@ function restoreState(s){
     components.forEach(c=>renderComponent(c));
     customContainers.forEach(c=>renderCustomContainer(c));
     drawWires();runSimulation();isUndoRedo=false;markPortPositionsDirty();updateUndoRedoButtons();
+    if(typeof drawTimingDiagram === 'function') drawTimingDiagram();
     collabBroadcastState();
 }
 function undo(){
@@ -2054,7 +2096,11 @@ function removeWireFromPort(cid,pt,pidx){
     let removed=false;
     if(pt==='in'){const i=wires.findIndex(w=>w.toComp===cid&&w.toPort===pidx);if(i!==-1){wires.splice(i,1);removed=true}}
     else if(pt==='out'){const i=wires.findIndex(w=>w.fromComp===cid&&w.fromPort===pidx);if(i!==-1){wires.splice(i,1);removed=true}}
-    if(removed){runSimulation();drawWires();forceSaveState();showToast('Wire removed.','info',1000)}
+    if(removed){
+        runSimulation();drawWires();forceSaveState();
+        if(typeof drawTimingDiagram === 'function') drawTimingDiagram();
+        showToast('Wire removed.','info',1000);
+    }
     else showToast('No wire connected.','info',800);
 }
 
@@ -2069,6 +2115,7 @@ document.addEventListener('keydown',e=>{
         }
         if(wirePouringState){exitWirePouring();e.preventDefault();return}
         closeGateFolderDropdown();closeFolderContextMenu();
+        if(typeof closeTimingContextMenu === 'function') closeTimingContextMenu();
         const fm=document.getElementById('folder-modal');
         if(fm&&fm.style.display==='flex'){closeFolderDialog(false);e.preventDefault();return}
     }
@@ -2117,7 +2164,31 @@ document.addEventListener('contextmenu',e=>{
     const t=e.target;
     if(t&&t.classList.contains('port')){
         const cid=parseInt(t.getAttribute('data-comp')),pt=t.getAttribute('data-type'),pidx=parseInt(t.getAttribute('data-port'));
-        if(!isNaN(cid)&&pt&&!isNaN(pidx)){e.preventDefault();e.stopPropagation();removeWireFromPort(cid,pt,pidx);return}
+        if(!isNaN(cid)&&pt&&!isNaN(pidx)){
+            e.preventDefault();e.stopPropagation();
+            const item = { kind:'port', compId:cid, portType:pt, portIdx:pidx };
+            const tracked = isTracked(item);
+            const items = [
+                {
+                    label: tracked ? '📈 Remove from Timing Diagram' : '📈 Add to Timing Diagram',
+                    action: () => {
+                        const r = toggleTrackedNode(item);
+                        if(typeof showToast === 'function')
+                            showToast(r === 'added' ? 'Added to timing diagram.' : 'Removed from timing diagram.', 'info', 1200);
+                    }
+                }
+            ];
+            const hasWire = (pt === 'in')
+                ? wires.some(w => w.toComp   === cid && w.toPort   === pidx)
+                : wires.some(w => w.fromComp === cid && w.fromPort === pidx);
+            if(hasWire) items.push({
+                label: '✕ Remove wire',
+                danger: true,
+                action: () => removeWireFromPort(cid, pt, pidx)
+            });
+            showTimingContextMenu(items, e.clientX, e.clientY);
+            return;
+        }
     }
     const fe=t.closest('.gate-folder-btn');
     if(fe){e.preventDefault();e.stopPropagation();showFolderContextMenu(fe.dataset.folderName,e.clientX,e.clientY);return}
@@ -2143,6 +2214,7 @@ document.addEventListener('contextmenu',e=>{
 document.addEventListener('mousedown',e=>{
     if(!e.target.closest('#gate-folder-dropdown')&&!e.target.closest('.gate-folder-btn'))closeGateFolderDropdown();
     if(!e.target.closest('#folder-context-menu'))closeFolderContextMenu();
+    if(!e.target.closest('#timing-context-menu') && typeof closeTimingContextMenu === 'function') closeTimingContextMenu();
 });
 
 function spawnComponentAt(type,x,y){
@@ -2595,6 +2667,7 @@ function deleteWireById(wireId){
     wires.splice(i,1);
     selectedWireIds.delete(wireId);
     runSimulation();drawWires();forceSaveState();
+    if(typeof drawTimingDiagram === 'function') drawTimingDiagram();
     showToast('Wire deleted.','info',1000);
 }
 function deleteSelectedWires(){
@@ -2603,6 +2676,7 @@ function deleteSelectedWires(){
     wires=wires.filter(w=>!selectedWireIds.has(w.id));
     selectedWireIds.clear();
     runSimulation();drawWires();forceSaveState();
+    if(typeof drawTimingDiagram === 'function') drawTimingDiagram();
     showToast(`Deleted ${n} wire${n>1?'s':''}.`,'info',1200);
 }
 function onWireClick(e){
@@ -2630,8 +2704,22 @@ function onWireDblClick(e){
 function onWireContextMenu(e){
     e.preventDefault();
     e.stopPropagation();
-    const wireId=parseInt(e.currentTarget.dataset.wireId);
-    if(!isNaN(wireId))deleteWireById(wireId);
+    const wireId = parseInt(e.currentTarget.dataset.wireId);
+    if(isNaN(wireId)) return;
+    const item = { kind:'wire', wireId };
+    const tracked = isTracked(item);
+    const items = [
+        {
+            label: tracked ? '📈 Remove from Timing Diagram' : '📈 Add to Timing Diagram',
+            action: () => {
+                const r = toggleTrackedNode(item);
+                if(typeof showToast === 'function')
+                    showToast(r === 'added' ? 'Added to timing diagram.' : 'Removed from timing diagram.', 'info', 1200);
+            }
+        },
+        { label: '✕ Delete wire', danger: true, action: () => deleteWireById(wireId) }
+    ];
+    showTimingContextMenu(items, e.clientX, e.clientY);
 }
 function updateModalTempWire(cx,cy){
     if(!modalDraggingWire)return;
@@ -2770,6 +2858,7 @@ function removeComponent(id,skipSave){
     compPortEls.delete(id);
     dirtyPortComponents.delete(id);
     selectedIds.delete(id);resetSelectionSourceIndex();runSimulation();drawWires();
+    if(typeof drawTimingDiagram === 'function') drawTimingDiagram();
     if(!skipSave)forceSaveState();
 }
 function toggleInput(id){
@@ -3050,6 +3139,7 @@ function tickSingleClock(comp){
         comp.clockCounter=0;
         comp.state = comp.state === ST1 ? ST0 : ST1;
         comp.outputVal=comp.state;
+        _timingClockFired = true;
     }
 }
 function tickNestedClocksMain(comp){
@@ -3067,7 +3157,7 @@ function tickNestedClocksMain(comp){
             const oldState=st.state;
             if(st.counter>=st.period){st.counter=0;st.state=st.state===1?0:1}
             sc.state=st.state;sc.outputVal=st.state;
-            if(oldState!==st.state)anyChanged=true;
+            if(oldState!==st.state){anyChanged=true;_timingClockFired=true;}
         }
     });
     return anyChanged;
@@ -3258,6 +3348,7 @@ function tickNestedTiming(container){
 }
 function tickAll(){
     const seeds=[];
+    _timingClockFired = false;
     for(let i=0;i<components.length;i++){
         const comp=components[i];
         if(!comp.isCustom&&comp.type==='DELAY'){
@@ -3281,7 +3372,8 @@ function tickAll(){
         }
     }
     if(seeds.length)runSimulationIncremental(components,wires,seeds,updateVisuals);
-    // else: nothing changed this tick — visuals are already correct, skip.
+    // Clock edge fired this tick → capture a sample AFTER propagation
+    if(_timingClockFired && typeof captureTimelineSample === 'function') captureTimelineSample();
 }
 function tickModal(){
     const seeds=[];
@@ -3319,7 +3411,11 @@ function tickModal(){
     }
     setTimeout(tickLoop, TICK_MS);
 })();
-function stepSimulation(){tickAll();forceSaveState()}
+function stepSimulation(){
+    tickAll();
+    if(typeof captureTimelineSample === 'function') captureTimelineSample();
+    forceSaveState();
+}
 
 function updateVisuals(){
     const world=getWorld();
@@ -4317,6 +4413,10 @@ async function clearAll(){
     compEls.clear();compPortEls.clear();dirtyPortComponents.clear();portPositionsDirty=true;portPositions={};
     wirePaths.clear();
     updateCustomGatesToolbar();resetWiring();markPortPositionsDirty();drawWires();
+    if(typeof timingTracked !== 'undefined') timingTracked.length = 0;
+    if(typeof timingHistory !== 'undefined') timingHistory.length = 0;
+    if(typeof drawTimingDiagram === 'function') drawTimingDiagram();
+    if(typeof updateTimingInfo === 'function') updateTimingInfo();
     localStorage.removeItem('logic_sim_save_state_v4');forceSaveState();showToast('All cleared.','info');
 }
 setInterval(() => { scheduleIdleSave(); }, 15000);
@@ -4451,6 +4551,7 @@ function deleteCustomGateByName(gateName){
         components.some(c => c.id === w.toComp)
     );
     delete savedCustomGates[gateName];
+    if(typeof drawTimingDiagram === 'function') drawTimingDiagram();
 }
 
 async function deleteCurrentCustomGate(){
@@ -8605,6 +8706,7 @@ function applyRemoteWireRemoval(idStr){
     wires = wires.filter(w => w.id !== id);
     drawWires();
     runSimulation();
+    if(typeof drawTimingDiagram === 'function') drawTimingDiagram();
     lastSyncedWireSigs.delete(id);
 }
 
@@ -8643,6 +8745,372 @@ window.leaveRoom              = leaveRoom;
 window.copyRoomCode           = copyRoomCode;
 window.signOutCollab          = signOutCollab;
 window.changeUserColor        = changeUserColor;
+
+/* ═══════════════════════════════════════════════════════════
+   TIMING DIAGRAM (CHRONOGRAM)
+   ═══════════════════════════════════════════════════════════ */
+var timingTracked  = [];
+var timingHistory  = [];
+var _timingClockFired = false;
+var _timingLastCapture = 0;
+const TIMING_MAX_SAMPLES = 600;
+const TIMING_PALETTE = ['#22d3ee','#a78bfa','#f59e0b','#84cc16','#ec4899',
+                        '#f97316','#06b6d4','#eab308','#8b5cf6','#14b8a6',
+                        '#f43f5e','#3b82f6','#10b981','#e879f9'];
+
+function toggleTimingPanel(){
+    const panel    = document.getElementById('timing-panel');
+    const viewport = document.getElementById('viewport');
+    const toastC   = document.getElementById('toast-container');
+    if(!panel) return;
+    const willOpen = !panel.classList.contains('open');
+    if(willOpen){
+        panel.classList.add('open');
+        panel.style.display = 'flex';
+        if(viewport) viewport.style.bottom = '220px';
+        if(toastC)   toastC.style.bottom   = '230px';
+    }else{
+        panel.classList.remove('open');
+        panel.style.display = 'none';
+        if(viewport) viewport.style.bottom = '0';
+        if(toastC)   toastC.style.bottom   = '';
+    }
+    // If opening with tracked nodes but no history, seed one sample
+    if(willOpen && timingTracked.length && !timingHistory.length) captureTimelineSample(true);
+    setTimeout(drawTimingDiagram, 80);
+    updateTimingInfo();
+}
+
+function clearTimeline(){
+    timingHistory = [];
+    drawTimingDiagram();
+    updateTimingInfo();
+    if(typeof showToast === 'function') showToast('Timeline cleared.', 'info', 1200);
+}
+
+function updateTimingInfo(){
+    const el = document.getElementById('timing-info');
+    if(!el) return;
+    el.textContent = timingTracked.length
+        ? `${timingTracked.length} node${timingTracked.length===1?'':'s'} · ${timingHistory.length} sample${timingHistory.length===1?'':'s'}`
+        : 'No nodes tracked';
+}
+
+function trackedKey(item){
+    if(item.kind === 'port') return `p:${item.compId}:${item.portType}:${item.portIdx}`;
+    if(item.kind === 'wire') return `w:${item.wireId}`;
+    return '';
+}
+function isTracked(item){
+    const k = trackedKey(item);
+    return timingTracked.some(t => trackedKey(t) === k);
+}
+function makeTrackedLabel(item){
+    if(item.kind === 'port'){
+        const comp = components.find(c => c.id === item.compId);
+        const name = comp ? ((comp.customLabel||'').trim() || comp.type) : `#${item.compId}`;
+        const dir  = item.portType === 'out' ? 'OUT' : 'IN';
+        return `${name} ${dir}${item.portIdx}`;
+    }
+    if(item.kind === 'wire'){
+        const w = wires.find(x => x.id === item.wireId);
+        if(!w) return `Wire #${item.wireId}`;
+        const src = components.find(c => c.id === w.fromComp);
+        const dst = components.find(c => c.id === w.toComp);
+        const srcN = src ? ((src.customLabel||'').trim() || src.type) : `#${w.fromComp}`;
+        const dstN = dst ? ((dst.customLabel||'').trim() || dst.type) : `#${w.toComp}`;
+        return `${srcN}→${dstN}:${w.toPort}`;
+    }
+    return '?';
+}
+
+function toggleTrackedNode(item){
+    const k = trackedKey(item);
+    const idx = timingTracked.findIndex(t => trackedKey(t) === k);
+    if(idx !== -1){
+        timingTracked.splice(idx, 1);
+        for(const s of timingHistory) if(idx < s.length) s.splice(idx, 1);
+        drawTimingDiagram();
+        updateTimingInfo();
+        return 'removed';
+    }
+    const color = TIMING_PALETTE[timingTracked.length % TIMING_PALETTE.length];
+    timingTracked.push({ ...item, label: makeTrackedLabel(item), color });
+    // backfill existing history with current value for this new node
+    const nowVal = readTrackedValue({ ...item });
+    for(const s of timingHistory) s.push(nowVal);
+    if(!timingHistory.length) timingHistory.push(timingTracked.map(t => readTrackedValue(t)));
+    drawTimingDiagram();
+    updateTimingInfo();
+    return 'added';
+}
+
+function readTrackedValue(item){
+    if(typeof coerceState !== 'function') coerceState = v => (v===1||v===true)?'1':(v===0||v===false)?'0':(typeof v==='string'?v:'Z');
+    if(item.kind === 'port'){
+        const comp = components.find(c => c.id === item.compId);
+        if(!comp) return 'Z';
+        if(item.portType === 'out'){
+            const v = (typeof getOutputValue === 'function')
+                ? getOutputValue(comp, item.portIdx)
+                : (comp.outputVal !== undefined ? comp.outputVal : 'Z');
+            if(Array.isArray(v)) return v.some(b => b === '1' || b === 1) ? '1' : '0';
+            return coerceState(v);
+        }
+        const v = comp.inputs && comp.inputs[item.portIdx];
+        return coerceState(v === undefined ? 'Z' : v);
+    }
+    if(item.kind === 'wire'){
+        const w = wires.find(x => x.id === item.wireId);
+        if(!w) return 'Z';
+        const src = components.find(c => c.id === w.fromComp);
+        if(!src) return 'Z';
+        // If several drivers target the same destination port, resolve contention
+        const peers = wires.filter(x => x.toComp === w.toComp && x.toPort === w.toPort);
+        if(peers.length > 1 && typeof resolveDrivers === 'function'){
+            const vals = peers.map(pw => {
+                const s = components.find(c => c.id === pw.fromComp);
+                if(!s) return 'Z';
+                const v = (typeof getOutputValue === 'function')
+                    ? getOutputValue(s, pw.fromPort) : (s.outputVal || 'Z');
+                return Array.isArray(v) ? (v.some(b => b === '1') ? '1' : '0') : v;
+            });
+            return coerceState(resolveDrivers(vals));
+        }
+        const v = (typeof getOutputValue === 'function')
+            ? getOutputValue(src, w.fromPort) : (src.outputVal || 'Z');
+        if(Array.isArray(v)) return v.some(b => b === '1' || b === 1) ? '1' : '0';
+        return coerceState(v);
+    }
+    return 'Z';
+}
+
+function captureTimelineSample(force){
+    if(!timingTracked || !timingTracked.length) return;
+    const now = performance.now();
+    if(!force && now - _timingLastCapture < 2) return;
+    _timingLastCapture = now;
+    const vals = timingTracked.map(t => readTrackedValue(t));
+    timingHistory.push(vals);
+    if(timingHistory.length > TIMING_MAX_SAMPLES) timingHistory.shift();
+    drawTimingDiagram();
+    updateTimingInfo();
+}
+
+/* ── Canvas rendering ────────────────────────────────── */
+function drawTimingDiagram(){
+    /* ── Auto-purge: drop any tracked node whose component/wire is gone ── */
+    if(timingTracked && timingTracked.length){
+        let purged = 0;
+        for(let i = timingTracked.length - 1; i >= 0; i--){
+            const t = timingTracked[i];
+            let stale = false;
+            if(t.kind === 'port' && !components.find(c => c.id === t.compId)) stale = true;
+            else if(t.kind === 'wire' && !wires.find(w => w.id === t.wireId)) stale = true;
+            if(stale){
+                timingTracked.splice(i, 1);
+                for(const s of timingHistory) if(i < s.length) s.splice(i, 1);
+                purged++;
+            }
+        }
+        if(purged) updateTimingInfo();
+    }
+
+    const canvas = document.getElementById('timing-canvas');
+    const panel  = document.getElementById('timing-panel');
+    if(!canvas || !panel || !panel.classList.contains('open')) return;
+    const rect = canvas.getBoundingClientRect();
+    if(rect.width < 10 || rect.height < 10) return;
+
+    const dpr = window.devicePixelRatio || 1;
+    canvas.width  = Math.floor(rect.width  * dpr);
+    canvas.height = Math.floor(rect.height * dpr);
+    const ctx = canvas.getContext('2d');
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+
+    const style = getComputedStyle(document.body);
+    const bg      = style.getPropertyValue('--bg-color').trim()     || '#f7f8fa';
+    const textCol = style.getPropertyValue('--text-color').trim()   || '#14181f';
+    const bordCol = style.getPropertyValue('--border-color').trim() || '#e3e6eb';
+
+    ctx.fillStyle = bg;
+    ctx.fillRect(0, 0, rect.width, rect.height);
+
+    const LABEL_W = 150;
+    const ROW_H   = 26;
+    const PAD_TOP = 6;
+    const WAVE_X  = LABEL_W;
+    const WAVE_W  = rect.width - LABEL_W - 6;
+
+    if(!timingTracked.length){
+        ctx.fillStyle = textCol;
+        ctx.globalAlpha = 0.55;
+        ctx.font = '12px system-ui,-apple-system,sans-serif';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText('Right-click any port or wire → "Add to Timing Diagram"',
+                     rect.width/2, rect.height/2);
+        ctx.globalAlpha = 1;
+        return;
+    }
+
+    const sampleW    = 4;
+    const maxVisible = Math.max(1, Math.floor(WAVE_W / sampleW));
+    const startIdx   = Math.max(0, timingHistory.length - maxVisible);
+    const visible    = timingHistory.slice(startIdx);
+
+    // Vertical grid
+    ctx.strokeStyle = bordCol;
+    ctx.lineWidth = 0.5;
+    ctx.beginPath();
+    for(let i = 0; i < visible.length; i += 5){
+        const x = WAVE_X + i * sampleW + 0.5;
+        ctx.moveTo(x, 0);
+        ctx.lineTo(x, rect.height);
+    }
+    ctx.stroke();
+
+    for(let rowIdx = 0; rowIdx < timingTracked.length; rowIdx++){
+        const item = timingTracked[rowIdx];
+        const y0 = PAD_TOP + rowIdx * ROW_H;
+        if(y0 > rect.height) break;
+
+        const yHigh = y0 + 5;
+        const yLow  = y0 + ROW_H - 6;
+        const yMid  = (yHigh + yLow) / 2;
+
+        // Label column background
+        ctx.fillStyle = item.color;
+        ctx.globalAlpha = 0.18;
+        ctx.fillRect(0, y0, LABEL_W, ROW_H);
+        ctx.globalAlpha = 1;
+        ctx.fillStyle = item.color;
+        ctx.fillRect(0, y0, 3, ROW_H);
+
+        // Label text
+        ctx.fillStyle = textCol;
+        ctx.font = '11px ui-monospace,Menlo,Consolas,monospace';
+        ctx.textAlign = 'left';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(item.label || '(unnamed)', 8, y0 + ROW_H/2);
+
+        // Baseline (low level) hint
+        ctx.strokeStyle = bordCol;
+        ctx.lineWidth = 0.5;
+        ctx.beginPath();
+        ctx.moveTo(WAVE_X, yLow + 0.5);
+        ctx.lineTo(WAVE_X + WAVE_W, yLow + 0.5);
+        ctx.stroke();
+
+        // Waveform
+        for(let i = 0; i < visible.length; i++){
+            const v = visible[i][rowIdx] || 'Z';
+            const x = WAVE_X + i * sampleW;
+            const xEnd = x + sampleW;
+
+            if(v === 'X'){
+                // Red "error" fill, both rails drawn
+                ctx.fillStyle = 'rgba(239,68,68,.28)';
+                ctx.fillRect(x, yHigh, sampleW, yLow - yHigh);
+                ctx.strokeStyle = '#ef4444';
+                ctx.lineWidth = 1.5;
+                ctx.beginPath();
+                ctx.moveTo(x, yHigh); ctx.lineTo(xEnd, yHigh);
+                ctx.moveTo(x, yLow);  ctx.lineTo(xEnd, yLow);
+                ctx.stroke();
+                if(i < visible.length - 1){
+                    const nv = visible[i+1][rowIdx] || 'Z';
+                    const ny = _timingStateY(nv, yHigh, yLow);
+                    if(nv !== 'X'){
+                        ctx.beginPath();
+                        ctx.moveTo(xEnd, yMid);
+                        ctx.lineTo(xEnd, ny);
+                        ctx.stroke();
+                    }
+                }
+                continue;
+            }
+
+            const y = _timingStateY(v, yHigh, yLow);
+            const isZ = v === 'Z';
+            const isHi = v === '1';
+
+            // Horizontal segment
+            ctx.strokeStyle = isZ ? '#6b7280'
+                            : isHi ? item.color
+                            : _timingDarken(item.color, 0.45);
+            ctx.lineWidth = 2;
+            ctx.setLineDash(isZ ? [3, 3] : []);
+            ctx.beginPath();
+            ctx.moveTo(x, y);
+            ctx.lineTo(xEnd, y);
+            ctx.stroke();
+            ctx.setLineDash([]);
+
+            // Vertical transition
+            if(i < visible.length - 1){
+                const nv = visible[i+1][rowIdx] || 'Z';
+                const ny = _timingStateY(nv, yHigh, yLow);
+                if(Math.abs(ny - y) > 0.5){
+                    ctx.beginPath();
+                    ctx.moveTo(xEnd, y);
+                    ctx.lineTo(xEnd, ny);
+                    ctx.stroke();
+                }
+            }
+        }
+    }
+}
+
+function _timingStateY(v, yHigh, yLow){
+    if(v === '1') return yHigh;
+    if(v === '0') return yLow;
+    return (yHigh + yLow) / 2;   // Z / X at mid
+}
+function _timingDarken(hex, factor){
+    const h = (hex||'#000000').replace('#','');
+    if(h.length !== 6) return hex;
+    const r = Math.round(parseInt(h.slice(0,2),16) * factor);
+    const g = Math.round(parseInt(h.slice(2,4),16) * factor);
+    const b = Math.round(parseInt(h.slice(4,6),16) * factor);
+    return `rgb(${r},${g},${b})`;
+}
+
+/* ── Context menu ────────────────────────────────────── */
+function closeTimingContextMenu(){
+    const m = document.getElementById('timing-context-menu');
+    if(m) m.remove();
+}
+function showTimingContextMenu(items, x, y){
+    closeTimingContextMenu();
+    const m = document.createElement('div');
+    m.id = 'timing-context-menu';
+    items.forEach(it => {
+        const el = document.createElement('div');
+        el.className = 'tcm-item' + (it.danger ? ' tcm-danger' : '');
+        el.textContent = it.label;
+        el.addEventListener('mousedown', e => e.stopPropagation());
+        el.addEventListener('click', e => {
+            e.stopPropagation();
+            closeTimingContextMenu();
+            try { it.action(); } catch(err){ console.warn('[timing menu]', err); }
+        });
+        m.appendChild(el);
+    });
+    document.body.appendChild(m);
+    m.style.left = Math.max(4, Math.min(x, window.innerWidth  - m.offsetWidth  - 6)) + 'px';
+    m.style.top  = Math.max(4, Math.min(y, window.innerHeight - m.offsetHeight - 6)) + 'px';
+    m.addEventListener('mousedown', e => e.stopPropagation());
+    m.addEventListener('contextmenu', e => e.preventDefault());
+}
+
+/* Keep the canvas sized on window resize */
+window.addEventListener('resize', () => drawTimingDiagram());
+
+/* Public API */
+window.toggleTimingPanel = toggleTimingPanel;
+window.clearTimeline     = clearTimeline;
+window.drawTimingDiagram = drawTimingDiagram;
 
 </script>
 </body>
