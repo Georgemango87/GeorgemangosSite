@@ -796,6 +796,38 @@ body.no-animations *,body.no-animations *::before,body.no-animations *::after{
   background:#ef4444!important;
   border-color:#fca5a5!important;
 }
+/* ══ 4-STATE WIRE COLOURS ══ */
+:root{
+  --wire-low-color:#0f1f33;
+  --wire-high-color:#22c55e;
+  --wire-float-color:#6b7280;
+  --wire-error-color:#ef4444;
+}
+.wire-path.low{stroke:var(--wire-low-color)}
+.wire-path.floating{stroke:var(--wire-float-color);stroke-dasharray:6,4}
+.wire-path.contention{stroke:var(--wire-error-color)!important;
+  animation:wireFlash .5s ease-in-out infinite alternate}
+.wire-path.low:hover{stroke:#1e40af;stroke-width:4.5}
+.wire-path.floating:hover{stroke:#9ca3af;stroke-width:4.5}
+.wire-path.contention:hover{stroke:#fca5a5!important;stroke-width:5}
+@keyframes wireFlash{
+  0%{stroke:#ef4444}
+  100%{stroke:#ff9999;stroke-width:5.5}
+}
+
+/* Contention ports flash red */
+.port.contention-port{background:#ef4444!important;border-color:#fca5a5!important;
+  animation:busErrPulse .55s ease-in-out infinite alternate!important}
+
+/* Error bulb (output receiving X) */
+.bulb.error{background:#ef4444;box-shadow:0 0 14px #ef4444;border-color:#dc2626;
+  animation:busErrPulse .6s ease-in-out infinite alternate}
+
+/* Tri-state buffer badge */
+.gate.tri-gate .gate-header{background:linear-gradient(135deg,#0891b2,#155e75)!important}
+
+#debug-tooltip .dbg-err-inline{color:#f87171;font-weight:bold}
+#debug-tooltip .dbg-z{color:#9ca3af;font-style:italic}
 </style>
 </head>
 <body>
@@ -819,7 +851,8 @@ body.no-animations *,body.no-animations *::before,body.no-animations *::after{
         <div class="tool-btn" data-gate-type="CLOCK" style="background:#0d9488;" onmousedown="startGhostDrag(event,'CLOCK')" ontouchstart="startGhostDrag(event,'CLOCK')">CLOCK</div>
         <div class="tool-btn" data-gate-type="PULSE" style="background:#be123c;" onmousedown="startGhostDrag(event,'PULSE')" ontouchstart="startGhostDrag(event,'PULSE')">PULSE</div>
         <div class="tool-btn" data-gate-type="JOINER" style="background:#7c3aed;" onmousedown="startGhostDrag(event,'JOINER')" ontouchstart="startGhostDrag(event,'JOINER')">Join</div>
-        <div class="tool-btn" data-gate-type="SPLITTER" style="background:#7c3aed;" onmousedown="startGhostDrag(event,'SPLITTER')" ontouchstart="startGhostDrag(event,'SPLITTER')">Split</div>
+        <div class="tool-btn" data-gate-type="SPLITTER" style="background:#7c3aed;" onmousedown="startGhostDrag(event,'SPLITTER')" ontouchstart="startGhostDrag(event,'SPLITTER')">Split</div>\
+        <div class="tool-btn" data-gate-type="TRI" style="background:#0891b2;" onmousedown="startGhostDrag(event,'TRI')" ontouchstart="startGhostDrag(event,'TRI')">Tri-Buf</div>
     </div>
     <div class="toolbar-group" style="border-left:2px solid var(--border-color);padding-left:5px;">
         <div class="tool-btn" data-gate-type="SCREEN" style="background:#d97706;" onmousedown="startGhostDrag(event,'SCREEN')" ontouchstart="startGhostDrag(event,'SCREEN')">Pixel</div>
@@ -1147,13 +1180,18 @@ function buildWorldCache(){
     }
     const wiresByToComp = new Map();
     const iwm = new Map();
+    const iwmMulti = new Map();       /* toComp:toPort -> array of wires */
     for(let i=0;i<wires.length;i++){
         const w = wires[i];
         if(!byId.has(w.fromComp) || !byId.has(w.toComp)) continue;
         let list = wiresByToComp.get(w.toComp);
         if(!list){ list=[]; wiresByToComp.set(w.toComp, list); }
         list.push(w);
-        iwm.set(w.toComp + ':' + w.toPort, w);
+        const key = w.toComp + ':' + w.toPort;
+        if(!iwm.has(key)) iwm.set(key, w);   /* kept for legacy callers */
+        let mlist = iwmMulti.get(key);
+        if(!mlist){ mlist=[]; iwmMulti.set(key, mlist); }
+        mlist.push(w);
     }
     const consumers = new Map();
     for(let i=0;i<wires.length;i++){
@@ -1173,6 +1211,7 @@ function buildWorldCache(){
     worldCache.compsByType = compsByType;
     worldCache.wiresByToComp = wiresByToComp;
     worldCache.iwm = iwm;
+    worldCache.iwmMulti = iwmMulti;
     worldCache.consumers = consumers;
     return worldCache;
 }
@@ -1233,7 +1272,7 @@ let pendingSnapshotTimer=null;function snapValue(v){
     return Math.round(v/SNAP)*SNAP;
 }
 
-const GATE_COLORS={INPUT:'#1f3a63',PUSH:'#3d4653',OUTPUT:'#b45309',AND:'#15803d',OR:'#0f766e',XOR:'#6d28d9',NOT:'#b91c1c',NAND:'#134e4a',NOR:'#3730a3',XNOR:'#0369a1',DELAY:'#3d4653',CLOCK:'#0d9488',PULSE:'#be123c',SCREEN:'#d97706',COLOR:'#9d174d',JOINER:'#7c3aed',SPLITTER:'#7c3aed'};
+const GATE_COLORS={INPUT:'#1f3a63',PUSH:'#3d4653',OUTPUT:'#b45309',AND:'#15803d',OR:'#0f766e',XOR:'#6d28d9',NOT:'#b91c1c',NAND:'#134e4a',NOR:'#3730a3',XNOR:'#0369a1',DELAY:'#3d4653',CLOCK:'#0d9488',PULSE:'#be123c',SCREEN:'#d97706',COLOR:'#9d174d',JOINER:'#7c3aed',SPLITTER:'#7c3aed',TRI:'#0891b2'};
 function getGateColor(c){if(c.isCustom)return(c.def&&c.def.color)||'#1f3a63';return GATE_COLORS[c.type]||'#007bff'}
 function getGateColorByName(t,d){if(d&&d.color)return d.color;return GATE_COLORS[t]||'#1f3a63'}
 
@@ -1254,39 +1293,60 @@ function ensureDelayQueue(comp){
     const n=delayTicksFor(comp);
     const old=Array.isArray(comp.delayQueue)?comp.delayQueue:[];
     if(old.length!==n){
-        const q=new Array(n).fill(0);
+        const q=new Array(n).fill(ST0);
         const keep=Math.min(old.length,n);
-        for(let i=0;i<keep;i++)q[n-keep+i]=Number(old[old.length-keep+i])?1:0;
+        for(let i=0;i<keep;i++)q[n-keep+i]=coerceState(old[old.length-keep+i]);
         comp.delayQueue=q;
+    }else{
+        for(let i=0;i<comp.delayQueue.length;i++)
+            comp.delayQueue[i]=coerceState(comp.delayQueue[i]);
     }
     return comp.delayQueue;
 }
-/* FIX 1: preserve existing inputs when the array already matches the
-   expected size, so re-hydration does not wipe live signal values. */
 function initComponentInputs(comp){
     if(!comp)return;
     const t=comp.type;
+
+    /* ── Migrate any legacy numeric values to state strings ── */
+    comp.state     = coerceState(comp.state);
+    comp.outputVal = coerceState(comp.outputVal);
+    if(Array.isArray(comp.inputs)){
+        for(let i=0;i<comp.inputs.length;i++)comp.inputs[i]=coerceState(comp.inputs[i]);
+    }
+    if(Array.isArray(comp.outputsArray)){
+        for(let i=0;i<comp.outputsArray.length;i++)comp.outputsArray[i]=coerceState(comp.outputsArray[i]);
+    }
+    if(Array.isArray(comp.busOutput)){
+        for(let i=0;i<comp.busOutput.length;i++)comp.busOutput[i]=coerceState(comp.busOutput[i]);
+    }
+    if(Array.isArray(comp.outputBits)){
+        for(let i=0;i<comp.outputBits.length;i++)comp.outputBits[i]=coerceState(comp.outputBits[i]);
+    }
+
     if(comp.isCustom){
         const n=(comp.def&&comp.def.inputsCount)||0;
-        if(!Array.isArray(comp.inputs)||comp.inputs.length!==n)comp.inputs=new Array(n).fill(0);
+        if(!Array.isArray(comp.inputs)||comp.inputs.length!==n)comp.inputs=new Array(n).fill(ST0);
     }
     else if(t==='INPUT'||t==='OUTPUT'||t==='SCREEN'||t==='PUSH'||t==='NOT'||t==='DELAY'||t==='COLOR'||t==='PULSE'||t==='CLOCK'){
-        if(!Array.isArray(comp.inputs)||comp.inputs.length!==1)comp.inputs=[0];
+        if(!Array.isArray(comp.inputs)||comp.inputs.length!==1)comp.inputs=[ST0];
+    }
+    else if(t==='TRI'){
+        if(!Array.isArray(comp.inputs)||comp.inputs.length!==2)comp.inputs=[STZ,STZ];
     }
     else if(t==='JOINER'){
         const n=Math.max(2,Math.min(16,comp.busWidth||4));
         comp.busWidth=n;
-        if(!Array.isArray(comp.inputs)||comp.inputs.length!==n)comp.inputs=new Array(n).fill(0);
-        if(!Array.isArray(comp.busOutput)||comp.busOutput.length!==n)comp.busOutput=new Array(n).fill(0);
+        if(!Array.isArray(comp.inputs)||comp.inputs.length!==n)comp.inputs=new Array(n).fill(ST0);
+        if(!Array.isArray(comp.busOutput)||comp.busOutput.length!==n)comp.busOutput=new Array(n).fill(ST0);
     }
     else if(t==='SPLITTER'){
         const n=Math.max(2,Math.min(16,comp.busWidth||4));
         comp.busWidth=n;
-        if(!Array.isArray(comp.inputs)||comp.inputs.length!==1)comp.inputs=[0];
-        if(!Array.isArray(comp.outputBits)||comp.outputBits.length!==n)comp.outputBits=new Array(n).fill(0);
+        if(!Array.isArray(comp.inputs)||comp.inputs.length!==1)comp.inputs=[STZ];
+        if(!Array.isArray(comp.outputBits)||comp.outputBits.length!==n)comp.outputBits=new Array(n).fill(ST0);
     }
     else{
-        if(!Array.isArray(comp.inputs)||comp.inputs.length!==2)comp.inputs=[0,0];
+        if(!Array.isArray(comp.inputs)||comp.inputs.length!==2)comp.inputs=[ST0,ST0];
     }
     if(t==='DELAY'){
         if(comp.delayMs===undefined||comp.delayMs===null)comp.delayMs=(Number(comp.delayVal)||3)*TICK_MS;
@@ -1301,9 +1361,46 @@ function initComponentInputs(comp){
     if(t==='PULSE'){
         comp.pulseCounter=comp.pulseCounter||0;
         comp.pulsePrevInput=comp.pulsePrevInput||0;
-        if(comp.state===undefined)comp.state=0;
         comp.outputVal=comp.state;
     }
+}
+
+/* ═══ 4-STATE LOGIC HELPERS ═══ */
+const ST0 = '0', ST1 = '1', STZ = 'Z', STX = 'X';
+
+function coerceState(v){
+    if(v === 0 || v === false) return ST0;
+    if(v === 1 || v === true)  return ST1;
+    if(v === '0' || v === '1' || v === 'Z' || v === 'X') return v;
+    if(Array.isArray(v)) return v.length ? coerceState(v[0]) : STZ;
+    return ST0;
+}
+
+function gateNormalize(v){
+    v = coerceState(v);
+    return v === STZ ? ST0 : v;   /* floating = low for standard gates */
+}
+
+function resolveDrivers(vals){
+    let hasLow = false, hasHigh = false;
+    for(let i = 0; i < vals.length; i++){
+        const v = coerceState(vals[i]);
+        if(v === STX) return STX;
+        if(v === ST1) hasHigh = true;
+        else if(v === ST0) hasLow = true;
+    }
+    if(hasLow && hasHigh) return STX;
+    if(hasHigh) return ST1;
+    if(hasLow)  return ST0;
+    return STZ;
+}
+
+function wireStateClass(v){
+    v = coerceState(v);
+    if(v === ST1) return 'powered';
+    if(v === STX) return 'contention';
+    if(v === STZ) return 'floating';
+    return 'low';
 }
 
 /* ═══ MULTI-BIT BUS HELPERS ═══ */
@@ -1314,17 +1411,17 @@ function getPortWidth(comp, dir, portIdx){
     return 1;
 }
 function getOutputValue(src, fromPort){
-    if(!src) return 0;
+    if(!src) return STZ;
     if(src.isCustom){
         return (src.outputsArray && src.outputsArray[fromPort] !== undefined)
-            ? src.outputsArray[fromPort] : 0;
+            ? coerceState(src.outputsArray[fromPort]) : STZ;
     }
     if(src.type === 'JOINER')
-        return Array.isArray(src.busOutput) ? src.busOutput.slice() : [];
+        return Array.isArray(src.busOutput) ? src.busOutput.map(coerceState) : [];
     if(src.type === 'SPLITTER')
         return (src.outputBits && src.outputBits[fromPort] !== undefined)
-            ? src.outputBits[fromPort] : 0;
-    return src.outputVal || 0;
+            ? coerceState(src.outputBits[fromPort]) : ST0;
+    return src.outputVal === undefined ? STZ : coerceState(src.outputVal);
 }
 function validateConnection(fromComp, fromPort, toComp, toPort){
     if(!fromComp || !toComp) return { ok:false, msg:'Component missing.' };
@@ -1764,6 +1861,7 @@ function startGhostDrag(e,type,sourceFolder){
         else if(type==='SCREEN'){bc=`<div style="width:40px;height:40px;background:var(--pixel-off);position:relative;"><div class="port" style="position:absolute;left:50%;top:50%;transform:translate(-50%,-50%) scale(.7);width:12px;height:12px;border-radius:50%;background:#007bff;border:2px solid #fff;opacity:.5;"></div></div>`;w=40;h=40}
         else if(type==='JOINER'){bc=`<div style="display:flex;justify-content:space-between;align-items:center;gap:4px;"><div><div class="port" style="margin-bottom:3px;"></div><div class="port" style="margin-bottom:3px;"></div><div class="port"></div></div><span style="font-size:9px;">JOIN</span><div class="port output" style="width:16px;height:16px;border-radius:4px;"></div></div>`;h=120;w=140}
         else if(type==='SPLITTER'){bc=`<div style="display:flex;justify-content:space-between;align-items:center;gap:4px;"><div class="port" style="width:16px;height:16px;border-radius:4px;"></div><span style="font-size:9px;">SPLIT</span><div><div class="port output" style="margin-bottom:3px;"></div><div class="port output" style="margin-bottom:3px;"></div><div class="port output"></div></div></div>`;h=120;w=140}
+        else if(type==='TRI'){bc=`<div style="display:flex;justify-content:space-between;align-items:center;gap:4px;"><div class="port"></div><span style="font-size:9px;">TRI</span><div class="port output"></div></div>`;h=80;w=140}
         else{bc=`<div style="display:flex;justify-content:space-between;align-items:center;"><div><div class="port" style="margin-bottom:3px;"></div><div class="port"></div></div><span style="font-size:10px;font-weight:bold;">${type}</span><div class="port output"></div></div>`}
     }
     ghostGate.style.setProperty('--gate-color',gc);ghostGate.style.width=w+'px';
@@ -1894,8 +1992,12 @@ function handleEnd(cx,cy){
             if(!check.ok){
                 flashPortError(t,check.msg);
             }else{
-                wires=wires.filter(w=>!(w.toComp===tc&&w.toPort===tp));
-                wires.push(newWire(draggingWire.compId,draggingWire.portIndex,tc,tp));
+                const exists = wires.some(w =>
+                    w.fromComp===draggingWire.compId && w.fromPort===draggingWire.portIndex &&
+                    w.toComp===tc && w.toPort===tp);
+                if(!exists){
+                    wires.push(newWire(draggingWire.compId,draggingWire.portIndex,tc,tp));
+                }
                 runSimulation();drawWires();forceSaveState();
             }
         }
@@ -1924,7 +2026,6 @@ function connectWireInPourMode(tc,tp){
         return true;
     }
     if(wires.some(w=>w.fromComp===fc&&w.fromPort===fp&&w.toComp===tc&&w.toPort===tp)){showToast('Wire already exists.','info',800);return false}
-    wires=wires.filter(w=>!(w.toComp===tc&&w.toPort===tp));
     wires.push(newWire(fc,fp,tc,tp));
     runSimulation();drawWires();forceSaveState();
     const ie=document.querySelector(`.port[data-comp="${tc}"][data-type="in"][data-port="${tp}"]`);
@@ -1942,7 +2043,6 @@ function wireFromSelectedSource(tc,tp){
         return true;
     }
     if(wires.some(w=>w.fromComp===s.id&&w.fromPort===fp&&w.toComp===tc&&w.toPort===tp)){showToast(`Wire from ${s.type||'gate'} already exists.`,'info',800);return true}
-    wires=wires.filter(w=>!(w.toComp===tc&&w.toPort===tp));
     wires.push(newWire(s.id,fp,tc,tp));
     runSimulation();drawWires();forceSaveState();
     const ie=document.querySelector(`.port[data-comp="${tc}"][data-type="in"][data-port="${tp}"]`);
@@ -2053,7 +2153,8 @@ function spawnComponentAt(type,x,y){
         clockMs:type==='CLOCK'?250:undefined,clockCounter:type==='CLOCK'?0:undefined,
         pixelColor:type==='COLOR'?'#22c55e':undefined,
         pixelWidth:type==='SCREEN'?40:undefined,pixelHeight:type==='SCREEN'?40:undefined,
-        busWidth:(type==='JOINER'||type==='SPLITTER')?4:undefined};
+        busWidth:(type==='JOINER'||type==='SPLITTER')?4:undefined,
+        state:ST0, outputVal:ST0};
     initComponentInputs(comp);
     components.push(comp);renderComponent(comp);forceSaveState();runSimulation();
     localAddTimes.set(id, Date.now());
@@ -2097,6 +2198,8 @@ function renderComponent(comp){
         el.style.left=comp.x+'px';
         el.style.top=comp.y+'px';
     }
+    if(comp.type==='TRI') el.classList.add('tri-gate');
+
     let bc='';
     if(comp.isCustom){
         const il=(comp.def&&comp.def.inputInitials)||[],ol=(comp.def&&comp.def.outputInitials)||[];
@@ -2120,6 +2223,20 @@ function renderComponent(comp){
         canvas.appendChild(el);
         registerComponentDom(comp,el);
         return;
+    }
+        else if(comp.type==='TRI'){
+        bc = `<div style="display:flex;justify-content:space-between;align-items:center;gap:4px;">`
+           +   `<div style="display:flex;flex-direction:column;align-items:center;gap:2px;">`
+           +     `<div class="port" id="port-${comp.id}-in-0" data-comp="${comp.id}" data-type="in" data-port="0"></div>`
+           +     `<span style="font-size:8px;opacity:.75;">D</span>`
+           +   `</div>`
+           +   `<div style="display:flex;flex-direction:column;align-items:center;gap:2px;">`
+           +     `<span style="font-size:9px;font-weight:bold;">TRI</span>`
+           +     `<div class="port" id="port-${comp.id}-in-1" data-comp="${comp.id}" data-type="in" data-port="1"></div>`
+           +     `<span style="font-size:8px;opacity:.75;">E</span>`
+           +   `</div>`
+           +   `<div class="port output" id="port-${comp.id}-out-0" data-comp="${comp.id}" data-type="out" data-port="0"></div>`
+           + `</div>`;
     }
     else if(comp.type==='JOINER'){
         const n = comp.busWidth || 4;
@@ -2167,7 +2284,7 @@ function renderComponent(comp){
     let ts=`<span class="gate-label" id="gate-label-${comp.id}">${escapeHtml(displayLabel)}</span>`;
     el.innerHTML=`<div class="gate-header" onmousedown="startDragGate(event,${comp.id})" ontouchstart="startDragGate(event,${comp.id})">${ts}${busSel}${hr}</div><div class="gate-body">${bc}</div>`;
     if(comp.type==='INPUT'){const b=el.querySelector(`#sw-${comp.id}`);const tg=e=>{e.preventDefault();e.stopPropagation();toggleInput(comp.id)};b.addEventListener('click',tg);b.addEventListener('touchstart',tg,{passive:false})}
-    if(comp.type==='PUSH'){const b=el.querySelector(`#push-${comp.id}`);const ps=e=>{e.preventDefault();e.stopPropagation();comp.state=1;comp.outputVal=1;b.classList.add('active');b.innerText='ON';runSimulation([comp.id]);forceSaveState()};const pe=e=>{e.preventDefault();e.stopPropagation();comp.state=0;comp.outputVal=0;b.classList.remove('active');b.innerText='PRESS';runSimulation([comp.id]);forceSaveState()};b.addEventListener('mousedown',ps);b.addEventListener('mouseup',pe);b.addEventListener('mouseleave',pe);b.addEventListener('touchstart',ps,{passive:false});b.addEventListener('touchend',pe,{passive:false});b.addEventListener('touchcancel',pe,{passive:false})}
+    if(comp.type==='PUSH'){const b=el.querySelector(`#push-${comp.id}`);const ps=e=>{e.preventDefault();e.stopPropagation();comp.state=ST1;comp.outputVal=ST1;b.classList.add('active');b.innerText='ON';runSimulation([comp.id]);forceSaveState()};const pe=e=>{e.preventDefault();e.stopPropagation();comp.state=ST0;comp.outputVal=ST0;b.classList.remove('active');b.innerText='PRESS';runSimulation([comp.id]);forceSaveState()};b.addEventListener('mousedown',ps);b.addEventListener('mouseup',pe);b.addEventListener('mouseleave',pe);b.addEventListener('touchstart',ps,{passive:false});b.addEventListener('touchend',pe,{passive:false});b.addEventListener('touchcancel',pe,{passive:false})}
     if(comp.type==='DELAY'){const dInp=el.querySelector(`#delay-val-${comp.id}`);dInp.addEventListener('change',e=>{e.stopPropagation();let v=parseInt(dInp.value)||150;v=Math.max(1,Math.min(TICK_MS*MAX_TICKS,v));comp.delayMs=Math.round(v);dInp.value=comp.delayMs;ensureDelayQueue(comp);forceSaveState()});dInp.addEventListener('mousedown',e=>e.stopPropagation())}
     if(comp.type==='CLOCK'){const cInp=el.querySelector(`#clock-val-${comp.id}`);cInp.addEventListener('change',e=>{e.stopPropagation();let v=parseInt(cInp.value)||250;v=Math.max(TICK_MS,Math.min(TICK_MS*MAX_TICKS,v));comp.clockMs=Math.round(v);cInp.value=comp.clockMs;comp.clockCounter=0;forceSaveState()});cInp.addEventListener('mousedown',e=>e.stopPropagation())}
     if(comp.type==='COLOR'){const cInp=el.querySelector(`#color-val-${comp.id}`);cInp.addEventListener('input',e=>{e.stopPropagation();comp.pixelColor=e.target.value;updateVisuals();forceSaveState()});cInp.addEventListener('mousedown',e=>e.stopPropagation())}
@@ -2374,8 +2491,12 @@ function attachPortHandlers(el,which){
                             const check=validateConnection(fromComp,ds.portIndex,toComp,tp);
                             if(!check.ok){ flashPortError(t,check.msg); }
                             else{
-                                wires=wires.filter(w=>!(w.toComp===tc&&w.toPort===tp));
-                                wires.push(newWire(ds.compId,ds.portIndex,tc,tp));
+                                const exists = wires.some(w =>
+                                    w.fromComp===ds.compId && w.fromPort===ds.portIndex &&
+                                    w.toComp===tc && w.toPort===tp);
+                                if(!exists){
+                                    wires.push(newWire(ds.compId,ds.portIndex,tc,tp));
+                                }
                                 runSimulation();drawWires();forceSaveState();
                             }
                         }else{
@@ -2653,10 +2774,12 @@ function removeComponent(id,skipSave){
 }
 function toggleInput(id){
     const c=components.find(c=>c.id===id);if(!c||c.type!=='INPUT')return;
-    c.state=c.state===0?1:0;c.outputVal=c.state;
-    const b=document.getElementById(`sw-${id}`);if(b){b.classList.toggle('active');b.innerText=c.state===1?'ON':'OFF'}
+    c.state = c.state === ST1 ? ST0 : ST1;
+    c.outputVal = c.state;
+    const b=document.getElementById(`sw-${id}`);
+    if(b){ b.classList.toggle('active', c.state === ST1); b.innerText = c.state === ST1 ? 'ON' : 'OFF'; }
     runSimulation([id]);forceSaveState();
-}
+}   
 
 /* ═══════════════════════════════════════════════════════════
    MULTI-BIT BUS HELPERS
@@ -2715,38 +2838,64 @@ function flashPortError(portEl, msg){
 }
 
 function evaluateGate(comp,inputs){
+    /* ── Tri-state buffer: [D, E] → out ───────────────── */
+    if(comp.type==='TRI'){
+        const data = inputs[0] === undefined ? STZ : coerceState(inputs[0]);
+        const en   = gateNormalize(inputs[1] === undefined ? ST0 : inputs[1]);
+        if(en === STX) return STX;               /* uncertain enable */
+        if(en === ST1) return data;              /* pass through D (0/1/Z/X) */
+        return STZ;                              /* disabled → floating */
+    }
+
+    /* ── Bus gates ────────────────────────────────────── */
     if(comp.type==='JOINER'){
         const n = comp.busWidth || inputs.length || 2;
         const bits = [];
         for(let i=0;i<n;i++){
             const v = inputs[i];
-            bits.push(Array.isArray(v) ? (v[0] ? 1 : 0) : (v ? 1 : 0));
+            bits.push(Array.isArray(v) ? coerceState(v[0]) : gateNormalize(v));
         }
         comp.busOutput = bits;
-        return bits.some(b => b) ? 1 : 0;
+        return bits.some(b => b === ST1) ? ST1 : ST0;
     }
     if(comp.type==='SPLITTER'){
         const n = comp.busWidth || 2;
         const raw = inputs[0];
-        const bits = Array.isArray(raw) ? raw.slice(0, n) : new Array(n).fill(0);
-        while(bits.length < n) bits.push(0);
+        const bits = Array.isArray(raw)
+            ? raw.slice(0,n).map(coerceState)
+            : new Array(n).fill(ST0);
+        while(bits.length < n) bits.push(ST0);
         comp.outputBits = bits;
-        return bits[0] ? 1 : 0;
+        return bits[0];
     }
-    if(comp.type==='INPUT')return comp.state;
-    if(comp.type==='PUSH')return comp.state;
-    if(comp.type==='AND')return(inputs[0]===1&&inputs[1]===1)?1:0;
-    if(comp.type==='OR')return(inputs[0]===1||inputs[1]===1)?1:0;
-    if(comp.type==='XOR')return(inputs[0]!==inputs[1])?1:0;
-    if(comp.type==='NOT')return inputs[0]===1?0:1;
-    if(comp.type==='NAND')return!(inputs[0]===1&&inputs[1]===1)?1:0;
-    if(comp.type==='NOR')return!(inputs[0]===1||inputs[1]===1)?1:0;
-    if(comp.type==='XNOR')return(inputs[0]===inputs[1])?1:0;
-    if(comp.type==='OUTPUT'||comp.type==='SCREEN'||comp.type==='COLOR')return inputs[0];
-    if(comp.type==='CLOCK')return comp.state||0;
-    if(comp.type==='PULSE')return comp.state||0;
-    if(comp.type==='DELAY'){ensureDelayQueue(comp);return comp.outputVal||0}
-    return 0;
+
+    /* ── Standard scalar gates ────────────────────────── */
+    const a = gateNormalize(inputs[0]);
+    const b = gateNormalize(inputs[1]);
+
+    if(comp.type==='INPUT') return coerceState(comp.state);
+    if(comp.type==='PUSH')  return coerceState(comp.state);
+
+    /* X propagation: if any used input is X, output is X */
+    if(comp.type==='NOT'){
+        if(a === STX) return STX;
+        return a === ST1 ? ST0 : ST1;
+    }
+    if(a === STX || b === STX) return STX;
+    if(comp.type==='AND')  return (a === ST1 && b === ST1) ? ST1 : ST0;
+    if(comp.type==='OR')   return (a === ST1 || b === ST1) ? ST1 : ST0;
+    if(comp.type==='XOR')  return (a !== b)               ? ST1 : ST0;
+    if(comp.type==='NAND') return !(a === ST1 && b === ST1) ? ST1 : ST0;
+    if(comp.type==='NOR')  return !(a === ST1 || b === ST1) ? ST1 : ST0;
+    if(comp.type==='XNOR') return (a === b)               ? ST1 : ST0;
+
+    if(comp.type==='OUTPUT'||comp.type==='SCREEN'||comp.type==='COLOR') return a;
+
+    if(comp.type==='CLOCK') return comp.state === ST1 ? ST1 : ST0;
+    if(comp.type==='PULSE') return comp.state === ST1 ? ST1 : ST0;
+    if(comp.type==='DELAY'){ ensureDelayQueue(comp); return coerceState(comp.outputVal); }
+
+    return ST0;
 }
 /* FIX 2: Resolve output ports from def.innerOutputs when it exactly
    matches the definition's output count, so unwired OUTPUTs and nested
@@ -2816,7 +2965,8 @@ function evaluateCustomGate(comp) {
 
     for (let i = 0; i < inputs.length; i++) {
         const ic = inputs[i];
-        const v  = (comp.inputs && comp.inputs[i] === 1) ? 1 : 0;
+        const v  = comp.inputs && comp.inputs[i] !== undefined
+                    ? coerceState(comp.inputs[i]) : STZ;
         ic.state = v;
         ic.outputVal = v;
     }
@@ -2844,9 +2994,9 @@ function evaluateCustomGate(comp) {
                 if (!src) continue;
                 if (src.isCustom && w.fromPort !== undefined) {
                     ins[i] = src.outputsArray && src.outputsArray[w.fromPort] !== undefined
-                        ? src.outputsArray[w.fromPort] : 0;
+                        ? coerceState(src.outputsArray[w.fromPort]) : STZ;
                 } else {
-                    ins[i] = src.outputVal || 0;
+                    ins[i] = src.outputVal === undefined ? STZ : coerceState(src.outputVal);
                 }
             }
             sc.inputs = ins;
@@ -2856,23 +3006,23 @@ function evaluateCustomGate(comp) {
             } else if (sc.type === 'DELAY') {
                 if (comp.delayStates && comp.delayStates[sc.id]) {
                     const st  = comp.delayStates[sc.id];
-                    const val = st.queue[st.ptr] || 0;
-                    st.queue[st.ptr] = ins[0] || 0;
+                    const val = coerceState(st.queue[st.ptr] || ST0);
+                    st.queue[st.ptr] = gateNormalize(ins[0]);
                     st.ptr = (st.ptr + 1) % st.queue.length;
                     sc.outputVal = val;
                 } else {
-                    sc.outputVal = 0;
+                    sc.outputVal = ST0;
                 }
             } else if (sc.type === 'PULSE') {
-                const inp  = ins[0] || 0;
+                const inp  = ins[0] === ST1 ? 1 : (ins[0] === STX ? 2 : 0);
                 const prev = sc.pulsePrevInput ? 1 : 0;
-                if (inp === 1 && prev === 0) { sc.state = 1; sc.pulseCounter = 1; }
-                else if ((sc.pulseCounter || 0) > 0) {
+                if (inp === 1 && prev === 0) { sc.state = ST1; sc.pulseCounter = 1; }
+                else if (inp !== 2 && (sc.pulseCounter || 0) > 0) {
                     sc.pulseCounter--;
-                    if (sc.pulseCounter <= 0) { sc.pulseCounter = 0; sc.state = 0; }
+                    if (sc.pulseCounter <= 0) { sc.pulseCounter = 0; sc.state = ST0; }
                 }
-                sc.pulsePrevInput = inp;
-                sc.outputVal = sc.state ? 1 : 0;
+                sc.pulsePrevInput = (inp === 1) ? 1 : 0;
+                sc.outputVal = sc.state === ST1 ? ST1 : ST0;
             } else {
                 sc.outputVal = evaluateGate(sc, ins);
             }
@@ -2886,15 +3036,21 @@ function evaluateCustomGate(comp) {
     }
 
     const outputs = cache.orderedOutputs;
-    comp.outputsArray = outputs.map(oc => oc.outputVal === 1 ? 1 : 0);
-    comp.outputVal = comp.outputsArray[0] || 0;
+    comp.outputsArray = outputs.map(oc => coerceState(oc.outputVal));
+    comp.outputVal = comp.outputsArray[0] || ST0;
 }
 function tickSingleClock(comp){
-    if(!Array.isArray(comp.inputs)||comp.inputs.length<1)comp.inputs=[0];
-    if(!(comp.inputs[0]?1:0)){comp.clockCounter=0;comp.state=0;comp.outputVal=0;return}
+    if(!Array.isArray(comp.inputs)||comp.inputs.length<1)comp.inputs=[ST0];
+    if(coerceState(comp.inputs[0]) !== ST1){
+        comp.clockCounter=0; comp.state=ST0; comp.outputVal=ST0; return;
+    }
     const p=clockTicksFor(comp);
     comp.clockCounter=(comp.clockCounter||0)+1;
-    if(comp.clockCounter>=p){comp.clockCounter=0;comp.state=comp.state===1?0:1;comp.outputVal=comp.state}
+    if(comp.clockCounter>=p){
+        comp.clockCounter=0;
+        comp.state = comp.state === ST1 ? ST0 : ST1;
+        comp.outputVal=comp.state;
+    }
 }
 function tickNestedClocksMain(comp){
     let anyChanged=false;
@@ -2921,6 +3077,7 @@ function runSimulationIncremental(comps,wr,seeds,updateFn){
     const world=getWorld();
     const byId=world.byId;
     const iwm=world.iwm;
+    const iwmMulti=world.iwmMulti;
     const consumers=world.consumers;
 
     const queue=[];
@@ -2953,13 +3110,17 @@ function runSimulationIncremental(comps,wr,seeds,updateFn){
         const oldOut=comp.outputVal;
         const oldOutputs=comp.outputsArray?comp.outputsArray.slice():null;
         const ic=(comp.inputs||[]).length;
-        const ins=new Array(ic).fill(0);
+        const ins=new Array(ic).fill(STZ);
         for(let i=0;i<ic;i++){
-            const w=iwm.get(comp.id+':'+i);
-            if(!w)continue;
-            const src=byId.get(w.fromComp);
-            if(!src)continue;
-            ins[i]=getOutputValue(src, w.fromPort);
+            const wList = iwmMulti.get(comp.id+':'+i);
+            if(!wList || !wList.length){ ins[i] = STZ; continue; }
+            const vals = [];
+            for(let j=0;j<wList.length;j++){
+                const w = wList[j];
+                const src = byId.get(w.fromComp);
+                if(src) vals.push(getOutputValue(src, w.fromPort));
+            }
+            ins[i] = resolveDrivers(vals);
         }
         comp.inputs=ins;
         if(!comp.isCustom&&(comp.type==='CLOCK'||comp.type==='PULSE'))continue;
@@ -3036,17 +3197,23 @@ function runModalSimulation(){
 
 function tickDelayComponent(comp){
     const q=ensureDelayQueue(comp);
-    comp.outputVal=q[0]?1:0;
+    comp.outputVal=q[0];
     q.shift();
-    q.push((comp.inputs&&comp.inputs[0])?1:0);
+    const raw = comp.inputs && comp.inputs[0];
+    q.push(raw === STX ? STX : gateNormalize(raw));
 }
 function tickPulseComponent(comp){
-    const inp=(comp.inputs&&comp.inputs[0])?1:0;
+    const raw = comp.inputs && comp.inputs[0];
+    const inp = raw === ST1 ? 1 : (raw === STX ? 2 : 0);   /* 2 = "unknown" */
     const prev=comp.pulsePrevInput?1:0;
-    if(inp===1&&prev===0){comp.state=1;comp.pulseCounter=1;}
-    else if((comp.pulseCounter||0)>0){comp.pulseCounter--;if(comp.pulseCounter<=0){comp.pulseCounter=0;comp.state=0}}
-    comp.pulsePrevInput=inp;
-    comp.outputVal=comp.state?1:0;
+    if(inp===1&&prev===0){comp.state=ST1;comp.pulseCounter=1;}
+    else if(inp===2){ /* X input: no edge, keep last known state */ }
+    else if((comp.pulseCounter||0)>0){
+        comp.pulseCounter--;
+        if(comp.pulseCounter<=0){comp.pulseCounter=0;comp.state=ST0;}
+    }
+    comp.pulsePrevInput=(inp===1)?1:0;
+    comp.outputVal=comp.state;
 }
 function hasNestedTiming(comp){
     const sub = comp.subComps || [];
@@ -3199,8 +3366,13 @@ function updateVisuals(){
         if(el._pw!==pw){el.classList.toggle('powered',pw);el._pw=pw}
         if(comp.type==='OUTPUT'){
             const b=el.querySelector('.bulb');
-            const on=comp.outputVal===1;
-            if(b&&b._on!==on){b.classList.toggle('on',on);b._on=on}
+            const state = coerceState(comp.inputs && comp.inputs[0]);
+            const on    = state === ST1;
+            const err   = state === STX;
+            if(b){
+                if(b._on !== on){ b.classList.toggle('on', on); b._on = on; }
+                if(b._err !== err){ b.classList.toggle('error', err); b._err = err; }
+            }
         }
         if(comp.type==='SCREEN'){
             const p=el.querySelector('.pixel-square');
@@ -3228,31 +3400,45 @@ function updateVisuals(){
             const ins=comp.inputs||[];
             for(let j=0;j<ins.length;j++){
                 const p=pc.in[j];if(!p)continue;
-                const v = ins[j];
-                const on = Array.isArray(v) ? v.some(b => b === 1) : (v === 1);
+                const v = coerceState(ins[j]);
+                const on  = (v === ST1);
+                const err = (v === STX);
                 if(p._ao!==on){p.classList.toggle('active-port',on);p._ao=on}
+                if(p._e !== err){p.classList.toggle('contention-port',err);p._e=err}
             }
             if(comp.type==='SPLITTER' && comp.outputBits){
                 for(let j=0;j<comp.outputBits.length;j++){
                     const p=pc.out[j];if(!p)continue;
-                    const on = comp.outputBits[j] === 1;
+                    const on = coerceState(comp.outputBits[j]) === ST1;
                     if(p._ao!==on){p.classList.toggle('active-port',on);p._ao=on}
                 }
             }else if(comp.isCustom&&comp.outputsArray){
                 for(let j=0;j<comp.outputsArray.length;j++){
                     const p=pc.out[j];if(!p)continue;
-                    const on=comp.outputsArray[j]===1;
+                    const on=coerceState(comp.outputsArray[j])===ST1;
                     if(p._ao!==on){p.classList.toggle('active-port',on);p._ao=on}
                 }
             }else if(comp.type!=='SCREEN'){
                 const p=pc.out[0];
                 if(p){
-                    const on=comp.outputVal===1;
+                    const on=coerceState(comp.outputVal)===ST1;
                     if(p._ao!==on){p.classList.toggle('active-port',on);p._ao=on}
                 }
             }
         }
     }
+    /* Pre-compute resolved state per destination for contention display */
+    const iwmMulti = world.iwmMulti;
+    const destState = new Map();
+    if(iwmMulti){
+        for(const [key, wList] of iwmMulti){
+            if(wList.length > 1){
+                const vals = wList.map(w => getOutputValue(byId.get(w.fromComp), w.fromPort));
+                destState.set(key, resolveDrivers(vals));
+            }
+        }
+    }
+
     for(let i=0;i<wires.length;i++){
         const w=wires[i];
         const p=wirePaths.get('wire-'+w.id);
@@ -3263,21 +3449,42 @@ function updateVisuals(){
         const isBus = fromW > 1;
         if(p._isBus !== isBus){ p.classList.toggle('bus-wire', isBus); p._isBus = isBus; }
 
-        let pw=false,color=null;
-        if(s.isCustom && w.fromPort!==undefined){
-            pw=!!(s.outputsArray && s.outputsArray[w.fromPort]===1);
-        } else if(s.type==='SPLITTER'){
-            pw = !!(s.outputBits && s.outputBits[w.fromPort]);
-        } else {
-            const v = (s.type==='JOINER' && Array.isArray(s.busOutput)) ? s.busOutput : s.outputVal;
-            pw = Array.isArray(v) ? v.some(b=>b===1) : v===1;
-            if(pw){
-                if(s.type==='COLOR') color=s.pixelColor||'#39ff14';
-                else if(s.outputColor) color=s.outputColor;
-            }
+        if(isBus){
+            /* bus wires keep the original bus appearance */
+            const anyHigh = Array.isArray(s.busOutput)
+                ? s.busOutput.some(b => b === ST1)
+                : (s.outputVal === ST1);
+            if(p._pw !== anyHigh){ p.classList.toggle('powered', anyHigh); p._pw = anyHigh; }
+            continue;
         }
-        if(p._pw!==pw){p.classList.toggle('powered',pw);p._pw=pw}
-        if(p._stroke!==color){p.style.stroke=color||'';p._stroke=color}
+
+        /* Determine state to display: destination contention wins */
+        const destKey = w.toComp + ':' + w.toPort;
+        let displayState;
+        if(destState.has(destKey)){
+            displayState = destState.get(destKey);
+        } else {
+            displayState = coerceState(getOutputValue(s, w.fromPort));
+        }
+        if(displayState === STX){
+            /* was the source itself X, or was it contention at the destination? */
+            const srcState = coerceState(getOutputValue(s, w.fromPort));
+            if(srcState === STX || destState.get(destKey) === STX) displayState = STX;
+        }
+
+        /* Apply exactly one state class */
+        const newClass = wireStateClass(displayState);
+        if(p._stateClass !== newClass){
+            p.classList.remove('low','floating','powered','contention');
+            p.classList.add(newClass);
+            p._stateClass = newClass;
+        }
+
+        /* Optional stroke override for COLOR gate propagation */
+        let color = null;
+        if(displayState === ST1 && s.type === 'COLOR') color = s.pixelColor || '#39ff14';
+        else if(displayState === ST1 && s.outputColor) color = s.outputColor;
+        if(p._stroke !== color){ p.style.stroke = color || ''; p._stroke = color; }
     }
     if(debugMode){
         refreshDebugOverlay();
@@ -3291,7 +3498,11 @@ function updateModalVisuals(){
         let pw=comp.outputVal===1;
         if(comp.isCustom&&comp.outputsArray&&comp.outputsArray.length)pw=comp.outputsArray.some(v=>v===1);
         el.classList.toggle('powered',pw);
-        if(comp.type==='OUTPUT'){const b=el.querySelector('.bulb');if(b)b.classList.toggle('on',comp.outputVal===1)}
+        if(comp.type==='OUTPUT'){
+            const b=el.querySelector('.bulb');
+            const s=coerceState(comp.inputs && comp.inputs[0]);
+            if(b){ b.classList.toggle('on', s===ST1); b.classList.toggle('error', s===STX); }
+        }
         if(comp.type==='PULSE'){const l=el.querySelector('.pulse-led');if(l)l.classList.toggle('on',comp.state===1)}
         if(comp.type==='SCREEN'){
             const p=document.getElementById(`modal-pixel-${comp.id}`);
@@ -3410,8 +3621,12 @@ function hideDebugTooltip(){
     debugLastHtml='';
 }
 function dbgLine(label,val){
-    const cls=val===1?'dbg-hi':(val===0?'dbg-lo':'');
-    return `<div class="dbg-line ${cls}">${escapeHtml(String(label))}: ${val}</div>`;
+    const s = coerceState(val);
+    const cls = s === ST1 ? 'dbg-hi'
+              : s === ST0 ? 'dbg-lo'
+              : s === STX ? 'dbg-err-inline'
+              : 'dbg-z';
+    return `<div class="dbg-line ${cls}">${escapeHtml(String(label))}: ${s}</div>`;
 }
 function buildGateDebugHtml(comp){
     const lines=[];
@@ -3420,12 +3635,16 @@ function buildGateDebugHtml(comp){
         for(let i=0;i<ins.length;i++)lines.push(dbgLine('IN '+i,ins[i]));
         for(let i=0;i<outs.length;i++)lines.push(dbgLine('OUT '+i,outs[i]));
         if(!comp.def)lines.push('<div class="dbg-err">⚠ missing definition</div>');
+    }else if(comp.type==='TRI'){
+        lines.push(dbgLine('Data (D)', comp.inputs && comp.inputs[0]));
+        lines.push(dbgLine('Enable (E)', comp.inputs && comp.inputs[1]));
+        lines.push(dbgLine('Out', comp.outputVal));
     }else if(comp.type==='INPUT'||comp.type==='PUSH'){
-        lines.push(dbgLine('State',comp.state===1?1:0));
-        lines.push(dbgLine('Out',comp.outputVal===1?1:0));
+        lines.push(dbgLine('State',comp.state));
+        lines.push(dbgLine('Out',comp.outputVal));
     }else if(comp.type==='OUTPUT'){
-        lines.push(dbgLine('In',(comp.inputs&&comp.inputs[0])===1?1:0));
-        lines.push(dbgLine('Bulb',comp.outputVal===1?1:0));
+        lines.push(dbgLine('In',comp.inputs && comp.inputs[0]));
+        lines.push(dbgLine('Bulb',comp.outputVal));
     }else if(comp.type==='CLOCK'){
         lines.push(dbgLine('Enable',(comp.inputs&&comp.inputs[0])===1?1:0));
         lines.push(dbgLine('State',comp.state===1?1:0));
@@ -4291,7 +4510,8 @@ function setupModalToolbar(){
         {type:'SCREEN', label:'Pixel',  color:GATE_COLORS.SCREEN},
         {type:'COLOR',  label:'Color',  color:GATE_COLORS.COLOR},
         {type:'JOINER', label:'Join',   color:GATE_COLORS.JOINER},
-        {type:'SPLITTER',label:'Split', color:GATE_COLORS.SPLITTER}
+        {type:'SPLITTER',label:'Split', color:GATE_COLORS.SPLITTER},
+        {type:'TRI',     label:'Tri',   color:GATE_COLORS.TRI}
     ];
     std.forEach(g=>{const b=document.createElement('div');b.className='tool-btn';b.style.background=g.color;b.textContent=g.label;b.onmousedown=e=>startModalGhostDrag(e,g.type);b.ontouchstart=e=>startModalGhostDrag(e,g.type);tb.appendChild(b)});
     const folderMap=getGateFolders();
@@ -4614,6 +4834,20 @@ function renderModalComponent(comp){
         el.addEventListener('touchstart',e=>{if(!e.target.classList.contains('pixel-delete-btn')&&!e.target.classList.contains('port'))startDragModalGate(e,comp.id)});
         document.getElementById('custom-gate-modal-canvas').appendChild(el);
         attachPortHandlers(el,'modal');return;
+    }
+        else if(comp.type==='TRI'){
+        bc = `<div style="display:flex;justify-content:space-between;align-items:center;gap:4px;">`
+           +   `<div style="display:flex;flex-direction:column;align-items:center;gap:2px;">`
+           +     `<div class="port" id="modal-port-${comp.id}-in-0" data-comp="${comp.id}" data-type="in" data-port="0"></div>`
+           +     `<span style="font-size:8px;opacity:.75;">D</span>`
+           +   `</div>`
+           +   `<div style="display:flex;flex-direction:column;align-items:center;gap:2px;">`
+           +     `<span style="font-size:9px;font-weight:bold;">TRI</span>`
+           +     `<div class="port" id="modal-port-${comp.id}-in-1" data-comp="${comp.id}" data-type="in" data-port="1"></div>`
+           +     `<span style="font-size:8px;opacity:.75;">E</span>`
+           +   `</div>`
+           +   `<div class="port output" id="modal-port-${comp.id}-out-0" data-comp="${comp.id}" data-type="out" data-port="0"></div>`
+           + `</div>`;
     }
     else if(comp.type==='JOINER'){
         const n = comp.busWidth || 4;
@@ -5118,7 +5352,7 @@ const LSET_DEFAULT = {
     NAND:'#134e4a', NOR:'#3730a3', XNOR:'#0369a1',
     DELAY:'#3d4653', CLOCK:'#0d9488', PULSE:'#be123c',
     SCREEN:'#d97706', COLOR:'#9d174d',
-    JOINER:'#7c3aed', SPLITTER:'#7c3aed',
+    JOINER:'#7c3aed', SPLITTER:'#7c3aed', TRI:'#0891b2',
     CUSTOM_DEFAULT:'#1f3a63'
   },
   fonts: { ui:'', serif:'', mono:'', uiScale:1, brandScale:1 },
@@ -5708,6 +5942,7 @@ function getGateHeight(comp){
         const n = Math.max(2, comp.busWidth || 4);
         return 40 + n * 20;
     }
+    if(comp.type==='TRI') return 80;
     switch(comp.type){
         case 'AND': case 'OR': case 'XOR':
         case 'NAND': case 'NOR': case 'XNOR':
@@ -7614,7 +7849,7 @@ let lastSyncedFoldersJson = '';
 /* Cheap per-component signature. Avoids the deep clone that
    JSON.parse(JSON.stringify(c)) does for every component on every diff. */
 function compSig(c){
-    return c.type + '|' + c.x + '|' + c.y + '|' + (c.state||0) + '|' + (c.outputVal||0)
+    return c.type + '|' + c.x + '|' + c.y + '|' + (c.state||ST0) + '|' + (c.outputVal||ST0)
          + '|' + (c.customLabel||'') + '|' + (c.pixelColor||'') + '|' + (c.pixelWidth||0)
          + '|' + (c.pixelHeight||0) + '|' + (c.delayMs||0) + '|' + (c.clockMs||0)
          + '|' + (c.busWidth||0)
