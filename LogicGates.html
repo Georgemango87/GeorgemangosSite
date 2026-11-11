@@ -1539,6 +1539,75 @@ body.script-panel-open .mode-badge      { right: 392px; }
     body.script-panel-open #toast-container { right: 14px; }
     body.script-panel-open .mode-badge      { right: 12px; }
 }
+
+/* ═══════════════════════════════════════════════════════════════
+   SCRIPTING — Settings-driven overrides
+   Every property below uses var(--script-*, fallback). The fallbacks
+   are base theme vars, so the panel automatically follows the active
+   theme (and every preset) unless the user has explicitly overridden
+   a value from Settings → ⚡ Scripting.
+   ═══════════════════════════════════════════════════════════════ */
+#script-panel {
+    width: var(--script-panel-width, 380px);
+    background: var(--script-panel-bg, var(--toolbar-bg));
+    border-left-color: var(--script-panel-border, var(--border-color));
+    box-shadow: -4px 0 18px var(--script-panel-shadow, rgba(0,0,0,.20));
+}
+body.script-panel-open #viewport        { right: var(--script-panel-width, 380px); }
+body.script-panel-open #timing-panel    { right: var(--script-panel-width, 380px); }
+body.script-panel-open #toast-container { right: calc(var(--script-panel-width, 380px) + 14px); }
+body.script-panel-open .mode-badge      { right: calc(var(--script-panel-width, 380px) + 12px); }
+
+#script-editor {
+    background: var(--script-editor-bg, var(--bg-color));
+    color:      var(--script-editor-text, var(--text-color));
+    caret-color:var(--script-editor-caret, var(--accent));
+    border-color: var(--script-panel-border, var(--border-color));
+    font-size:   var(--script-editor-font-size, 12.5px);
+}
+#script-editor:focus {
+    border-color: var(--script-editor-caret, var(--accent));
+    box-shadow: 0 0 0 2px color-mix(
+        in srgb,
+        var(--script-editor-caret, var(--accent)) 22%,
+        transparent);
+}
+#script-panel .sp-hint {
+    background: var(--script-hint-bg, var(--bg-color));
+    color:      var(--script-hint-text, var(--muted));
+    border-color: var(--script-panel-border, var(--border-color));
+}
+#script-panel .sp-hint strong {
+    color: var(--script-hint-accent, var(--accent));
+}
+#script-status.ok {
+    border-left-color: var(--script-status-ok-text, #16a34a);
+    background:        var(--script-status-ok-bg, rgba(22,163,74,.10));
+    color:             var(--script-status-ok-text, #16a34a);
+}
+#script-status.err {
+    border-left-color: var(--script-status-err-text, #dc2626);
+    background:        var(--script-status-err-bg, rgba(220,38,38,.10));
+    color:             var(--script-status-err-text, #dc2626);
+}
+#script-compile-btn {
+    border-radius: var(--script-compile-radius, 7px);
+    color:         var(--script-compile-text, #fff);
+    background: linear-gradient(
+        180deg,
+        var(--script-compile-bg,   var(--accent))                   0%,
+        var(--script-compile-bg-2, var(--accent-2, var(--accent))) 100%);
+    box-shadow:
+        0 2px 10px color-mix(
+            in srgb,
+            var(--script-compile-bg, var(--accent)) 35%,
+            transparent),
+        inset 0 1px 0 rgba(255,255,255,.10);
+}
+.tool-btn[data-btn-id="script"].active {
+    outline: 2px solid var(--accent);
+    outline-offset: 1px;
+}
 </style>
 </head>
 <body>
@@ -1805,6 +1874,7 @@ body.script-panel-open .mode-badge      { right: 392px; }
         <button class="stab"        data-tab="preferences" onclick="setSettingsTab('preferences')">⚡ Preferences</button>
         <button class="stab"        data-tab="fonts"   onclick="setSettingsTab('fonts')">🔤 Fonts</button>
         <button class="stab"        data-tab="layout"  onclick="setSettingsTab('layout')">📐 Layout</button>
+        <button class="stab"        data-tab="script"  onclick="setSettingsTab('script')">⚡ Scripting</button>
         <button class="stab"        data-tab="presets" onclick="setSettingsTab('presets')">✨ Presets</button>
         <button class="stab"        data-tab="advanced"onclick="setSettingsTab('advanced')">⚙️ Advanced</button>
       </div>
@@ -6953,7 +7023,8 @@ const LSET_DEFAULT = {
     export:'#15803d', import:'#0f766e',
     undo:'#3d4653', redo:'#3d4653',
     share:'#1f3a63',
-    help:'#3d4653'
+    help:'#3d4653',
+    script:'#7c3aed'
   },
   /* Preferences are user-controlled and are deliberately NOT part of
      preset overrides — see applyLsPreset(). Everything the user can
@@ -6970,6 +7041,21 @@ const LSET_DEFAULT = {
     badgePosition: 'top-right',
     showPourTooltip: true,
     showHotkeyButton: true
+  },
+  /* NEW — Scripting sidebar layout + optional colour overrides.
+     Colour overrides start empty (meaning "inherit from theme"); the
+     settings UI writes explicit overrides into colorsLight/colorsDark. */
+  script: {
+    panelWidth:      380,
+    columnWidth:     220,
+    rowStep:         100,
+    xStart:          80,
+    yStart:          80,
+    gateGap:         20,
+    editorFontSize:  12.5,
+    compileBtnRadius:7,
+    colorsLight:     {},
+    colorsDark:      {}
   }
 };
 
@@ -7503,6 +7589,50 @@ const PRESET_OVERLAY_MAP = {
   'Blueprint':       { '--badge-bg':'#0d2648','--badge-border':'#1a3a6a','--badge-text':'#e8f0ff','--badge-hint':'#8aa8d0','--hotkey-key-bg-top':'#0f2a52','--hotkey-key-bg-bottom':'#0d2648','--hotkey-key-text':'#e8f0ff','--hotkey-key-border':'#2a5a9a' },
   'High Contrast':   { '--badge-bg':'#000000','--badge-border':'#ffffff','--badge-text':'#ffffff','--badge-hint':'#cccccc','--hotkey-key-bg-top':'#000000','--hotkey-key-bg-bottom':'#000000','--hotkey-key-text':'#ffffff','--hotkey-key-border':'#ffffff' }
 };
+/* Merge overlay colours into each preset's active-theme block. */
+for(const name of Object.keys(PRESET_OVERLAY_MAP)){
+    const preset = LSET_PRESETS[name];
+    if(!preset) continue;
+    const themeKey = preset.dark ? 'dark' : 'light';
+    preset[themeKey] = Object.assign({}, preset[themeKey] || {}, PRESET_OVERLAY_MAP[name]);
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   Per-preset toolbar-button colours for the newer action buttons
+   (Script, Logic Table). These landed after the original preset
+   definitions, so presets didn't include them — meaning applying a
+   preset left these buttons frozen at the neutral default.
+   Values mirror each palette's `customGate` colour, so both "custom
+   feature" buttons stay visually consistent per theme.
+   ═══════════════════════════════════════════════════════════════ */
+const PRESET_BUTTON_EXT_MAP = {
+  'Neon':           { script:'#b14eff', logicTable:'#00e5ff' },
+  'Terminal':       { script:'#22aa22', logicTable:'#55ffaa' },
+  'Cyberpunk':      { script:'#ff9900', logicTable:'#ffcc00' },
+  'Blueprint':      { script:'#6a94c8', logicTable:'#88ffcc' },
+  'Paper':          { script:'#6a4a8a', logicTable:'#3b6a68' },
+  'Sepia':          { script:'#6a4a5a', logicTable:'#3a5a5a' },
+  'Dracula':        { script:'#bd93f9', logicTable:'#8be9fd' },
+  'Nord':           { script:'#b48ead', logicTable:'#8fbcbb' },
+  'Solarized Dark': { script:'#6c71c4', logicTable:'#2aa198' },
+  'Synthwave':      { script:'#cc44ff', logicTable:'#00e5ff' },
+  'Forest':         { script:'#7a5a68', logicTable:'#5a8a78' },
+  'Ocean':          { script:'#7a5ac8', logicTable:'#40e0ff' },
+  'Candy':          { script:'#c8a0e8', logicTable:'#88d8c8' },
+  'Mono':           { script:'#4a4a4a', logicTable:'#2a2a2a' },
+  'High Contrast':  { script:'#ff00ff', logicTable:'#00ffff' },
+  'Lava':           { script:'#ff3366', logicTable:'#ffcc00' },
+  'Ice':            { script:'#7ab0e8', logicTable:'#4ad8ff' }
+};
+for(const name of Object.keys(PRESET_BUTTON_EXT_MAP)){
+    const preset = LSET_PRESETS[name];
+    if(!preset) continue;
+    if(!preset.buttons) preset.buttons = {};
+    for(const key of Object.keys(PRESET_BUTTON_EXT_MAP[name])){
+        if(!preset.buttons[key]) preset.buttons[key] = PRESET_BUTTON_EXT_MAP[name][key];
+    }
+}
+
 /* Per-preset gate colours for the newer components (Join / Split / Tri /
    Note). These landed after the original preset definitions, so they
    weren't included — every preset inherited the neutral purple/teal/yellow
@@ -7558,6 +7688,140 @@ for(const name of Object.keys(PRESET_SIGNAL_MAP)){
     if(!preset) continue;
     const themeKey = preset.dark ? 'dark' : 'light';
     preset[themeKey] = Object.assign({}, preset[themeKey] || {}, PRESET_SIGNAL_MAP[name]);
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   Per-preset scripting-panel overrides.
+   Opt-in: presets WITHOUT an entry here inherit the theme via the
+   CSS fallbacks in the scripting stylesheet — that's the majority.
+   Presets WITH an entry ship a bespoke scripting look (glowing
+   compile button, monochrome editor, etc.) via LSET.script's
+   coloursLight / coloursDark maps.
+   ═══════════════════════════════════════════════════════════════ */
+const PRESET_SCRIPT_MAP = {
+  /* Full override: Neon glows */
+  'Neon': {
+    colorsDark: {
+      '--script-panel-bg':        '#0a0a18',
+      '--script-panel-border':    '#00ffcc',
+      '--script-panel-shadow':    'rgba(0,255,204,0.25)',
+      '--script-editor-bg':       '#03030a',
+      '--script-editor-text':     '#00ffcc',
+      '--script-editor-caret':    '#ff2fd0',
+      '--script-hint-bg':         '#0a1520',
+      '--script-hint-text':       '#7de6d0',
+      '--script-hint-accent':     '#ff2fd0',
+      '--script-compile-bg':      '#00ffcc',
+      '--script-compile-bg-2':    '#00ccaa',
+      '--script-compile-text':    '#06060c',
+      '--script-status-ok-bg':    'rgba(0,255,157,0.15)',
+      '--script-status-ok-text':  '#00ff9d',
+      '--script-status-err-bg':   'rgba(255,47,109,0.15)',
+      '--script-status-err-text': '#ff2f6d'
+    }
+  },
+
+  /* Full override: Terminal monochrome green */
+  'Terminal': {
+    colorsDark: {
+      '--script-panel-bg':        '#051005',
+      '--script-panel-border':    '#0d3a0d',
+      '--script-editor-bg':       '#020802',
+      '--script-editor-text':     '#33ff33',
+      '--script-editor-caret':    '#88ff88',
+      '--script-hint-bg':         '#0a1a0a',
+      '--script-hint-text':       '#22aa22',
+      '--script-hint-accent':     '#88ff88',
+      '--script-compile-bg':      '#33ff33',
+      '--script-compile-bg-2':    '#22cc22',
+      '--script-compile-text':    '#000000',
+      '--script-status-ok-bg':    'rgba(51,255,51,0.15)',
+      '--script-status-ok-text':  '#33ff33',
+      '--script-status-err-bg':   'rgba(255,85,85,0.15)',
+      '--script-status-err-text': '#ff5555'
+    }
+  },
+
+  /* Full override: Cyberpunk yellow/red */
+  'Cyberpunk': {
+    colorsDark: {
+      '--script-panel-bg':        '#141008',
+      '--script-panel-border':    '#3a3000',
+      '--script-editor-bg':       '#0a0800',
+      '--script-editor-text':     '#ffee00',
+      '--script-editor-caret':    '#ff2200',
+      '--script-hint-bg':         '#1a1400',
+      '--script-hint-text':       '#aa9900',
+      '--script-hint-accent':     '#ff2200',
+      '--script-compile-bg':      '#ffee00',
+      '--script-compile-bg-2':    '#ccbb00',
+      '--script-compile-text':    '#000000',
+      '--script-status-ok-bg':    'rgba(0,255,136,0.15)',
+      '--script-status-ok-text':  '#00ff88',
+      '--script-status-err-bg':   'rgba(255,34,0,0.18)',
+      '--script-status-err-text': '#ff2200'
+    }
+  },
+
+  /* Compile-button only: Synthwave neon-pink glow */
+  'Synthwave': {
+    colorsDark: {
+      '--script-compile-bg':   '#ff2fd0',
+      '--script-compile-bg-2': '#cc1aa8',
+      '--script-compile-text': '#1a0a2e',
+      '--script-editor-caret': '#ff2fd0'
+    }
+  },
+
+  /* Compile-button only: High Contrast pure cyan */
+  'High Contrast': {
+    colorsDark: {
+      '--script-panel-border': '#ffffff',
+      '--script-compile-bg':   '#00ffff',
+      '--script-compile-bg-2': '#00cccc',
+      '--script-compile-text': '#000000'
+    }
+  },
+
+  /* Light preset: Paper warm parchment */
+  'Paper': {
+    colorsLight: {
+      '--script-panel-bg':        '#fbf6e8',
+      '--script-panel-border':    '#d8ccb0',
+      '--script-editor-bg':       '#f4ecd8',
+      '--script-editor-text':     '#2b2620',
+      '--script-editor-caret':    '#7c5c3b',
+      '--script-hint-bg':         '#ece3cf',
+      '--script-hint-text':       '#6b6152',
+      '--script-hint-accent':     '#7c5c3b',
+      '--script-compile-bg':      '#7c5c3b',
+      '--script-compile-bg-2':    '#61452b',
+      '--script-compile-text':    '#fbf6e8',
+      '--script-status-ok-bg':    'rgba(77,124,15,0.15)',
+      '--script-status-ok-text':  '#4d7c0f',
+      '--script-status-err-bg':   'rgba(161,51,44,0.15)',
+      '--script-status-err-text': '#a1332c'
+    }
+  }
+};
+for(const name of Object.keys(PRESET_SCRIPT_MAP)){
+    const preset = LSET_PRESETS[name];
+    if(!preset) continue;
+    if(!preset.script) preset.script = {};
+    if(PRESET_SCRIPT_MAP[name].colorsLight){
+        preset.script.colorsLight = Object.assign(
+            {},
+            preset.script.colorsLight || {},
+            PRESET_SCRIPT_MAP[name].colorsLight
+        );
+    }
+    if(PRESET_SCRIPT_MAP[name].colorsDark){
+        preset.script.colorsDark = Object.assign(
+            {},
+            preset.script.colorsDark || {},
+            PRESET_SCRIPT_MAP[name].colorsDark
+        );
+    }
 }
 
 /* ── small helpers ─────────────────────────────────────── */
@@ -7889,6 +8153,32 @@ function applySettings(){
     });
   }
 
+  // ── Scripting sidebar — layout vars + optional colour overrides ──
+  // Layout is always applied. Colours are only applied when the user
+  // has explicitly overridden them; otherwise the CSS fallbacks in
+  // the appended stylesheet resolve against the active theme vars.
+  if(LSET.script){
+    const S = LSET.script;
+    body.style.setProperty('--script-panel-width',      (S.panelWidth       ?? 380)  + 'px');
+    body.style.setProperty('--script-editor-font-size', (S.editorFontSize   ?? 12.5) + 'px');
+    body.style.setProperty('--script-compile-radius',   (S.compileBtnRadius ?? 7)    + 'px');
+
+    const isDarkScript = body.classList.contains('dark-theme');
+    const overrides    = isDarkScript ? (S.colorsDark || {}) : (S.colorsLight || {});
+    const SCRIPT_COLOR_VARS = [
+      '--script-panel-bg','--script-panel-border','--script-panel-shadow',
+      '--script-editor-bg','--script-editor-text','--script-editor-caret',
+      '--script-hint-bg','--script-hint-text','--script-hint-accent',
+      '--script-compile-bg','--script-compile-bg-2','--script-compile-text',
+      '--script-status-ok-bg','--script-status-ok-text',
+      '--script-status-err-bg','--script-status-err-text'
+    ];
+    for(const v of SCRIPT_COLOR_VARS){
+      if(overrides[v]) body.style.setProperty(v, overrides[v]);
+      else             body.style.removeProperty(v);
+    }
+  }
+
   // If the custom-gate modal is open, refresh its toolbar so its
   // swatches use the new palette.
   const modalTb = document.getElementById('custom-gate-modal-toolbar');
@@ -8115,6 +8405,7 @@ function resetPreferences(){
 function lsetHtmlButtons(){
     const list = [
         ['customGate','⚙️ Custom Gate'],
+        ['logicTable','📋 Logic Table'],
         ['pause','Pause / Resume'],
         ['step','Step'],
         ['reset','Reset view'],
@@ -8129,8 +8420,9 @@ function lsetHtmlButtons(){
         ['undo','↩ Undo'],
         ['redo','↪ Redo'],
         ['share','🌐 Share'],
+        ['script','⚡ Script'],
         ['help','? Help / Shortcuts']
-    ];
+    ];  
     const rows = list.map(([k,label]) =>
         `<div class="field"><label>${escapeHtml(label)}</label>
           <input type="color" data-path="buttons.${k}" value="${lsetNormHex(lsetGet(LSET,'buttons.'+k))}"></div>`
@@ -8426,6 +8718,102 @@ function lsetHtmlLayout(){
       <b>visible</b> is also under Preferences.
     </p>`;
 }
+/* ── Scripting tab ─────────────────────────────────────── */
+function lsetHtmlScripting(){
+    const S = LSET.script || {};
+
+    /* Colour row: shows the resolved value (override OR theme fallback).
+       Data-attribute parsing handled by onSettingsInput below. */
+    const colorRow = (label, varName, fallbackVar) => {
+        const lightOverride = (S.colorsLight && S.colorsLight[varName]) || null;
+        const darkOverride  = (S.colorsDark  && S.colorsDark[varName])  || null;
+        const lightFallback = LSET.light[fallbackVar] || LSET_DEFAULT.light[fallbackVar] || '#000000';
+        const darkFallback  = LSET.dark[fallbackVar]  || LSET_DEFAULT.dark[fallbackVar]  || '#000000';
+        const lVal  = lsetNormHex(lightOverride || lightFallback);
+        const dVal  = lsetNormHex(darkOverride  || darkFallback);
+        const lTitle = lightOverride ? 'Light — custom override' : 'Light — inherit from ' + fallbackVar;
+        const dTitle = darkOverride  ? 'Dark — custom override'  : 'Dark — inherit from '  + fallbackVar;
+        return `<div class="field">
+            <label title="${varName}">${escapeHtml(label)}</label>
+            <input type="color" data-script-color="light|${varName}" value="${lVal}" title="${lTitle}">
+            <input type="color" data-script-color="dark|${varName}"  value="${dVal}" title="${dTitle}">
+        </div>`;
+    };
+
+    return `<div class="sec-title">Sidebar layout</div>
+    <div class="grid">
+      ${lsetRng('Panel width','script.panelWidth',280,600,10,'px')}
+      ${lsetRng('Editor font size','script.editorFontSize',10,20,0.5,'px')}
+      ${lsetRng('Compile button radius','script.compileBtnRadius',0,20,1,'px')}
+    </div>
+
+    <div class="sec-title">Auto-layout columns</div>
+    <div class="grid">
+      ${lsetRng('Column width','script.columnWidth',140,360,10,'px')}
+      ${lsetRng('Row step','script.rowStep',60,160,5,'px')}
+      ${lsetRng('Left start X','script.xStart',20,200,5,'px')}
+      ${lsetRng('Top start Y','script.yStart',20,200,5,'px')}
+      ${lsetRng('Gate gap','script.gateGap',0,60,5,'px')}
+    </div>
+
+    <div class="sec-title">Colours &nbsp;·&nbsp; left = light theme, right = dark theme</div>
+    <p style="font-size:11px;opacity:.65;margin:0 0 10px;line-height:1.6;">
+      Every colour <b>inherits from your theme by default</b>. Picking a custom
+      colour creates an override that survives theme toggles but is reset when
+      you apply a preset. Click <b>Reset</b> below to return everything to theme
+      defaults.
+    </p>
+    <div class="grid">
+      ${colorRow('Panel background','--script-panel-bg','--toolbar-bg')}
+      ${colorRow('Panel border','--script-panel-border','--border-color')}
+      ${colorRow('Editor background','--script-editor-bg','--bg-color')}
+      ${colorRow('Editor text','--script-editor-text','--text-color')}
+      ${colorRow('Editor caret','--script-editor-caret','--accent')}
+      ${colorRow('Hint background','--script-hint-bg','--bg-color')}
+      ${colorRow('Hint text','--script-hint-text','--muted')}
+      ${colorRow('Hint accent (Example:)','--script-hint-accent','--accent')}
+      ${colorRow('Compile button — top','--script-compile-bg','--accent')}
+      ${colorRow('Compile button — bottom','--script-compile-bg-2','--accent-2')}
+      ${colorRow('Compile button — text','--script-compile-text','--text-color')}
+      ${colorRow('Status — OK background','--script-status-ok-bg','--bg-color')}
+      ${colorRow('Status — OK text','--script-status-ok-text','--good')}
+      ${colorRow('Status — error background','--script-status-err-bg','--bg-color')}
+      ${colorRow('Status — error text','--script-status-err-text','--danger')}
+    </div>
+
+    <div style="margin-top:16px;display:flex;gap:8px;flex-wrap:wrap;">
+      <button class="btn-cancel" onclick="resetScriptColors()">↺ Reset colours to theme defaults</button>
+      <button class="btn-cancel" onclick="copyScriptLightToDark()">Copy light → dark</button>
+      <button class="btn-cancel" onclick="copyScriptDarkToLight()">Copy dark → light</button>
+    </div>
+
+    <p style="font-size:11px;opacity:.6;margin-top:20px;line-height:1.6;">
+      The <b>⚡ Script</b> toolbar button's colour is under
+      <b>🔘 Buttons → ⚡ Script</b>. The editor uses your
+      <b>Monospace font</b> from <b>🔤 Fonts</b>.
+    </p>`;
+}
+
+function resetScriptColors(){
+    if(!LSET.script) LSET.script = { colorsLight:{}, colorsDark:{} };
+    LSET.script.colorsLight = {};
+    LSET.script.colorsDark  = {};
+    applySettings(); saveSettings(); renderSettingsTab();
+    showToast('Script colours reset to theme defaults.','success',1400);
+}
+function copyScriptLightToDark(){
+    if(!LSET.script) LSET.script = { colorsLight:{}, colorsDark:{} };
+    LSET.script.colorsDark = lsetClone(LSET.script.colorsLight || {});
+    applySettings(); saveSettings(); renderSettingsTab();
+    showToast('Script colours: light → dark.','success',1200);
+}
+function copyScriptDarkToLight(){
+    if(!LSET.script) LSET.script = { colorsLight:{}, colorsDark:{} };
+    LSET.script.colorsLight = lsetClone(LSET.script.colorsDark || {});
+    applySettings(); saveSettings(); renderSettingsTab();
+    showToast('Script colours: dark → light.','success',1200);
+}
+
 function lsetHtmlPresets(){
     const builtinNames = Object.keys(LSET_PRESETS).filter(n => !CUSTOM_PRESETS[n]);
     const customNames  = Object.keys(CUSTOM_PRESETS);
@@ -8540,6 +8928,7 @@ function renderSettingsTab(){
   else if(lsetTab==='preferences') body.innerHTML=lsetHtmlPreferences();
   else if(lsetTab==='fonts')   body.innerHTML=lsetHtmlFonts();
   else if(lsetTab==='layout')  body.innerHTML=lsetHtmlLayout();
+  else if(lsetTab==='script')  body.innerHTML=lsetHtmlScripting();
   else if(lsetTab==='presets') body.innerHTML=lsetHtmlPresets();
   else                         body.innerHTML=lsetHtmlAdvanced();
   if(lsetTab==='advanced'){
@@ -8551,6 +8940,24 @@ function renderSettingsTab(){
 /* ── live editing ──────────────────────────────────────── */
 function onSettingsInput(e){
   const el=e.target;
+
+  /* Script colour overrides — data-script-color="light|--script-X" */
+  const scAttr = el.dataset && el.dataset.scriptColor;
+  if(scAttr){
+    const parts = scAttr.split('|');
+    const themeKey = parts[0];
+    const varName  = parts[1];
+    if(themeKey && varName){
+      if(!LSET.script) LSET.script = { colorsLight:{}, colorsDark:{} };
+      const bucket = themeKey === 'light' ? 'colorsLight' : 'colorsDark';
+      if(!LSET.script[bucket]) LSET.script[bucket] = {};
+      LSET.script[bucket][varName] = el.value;
+      applySettings();
+      scheduleSaveSettings();
+      return;
+    }
+  }
+
   if(el.matches('select[data-fontpick]')){
     const path=el.dataset.fontpick;
     lsetSet(LSET,path,el.value);
@@ -11017,12 +11424,8 @@ window.drawTimingDiagram = drawTimingDiagram;
     /* ── 2.4 Layout + compile + wiring ──────────────────────
        Column 0  → INPUTs  (fixed Y stack)
        Col 1..N  → gates   (post-order DFS, first-fit per column)
-       Col N+1   → OUTPUTs (fixed Y stack)                         */
-    const SCRIPT_COL_W    = 220;   // horizontal spacing between columns
-    const SCRIPT_ROW_STEP = 100;   // vertical spacing for fixed stacks
-    const SCRIPT_X_START  = 80;
-    const SCRIPT_Y_START  = 80;
-    const SCRIPT_GATE_GAP = 20;    // extra gap between gates in one column
+       Col N+1   → OUTPUTs (fixed Y stack)
+       Layout numbers come from LSET.script — see Settings → ⚡ Scripting. */
 
     function clearCanvasForCompile(){
         for(const el of compEls.values()) el.remove();
@@ -11047,13 +11450,20 @@ window.drawTimingDiagram = drawTimingDiagram;
     }
 
     function buildCircuitFromAst(parsed){
+        const S = (typeof LSET !== 'undefined' && LSET && LSET.script) || {};
+        const COL_W    = S.columnWidth ?? 220;
+        const ROW_STEP = S.rowStep     ?? 100;
+        const X_START  = S.xStart      ?? 80;
+        const Y_START  = S.yStart      ?? 80;
+        const GATE_GAP = S.gateGap     ?? 20;
+
         const colNextY = new Map();
 
         function placeGate(col, height){
             const existing = colNextY.get(col);
-            const y = existing !== undefined ? existing : SCRIPT_Y_START;
-            colNextY.set(col, y + height + SCRIPT_GATE_GAP);
-            return { x: SCRIPT_X_START + col * SCRIPT_COL_W, y };
+            const y = existing !== undefined ? existing : Y_START;
+            colNextY.set(col, y + height + GATE_GAP);
+            return { x: X_START + col * COL_W, y };
         }
 
         function spawnGateAndGet(type, x, y){
@@ -11077,14 +11487,14 @@ window.drawTimingDiagram = drawTimingDiagram;
         const inputMap = new Map();
         for(let i = 0; i < parsed.inputs.length; i++){
             const name = parsed.inputs[i];
-            const x = SCRIPT_X_START + 0 * SCRIPT_COL_W;
-            const y = SCRIPT_Y_START + i * SCRIPT_ROW_STEP;
+            const x = X_START + 0 * COL_W;
+            const y = Y_START + i * ROW_STEP;
             const comp = spawnGateAndGet('INPUT', x, y);
             setGateLabel(comp, name);
             inputMap.set(name, comp);
         }
         if(parsed.inputs.length){
-            colNextY.set(0, SCRIPT_Y_START + parsed.inputs.length * SCRIPT_ROW_STEP);
+            colNextY.set(0, Y_START + parsed.inputs.length * ROW_STEP);
         }
 
         /* — Compile AST nodes to gates with dedup — */
