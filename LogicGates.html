@@ -922,6 +922,378 @@ body.no-animations *,body.no-animations *::before,body.no-animations *::after{
     display:none;z-index:10;
 }
 .gate.note:hover .note-resize-handle{display:block}
+/* ═══════════════════════════════════════════════════════════
+   UX OVERLAYS — mode badge · pour tooltip · hotkey modal
+   ═══════════════════════════════════════════════════════════ */
+
+/* ── 1. Persistent mode badge ────────────────────────────── */
+.mode-badge {
+    position: fixed;
+    top: 68px;
+    right: 12px;
+    z-index: 200;
+    pointer-events: none;               /* never intercepts canvas clicks */
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 12px 6px 10px;
+    border-radius: 999px;
+    background: color-mix(in srgb, var(--toolbar-bg) 82%, transparent);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border: 1px solid var(--border-color);
+    box-shadow: 0 2px 12px rgba(0,0,0,0.10);
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--text-color);
+    --badge-accent: var(--accent);
+    max-width: min(360px, calc(100vw - 24px));
+    transition:
+        background .25s ease,
+        border-color .25s ease,
+        box-shadow .25s ease;
+    user-select: none;
+    -webkit-user-select: none;
+}
+.mode-badge-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--badge-accent);
+    box-shadow: 0 0 8px var(--badge-accent);
+    flex-shrink: 0;
+    transition: background .25s, box-shadow .25s;
+}
+.mode-badge-text {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.mode-badge-hint {
+    font-weight: 400;
+    opacity: 0.7;
+    font-size: 10px;
+    padding-left: 8px;
+    border-left: 1px solid var(--border-color);
+    margin-left: 2px;
+    white-space: nowrap;
+    display: none;
+}
+.mode-badge-hint:not(:empty) {
+    display: inline;
+}
+
+/* Per-mode theming */
+.mode-badge[data-mode="standard"] { --badge-accent: #6b7280; }
+.mode-badge[data-mode="pour"] {
+    --badge-accent: #f97316;
+    border-color: color-mix(in srgb, #f97316 45%, var(--border-color));
+    background: color-mix(in srgb, #f97316 12%, var(--toolbar-bg) 82%);
+}
+.mode-badge[data-mode="debug"] {
+    --badge-accent: #16a34a;
+    border-color: color-mix(in srgb, #16a34a 45%, var(--border-color));
+    background: color-mix(in srgb, #16a34a 12%, var(--toolbar-bg) 82%);
+}
+.mode-badge[data-mode="box"]  { --badge-accent: #eab308; }
+.mode-badge[data-mode="wire"] { --badge-accent: #3b82f6; }
+
+/* Pulse the dot for active modes */
+.mode-badge[data-mode="pour"] .mode-badge-dot,
+.mode-badge[data-mode="debug"] .mode-badge-dot {
+    animation: mode-pulse 1.6s ease-in-out infinite;
+}
+@keyframes mode-pulse {
+    0%, 100% { opacity: 1;    transform: scale(1);   }
+    50%      { opacity: 0.55; transform: scale(0.8); }
+}
+
+/* Small pop when the mode changes */
+.mode-badge.mode-changed {
+    animation: mode-change .3s ease-out;
+}
+@keyframes mode-change {
+    0%   { transform: scale(1);    }
+    40%  { transform: scale(1.04); }
+    100% { transform: scale(1);    }
+}
+
+/* ── 2. Pour-mode cursor tooltip ─────────────────────────── */
+.pour-tooltip {
+    position: fixed;
+    top: 0;
+    left: 0;
+    z-index: 9500;
+    pointer-events: none;
+    padding: 8px 12px;
+    border-radius: 8px;
+    background: color-mix(in srgb, #b45309 92%, black 8%);
+    color: #fff;
+    box-shadow: 0 6px 20px rgba(180, 83, 9, 0.35);
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity .15s ease, visibility 0s .15s;
+    max-width: 240px;
+    will-change: transform;
+    font-size: 11px;
+    line-height: 1.4;
+}
+.pour-tooltip.visible {
+    opacity: 1;
+    visibility: visible;
+    transition: opacity .15s ease, visibility 0s 0s;
+}
+.pour-tooltip-title {
+    font-weight: 700;
+    font-size: 11px;
+    margin-bottom: 3px;
+    letter-spacing: 0.01em;
+}
+.pour-tooltip-body {
+    font-size: 10px;
+    opacity: 0.9;
+    line-height: 1.5;
+}
+
+/* ── 3. Hotkey modal ─────────────────────────────────────── */
+.hotkey-modal {
+    position: fixed;
+    inset: 0;
+    z-index: 5100;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+}
+.hotkey-modal.open { display: flex; }
+
+.hotkey-modal-backdrop {
+    position: absolute;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.45);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    animation: hotkey-fade-in .22s ease-out;
+}
+@keyframes hotkey-fade-in {
+    from { opacity: 0; }
+    to   { opacity: 1; }
+}
+
+.hotkey-modal-sheet {
+    position: relative;
+    width: min(640px, 100%);
+    max-height: min(85vh, 780px);
+    background: var(--toolbar-bg);
+    color: var(--text-color);
+    border: 1px solid var(--border-color);
+    border-radius: 14px;
+    box-shadow: 0 24px 60px rgba(0, 0, 0, 0.45);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    animation: hotkey-sheet-in .28s cubic-bezier(.22, .61, .36, 1);
+}
+@keyframes hotkey-sheet-in {
+    from { opacity: 0; transform: translateY(24px) scale(.97); }
+    to   { opacity: 1; transform: translateY(0)     scale(1);  }
+}
+
+.hotkey-modal-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 20px 24px 16px;
+    border-bottom: 1px solid var(--border-color);
+    background: linear-gradient(180deg,
+        color-mix(in srgb, var(--accent) 6%, var(--toolbar-bg)) 0%,
+        var(--toolbar-bg) 100%);
+    flex-shrink: 0;
+}
+.hotkey-modal-eyebrow {
+    font-size: 9px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    opacity: 0.5;
+    margin-bottom: 4px;
+}
+.hotkey-modal-header h2 {
+    margin: 0;
+    font-size: 18px;
+    font-weight: 600;
+    letter-spacing: -0.01em;
+    font-family: var(--font-serif);
+}
+.hotkey-modal-close {
+    width: 28px;
+    height: 28px;
+    border-radius: 8px;
+    background: transparent;
+    border: 1px solid transparent;
+    color: var(--text-color);
+    font-size: 14px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0.65;
+    transition: opacity .15s, background .15s, border-color .15s;
+    flex-shrink: 0;
+}
+.hotkey-modal-close:hover {
+    opacity: 1;
+    background: color-mix(in srgb, var(--text-color) 8%, transparent);
+    border-color: var(--border-color);
+}
+
+.hotkey-modal-body {
+    flex: 1;
+    overflow-y: auto;
+    padding: 8px 24px 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.hotkey-section {
+    padding: 16px 0;
+    border-bottom: 1px solid var(--border-color);
+}
+.hotkey-section:last-child { border-bottom: none; }
+.hotkey-section h3 {
+    margin: 0 0 12px;
+    font-size: 12px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--accent);
+    opacity: 0.9;
+}
+.hotkey-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+.hotkey-list li {
+    display: grid;
+    grid-template-columns: minmax(0, auto) 1fr;
+    align-items: center;
+    gap: 16px;
+    padding: 4px 0;
+}
+.hotkey-keys {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    flex-wrap: wrap;
+    flex-shrink: 0;
+}
+.hotkey-keys .plus {
+    font-size: 10px;
+    opacity: 0.4;
+    font-weight: 400;
+    padding: 0 1px;
+}
+.hotkey-desc {
+    font-size: 12px;
+    opacity: 0.85;
+    line-height: 1.4;
+}
+
+/* Physical keycap treatment */
+.hotkey-modal kbd {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 22px;
+    height: 22px;
+    padding: 0 6px;
+    font-family: var(--font-mono, ui-monospace, Menlo, Consolas, monospace);
+    font-size: 11px;
+    font-weight: 700;
+    line-height: 1;
+    color: var(--text-color);
+    background: linear-gradient(180deg,
+        color-mix(in srgb, var(--toolbar-bg) 94%, var(--text-color) 6%)  0%,
+        color-mix(in srgb, var(--toolbar-bg) 86%, var(--text-color) 14%) 100%);
+    border: 1px solid var(--border-color);
+    border-bottom: 2px solid var(--border-strong, var(--border-color));
+    border-radius: 5px;
+    box-shadow:
+        0 1px 0 rgba(255, 255, 255, 0.08) inset,
+        0 1px 2px rgba(0, 0, 0, 0.06);
+    white-space: nowrap;
+    vertical-align: middle;
+}
+
+.hotkey-modal-footer {
+    padding: 12px 24px;
+    border-top: 1px solid var(--border-color);
+    font-size: 11px;
+    opacity: 0.65;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    background: color-mix(in srgb, var(--bg-color) 50%, var(--toolbar-bg));
+    flex-shrink: 0;
+}
+.hotkey-modal-footer kbd {
+    height: 18px;
+    min-width: 18px;
+    padding: 0 4px;
+    font-size: 10px;
+    border-bottom-width: 1px;
+}
+
+/* ── Responsive ──────────────────────────────────────────── */
+@media (max-width: 640px) {
+    .mode-badge {
+        font-size: 10px;
+        padding: 4px 10px 4px 8px;
+        top: auto;
+        bottom: 12px;      /* bottom-right on phones to stay clear of wrapped toolbar */
+        right: 12px;
+    }
+    .hotkey-modal {
+        padding: 0;
+        align-items: flex-end;
+    }
+    .hotkey-modal-sheet {
+        width: 100%;
+        max-height: 92vh;
+        border-radius: 16px 16px 0 0;
+        animation: hotkey-sheet-in-mobile .3s cubic-bezier(.22, .61, .36, 1);
+    }
+    @keyframes hotkey-sheet-in-mobile {
+        from { opacity: 0; transform: translateY(40px); }
+        to   { opacity: 1; transform: translateY(0);    }
+    }
+    .hotkey-modal-header { padding: 16px 18px 12px; }
+    .hotkey-modal-body   { padding: 6px 18px 16px;  }
+    .hotkey-modal-footer { padding: 10px 18px;      }
+    .hotkey-list li {
+        grid-template-columns: 1fr;
+        gap: 4px;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .mode-badge,
+    .mode-badge-dot,
+    .mode-badge.mode-changed,
+    .pour-tooltip,
+    .hotkey-modal-backdrop,
+    .hotkey-modal-sheet {
+        animation: none !important;
+        transition: none !important;
+    }
+}
 </style>
 </head>
 <body>
@@ -981,6 +1353,12 @@ body.no-animations *,body.no-animations *::before,body.no-animations *::after{
     <div class="toolbar-group" style="border-left:2px solid var(--border-color);padding-left:5px;">
         <button id="share-btn" data-btn-id="share" onclick="openShareModal()" style="background:#1f3a63;">🌐 Share</button>
     </div>
+    <div class="toolbar-group">
+    <button id="help-btn" onclick="openHotkeyModal()"
+            style="background:#3d4653;width:24px;height:24px;border-radius:50%;padding:0;font-weight:bold;font-size:13px;"
+            title="Keyboard shortcuts (Shift+?)"
+            aria-label="Open keyboard shortcuts">?</button>
+</div>
     <div class="toolbar-group" style="border-left:2px solid var(--border-color);padding-left:5px;">
         <span id="pour-indicator">🔌 Pour mode <button class="pour-exit-btn" onclick="exitWirePouring()">✕</button></span>
     </div>
@@ -1233,6 +1611,81 @@ body.no-animations *,body.no-animations *::before,body.no-animations *::after{
     • <strong>Undo/Redo</strong>: Ctrl+Z / Ctrl+Shift+Z.<br />
     • <strong>Debug mode</strong>: press <strong>D</strong>. Hover gates/wires to inspect; click a gate body or wire to pin; <strong>Esc</strong> to unpin.<br />
     • <strong>Collab</strong>: click <strong>🌐 Share</strong> to sign in, host a room, or join one — you'll see everyone's live cursor.
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════
+     UX OVERLAYS — mode badge · pour tooltip · hotkey modal
+     ═══════════════════════════════════════════════════════════ -->
+
+<!-- 1. Persistent mode badge -->
+<div id="mode-badge" class="mode-badge" data-mode="standard" aria-live="polite">
+    <span class="mode-badge-dot" aria-hidden="true"></span>
+    <span class="mode-badge-text">Standard</span>
+    <span class="mode-badge-hint"></span>
+</div>
+
+<!-- 2. Pour-mode cursor tooltip -->
+<div id="pour-tooltip" class="pour-tooltip" role="tooltip" aria-hidden="true">
+    <div class="pour-tooltip-title">🔌 Pour Mode</div>
+    <div class="pour-tooltip-body">Click inputs to wire · Right-click to cancel</div>
+</div>
+
+<!-- 3. Hotkey / mode reference modal -->
+<div id="hotkey-modal" class="hotkey-modal" role="dialog" aria-modal="true" aria-labelledby="hotkey-modal-title">
+    <div class="hotkey-modal-backdrop" onclick="closeHotkeyModal()"></div>
+    <div class="hotkey-modal-sheet" role="document">
+        <div class="hotkey-modal-header">
+            <div>
+                <div class="hotkey-modal-eyebrow">Reference</div>
+                <h2 id="hotkey-modal-title">Shortcuts &amp; Modes</h2>
+            </div>
+            <button class="hotkey-modal-close" onclick="closeHotkeyModal()" aria-label="Close shortcuts">✕</button>
+        </div>
+
+        <div class="hotkey-modal-body">
+
+            <div class="hotkey-section">
+                <h3>Selecting &amp; Copying</h3>
+                <ul class="hotkey-list">
+                    <li><span class="hotkey-keys"><kbd>Shift</kbd><span class="plus">+</span><kbd>Drag</kbd></span><span class="hotkey-desc">Box select multiple gates</span></li>
+                    <li><span class="hotkey-keys"><kbd>Shift</kbd><span class="plus">+</span><kbd>Click</kbd></span><span class="hotkey-desc">Add / remove a gate from selection</span></li>
+                    <li><span class="hotkey-keys"><kbd>Ctrl</kbd><span class="plus">+</span><kbd>C</kbd></span><span class="hotkey-desc">Copy selected gates</span></li>
+                    <li><span class="hotkey-keys"><kbd>Ctrl</kbd><span class="plus">+</span><kbd>V</kbd></span><span class="hotkey-desc">Paste at cursor</span></li>
+                    <li><span class="hotkey-keys"><kbd>Ctrl</kbd><span class="plus">+</span><kbd>Z</kbd></span><span class="hotkey-desc">Undo</span></li>
+                    <li><span class="hotkey-keys"><kbd>Ctrl</kbd><span class="plus">+</span><kbd>Shift</kbd><span class="plus">+</span><kbd>Z</kbd></span><span class="hotkey-desc">Redo</span></li>
+                    <li><span class="hotkey-keys"><kbd>Delete</kbd></span><span class="hotkey-desc">Remove selected gates / wires</span></li>
+                </ul>
+            </div>
+
+            <div class="hotkey-section">
+                <h3>Advanced Wiring · Pour Mode</h3>
+                <ul class="hotkey-list">
+                    <li><span class="hotkey-keys"><kbd>Click</kbd><span class="plus">on</span><kbd>Output</kbd></span><span class="hotkey-desc">Enter Pour mode from that source</span></li>
+                    <li><span class="hotkey-keys"><kbd>Click</kbd><span class="plus">on</span><kbd>Input</kbd></span><span class="hotkey-desc">Wire from the active pour source</span></li>
+                    <li><span class="hotkey-keys"><kbd>Right-click</kbd></span><span class="hotkey-desc">Cancel Pour mode</span></li>
+                    <li><span class="hotkey-keys"><kbd>Esc</kbd></span><span class="hotkey-desc">Exit Pour mode</span></li>
+                    <li><span class="hotkey-keys"><kbd>Shift</kbd><span class="plus">+</span><kbd>Click</kbd><span class="plus">on</span><kbd>Input</kbd></span><span class="hotkey-desc">Wire from the next selected source (round-robin)</span></li>
+                    <li><span class="hotkey-keys"><kbd>Double-click</kbd><span class="plus">on</span><kbd>Wire</kbd></span><span class="hotkey-desc">Delete the wire</span></li>
+                </ul>
+            </div>
+
+            <div class="hotkey-section">
+                <h3>Debugging</h3>
+                <ul class="hotkey-list">
+                    <li><span class="hotkey-keys"><kbd>D</kbd></span><span class="hotkey-desc">Toggle Debug mode</span></li>
+                    <li><span class="hotkey-keys"><kbd>Hover</kbd><span class="plus">on</span><kbd>Gate</kbd></span><span class="hotkey-desc">Inspect live signal values</span></li>
+                    <li><span class="hotkey-keys"><kbd>Click</kbd><span class="plus">on</span><kbd>Body</kbd></span><span class="hotkey-desc">Pin the tooltip</span></li>
+                    <li><span class="hotkey-keys"><kbd>Esc</kbd></span><span class="hotkey-desc">Unpin</span></li>
+                    <li><span class="hotkey-keys"><kbd>Right-click</kbd><span class="plus">on</span><kbd>Port</kbd></span><span class="hotkey-desc">Add to Timing Diagram</span></li>
+                </ul>
+            </div>
+
+        </div>
+
+        <div class="hotkey-modal-footer">
+            <span>Press <kbd>?</kbd> to toggle · <kbd>Esc</kbd> to close</span>
+        </div>
+    </div>
 </div>
 
 <script>
@@ -9771,6 +10224,170 @@ window.toggleTimingPanel = toggleTimingPanel;
 window.clearTimeline     = clearTimeline;
 window.drawTimingDiagram = drawTimingDiagram;
 
+</script>
+<script>
+/* ═══════════════════════════════════════════════════════════
+   UX OVERLAYS — badge · tooltip · hotkey modal
+   Zero cooperation required from the simulator engine.
+   ═══════════════════════════════════════════════════════════ */
+(function () {
+    'use strict';
+
+    /* ── 1. Persistent mode badge ───────────────────────── */
+    const badge     = document.getElementById('mode-badge');
+    const badgeText = badge.querySelector('.mode-badge-text');
+    const badgeHint = badge.querySelector('.mode-badge-hint');
+
+    const MODE_META = {
+        standard: { label: 'Standard',      hint: '' },
+        pour:     { label: '🔌 Pour Mode',  hint: 'Click inputs to wire' },
+        debug:    { label: '🐞 Debug Mode', hint: 'Click a gate to pin · D to exit' },
+        box:      { label: '▦ Box Select',  hint: 'Release to select'     },
+        wire:     { label: '🔗 Wiring',     hint: 'Drop on an input port' },
+    };
+
+    let lastMode = '';
+
+    // Declared here so renderBadge() can reference it during its first run.
+    // Section 2 attaches its event handlers to this same element.
+    const pourTip = document.getElementById('pour-tooltip');
+
+    function currentMode() {
+        // Read the simulator's own globals — they already exist on window.
+        if (typeof debugMode        !== 'undefined' && debugMode)        return 'debug';
+        if (typeof wirePouringState !== 'undefined' && wirePouringState) return 'pour';
+        if (typeof isBoxSelecting   !== 'undefined' && isBoxSelecting)   return 'box';
+        if (typeof draggingWire     !== 'undefined' && draggingWire)     return 'wire';
+        return 'standard';
+    }
+
+    function renderBadge() {
+        const mode = currentMode();
+        if (mode === lastMode) return;
+        lastMode = mode;
+
+        const meta = MODE_META[mode] || MODE_META.standard;
+        badge.dataset.mode       = mode;
+        badgeText.textContent    = meta.label;
+        badgeHint.textContent    = meta.hint || '';
+
+        // Restart the pop animation
+        badge.classList.remove('mode-changed');
+        void badge.offsetWidth;
+        badge.classList.add('mode-changed');
+
+        // Hide the pour tooltip if we leave pour mode
+        if (mode !== 'pour' && pourTip) pourTip.classList.remove('visible');
+    }
+
+    // 100 ms polling — invisible to the user, zero coupling to engine code.
+    setInterval(renderBadge, 100);
+    renderBadge();
+
+    /* ── 2. Pour-mode cursor tooltip ────────────────────── */
+    // (pourTip itself was declared in section 1 to avoid TDZ during the
+    //  initial renderBadge() call.)
+    let pourX = 0, pourY = 0, pourRaf = 0;
+
+    function positionPourTip() {
+        pourRaf = 0;
+        let x = pourX + 16;
+        let y = pourY + 22;
+
+        // Flip horizontally near the right edge
+        const w = pourTip.offsetWidth || 200;
+        if (x + w > window.innerWidth - 8) x = pourX - w - 16;
+
+        // Flip vertically near the bottom edge
+        const h = pourTip.offsetHeight || 60;
+        if (y + h > window.innerHeight - 8) y = pourY - h - 22;
+
+        pourTip.style.transform = `translate3d(${x}px, ${y}px, 0)`;
+    }
+
+    document.addEventListener('mousemove', (e) => {
+        pourX = e.clientX;
+        pourY = e.clientY;
+
+        const active = typeof wirePouringState !== 'undefined' && wirePouringState;
+        if (active) {
+            pourTip.classList.add('visible');
+            if (!pourRaf) pourRaf = requestAnimationFrame(positionPourTip);
+        } else {
+            pourTip.classList.remove('visible');
+        }
+    }, { passive: true });
+
+    // Immediate hide on right-click — the app exits pour mode on right-click
+    document.addEventListener('mousedown', (e) => {
+        if (e.button === 2) pourTip.classList.remove('visible');
+    }, { passive: true });
+
+    /* ── 3. Hotkey modal ────────────────────────────────── */
+    const modal = document.getElementById('hotkey-modal');
+    let modalOpen = false;
+
+    window.openHotkeyModal = function () {
+        if (modalOpen) return;
+        modalOpen = true;
+        modal.classList.add('open');
+        // Focus the close button for keyboard users
+        const closeBtn = modal.querySelector('.hotkey-modal-close');
+        if (closeBtn) closeBtn.focus({ preventScroll: true });
+    };
+
+    window.closeHotkeyModal = function () {
+        if (!modalOpen) return;
+        modalOpen = false;
+        modal.classList.remove('open');
+        // Return focus to the toolbar trigger if the user opened it from there
+        const trigger = document.getElementById('help-btn');
+        if (trigger && document.activeElement === document.body) {
+            trigger.focus({ preventScroll: true });
+        }
+    };
+
+    window.toggleHotkeyModal = function () {
+        modalOpen ? window.closeHotkeyModal() : window.openHotkeyModal();
+    };
+
+    /* ── 4. Keyboard wiring ─────────────────────────────── */
+    document.addEventListener('keydown', (e) => {
+        // Ignore keystrokes while typing in any form field
+        const t = document.activeElement;
+        const typing = t && (
+            t.tagName === 'INPUT'    ||
+            t.tagName === 'TEXTAREA' ||
+            t.tagName === 'SELECT'   ||
+            t.isContentEditable
+        );
+
+        // '?' — the character produced by Shift+/ on most layouts
+        if (!typing && (e.key === '?' || (e.key === '/' && e.shiftKey))) {
+            e.preventDefault();
+            e.stopPropagation();
+            window.toggleHotkeyModal();
+            return;
+        }
+
+        // Escape closes only this modal when it's open.
+        // Uses capture so the app's own Escape handlers (debug unpin, etc.)
+        // don't fire on the same keypress.
+        if (modalOpen && e.key === 'Escape') {
+            e.preventDefault();
+            e.stopPropagation();
+            window.closeHotkeyModal();
+            return;
+        }
+    }, /* capture: */ true);
+
+    // Clicking the backdrop closes the modal
+    const backdrop = modal.querySelector('.hotkey-modal-backdrop');
+    if (backdrop) backdrop.addEventListener('mousedown', (e) => {
+        if (e.target === backdrop) window.closeHotkeyModal();
+    });
+
+})();
 </script>
 </body>
 </html>
