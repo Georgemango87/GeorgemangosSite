@@ -1291,6 +1291,254 @@ body.no-animations *,body.no-animations *::before,body.no-animations *::after{
         transition: none !important;
     }
 }
+
+/* ═══════════════════════════════════════════════════════════════
+   SCRIPTING SIDEBAR — Step 1: UI shell only
+   Slides in from the right; pushes viewport/timing/toasts/badge.
+   Colours come from the existing CSS vars, so it inherits light &
+   dark themes automatically.
+   ═══════════════════════════════════════════════════════════════ */
+#script-panel {
+    position: fixed;
+    top: 62px;                 /* aligns with #viewport top */
+    right: 0;
+    bottom: 0;
+    width: 380px;
+    max-width: 100vw;
+    background: var(--toolbar-bg);
+    color: var(--text-color);
+    border-left: 1px solid var(--border-color);
+    box-shadow: -4px 0 18px rgba(0,0,0,.20);
+    z-index: 140;
+    display: flex;
+    flex-direction: column;
+    font-family: var(--font-ui);
+    transform: translateX(100%);
+    visibility: hidden;
+    transition: transform .28s cubic-bezier(.22,.61,.36,1),
+                visibility 0s .28s;
+    will-change: transform;
+}
+body.script-panel-open #script-panel {
+    transform: translateX(0);
+    visibility: visible;
+    transition: transform .28s cubic-bezier(.22,.61,.36,1),
+                visibility 0s 0s;
+}
+
+/* Push everything that hugs the right edge out of the way */
+body.script-panel-open #viewport        { right: 380px; }
+body.script-panel-open #timing-panel    { right: 380px; }
+body.script-panel-open #toast-container { right: 394px; }
+body.script-panel-open .mode-badge      { right: 392px; }
+
+/* ── Header ─────────────────────────────────────── */
+#script-panel .sp-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    padding: 11px 14px;
+    border-bottom: 1px solid var(--border-color);
+    background: var(--toolbar-bg);
+    flex-shrink: 0;
+}
+#script-panel .sp-title {
+    font-size: 13px;
+    font-weight: 700;
+    letter-spacing: .01em;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    color: var(--text-color);
+}
+#script-panel .sp-close {
+    background: transparent;
+    border: 1px solid transparent;
+    color: var(--text-color);
+    font-size: 14px;
+    cursor: pointer;
+    width: 26px;
+    height: 26px;
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: .65;
+    padding: 0;
+    flex-shrink: 0;
+    transition: background .12s, opacity .12s, border-color .12s;
+    font-family: inherit;
+}
+#script-panel .sp-close:hover {
+    opacity: 1;
+    background: color-mix(in srgb, var(--text-color) 8%, transparent);
+    border-color: var(--border-color);
+}
+
+/* ── Body ───────────────────────────────────────── */
+#script-panel .sp-body {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    padding: 12px 14px 14px;
+    min-height: 0;
+    overflow: hidden;
+}
+
+/* ── The editor (the "IDE" part) ────────────────── */
+#script-panel .sp-editor-wrap {
+    flex: 1;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+}
+#script-editor {
+    flex: 1;
+    width: 100%;
+    min-height: 100px;
+    background: var(--bg-color);
+    color: var(--text-color);
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    padding: 10px 12px;
+    font-family: var(--font-mono,
+                 ui-monospace, SFMono-Regular, Menlo, Consolas,
+                 "Liberation Mono", "Courier New", monospace);
+    font-size: 12.5px;
+    line-height: 1.6;
+    resize: none;
+    outline: none;
+    white-space: pre;
+    overflow: auto;
+    tab-size: 4;
+    -moz-tab-size: 4;
+    box-sizing: border-box;
+    caret-color: var(--accent);
+    transition: border-color .12s, box-shadow .12s;
+}
+#script-editor:focus {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 2px color-mix(in srgb, var(--accent) 22%, transparent);
+}
+#script-editor::placeholder {
+    color: var(--muted);
+    opacity: .55;
+    font-style: italic;
+}
+
+/* ── Helper hint under the editor ───────────────── */
+#script-panel .sp-hint {
+    flex-shrink: 0;
+    font-size: 11px;
+    color: var(--muted);
+    line-height: 1.5;
+    padding: 7px 10px;
+    background: var(--bg-color);
+    border: 1px dashed var(--border-color);
+    border-radius: 6px;
+    display: flex;
+    align-items: baseline;
+    gap: 6px;
+    flex-wrap: wrap;
+}
+#script-panel .sp-hint strong {
+    color: var(--accent);
+    font-weight: 700;
+    font-size: 10.5px;
+    letter-spacing: .02em;
+}
+#script-panel .sp-hint code {
+    font-family: var(--font-mono,
+                 ui-monospace, SFMono-Regular, Menlo, Consolas,
+                 "Liberation Mono", "Courier New", monospace);
+    font-size: 11px;
+    color: var(--text-color);
+    background: rgba(127,127,127,.12);
+    padding: 1px 5px;
+    border-radius: 3px;
+    white-space: nowrap;
+}
+
+/* ── Status line ────────────────────────────────── */
+#script-status {
+    flex-shrink: 0;
+    font-size: 11px;
+    padding: 7px 10px;
+    border-radius: 5px;
+    border-left: 3px solid var(--border-strong);
+    background: rgba(127,127,127,.08);
+    color: var(--muted);
+    white-space: pre-wrap;
+    font-family: var(--font-mono,
+                 ui-monospace, SFMono-Regular, Menlo, Consolas,
+                 "Liberation Mono", "Courier New", monospace);
+    line-height: 1.5;
+    max-height: 90px;
+    overflow-y: auto;
+    min-height: 14px;
+    transition: border-color .15s, background .15s, color .15s;
+}
+#script-status.ok {
+    border-left-color: #16a34a;
+    background: rgba(22,163,74,.10);
+    color: #16a34a;
+}
+#script-status.err {
+    border-left-color: #dc2626;
+    background: rgba(220,38,38,.10);
+    color: #dc2626;
+}
+
+/* ── Prominent Compile button ───────────────────── */
+#script-compile-btn {
+    flex-shrink: 0;
+    width: 100%;
+    padding: 12px 14px;
+    border: none;
+    border-radius: 7px;
+    cursor: pointer;
+    font-family: var(--font-ui);
+    font-size: 13px;
+    font-weight: 700;
+    letter-spacing: .02em;
+    color: #fff;
+    background: linear-gradient(
+        180deg,
+        var(--accent)   0%,
+        var(--accent-2, var(--accent)) 100%);
+    box-shadow:
+        0 2px 10px color-mix(in srgb, var(--accent) 35%, transparent),
+        inset 0 1px 0 rgba(255,255,255,.10);
+    transition: transform .1s, filter .12s, box-shadow .12s;
+}
+#script-compile-btn:hover {
+    filter: brightness(1.10);
+    box-shadow:
+        0 3px 14px color-mix(in srgb, var(--accent) 45%, transparent),
+        inset 0 1px 0 rgba(255,255,255,.14);
+}
+#script-compile-btn:active {
+    transform: translateY(1px);
+    filter: brightness(0.95);
+}
+
+/* ── Active toggle button in the toolbar ────────── */
+.tool-btn[data-btn-id="script"].active {
+    outline: 2px solid #ffc107;
+    outline-offset: 1px;
+    filter: brightness(1.18);
+}
+
+/* ── Mobile ─────────────────────────────────────── */
+@media (max-width: 640px) {
+    #script-panel { width: 100%; }
+    body.script-panel-open #viewport        { right: 0; }
+    body.script-panel-open #timing-panel    { right: 0; }
+    body.script-panel-open #toast-container { right: 14px; }
+    body.script-panel-open .mode-badge      { right: 12px; }
+}
 </style>
 </head>
 <body>
@@ -1325,6 +1573,7 @@ body.no-animations *,body.no-animations *::before,body.no-animations *::after{
     <div class="toolbar-group" style="border-left:2px solid var(--border-color);padding-left:5px;">
         <div class="tool-btn" data-btn-id="customGate" style="background:#8b5cf6;" onclick="openCustomGateModal(null, false)">⚙️ Custom Gate</div>
         <div class="tool-btn" data-btn-id="logicTable" style="background:#0891b2;" onclick="openLogicTable()">📋 Logic Table</div>
+        <div class="tool-btn" data-btn-id="script" style="background:#7c3aed;" onclick="toggleScriptPanel()" title="Open the Custom Scripting sidebar (Boolean equations → circuit)">⚡ Script</div>
     </div>
     <div class="toolbar-group" id="custom-gates-toolbar"></div>
     <div class="toolbar-group">
@@ -1358,6 +1607,30 @@ body.no-animations *,body.no-animations *::before,body.no-animations *::after{
 </div>
     <div class="toolbar-group" style="border-left:2px solid var(--border-color);padding-left:5px;">
         <span id="pour-indicator">🔌 Pour mode <button class="pour-exit-btn" onclick="exitWirePouring()">✕</button></span>
+    </div>
+</div>
+
+<div id="script-panel" aria-hidden="true" role="complementary" aria-label="Custom Scripting sidebar">
+    <div class="sp-header">
+        <div class="sp-title">⚡ Custom Scripting</div>
+        <button class="sp-close" type="button" onclick="closeScriptPanel()" title="Close panel (Esc)" aria-label="Close scripting panel">✕</button>
+    </div>
+    <div class="sp-body">
+        <div class="sp-editor-wrap">
+            <textarea id="script-editor"
+                      spellcheck="false"
+                      autocomplete="off"
+                      autocorrect="off"
+                      autocapitalize="off"
+                      wrap="off"
+                      placeholder="Example: Y = (A AND B) OR (C XOR NOT D)"></textarea>
+        </div>
+        <div class="sp-hint">
+            <strong>Example:</strong>
+            <code>Y = (A AND B) OR (C XOR NOT D)</code>
+        </div>
+        <div id="script-status">Ready to compile.</div>
+        <button id="script-compile-btn" type="button" onclick="onCompileScriptClick()">⚡ Compile Circuit</button>
     </div>
 </div>
 
@@ -10488,6 +10761,528 @@ window.addEventListener('resize', () => drawTimingDiagram());
 window.toggleTimingPanel = toggleTimingPanel;
 window.clearTimeline     = clearTimeline;
 window.drawTimingDiagram = drawTimingDiagram;
+
+/* ═══════════════════════════════════════════════════════════════
+   SCRIPTING SIDEBAR — Step 1: UI shell only
+   Toggle logic + a stubbed Compile button. Step 2 will replace
+   onCompileScriptClick() with the real tokenizer/parser/compiler.
+   ═══════════════════════════════════════════════════════════════ */
+(function(){
+    'use strict';
+
+    const PANEL_ID = 'script-panel';
+
+    function setScriptStatus(msg, kind){
+        const el = document.getElementById('script-status');
+        if(!el) return;
+        el.textContent = msg || '';
+        el.className = kind || '';
+    }
+
+    function syncToolbarButton(){
+        const btn = document.querySelector('.tool-btn[data-btn-id="script"]');
+        if(!btn) return;
+        const open = document.body.classList.contains('script-panel-open');
+        btn.classList.toggle('active', open);
+        btn.setAttribute('aria-pressed', open ? 'true' : 'false');
+    }
+
+    function nudgeCanvasAfterResize(){
+        // The viewport's right edge changed → port screenshots & wire
+        // paths need to be re-measured. Defer past the CSS transition.
+        setTimeout(() => {
+            try{
+                if(typeof markPortPositionsDirty === 'function') markPortPositionsDirty();
+                if(typeof drawWires           === 'function') drawWires();
+            } catch(_){}
+        }, 320);
+    }
+
+    window.openScriptPanel = function(){
+        const panel = document.getElementById(PANEL_ID);
+        if(!panel) return;
+        document.body.classList.add('script-panel-open');
+        panel.setAttribute('aria-hidden', 'false');
+        syncToolbarButton();
+        nudgeCanvasAfterResize();
+        setTimeout(() => {
+            const ed = document.getElementById('script-editor');
+            if(ed) ed.focus();
+        }, 280);
+    };
+
+    window.closeScriptPanel = function(){
+        const panel = document.getElementById(PANEL_ID);
+        if(!panel) return;
+        document.body.classList.remove('script-panel-open');
+        panel.setAttribute('aria-hidden', 'true');
+        syncToolbarButton();
+        nudgeCanvasAfterResize();
+    };
+
+    window.toggleScriptPanel = function(){
+        if(document.body.classList.contains('script-panel-open')) window.closeScriptPanel();
+        else window.openScriptPanel();
+    };
+
+    /* ════════════════════════════════════════════════════════
+       STEP 2 — Parser · Compiler · Auto-Layout · Wiring
+       ════════════════════════════════════════════════════════ */
+
+    /* ── 2.1 Tokenizer ─────────────────────────────────────── */
+    const SCRIPT_OPS = ['AND','OR','NOT','XOR','NAND','NOR','XNOR'];
+
+    function lexScript(src){
+        const tokens = [];
+        let i = 0;
+        while(i < src.length){
+            const c = src[i];
+            if(/\s/.test(c)){ i++; continue; }
+            if(c === '('){ tokens.push({ t:'(' }); i++; continue; }
+            if(c === ')'){ tokens.push({ t:')' }); i++; continue; }
+            if(c === '&'){ tokens.push({ t:'AND' }); i++; continue; }
+            if(c === '|'){ tokens.push({ t:'OR'  }); i++; continue; }
+            if(c === '^'){ tokens.push({ t:'XOR' }); i++; continue; }
+            if(c === '~' || c === '!'){ tokens.push({ t:'NOT' }); i++; continue; }
+            if(/[A-Za-z_]/.test(c)){
+                let j = i;
+                while(j < src.length && /[A-Za-z0-9_]/.test(src[j])) j++;
+                const word  = src.slice(i, j);
+                const upper = word.toUpperCase();
+                if(SCRIPT_OPS.indexOf(upper) !== -1) tokens.push({ t: upper });
+                else                                 tokens.push({ t:'IDENT', v: word });
+                i = j;
+                continue;
+            }
+            throw new Error('Unexpected character "' + c + '" at column ' + (i + 1));
+        }
+        return tokens;
+    }
+
+    /* ── 2.2 Recursive-descent parser ───────────────────────
+       Precedence (low → high):  OR/NOR  <  XOR/XNOR  <  AND/NAND  <  NOT
+       All binary operators are left-associative.                */
+    function parseExpression(src){
+        const tokens = lexScript(src);
+        let pos = 0;
+        const peek = () => tokens[pos];
+        const eat  = (t) => {
+            const tok = tokens[pos];
+            if(!tok) throw new Error('Unexpected end of expression');
+            if(t !== undefined && tok.t !== t)
+                throw new Error('Expected "' + t + '" but got "' + tok.t + '"');
+            pos++;
+            return tok;
+        };
+
+        function parseOr(){
+            let left = parseXor();
+            while(peek() && (peek().t === 'OR' || peek().t === 'NOR')){
+                const op = eat().t;
+                left = { type:'op', op, left, right: parseXor() };
+            }
+            return left;
+        }
+        function parseXor(){
+            let left = parseAnd();
+            while(peek() && (peek().t === 'XOR' || peek().t === 'XNOR')){
+                const op = eat().t;
+                left = { type:'op', op, left, right: parseAnd() };
+            }
+            return left;
+        }
+        function parseAnd(){
+            let left = parseNot();
+            while(peek() && (peek().t === 'AND' || peek().t === 'NAND')){
+                const op = eat().t;
+                left = { type:'op', op, left, right: parseNot() };
+            }
+            return left;
+        }
+        function parseNot(){
+            if(peek() && peek().t === 'NOT'){
+                eat();
+                return { type:'not', operand: parseNot() };
+            }
+            return parseAtom();
+        }
+        function parseAtom(){
+            const tok = peek();
+            if(!tok) throw new Error('Unexpected end of expression');
+            if(tok.t === '('){
+                eat();
+                const inner = parseOr();
+                eat(')');
+                return inner;
+            }
+            if(tok.t === 'IDENT'){
+                eat();
+                return { type:'input', name: tok.v };
+            }
+            throw new Error('Unexpected token "' + tok.t + '"');
+        }
+
+        const ast = parseOr();
+        if(pos < tokens.length)
+            throw new Error('Unexpected trailing token "' + tokens[pos].t + '"');
+        return ast;
+    }
+
+    /* ── 2.3 Multi-line script parser ──────────────────────── */
+    function parseScriptSource(src){
+        const lines       = src.split(/\r?\n/);
+        const assignments = [];
+        const declaredInputs = new Set();
+
+        for(let i = 0; i < lines.length; i++){
+            let line = lines[i];
+            const hash = line.indexOf('#');
+            if(hash !== -1) line = line.slice(0, hash);
+            line = line.trim();
+            if(!line) continue;
+            const lineNo = i + 1;
+
+            // Optional declaration line:  inputs: A, B, C
+            const declMatch = line.match(/^inputs?\s*:\s*(.+)$/i);
+            if(declMatch){
+                const names = declMatch[1].split(/[,\s]+/).filter(Boolean);
+                for(const n of names){
+                    if(!/^[A-Za-z_][A-Za-z0-9_]*$/.test(n))
+                        throw new Error('Line ' + lineNo + ': invalid input name "' + n + '"');
+                    declaredInputs.add(n);
+                }
+                continue;
+            }
+
+            // Equation:  NAME = EXPR
+            const eqMatch = line.match(/^([A-Za-z_][A-Za-z0-9_]*)\s*=\s*(.+)$/);
+            if(eqMatch){
+                let ast;
+                try{
+                    ast = parseExpression(eqMatch[2]);
+                }catch(e){
+                    throw new Error('Line ' + lineNo + ': ' + e.message);
+                }
+                assignments.push({ name: eqMatch[1], ast, lineNo });
+                continue;
+            }
+
+            throw new Error('Line ' + lineNo + ': could not understand "' + line + '"');
+        }
+
+        if(!assignments.length) throw new Error('No equations found. Try:  Y = A AND B');
+
+        const assignedNames = new Set(assignments.map(a => a.name));
+
+        // Disallow declaring an input AND assigning it
+        for(const a of assignments){
+            if(declaredInputs.has(a.name)){
+                throw new Error('"' + a.name + '" is declared as an input but also assigned to. Rename one.');
+            }
+        }
+
+        // Infer implicit inputs from RHS identifiers that aren't assigned.
+        for(const a of assignments){
+            collectIdentifiers(a.ast, (name) => {
+                if(!assignedNames.has(name)) declaredInputs.add(name);
+            });
+        }
+
+        // Validate — walk each RHS in order. A signal is legal if it's a
+        // declared input, or an assignment already defined earlier.
+        const assignedSoFar = new Set();
+        for(const a of assignments){
+            collectIdentifiers(a.ast, (name) => {
+                if(declaredInputs.has(name)) return;
+                if(assignedSoFar.has(name))  return;
+                if(assignedNames.has(name))
+                    throw new Error('Line ' + a.lineNo + ': "' + name + '" used before it\'s defined. Move its equation above.');
+                throw new Error('Line ' + a.lineNo + ': "' + name + '" is not a declared input.');
+            });
+            assignedSoFar.add(a.name);
+        }
+
+        return { assignments, inputs: Array.from(declaredInputs).sort() };
+    }
+
+    function collectIdentifiers(node, fn){
+        if(node.type === 'input') fn(node.name);
+        else if(node.type === 'not') collectIdentifiers(node.operand, fn);
+        else if(node.type === 'op'){
+            collectIdentifiers(node.left, fn);
+            collectIdentifiers(node.right, fn);
+        }
+    }
+
+    /* ── 2.4 Layout + compile + wiring ──────────────────────
+       Column 0  → INPUTs  (fixed Y stack)
+       Col 1..N  → gates   (post-order DFS, first-fit per column)
+       Col N+1   → OUTPUTs (fixed Y stack)                         */
+    const SCRIPT_COL_W    = 220;   // horizontal spacing between columns
+    const SCRIPT_ROW_STEP = 100;   // vertical spacing for fixed stacks
+    const SCRIPT_X_START  = 80;
+    const SCRIPT_Y_START  = 80;
+    const SCRIPT_GATE_GAP = 20;    // extra gap between gates in one column
+
+    function clearCanvasForCompile(){
+        for(const el of compEls.values()) el.remove();
+        compEls.clear();
+        compPortEls.clear();
+        dirtyPortComponents.clear();
+        portPositionsDirty = true;
+        portPositions = {};
+        for(const p of wirePaths.values()) p.remove();
+        wirePaths.clear();
+        for(const l of wireLabels.values()) l.remove();
+        wireLabels.clear();
+        components         = [];
+        wires              = [];
+        customContainers   = [];
+        selectedIds.clear();
+        selectedWireIds.clear();
+        if(typeof resetSelectionSourceIndex === 'function') resetSelectionSourceIndex();
+        if(typeof exitWirePouring            === 'function') exitWirePouring();
+        if(typeof closeGateFolderDropdown    === 'function') closeGateFolderDropdown();
+        if(typeof closeFolderContextMenu     === 'function') closeFolderContextMenu();
+    }
+
+    function buildCircuitFromAst(parsed){
+        const colNextY = new Map();
+
+        function placeGate(col, height){
+            const existing = colNextY.get(col);
+            const y = existing !== undefined ? existing : SCRIPT_Y_START;
+            colNextY.set(col, y + height + SCRIPT_GATE_GAP);
+            return { x: SCRIPT_X_START + col * SCRIPT_COL_W, y };
+        }
+
+        function spawnGateAndGet(type, x, y){
+            const beforeCount = components.length;
+            const result = spawnComponentAt(type, x, y);
+            if(result && typeof result === 'object' && 'id' in result) return result;
+            if(components.length !== beforeCount + 1)
+                throw new Error('Failed to spawn ' + type + ' gate at (' + x + ',' + y + ')');
+            return components[components.length - 1];
+        }
+
+        function setGateLabel(comp, name){
+            comp.customLabel = name;
+            const lbl = document.querySelector('#gate-label-' + comp.id);
+            if(lbl) lbl.textContent = name;
+            const io = document.querySelector('#comp-' + comp.id + ' .io-label');
+            if(io) io.textContent = name;
+        }
+
+        /* — Place all inputs in column 0 — */
+        const inputMap = new Map();
+        for(let i = 0; i < parsed.inputs.length; i++){
+            const name = parsed.inputs[i];
+            const x = SCRIPT_X_START + 0 * SCRIPT_COL_W;
+            const y = SCRIPT_Y_START + i * SCRIPT_ROW_STEP;
+            const comp = spawnGateAndGet('INPUT', x, y);
+            setGateLabel(comp, name);
+            inputMap.set(name, comp);
+        }
+        if(parsed.inputs.length){
+            colNextY.set(0, SCRIPT_Y_START + parsed.inputs.length * SCRIPT_ROW_STEP);
+        }
+
+        /* — Compile AST nodes to gates with dedup — */
+        const gateByKey   = new Map();  // canonical AST key → comp
+        const namedSignals = new Map(); // assignment name → { comp, depth }
+        const pendingWires = [];        // deferred so we can batch at the end
+
+        function canonicalKey(node){
+            if(node.type === 'input') return 'I:' + node.name;
+            if(node.type === 'not')   return 'N:' + canonicalKey(node.operand);
+            if(node.type === 'op'){
+                const comm = ['AND','OR','XOR','NAND','NOR','XNOR'].indexOf(node.op) !== -1;
+                const a = canonicalKey(node.left);
+                const b = canonicalKey(node.right);
+                if(comm){
+                    const pair = a < b ? [a, b] : [b, a];
+                    return 'O:' + node.op + ':' + pair[0] + ':' + pair[1];
+                }
+                return 'O:' + node.op + ':' + a + ':' + b;
+            }
+            return '?';
+        }
+
+        function compileNode(node){
+            /* — Leaf — */
+            if(node.type === 'input'){
+                if(inputMap.has(node.name))
+                    return { comp: inputMap.get(node.name), depth: 0 };
+                if(namedSignals.has(node.name))
+                    return namedSignals.get(node.name);
+                throw new Error('Unknown signal "' + node.name + '"');
+            }
+
+            const key = canonicalKey(node);
+            if(gateByKey.has(key)){
+                const comp = gateByKey.get(key);
+                return { comp, depth: comp._scriptDepth };
+            }
+
+            /* — NOT — */
+            if(node.type === 'not'){
+                const inner = compileNode(node.operand);
+                const depth = inner.depth + 1;
+                const { x, y } = placeGate(depth, 60);
+                const comp = spawnGateAndGet('NOT', x, y);
+                comp._scriptDepth = depth;
+                pendingWires.push({ fromComp: inner.comp.id, fromPort: 0, toComp: comp.id, toPort: 0 });
+                gateByKey.set(key, comp);
+                return { comp, depth };
+            }
+
+            /* — Binary op — */
+            const left  = compileNode(node.left);
+            const right = compileNode(node.right);
+            const depth = Math.max(left.depth, right.depth) + 1;
+            const { x, y } = placeGate(depth, 80);
+            const comp = spawnGateAndGet(node.op, x, y);
+            comp._scriptDepth = depth;
+            pendingWires.push({ fromComp: left.comp.id,  fromPort: 0, toComp: comp.id, toPort: 0 });
+            pendingWires.push({ fromComp: right.comp.id, fromPort: 0, toComp: comp.id, toPort: 1 });
+            gateByKey.set(key, comp);
+            return { comp, depth };
+        }
+
+        /* — Compile each assignment, register its name as a reusable signal — */
+        const outputEntries = [];
+        let maxDepth = 0;
+        for(const a of parsed.assignments){
+            const res = compileNode(a.ast);
+            namedSignals.set(a.name, res);
+            if(res.depth > maxDepth) maxDepth = res.depth;
+            outputEntries.push({ name: a.name, src: res });
+        }
+
+        /* — Place OUTPUTs in the final column — */
+        const outCol = maxDepth + 1;
+        for(const e of outputEntries){
+            const { x, y } = placeGate(outCol, 60);
+            const outComp = spawnGateAndGet('OUTPUT', x, y);
+            setGateLabel(outComp, e.name);
+            pendingWires.push({ fromComp: e.src.comp.id, fromPort: 0, toComp: outComp.id, toPort: 0 });
+        }
+
+        /* — Push all wires — */
+        for(const w of pendingWires){
+            if(w.fromComp === w.toComp) continue;
+            wires.push(newWire(w.fromComp, w.fromPort, w.toComp, w.toPort));
+        }
+
+        return {
+            inputs:  parsed.inputs.length,
+            gates:   gateByKey.size,       // inputs are NOT in gateByKey
+            outputs: outputEntries.length
+        };
+    }
+
+    /* ── 2.5 The click handler ─────────────────────────────── */
+    window.onCompileScriptClick = async function(){
+        const ed  = document.getElementById('script-editor');
+        const src = (ed ? ed.value : '').trim();
+
+        if(!src){
+            setScriptStatus('❌ The editor is empty.\nTry:  Y = (A AND B) OR NOT C', 'err');
+            return;
+        }
+
+        /* Parse first — never touch the canvas on a syntax error */
+        let parsed;
+        try{
+            parsed = parseScriptSource(src);
+        }catch(e){
+            setScriptStatus('❌ ' + e.message, 'err');
+            if(typeof showToast === 'function')
+                showToast('Script error: ' + e.message, 'error', 3200);
+            return;
+        }
+
+        /* Ask before wiping an existing circuit */
+        if(components.length > 0){
+            const ok = await showConfirm(
+                'Compile Circuit',
+                'This will replace your current ' + components.length +
+                '-component circuit with the one built from the script.\n\nContinue?',
+                'Cancel',
+                'Clear & Build'
+            );
+            if(!ok){
+                setScriptStatus('Compile cancelled — canvas unchanged.', '');
+                return;
+            }
+        }
+
+        /* Suppress per-gate undo snapshots so the whole build is ONE undo step */
+        const wasUndoRedo = isUndoRedo;
+        isUndoRedo = true;
+        let summary;
+        try{
+            clearCanvasForCompile();
+            summary = buildCircuitFromAst(parsed);
+        }catch(e){
+            console.error('[script compile]', e);
+            isUndoRedo = wasUndoRedo;
+            setScriptStatus('❌ Compile failed: ' + (e.message || e), 'err');
+            if(typeof showToast === 'function')
+                showToast('Compile failed: ' + (e.message || e), 'error', 3200);
+            return;
+        }
+        isUndoRedo = wasUndoRedo;
+
+        /* Full refresh pipeline — same calls the engine uses internally */
+        markWorldDirty();
+        markPortPositionsDirty();
+        runSimulation();
+        drawWires();
+        forceSaveState();   // one undo step, one autosave, one collab broadcast
+
+        setScriptStatus(
+            '✅ Compiled: ' + summary.inputs + ' input(s), ' +
+            summary.gates + ' gate(s), ' + summary.outputs + ' output(s).',
+            'ok'
+        );
+        if(typeof showToast === 'function'){
+            showToast(
+                'Circuit built — ' + summary.gates + ' gate(s), ' +
+                summary.outputs + ' output(s).',
+                'success', 2200
+            );
+        }
+    };
+
+    /* ── Esc closes the panel (respecting modals & typing) ─ */
+    document.addEventListener('keydown', (e) => {
+        if(e.key !== 'Escape') return;
+        if(!document.body.classList.contains('script-panel-open')) return;
+
+        const t = document.activeElement;
+        const typing = t && (
+            t.tagName === 'TEXTAREA' || t.tagName === 'INPUT' ||
+            t.tagName === 'SELECT'   || t.isContentEditable
+        );
+
+        // Two-stage Esc in the editor: blur first, then close.
+        if(typing && t.id === 'script-editor'){ t.blur(); return; }
+
+        // Let an open modal claim Esc.
+        const modalOpen = ['share-modal','settings-modal','custom-gate-modal',
+                           'logic-table-modal','hotkey-modal'].some(id => {
+            const el = document.getElementById(id);
+            return el && (el.style.display === 'flex' || el.classList.contains('open'));
+        });
+        if(modalOpen) return;
+
+        window.closeScriptPanel();
+    });
+
+    // Sync button state on load
+    window.addEventListener('load', syncToolbarButton);
+})();
 
 </script>
 <script>
