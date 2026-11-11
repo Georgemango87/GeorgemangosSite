@@ -298,8 +298,7 @@ svg{position:absolute;top:0;left:0;width:100%;height:100%;pointer-events:all;ove
 .gate-folder-btn.active{outline:2px solid #ffc107;outline-offset:1px;filter:brightness(1.15)}
 .gate-folder-btn.drag-over{outline:3px dashed #ffc107;outline-offset:2px;filter:brightness(1.25)}
 .folder-count{background:rgba(0,0,0,.35);border-radius:8px;padding:0 5px;font-size:9px;line-height:14px;font-weight:bold}
-.folder-add-btn{background:#3d4653!important}
-.folder-add-btn:hover{background:#334155!important}
+.folder-add-btn:hover{filter:brightness(1.15)}
 #gate-folder-dropdown{position:fixed;z-index:2600;background:var(--toolbar-bg);color:var(--text-color);border:1px solid var(--border-color);border-radius:6px;box-shadow:0 8px 24px rgba(0,0,0,.28);padding:4px;min-width:150px;max-height:60vh;overflow-y:auto;display:flex;flex-direction:column;gap:2px}
 .gate-folder-item{display:flex;align-items:center;gap:7px;padding:5px 9px;border-radius:4px;cursor:grab;font-size:11px;white-space:nowrap;color:var(--text-color)}
 .gate-folder-item:hover{background:rgba(127,127,127,.18)}
@@ -845,7 +844,7 @@ body.no-animations *,body.no-animations *::before,body.no-animations *::after{
 /* ═══ TIMING DIAGRAM PANEL ═══ */
 #timing-panel{
     position:fixed;left:0;right:0;bottom:0;height:220px;
-    background:var(--toolbar-bg);border-top:2px solid var(--accent);
+    background:var(--timing-panel-bg,var(--toolbar-bg));border-top:2px solid var(--accent);
     box-shadow:0 -6px 20px rgba(0,0,0,.25);
     display:none;flex-direction:column;z-index:150;
 }
@@ -1958,8 +1957,8 @@ body.script-panel-open .mode-badge      { right: calc(var(--script-panel-width, 
         <button id="pause-btn" data-btn-id="pause" onclick="togglePause()" style="background:#1f3a63;">Pause</button>
         <button data-btn-id="step" onclick="stepSimulation()" style="background:#3b5b8c;">Step</button>
         <button data-btn-id="reset" onclick="resetView()" style="background:#3d4653;">Reset</button>
-        <button onclick="clearTimeline()" style="background:#b91c1c;" title="Clear timing diagram history">🗑 Timeline</button>
-        <button onclick="toggleTimingPanel()" style="background:#0d9488;" title="Toggle timing diagram panel">📈 Timing</button>
+<button data-btn-id="clearTimeline" onclick="clearTimeline()" style="background:#b91c1c;" title="Clear timing diagram history">🗑 Timeline</button>
+<button data-btn-id="timing" onclick="toggleTimingPanel()" style="background:#0d9488;" title="Toggle timing diagram panel">📈 Timing</button>
         <button data-btn-id="theme" onclick="toggleTheme()" style="background:#3b5b8c;">Theme</button>
         <button data-btn-id="settings" onclick="openSettingsModal()" style="background:#0f766e;" title="Colours, fonts, layout &amp; presets">⚙️ Settings</button>
         <button data-btn-id="clear" onclick="clearAll()" style="background:#b91c1c;">Clear</button>
@@ -6048,7 +6047,8 @@ function updateCustomGatesToolbar(){
 
     const addBtn=document.createElement('div');
     addBtn.className='tool-btn folder-add-btn';
-    addBtn.style.background='#3d4653';
+    addBtn.style.background=(LSET&&LSET.buttons&&LSET.buttons.folder)||'#3d4653';
+    addBtn.dataset.btnId='folder';
     addBtn.title='Create a new folder';
     addBtn.innerHTML='<span style="font-size:11px;">📁</span><span>+</span>';
     addBtn.addEventListener('mousedown',e=>{e.preventDefault();e.stopPropagation()});
@@ -7843,6 +7843,7 @@ const LSET_DEFAULT = {
     '--accent':'#1f3a63','--accent-2':'#16294a','--accent-soft':'#3b5b8c',
     '--accent-tint':'#eef1f6','--muted':'#5b6472','--muted-2':'#78818f',
     '--danger':'#b91c1c','--good':'#15803d',
+    '--timing-panel-bg':'#ffffff',
     /* NEW */
     '--gate-header-text':'#ffffff',
     '--gate-shadow':'0 4px 6px rgba(0,0,0,.10)',
@@ -7888,6 +7889,7 @@ const LSET_DEFAULT = {
     '--accent':'#4d70db','--accent-2':'#3a56a0','--accent-soft':'#8fa6d8',
     '--accent-tint':'#1a2338','--muted':'#8b96b8','--muted-2':'#5a6b95',
     '--danger':'#ef4444','--good':'#22c55e',
+    '--timing-panel-bg':'#131a2b',
     /* NEW */
     '--gate-header-text':'#ffffff',
     '--gate-shadow':'0 4px 6px rgba(0,0,0,.35)',
@@ -7983,7 +7985,11 @@ const LSET_DEFAULT = {
     undo:'#3d4653', redo:'#3d4653',
     share:'#1f3a63',
     help:'#3d4653',
-    script:'#7c3aed'
+    script:'#7c3aed',
+    folder:'#3d4653',
+    clearTimeline:'#b91c1c',
+    timing:'#0d9488',
+    verilog:'#6366f1'
   },
   /* Preferences are user-controlled and are deliberately NOT part of
      preset overrides — see applyLsPreset(). Everything the user can
@@ -8035,7 +8041,8 @@ const LSET_THEME_FIELDS = [
   ['--muted','Muted text'],
   ['--muted-2','Muted text (dim)'],
   ['--danger','Danger'],
-  ['--good','Success']
+  ['--good','Success'],
+  ['--timing-panel-bg','Timing panel']
 ];
 
 const LSET_OVERLAY_COLOR_FIELDS = [
@@ -8556,6 +8563,36 @@ for(const name of Object.keys(PRESET_OVERLAY_MAP)){
     preset[themeKey] = Object.assign({}, preset[themeKey] || {}, PRESET_OVERLAY_MAP[name]);
 }
 
+/* Per-preset background for the bottom timing panel. Matches each
+   palette's toolbar-bg so the panel doesn't visibly “pop” when it opens. */
+const PRESET_TIMING_PANEL_MAP = {
+  'Neon':            '#0d0d1a',
+  'Terminal':        '#051005',
+  'Cyberpunk':       '#141008',
+  'Blueprint':       '#0d2648',
+  'Paper':           '#fbf6e8',
+  'Sepia':           '#f5ead6',
+  'Dracula':         '#21222c',
+  'Nord':            '#3b4252',
+  'Solarized Dark':  '#073642',
+  'Synthwave':       '#241040',
+  'Forest':          '#232b20',
+  'Ocean':           '#0f2a40',
+  'Candy':           '#ffffff',
+  'Mono':            '#ffffff',
+  'High Contrast':   '#000000',
+  'Lava':            '#281008',
+  'Ice':             '#ffffff'
+};
+for(const name of Object.keys(PRESET_TIMING_PANEL_MAP)){
+    const preset = LSET_PRESETS[name];
+    if(!preset) continue;
+    const themeKey = preset.dark ? 'dark' : 'light';
+    preset[themeKey] = Object.assign({}, preset[themeKey] || {}, {
+        '--timing-panel-bg': PRESET_TIMING_PANEL_MAP[name]
+    });
+}
+
 /* ═══════════════════════════════════════════════════════════════
    Per-preset toolbar-button colours for the newer action buttons
    (Script, Logic Table). These landed after the original preset
@@ -8589,6 +8626,37 @@ for(const name of Object.keys(PRESET_BUTTON_EXT_MAP)){
     if(!preset.buttons) preset.buttons = {};
     for(const key of Object.keys(PRESET_BUTTON_EXT_MAP[name])){
         if(!preset.buttons[key]) preset.buttons[key] = PRESET_BUTTON_EXT_MAP[name][key];
+    }
+}
+
+/* Per-preset colours for the folder / timing / clearTimeline / verilog
+   toolbar buttons. Same pattern as PRESET_BUTTON_EXT_MAP — opt-in per
+   preset, never overrides an existing key. */
+const PRESET_BUTTON_EXT_MAP_2 = {
+  'Neon':           { folder:'#00ffcc', clearTimeline:'#ff2f6d', timing:'#00e5ff', verilog:'#b14eff' },
+  'Terminal':       { folder:'#22aa22', clearTimeline:'#ff5555', timing:'#55ffaa', verilog:'#22aa22' },
+  'Cyberpunk':      { folder:'#ff9900', clearTimeline:'#ff2200', timing:'#ffee00', verilog:'#ffcc00' },
+  'Blueprint':      { folder:'#6a94c8', clearTimeline:'#ff6b6b', timing:'#88ffcc', verilog:'#6a94c8' },
+  'Paper':          { folder:'#6a4a8a', clearTimeline:'#a1332c', timing:'#3b6a68', verilog:'#4d7c0f' },
+  'Sepia':          { folder:'#6a4a5a', clearTimeline:'#8a2a1a', timing:'#3a5a5a', verilog:'#5a6a1a' },
+  'Dracula':        { folder:'#bd93f9', clearTimeline:'#ff5555', timing:'#8be9fd', verilog:'#bd93f9' },
+  'Nord':           { folder:'#b48ead', clearTimeline:'#bf616a', timing:'#8fbcbb', verilog:'#5e81ac' },
+  'Solarized Dark': { folder:'#6c71c4', clearTimeline:'#dc322f', timing:'#2aa198', verilog:'#268bd2' },
+  'Synthwave':      { folder:'#cc44ff', clearTimeline:'#ff3355', timing:'#00e5ff', verilog:'#00e5ff' },
+  'Forest':         { folder:'#7a5a68', clearTimeline:'#a84838', timing:'#5a8a78', verilog:'#6a8848' },
+  'Ocean':          { folder:'#7a5ac8', clearTimeline:'#e85a5a', timing:'#40e0ff', verilog:'#40e0ff' },
+  'Candy':          { folder:'#c8a0e8', clearTimeline:'#e888a8', timing:'#88d8c8', verilog:'#88d8c8' },
+  'Mono':           { folder:'#4a4a4a', clearTimeline:'#1a1a1a', timing:'#2a2a2a', verilog:'#2a2a2a' },
+  'High Contrast':  { folder:'#ff00ff', clearTimeline:'#ff0000', timing:'#00ffff', verilog:'#00ff00' },
+  'Lava':           { folder:'#ff3366', clearTimeline:'#ff2200', timing:'#ffcc00', verilog:'#ffcc00' },
+  'Ice':            { folder:'#7ab0e8', clearTimeline:'#e85a88', timing:'#4ad8ff', verilog:'#4ad8ff' }
+};
+for(const name of Object.keys(PRESET_BUTTON_EXT_MAP_2)){
+    const preset = LSET_PRESETS[name];
+    if(!preset) continue;
+    if(!preset.buttons) preset.buttons = {};
+    for(const key of Object.keys(PRESET_BUTTON_EXT_MAP_2[name])){
+        if(!preset.buttons[key]) preset.buttons[key] = PRESET_BUTTON_EXT_MAP_2[name][key];
     }
 }
 
@@ -9380,6 +9448,10 @@ function lsetHtmlButtons(){
         ['redo','↪ Redo'],
         ['share','🌐 Share'],
         ['script','⚡ Script'],
+        ['folder','📁+ Add folder'],
+        ['clearTimeline','🗑 Clear timeline'],
+        ['timing','📈 Timing'],
+        ['verilog','⬇ Export Verilog'],
         ['help','? Help / Shortcuts']
     ];  
     const rows = list.map(([k,label]) =>
