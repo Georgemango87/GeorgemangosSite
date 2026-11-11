@@ -1965,11 +1965,12 @@ body.script-panel-open .mode-badge      { right: calc(var(--script-panel-width, 
         <button data-btn-id="clear" onclick="clearAll()" style="background:#b91c1c;">Clear</button>
         <button id="debug-btn" data-btn-id="debug" onclick="toggleDebugMode()" style="background:#1f3a63;" title="Toggle Debug Mode (D)">🐞 Debug</button>
     </div>
-    <div class="toolbar-group">
-        <button data-btn-id="export" onclick="exportCircuit()" style="background:#15803d;">⬇ Export</button>
-        <button data-btn-id="import" onclick="document.getElementById('file-input').click()" style="background:#0f766e;">⬆ Import</button>
-        <input type="file" id="file-input" accept=".json" onchange="importCircuit(event)" />
-    </div>
+<div class="toolbar-group">
+    <button data-btn-id="export" onclick="exportCircuit()" style="background:#15803d;">⬇ Export</button>
+    <button data-btn-id="import" onclick="document.getElementById('file-input').click()" style="background:#0f766e;">⬆ Import</button>
+    <button data-btn-id="verilog" onclick="exportToVerilog()" style="background:#6366f1;" title="Export the circuit as a .v file">⬇ Verilog</button>
+    <input type="file" id="file-input" accept=".json" onchange="importCircuit(event)" />
+</div>
     <div class="toolbar-group">
         <button id="undo-btn" data-btn-id="undo" onclick="undo()" style="background:#3d4653;">↩ Undo</button>
         <button id="redo-btn" data-btn-id="redo" onclick="redo()" style="background:#3d4653;">↪ Redo</button>
@@ -6156,6 +6157,285 @@ async function exportCircuit(){
     const a=document.createElement('a');a.href=url;a.download=finalName;a.click();URL.revokeObjectURL(url);
     showToast('Circuit exported!','success');
 }
+async function exportToVerilog() {
+    // ─── Verilog keywords (avoid collisions with signal names) ──
+    const VERILOG_KEYWORDS = new Set([
+        'module','endmodule','input','output','inout','wire','reg','assign',
+        'always','initial','begin','end','if','else','case','endcase','default',
+        'and','or','not','xor','nand','nor','xnor','posedge','negedge',
+        'integer','parameter','function','endfunction','task','endtask',
+        'for','while','repeat','forever','generate','endgenerate','genvar',
+        'localparam','signed','unsigned','bit','logic'
+    ]);
+
+    function sanitizeName(s) {
+        if (s === null || s === undefined) return '';
+        s = String(s).trim();
+        if (!s) return '';
+        s = s.replace(/[^A-Za-z0-9_]/g, '_');
+        if (/^[0-9]/.test(s)) s = '_' + s;
+        if (VERILOG_KEYWORDS.has(s.toLowerCase())) s = s + '_sig';
+        return s;
+    }
+
+    function unique(base, used) {
+        let name = base || 'sig';
+        let i = 2;
+        while (used.has(name)) { name = base + '_' + i; i++; }
+        used.add(name);
+        return name;
+    }
+
+    // Signal name for an output port of a non-source component
+    const gateSignal = (comp, portIdx) => 'g' + comp.id + '_' + portIdx;
+
+    // ─── Recursive module generator ─────────────────────────
+    // Handles the main canvas *and* any nested custom gates by emitting
+    // a submodule per custom-gate type.
+    const generatedModules = new Map();
+
+    function generateModule(comps, wireList, moduleName, depth) {
+        if (depth > 32) throw new Error('Custom gate nesting too deep');
+
+        const usedNames   = new Set();
+        const localInput  = new Map();   // compId -> { name, width }
+        const localOutput = new Map();   // compId -> { name, width }
+
+        const inComps  = comps.filter(c => c.type === 'INPUT' || c.type === 'PUSH')
+                              .sort((a, b) => (a.y || 0) - (b.y || 0));
+        const outComps = comps.filter(c => c.type === 'OUTPUT')
+                              .sort((a, b) => (a.y || 0) - (b.y || 0));
+
+        inComps.forEach((c, i) => {
+            const base = sanitizeName(c.customLabel) || ('in' + i);
+            localInput.set(c.id, { name: unique(base, usedNames), width: c.dataWidth || 1 });
+        });
+        outComps.forEach((c, i) => {
+            const base = sanitizeName(c.customLabel) || ('out' + i);
+            localOutput.set(c.id, { name: unique(base, usedNames), width: c.dataWidth || 1 });
+        });
+
+        // Wire lookup by destination port: "compId:portIdx" -> wire
+        const incoming = new Map();
+        wireList.forEach(w => incoming.set(w.toComp + ':' + w.toPort, w));
+
+        const wireDecls = [];
+        const assigns   = [];
+
+        // Resolve the driving signal for a given destination port
+        function srcName(toComp, toPort) {
+            const w = incoming.get(toComp + ':' + toPort);
+            if (!w) return "1'b0";                                  // unconnected
+            const sc = comps.find(c => c.id === w.fromComp);
+            if (!sc) return "1'b0";
+            if (sc.type === 'INPUT' || sc.type === 'PUSH') {
+                const info = localInput.get(sc.id);
+                return info ? info.name : ('in_' + sc.id);
+            }
+            return gateSignal(sc, w.fromPort);
+        }
+
+        function declareWire(comp, portIdx, width) {
+            const n = gateSignal(comp, portIdx);
+            if (width > 1) wireDecls.push(`wire [${width - 1}:0] ${n};`);
+            else           wireDecls.push(`wire ${n};`);
+            return n;
+        }
+
+        comps.forEach(comp => {
+            const t = comp.type;
+
+            // Sources and sticky notes contribute no logic here
+            if (t === 'INPUT' || t === 'PUSH' || t === 'NOTE') return;
+            // Screen is a visual sink only
+            if (t === 'SCREEN') return;
+
+            // ── OUTPUT: becomes a module output port ──
+            if (t === 'OUTPUT') {
+                const info = localOutput.get(comp.id);
+                if (info) assigns.push(`assign ${info.name} = ${srcName(comp.id, 0)};`);
+                return;
+            }
+
+            // ── Custom gate: instantiate a generated submodule ──
+            if (comp.isCustom) {
+                const subName = sanitizeName(comp.type) || ('Custom_' + comp.id);
+                if (!generatedModules.has(subName)) {
+                    const innerComps = (comp.subComps && comp.subComps.length)
+                        ? comp.subComps
+                        : ((comp.def && comp.def.innerComps) || []);
+                    const innerWires = (comp.subWires && comp.subWires.length)
+                        ? comp.subWires
+                        : ((comp.def && comp.def.innerWires) || []);
+                    generatedModules.set(
+                        subName,
+                        generateModule(innerComps, innerWires, subName, depth + 1)
+                    );
+                }
+                const sub = generatedModules.get(subName);
+                const inPorts  = sub.ports.filter(p => p.dir === 'input');
+                const outPorts = sub.ports.filter(p => p.dir === 'output');
+
+                const outWires = outPorts.map((p, i) => declareWire(comp, i, p.width));
+                const conns = [];
+                inPorts.forEach((p, i) => {
+                    conns.push(`.${p.name}(${srcName(comp.id, i)})`);
+                });
+                outPorts.forEach((p, i) => {
+                    conns.push(`.${p.name}(${outWires[i]})`);
+                });
+                assigns.push(`${subName} u_${comp.id} (${conns.join(', ')});`);
+                return;
+            }
+
+            // ── SPLITTER: one wire per output bit (no single output) ──
+            if (t === 'SPLITTER') {
+                const busSrc = srcName(comp.id, 0);
+                const n = comp.busWidth || 4;
+                for (let i = 0; i < n; i++) {
+                    const bitName = declareWire(comp, i, 1);
+                    assigns.push(`assign ${bitName} = ${busSrc}[${i}];`);
+                }
+                return;
+            }
+
+            // ── CLOCK: emit as a free-running reg ──
+            if (t === 'CLOCK') {
+                const outName = 'g' + comp.id + '_0';
+                wireDecls.push(`reg ${outName} = 1'b0;`);
+                assigns.push(`// CLOCK #${comp.id} — free-running at ~${comp.clockMs || 250} ms period`);
+                assigns.push(
+                    `always #${Math.max(1, Math.round((comp.clockMs || 250) / 2))} ${outName} = ~${outName};`
+                );
+                return;
+            }
+
+            // ── All other standard gates ──
+            const width = (t === 'JOINER') ? (comp.busWidth || 4) : (comp.dataWidth || 1);
+            const outName = declareWire(comp, 0, width);
+            const a = srcName(comp.id, 0);
+            const b = srcName(comp.id, 1);
+
+            let expr;
+            switch (t) {
+                case 'AND':   expr = `${a} & ${b}`;             break;
+                case 'OR':    expr = `${a} | ${b}`;             break;
+                case 'XOR':   expr = `${a} ^ ${b}`;             break;
+                case 'NOT':   expr = `~${a}`;                   break;
+                case 'NAND':  expr = `~(${a} & ${b})`;          break;
+                case 'NOR':   expr = `~(${a} | ${b})`;          break;
+                case 'XNOR':  expr = `~(${a} ^ ${b})`;          break;
+                case 'TRI':   expr = `${b} ? ${a} : 1'bz`;      break;
+                case 'DELAY': expr = a;                         break;  // delay not modelled
+                case 'PULSE': expr = a;                         break;  // edge detect not modelled
+                case 'COLOR': expr = a;                         break;
+                case 'JOINER': {
+                    const n = comp.busWidth || 4;
+                    const bits = [];
+                    for (let i = n - 1; i >= 0; i--) bits.push(srcName(comp.id, i));
+                    expr = `{${bits.join(', ')}}`;
+                    break;
+                }
+                default:
+                    expr = "1'b0";
+            }
+            assigns.push(`assign ${outName} = ${expr};`);
+        });
+
+        const ports = [];
+        inComps.forEach(c => {
+            const info = localInput.get(c.id);
+            ports.push({ dir: 'input', name: info.name, width: info.width });
+        });
+        outComps.forEach(c => {
+            const info = localOutput.get(c.id);
+            ports.push({ dir: 'output', name: info.name, width: info.width });
+        });
+
+        return { moduleName, ports, wires: wireDecls, assigns };
+    }
+
+    // ─── Build the module tree ──────────────────────────────
+    const MODULE_NAME = 'logic_circuit';
+    let mainMod;
+    try {
+        mainMod = generateModule(components, wires, MODULE_NAME, 0);
+    } catch (e) {
+        console.error('[verilog]', e);
+        if (typeof showToast === 'function')
+            showToast('Verilog export failed: ' + e.message, 'error', 3500);
+        return;
+    }
+    generatedModules.set(MODULE_NAME, mainMod);
+
+    // ─── Render text ────────────────────────────────────────
+    function emit(mod) {
+        const out = [];
+        const portDecls = mod.ports.map(p =>
+            p.width > 1
+                ? `${p.dir} [${p.width - 1}:0] ${p.name}`
+                : `${p.dir} ${p.name}`
+        );
+        if (portDecls.length) {
+            out.push(`module ${mod.moduleName} (`);
+            out.push(portDecls.map(p => '    ' + p).join(',\n'));
+            out.push(');');
+        } else {
+            out.push(`module ${mod.moduleName};`);
+        }
+        if (mod.wires.length) {
+            mod.wires.forEach(w => out.push('    ' + w));
+            out.push('');
+        }
+        if (mod.assigns.length) {
+            mod.assigns.forEach(a => out.push('    ' + a));
+            out.push('');
+        }
+        out.push('endmodule');
+        return out;
+    }
+
+    const lines = [];
+    lines.push('`timescale 1ns/1ps');
+    lines.push('// Auto-generated from Logic Gate Simulator');
+    lines.push('// ' + new Date().toISOString());
+    lines.push('');
+
+    // Submodules first (dependency order guaranteed by Map insertion order)
+    for (const [name, mod] of generatedModules) {
+        if (name === MODULE_NAME) continue;
+        lines.push(...emit(mod));
+        lines.push('');
+    }
+    lines.push(...emit(mainMod));
+
+    const content = lines.join('\n');
+
+    // ─── Filename prompt (matches your JSON export pattern) ──
+    let filename = MODULE_NAME + '.v';
+    if (typeof showPrompt === 'function') {
+        const fn = await showPrompt('Export Verilog', 'Enter filename (without extension):', MODULE_NAME);
+        if (fn === null) return;                       // user cancelled
+        const trimmed = (fn || '').trim();
+        if (trimmed) filename = trimmed.replace(/\.v$/i, '') + '.v';
+    }
+
+    // ─── Download ────────────────────────────────────────────
+    const blob = new Blob([content], { type: 'text/plain' });
+    const url  = URL.createObjectURL(blob);
+    const a    = document.createElement('a');
+    a.href     = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+
+    if (typeof showToast === 'function')
+        showToast(`Verilog exported → ${filename}`, 'success', 2200);
+}
+
+window.exportToVerilog = exportToVerilog;
 function importCircuit(event){
     const file=event.target.files[0];if(!file)return;
     const reader=new FileReader();
