@@ -937,7 +937,7 @@ body.no-animations *,body.no-animations *::before,body.no-animations *::after{
 /* ── 1. Persistent mode badge ────────────────────────────── */
 .mode-badge {
     position: fixed;
-    top: var(--badge-offset-top, 68px);
+    top: calc(var(--toolbar-h, 62px) + var(--badge-offset-top, 8px));
     right: var(--badge-offset-right, 12px);
     z-index: 200;
     pointer-events: none;
@@ -1916,6 +1916,459 @@ body.script-panel-open .mode-badge      { right: calc(var(--script-panel-width, 
     outline: 2px solid var(--accent);
     outline-offset: 1px;
 }
+
+/* ═══════════════════════════════════════════════════════════════
+   REFACTOR: Visual Palette · Workspace Tools · Minimap · Code Editor
+   ═══════════════════════════════════════════════════════════════ */
+
+/* ── 1. Left visual palette ───────────────────────────────── */
+#palette {
+    position: fixed;
+    top: var(--toolbar-h, 62px);
+    left: 0;
+    bottom: 0;
+    width: 68px;
+    background: var(--toolbar-bg);
+    border-right: 1px solid var(--border-color);
+    box-shadow: 2px 0 12px rgba(0,0,0,.06);
+    z-index: 90;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    overflow-y: auto;
+    overflow-x: hidden;
+    padding: 8px 0 20px;
+    gap: 4px;
+    scrollbar-width: thin;
+    scrollbar-color: var(--border-color) transparent;
+    transition: transform .2s ease;
+}
+#palette::-webkit-scrollbar { width: 4px; }
+#palette::-webkit-scrollbar-thumb { background: var(--border-color); border-radius: 2px; }
+
+#palette .palette-section-title {
+    font-size: 8.5px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    opacity: 0.55;
+    margin: 8px 0 4px;
+    width: 100%;
+    text-align: center;
+    flex-shrink: 0;
+}
+
+#palette .palette-item {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    width: 54px;
+    min-height: 48px;
+    padding: 4px 2px 2px;
+    border-radius: 6px;
+    background: transparent;
+    color: var(--text-color);
+    cursor: grab;
+    touch-action: none;
+    transition: background .12s, transform .08s;
+    flex-shrink: 0;
+    border: 1px solid transparent;
+    user-select: none;
+    -webkit-user-select: none;
+}
+#palette .palette-item:hover {
+    background: color-mix(in srgb, var(--accent) 10%, transparent);
+    border-color: color-mix(in srgb, var(--accent) 24%, transparent);
+}
+#palette .palette-item:active { cursor: grabbing; transform: scale(0.96); }
+#palette .palette-item svg {
+    width: 32px;
+    height: 22px;
+    color: var(--text-color);
+    flex-shrink: 0;
+    display: block;
+    transition: color .12s;
+}
+#palette .palette-item:hover svg { color: var(--accent); }
+#palette .palette-item .palette-label {
+    font-size: 8.5px;
+    font-weight: 600;
+    margin-top: 2px;
+    opacity: 0.8;
+    letter-spacing: 0.02em;
+    line-height: 1;
+}
+#palette .palette-item .palette-color-dot {
+    position: absolute;
+    top: 4px;
+    right: 4px;
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--gate-color, var(--accent));
+}
+#palette .palette-sep {
+    width: 40px;
+    height: 1px;
+    background: var(--border-color);
+    margin: 6px 0;
+    flex-shrink: 0;
+}
+
+/* Body offset so canvas doesn't hide under the palette */
+body { padding-left: 0; }
+#viewport { left: 68px; top: var(--toolbar-h, 62px); }
+#toolbar   { left: 0; }
+
+/* Everything that docks beneath the toolbar tracks its live height.
+   The refactored toolbar is one short row, so a hard-coded 62 px left
+   a visible empty strip between it and the canvas. */
+#palette      { top: var(--toolbar-h, 62px); }
+#script-panel { top: var(--toolbar-h, 62px); }
+
+@media (max-width: 640px) {
+    #palette { width: 56px; }
+    #viewport { left: 56px; }
+    #palette .palette-item { width: 44px; min-height: 42px; }
+    #palette .palette-item svg { width: 26px; height: 18px; }
+}
+
+/* ── 2. Workspace Tools floating panel ────────────────────── */
+#workspace-panel {
+    position: fixed;
+    top: calc(var(--toolbar-h, 62px) + 6px);
+    right: 12px;
+    width: 240px;
+    background: var(--toolbar-bg);
+    color: var(--text-color);
+    border: 1px solid var(--border-color);
+    border-radius: 10px;
+    box-shadow: 0 12px 36px rgba(0,0,0,.28);
+    z-index: 2600;
+    display: none;
+    flex-direction: column;
+    overflow: hidden;
+    animation: wpSlideIn .18s ease-out;
+    transform-origin: top right;
+}
+#workspace-panel.open { display: flex; }
+@keyframes wpSlideIn {
+    from { opacity: 0; transform: translateY(-8px) scale(.97); }
+    to   { opacity: 1; transform: translateY(0)    scale(1); }
+}
+#workspace-panel .wp-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 12px;
+    border-bottom: 1px solid var(--border-color);
+    background: linear-gradient(180deg,
+        color-mix(in srgb, var(--accent) 6%, var(--toolbar-bg)) 0%,
+        var(--toolbar-bg) 100%);
+    flex-shrink: 0;
+}
+#workspace-panel .wp-title {
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    opacity: 0.9;
+}
+#workspace-panel .wp-close {
+    background: transparent;
+    border: none;
+    color: var(--text-color);
+    font-size: 13px;
+    cursor: pointer;
+    padding: 2px 6px;
+    border-radius: 4px;
+    opacity: 0.6;
+    transition: opacity .12s, background .12s;
+}
+#workspace-panel .wp-close:hover {
+    opacity: 1;
+    background: color-mix(in srgb, var(--text-color) 8%, transparent);
+}
+#workspace-panel .wp-body {
+    padding: 6px;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    overflow-y: auto;
+}
+#workspace-panel .wp-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    width: 100%;
+    padding: 8px 10px;
+    background: transparent;
+    color: var(--text-color);
+    border: none;
+    border-radius: 6px;
+    font-size: 12px;
+    font-weight: 500;
+    cursor: pointer;
+    text-align: left;
+    transition: background .12s;
+    font-family: inherit;
+}
+#workspace-panel .wp-item:hover {
+    background: color-mix(in srgb, var(--accent) 12%, transparent);
+}
+#workspace-panel .wp-item .wp-icon {
+    font-size: 14px;
+    width: 20px;
+    text-align: center;
+    flex-shrink: 0;
+}
+#workspace-panel .wp-sep {
+    height: 1px;
+    background: var(--border-color);
+    border: none;
+    margin: 4px 8px;
+    flex-shrink: 0;
+}
+
+/* ── 3. Minimap ───────────────────────────────────────────── */
+#minimap {
+    position: fixed;
+    bottom: 16px;
+    right: 16px;
+    width: 200px;
+    height: 140px;
+    background: var(--toolbar-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    box-shadow: 0 6px 20px rgba(0,0,0,.18);
+    z-index: 95;
+    overflow: hidden;
+    transition: width .18s ease, height .18s ease;
+    display: flex;
+    flex-direction: column;
+}
+#minimap.collapsed {
+    width: 34px;
+    height: 34px;
+    border-radius: 8px;
+    overflow: hidden;
+}
+#minimap.collapsed #minimap-canvas { display: none; }
+#minimap-canvas {
+    flex: 1;
+    width: 100%;
+    display: block;
+    cursor: crosshair;
+    background: color-mix(in srgb, var(--bg-color) 70%, var(--toolbar-bg));
+}
+#minimap-toggle {
+    position: absolute;
+    top: 4px;
+    right: 4px;
+    width: 24px;
+    height: 24px;
+    padding: 0;
+    border: 1px solid var(--border-color);
+    border-radius: 5px;
+    background: var(--toolbar-bg);
+    color: var(--text-color);
+    font-size: 12px;
+    line-height: 1;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0.75;
+    transition: opacity .12s, background .12s;
+    z-index: 2;
+}
+#minimap-toggle:hover {
+    opacity: 1;
+    background: color-mix(in srgb, var(--accent) 14%, var(--toolbar-bg));
+}
+#minimap.collapsed #minimap-toggle {
+    top: 50%;
+    right: 50%;
+    transform: translate(50%, -50%);
+    border-color: transparent;
+    background: transparent;
+    opacity: 0.8;
+}
+#minimap-label {
+    position: absolute;
+    bottom: 4px;
+    left: 6px;
+    font-size: 8px;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    opacity: 0.5;
+    pointer-events: none;
+    z-index: 2;
+}
+#minimap.collapsed #minimap-label { display: none; }
+
+/* ── 4. Floating help [?] button ─────────────────────────── */
+#floating-help {
+    position: fixed;
+    bottom: 16px;
+    left: 80px;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    padding: 0;
+    background: var(--toolbar-bg);
+    color: var(--text-color);
+    border: 1px solid var(--border-color);
+    font-size: 15px;
+    font-weight: 700;
+    cursor: pointer;
+    z-index: 94;
+    box-shadow: 0 4px 14px rgba(0,0,0,.15);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0.7;
+    transition: opacity .14s, transform .14s, background .14s;
+    font-family: var(--font-serif, Georgia, serif);
+}
+#floating-help:hover {
+    opacity: 1;
+    transform: scale(1.06);
+    background: color-mix(in srgb, var(--accent) 12%, var(--toolbar-bg));
+    border-color: var(--accent);
+}
+@media (max-width: 640px) {
+    #floating-help { left: 68px; bottom: 12px; }
+    #minimap { width: 140px; height: 100px; bottom: 12px; right: 12px; }
+    #minimap.collapsed { width: 32px; height: 32px; }
+}
+
+/* Hide the old tips box and pour-tooltip (they still exist for JS) */
+#instructions-box { display: none !important; }
+#pour-tooltip      { display: none !important; }
+
+/* ── 5. Script editor with line numbers + syntax highlighting ── */
+.code-editor {
+    display: flex;
+    flex: 1;
+    min-height: 100px;
+    background: var(--script-editor-bg, var(--bg-color));
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    overflow: hidden;
+    font-family: var(--font-mono, ui-monospace, SFMono-Regular, Menlo, Consolas, monospace);
+    font-size: var(--script-editor-font-size, 12.5px);
+    line-height: 1.6;
+    position: relative;
+    transition: border-color .12s, box-shadow .12s;
+}
+.code-editor:focus-within {
+    border-color: var(--script-editor-caret, var(--accent));
+    box-shadow: 0 0 0 2px color-mix(in srgb, var(--script-editor-caret, var(--accent)) 22%, transparent);
+}
+.code-editor .line-numbers {
+    padding: 10px 8px 10px 10px;
+    text-align: right;
+    color: var(--muted);
+    user-select: none;
+    -webkit-user-select: none;
+    overflow: hidden;
+    background: color-mix(in srgb, var(--text-color) 5%, transparent);
+    border-right: 1px solid var(--border-color);
+    font-variant-numeric: tabular-nums;
+    white-space: pre;
+    line-height: 1.6;
+    font-size: inherit;
+    font-family: inherit;
+    min-width: 36px;
+    flex-shrink: 0;
+    pointer-events: none;
+    opacity: 0.7;
+}
+.code-editor .code-area {
+    position: relative;
+    flex: 1;
+    overflow: hidden;
+    min-width: 0;
+}
+.code-editor .code-highlight,
+.code-editor #script-editor {
+    padding: 10px 12px;
+    font-family: inherit;
+    font-size: inherit;
+    line-height: 1.6;
+    white-space: pre;
+    tab-size: 4;
+    -moz-tab-size: 4;
+    box-sizing: border-box;
+    margin: 0;
+}
+.code-editor .code-highlight {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    overflow: auto;
+    color: var(--script-editor-text, var(--text-color));
+    background: transparent;
+    border: none;
+    z-index: 1;
+    scrollbar-width: none;
+}
+.code-editor .code-highlight::-webkit-scrollbar { display: none; }
+.code-editor #script-editor {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    min-height: 0;
+    flex: none;
+    background: transparent;
+    color: transparent;
+    -webkit-text-fill-color: transparent;
+    caret-color: var(--script-editor-caret, var(--accent));
+    border: none;
+    outline: none;
+    resize: none;
+    overflow: auto;
+    white-space: pre;
+    z-index: 2;
+}
+.code-editor #script-editor::placeholder {
+    color: var(--muted);
+    -webkit-text-fill-color: var(--muted);
+    opacity: .55;
+    font-style: italic;
+}
+.code-editor #script-editor::selection {
+    background: color-mix(in srgb, var(--script-editor-caret, var(--accent)) 32%, transparent);
+    -webkit-text-fill-color: transparent;
+}
+.code-editor #script-editor:focus {
+    border-color: transparent;
+    box-shadow: none;
+}
+.tok-keyword { color: var(--script-tok-keyword, #c084fc); font-weight: 700; }
+.tok-decl    { color: var(--script-tok-decl, #22d3ee); font-weight: 700; }
+.tok-comment { color: var(--script-tok-comment, var(--muted)); opacity: .65; font-style: italic; }
+.tok-op      { color: var(--script-tok-op, #f59e0b); }
+.tok-assign  { color: var(--script-tok-op, #f59e0b); font-weight: 700; }
+.tok-paren   { color: var(--script-tok-paren, var(--muted)); }
+.tok-ident   { color: var(--script-editor-text, var(--text-color)); }
+
+/* Compact toolbar */
+#toolbar {
+    padding: 5px 10px;
+    gap: 6px;
+    max-height: 58px;
+}
+#toolbar .brand-title {
+    padding-right: 6px;
+    margin-right: 2px;
+    border-right: 1px solid var(--border-color);
+}
 </style>
 </head>
 <body>
@@ -1927,30 +2380,19 @@ body.script-panel-open .mode-badge      { right: calc(var(--script-panel-width, 
         <div class="tool-btn" data-gate-type="PUSH"   style="background:#3d4653;" onmousedown="startGhostDrag(event,'PUSH')"   ontouchstart="startGhostDrag(event,'PUSH')">Push</div>
         <div class="tool-btn" data-gate-type="OUTPUT" style="background:#b45309;" onmousedown="startGhostDrag(event,'OUTPUT')" ontouchstart="startGhostDrag(event,'OUTPUT')">Output</div>
     </div>
-    <div class="toolbar-group">
-        <div class="tool-btn" data-gate-type="AND"   style="background:#15803d;" onmousedown="startGhostDrag(event,'AND')"   ontouchstart="startGhostDrag(event,'AND')">AND</div>
-        <div class="tool-btn" data-gate-type="OR"    style="background:#0f766e;" onmousedown="startGhostDrag(event,'OR')"    ontouchstart="startGhostDrag(event,'OR')">OR</div>
-        <div class="tool-btn" data-gate-type="XOR"   style="background:#6d28d9;" onmousedown="startGhostDrag(event,'XOR')"   ontouchstart="startGhostDrag(event,'XOR')">XOR</div>
-        <div class="tool-btn" data-gate-type="NOT"   style="background:#b91c1c;" onmousedown="startGhostDrag(event,'NOT')"   ontouchstart="startGhostDrag(event,'NOT')">NOT</div>
-        <div class="tool-btn" data-gate-type="NAND"  style="background:#134e4a;" onmousedown="startGhostDrag(event,'NAND')"  ontouchstart="startGhostDrag(event,'NAND')">NAND</div>
-        <div class="tool-btn" data-gate-type="NOR"   style="background:#3730a3;" onmousedown="startGhostDrag(event,'NOR')"   ontouchstart="startGhostDrag(event,'NOR')">NOR</div>
-        <div class="tool-btn" data-gate-type="XNOR"  style="background:#0369a1;" onmousedown="startGhostDrag(event,'XNOR')"  ontouchstart="startGhostDrag(event,'XNOR')">XNOR</div>
-        <div class="tool-btn" data-gate-type="DELAY" style="background:#3d4653;" onmousedown="startGhostDrag(event,'DELAY')" ontouchstart="startGhostDrag(event,'DELAY')">DELAY</div>
-        <div class="tool-btn" data-gate-type="CLOCK" style="background:#0d9488;" onmousedown="startGhostDrag(event,'CLOCK')" ontouchstart="startGhostDrag(event,'CLOCK')">CLOCK</div>
-        <div class="tool-btn" data-gate-type="PULSE" style="background:#be123c;" onmousedown="startGhostDrag(event,'PULSE')" ontouchstart="startGhostDrag(event,'PULSE')">PULSE</div>
-        <div class="tool-btn" data-gate-type="JOINER" style="background:#7c3aed;" onmousedown="startGhostDrag(event,'JOINER')" ontouchstart="startGhostDrag(event,'JOINER')">Join</div>
-        <div class="tool-btn" data-gate-type="SPLITTER" style="background:#7c3aed;" onmousedown="startGhostDrag(event,'SPLITTER')" ontouchstart="startGhostDrag(event,'SPLITTER')">Split</div>\
-        <div class="tool-btn" data-gate-type="TRI" style="background:#0891b2;" onmousedown="startGhostDrag(event,'TRI')" ontouchstart="startGhostDrag(event,'TRI')">Tri-Buf</div>
-    </div>
+    <!-- Gates now live in the left visual palette (see #palette) -->
     <div class="toolbar-group" style="border-left:2px solid var(--border-color);padding-left:5px;">
         <div class="tool-btn" data-gate-type="SCREEN" style="background:#d97706;" onmousedown="startGhostDrag(event,'SCREEN')" ontouchstart="startGhostDrag(event,'SCREEN')">Pixel</div>
         <div class="tool-btn" data-gate-type="COLOR"  style="background:#9d174d;" onmousedown="startGhostDrag(event,'COLOR')"  ontouchstart="startGhostDrag(event,'COLOR')">Color</div>
         <div class="tool-btn" data-gate-type="NOTE"   style="background:#eab308;color:#422006;" onmousedown="startGhostDrag(event,'NOTE')"  ontouchstart="startGhostDrag(event,'NOTE')">📝 Label</div>
     </div>
-    <div class="toolbar-group" style="border-left:2px solid var(--border-color);padding-left:5px;">
-        <div class="tool-btn" data-btn-id="customGate" style="background:#8b5cf6;" onclick="openCustomGateModal(null, false)">⚙️ Custom Gate</div>
-        <div class="tool-btn" data-btn-id="logicTable" style="background:#0891b2;" onclick="openLogicTable()">📋 Logic Table</div>
-        <div class="tool-btn" data-btn-id="script" style="background:#7c3aed;" onclick="toggleScriptPanel()" title="Open the Custom Scripting sidebar (Boolean equations → circuit)">⚡ Script</div>
+    <div class="toolbar-group">
+        <button id="workspace-tools-btn" data-btn-id="tools"
+                onclick="toggleWorkspacePanel(event)"
+                style="background:#3b5b8c;"
+                title="Workspace tools — Script, Logic Table, Custom Gate, Export, Import, Verilog">
+            🛠 Tools
+        </button>
     </div>
     <div class="toolbar-group" id="custom-gates-toolbar"></div>
     <div class="toolbar-group">
@@ -1964,12 +2406,7 @@ body.script-panel-open .mode-badge      { right: calc(var(--script-panel-width, 
         <button data-btn-id="clear" onclick="clearAll()" style="background:#b91c1c;">Clear</button>
         <button id="debug-btn" data-btn-id="debug" onclick="toggleDebugMode()" style="background:#1f3a63;" title="Toggle Debug Mode (D)">🐞 Debug</button>
     </div>
-<div class="toolbar-group">
-    <button data-btn-id="export" onclick="exportCircuit()" style="background:#15803d;">⬇ Export</button>
-    <button data-btn-id="import" onclick="document.getElementById('file-input').click()" style="background:#0f766e;">⬆ Import</button>
-    <button data-btn-id="verilog" onclick="exportToVerilog()" style="background:#6366f1;" title="Export the circuit as a .v file">⬇ Verilog</button>
-    <input type="file" id="file-input" accept=".json" onchange="importCircuit(event)" />
-</div>
+<input type="file" id="file-input" accept=".json" onchange="importCircuit(event)" style="display:none;" />
     <div class="toolbar-group">
         <button id="undo-btn" data-btn-id="undo" onclick="undo()" style="background:#3d4653;">↩ Undo</button>
         <button id="redo-btn" data-btn-id="redo" onclick="redo()" style="background:#3d4653;">↪ Redo</button>
@@ -1982,15 +2419,191 @@ body.script-panel-open .mode-badge      { right: calc(var(--script-panel-width, 
         style="width:24px;height:24px;border-radius:50%;padding:0;font-weight:bold;font-size:12px;"
         title="Open documentation (F1)"
         aria-label="Open documentation">📚</button>
-    <button id="help-btn" data-btn-id="help" onclick="openHotkeyModal()"
-        style="width:24px;height:24px;border-radius:50%;padding:0;font-weight:bold;font-size:13px;"
-        title="Keyboard shortcuts (Shift+?)"
-        aria-label="Open keyboard shortcuts">?</button>
+    <!-- ? moved to the floating bottom-left help icon (#floating-help) -->
 </div>
     <div class="toolbar-group" style="border-left:2px solid var(--border-color);padding-left:5px;">
         <span id="pour-indicator">🔌 Pour mode <button class="pour-exit-btn" onclick="exitWirePouring()">✕</button></span>
     </div>
 </div>
+
+<!-- ═══════════════════════════════════════════════════════════════
+     LEFT VISUAL PALETTE — ANSI/IEEE gate shapes (drag onto canvas)
+     ═══════════════════════════════════════════════════════════════ -->
+<div id="palette" class="visual-palette" aria-label="Component palette">
+    <div class="palette-section-title">Gates</div>
+
+    <div class="palette-item" data-gate-type="AND" title="AND gate"
+         onmousedown="startGhostDrag(event,'AND')" ontouchstart="startGhostDrag(event,'AND')">
+        <svg viewBox="0 0 44 30" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round">
+            <path d="M4 3 L18 3 A12 12 0 0 1 18 27 L4 27 Z"/>
+        </svg>
+        <span class="palette-label">AND</span>
+    </div>
+    <div class="palette-item" data-gate-type="OR" title="OR gate"
+         onmousedown="startGhostDrag(event,'OR')" ontouchstart="startGhostDrag(event,'OR')">
+        <svg viewBox="0 0 44 30" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round">
+            <path d="M4 3 Q18 3 30 15 Q18 27 4 27 Q14 15 4 3 Z"/>
+        </svg>
+        <span class="palette-label">OR</span>
+    </div>
+    <div class="palette-item" data-gate-type="XOR" title="XOR gate"
+         onmousedown="startGhostDrag(event,'XOR')" ontouchstart="startGhostDrag(event,'XOR')">
+        <svg viewBox="0 0 44 30" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round">
+            <path d="M4 3 Q18 3 30 15 Q18 27 4 27 Q14 15 4 3 Z"/>
+            <path d="M0 3 Q10 15 0 27"/>
+        </svg>
+        <span class="palette-label">XOR</span>
+    </div>
+    <div class="palette-item" data-gate-type="NOT" title="NOT gate"
+         onmousedown="startGhostDrag(event,'NOT')" ontouchstart="startGhostDrag(event,'NOT')">
+        <svg viewBox="0 0 44 30" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round">
+            <path d="M6 4 L26 15 L6 26 Z"/>
+            <circle cx="32" cy="15" r="3"/>
+        </svg>
+        <span class="palette-label">NOT</span>
+    </div>
+    <div class="palette-item" data-gate-type="NAND" title="NAND gate"
+         onmousedown="startGhostDrag(event,'NAND')" ontouchstart="startGhostDrag(event,'NAND')">
+        <svg viewBox="0 0 44 30" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round">
+            <path d="M4 3 L18 3 A12 12 0 0 1 18 27 L4 27 Z"/>
+            <circle cx="34" cy="15" r="3"/>
+        </svg>
+        <span class="palette-label">NAND</span>
+    </div>
+    <div class="palette-item" data-gate-type="NOR" title="NOR gate"
+         onmousedown="startGhostDrag(event,'NOR')" ontouchstart="startGhostDrag(event,'NOR')">
+        <svg viewBox="0 0 44 30" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round">
+            <path d="M4 3 Q18 3 30 15 Q18 27 4 27 Q14 15 4 3 Z"/>
+            <circle cx="34" cy="15" r="3"/>
+        </svg>
+        <span class="palette-label">NOR</span>
+    </div>
+    <div class="palette-item" data-gate-type="XNOR" title="XNOR gate"
+         onmousedown="startGhostDrag(event,'XNOR')" ontouchstart="startGhostDrag(event,'XNOR')">
+        <svg viewBox="0 0 44 30" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round">
+            <path d="M4 3 Q18 3 30 15 Q18 27 4 27 Q14 15 4 3 Z"/>
+            <path d="M0 3 Q10 15 0 27"/>
+            <circle cx="34" cy="15" r="3"/>
+        </svg>
+        <span class="palette-label">XNOR</span>
+    </div>
+
+    <div class="palette-sep"></div>
+    <div class="palette-section-title">Timing</div>
+
+    <div class="palette-item" data-gate-type="DELAY" title="Delay gate"
+         onmousedown="startGhostDrag(event,'DELAY')" ontouchstart="startGhostDrag(event,'DELAY')">
+        <svg viewBox="0 0 44 30" fill="none" stroke="currentColor" stroke-width="2">
+            <rect x="8" y="6" width="28" height="18" rx="2"/>
+            <path d="M2 15 L8 15 M36 15 L42 15"/>
+            <text x="22" y="19" text-anchor="middle" font-size="9" fill="currentColor" stroke="none" font-family="system-ui">Δt</text>
+        </svg>
+        <span class="palette-label">DELAY</span>
+    </div>
+    <div class="palette-item" data-gate-type="CLOCK" title="Clock"
+         onmousedown="startGhostDrag(event,'CLOCK')" ontouchstart="startGhostDrag(event,'CLOCK')">
+        <svg viewBox="0 0 44 30" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round">
+            <rect x="8" y="6" width="28" height="18" rx="2"/>
+            <path d="M12 18 L16 18 L16 11 L20 11 L20 18 L24 18 L24 11 L28 11 L28 18 L32 18" stroke-linecap="round"/>
+            <path d="M2 15 L8 15 M36 15 L42 15"/>
+        </svg>
+        <span class="palette-label">CLOCK</span>
+    </div>
+    <div class="palette-item" data-gate-type="PULSE" title="Pulse"
+         onmousedown="startGhostDrag(event,'PULSE')" ontouchstart="startGhostDrag(event,'PULSE')">
+        <svg viewBox="0 0 44 30" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round">
+            <path d="M2 15 L12 15 L12 6 L18 6 L18 15 L26 15 L26 6 L32 6 L32 15 L42 15" stroke-linecap="round"/>
+        </svg>
+        <span class="palette-label">PULSE</span>
+    </div>
+
+    <div class="palette-sep"></div>
+    <div class="palette-section-title">Buses</div>
+
+    <div class="palette-item" data-gate-type="JOINER" title="Joiner — N bits → 1 bus"
+         onmousedown="startGhostDrag(event,'JOINER')" ontouchstart="startGhostDrag(event,'JOINER')">
+        <svg viewBox="0 0 44 30" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round">
+            <path d="M4 5 L18 15 L4 25 M4 10 L14 15 M4 20 L14 15" stroke-linecap="round"/>
+            <path d="M18 15 L40 15" stroke-width="3.5"/>
+        </svg>
+        <span class="palette-label">JOIN</span>
+    </div>
+    <div class="palette-item" data-gate-type="SPLITTER" title="Splitter — 1 bus → N bits"
+         onmousedown="startGhostDrag(event,'SPLITTER')" ontouchstart="startGhostDrag(event,'SPLITTER')">
+        <svg viewBox="0 0 44 30" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round">
+            <path d="M4 15 L26 15" stroke-width="3.5"/>
+            <path d="M26 15 L40 5 M26 15 L40 15 M26 15 L40 25" stroke-linecap="round"/>
+        </svg>
+        <span class="palette-label">SPLIT</span>
+    </div>
+
+    <div class="palette-sep"></div>
+    <div class="palette-section-title">Buffer</div>
+
+    <div class="palette-item" data-gate-type="TRI" title="Tri-state buffer"
+         onmousedown="startGhostDrag(event,'TRI')" ontouchstart="startGhostDrag(event,'TRI')">
+        <svg viewBox="0 0 44 30" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round">
+            <path d="M14 5 L32 15 L14 25 Z"/>
+            <path d="M4 15 L14 15 M32 15 L40 15"/>
+            <path d="M20 22 L20 27 M20 27 L24 27" stroke-width="1.6"/>
+        </svg>
+        <span class="palette-label">TRI</span>
+    </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════════
+     WORKSPACE TOOLS — floating panel (Script · Logic Table ·
+     Custom Gate · Export · Import · Verilog · Share)
+     ═══════════════════════════════════════════════════════════════ -->
+<div id="workspace-panel" role="menu" aria-label="Workspace tools">
+    <div class="wp-header">
+        <span class="wp-title">🛠 Workspace Tools</span>
+        <button class="wp-close" type="button" onclick="closeWorkspacePanel()" aria-label="Close tools">✕</button>
+    </div>
+    <div class="wp-body">
+        <button type="button" class="wp-item" onclick="closeWorkspacePanel();toggleScriptPanel()">
+            <span class="wp-icon">⚡</span><span>Script</span>
+        </button>
+        <button type="button" class="wp-item" onclick="closeWorkspacePanel();openLogicTable()">
+            <span class="wp-icon">📋</span><span>Logic Table</span>
+        </button>
+        <button type="button" class="wp-item" onclick="closeWorkspacePanel();openCustomGateModal(null,false)">
+            <span class="wp-icon">⚙</span><span>Custom Gate</span>
+        </button>
+        <hr class="wp-sep">
+        <button type="button" class="wp-item" onclick="closeWorkspacePanel();exportCircuit()">
+            <span class="wp-icon">⬇</span><span>Export (.json)</span>
+        </button>
+        <button type="button" class="wp-item" onclick="closeWorkspacePanel();document.getElementById('file-input').click()">
+            <span class="wp-icon">⬆</span><span>Import (.json)</span>
+        </button>
+        <button type="button" class="wp-item" onclick="closeWorkspacePanel();exportToVerilog()">
+            <span class="wp-icon">⬇</span><span>Verilog (.v)</span>
+        </button>
+        <hr class="wp-sep">
+        <button type="button" class="wp-item" onclick="closeWorkspacePanel();openShareModal()">
+            <span class="wp-icon">🌐</span><span>Share / Collaborate</span>
+        </button>
+    </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════════
+     MINIMAP — bird's-eye view of the circuit
+     ═══════════════════════════════════════════════════════════════ -->
+<div id="minimap" aria-label="Minimap">
+    <span id="minimap-label">Map</span>
+    <canvas id="minimap-canvas"></canvas>
+    <button id="minimap-toggle" type="button" title="Toggle minimap" aria-label="Toggle minimap">⌗</button>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════════
+     FLOATING HELP [?] — replaces the persistent tips box and
+     pour tooltip. Opens the hotkey reference modal.
+     ═══════════════════════════════════════════════════════════════ -->
+<button id="floating-help" type="button"
+        onclick="openHotkeyModal()"
+        title="Keyboard shortcuts (Shift+?)"
+        aria-label="Open keyboard shortcuts">?</button>
 
 <div id="script-panel" aria-hidden="true" role="complementary" aria-label="Custom Scripting sidebar">
     <div class="sp-header">
@@ -1999,13 +2612,20 @@ body.script-panel-open .mode-badge      { right: calc(var(--script-panel-width, 
     </div>
     <div class="sp-body">
         <div class="sp-editor-wrap">
-            <textarea id="script-editor"
-                      spellcheck="false"
-                      autocomplete="off"
-                      autocorrect="off"
-                      autocapitalize="off"
-                      wrap="off"
-                      placeholder="Example: Y = (A AND B) OR (C XOR NOT D)"></textarea>
+            <div class="code-editor" id="script-editor-container">
+                <div class="line-numbers" id="script-line-numbers" aria-hidden="true">1</div>
+                <div class="code-area">
+                    <pre class="code-highlight" id="script-highlight" aria-hidden="true"></pre>
+                    <textarea id="script-editor"
+                              spellcheck="false"
+                              autocomplete="off"
+                              autocorrect="off"
+                              autocapitalize="off"
+                              wrap="off"
+                              aria-label="Boolean equation editor"
+                              placeholder="Example: Y = (A AND B) OR (C XOR NOT D)"></textarea>
+                </div>
+            </div>
         </div>
         <div class="sp-hint">
             <strong>Example:</strong>
@@ -7962,8 +8582,9 @@ const LSET_DEFAULT = {
     noiseOpacity:0.12,
     noiseScale:0.65,
     noiseOctaves:3,
-    /* UX overlays */
-    badgeOffsetTop:68,
+    /* UX overlays — badgeOffsetTop is now a gap *below* the toolbar,
+       not an absolute top offset from the viewport. */
+    badgeOffsetTop:8,
     badgeOffsetRight:12,
     badgeOffsetBottom:12,
     pourTipOffsetX:16,
@@ -9043,6 +9664,13 @@ function saveSettings(){
 function loadSettings(){
   let saved=null;
   try{ saved=JSON.parse(localStorage.getItem(LSET_KEY)||'null'); }catch(_){}
+  // Migration: `badgeOffsetTop` used to be an absolute top offset from the
+  // viewport (default 68). It's now a small gap below the toolbar. Convert
+  // any legacy value so returning users don't see the badge drop 60+ px.
+  if(saved && saved.layout && typeof saved.layout.badgeOffsetTop === 'number'
+     && saved.layout.badgeOffsetTop >= 40){
+    saved.layout.badgeOffsetTop = Math.max(4, Math.min(12, saved.layout.badgeOffsetTop - 62));
+  }
   // Migrate the old `behaviour` key name if present.
   if(saved && saved.behaviour && !saved.preferences){
     saved.preferences = saved.behaviour;
@@ -9728,7 +10356,7 @@ function lsetHtmlLayout(){
     </div>
     <div class="sec-title">UX overlays &nbsp;·&nbsp; badge, tooltip &amp; hotkey modal</div>
     <div class="grid">
-      ${lsetRng('Badge — top offset','layout.badgeOffsetTop',0,200,1,'px')}
+      ${lsetRng('Badge — gap below toolbar','layout.badgeOffsetTop',0,40,1,'px')}
       ${lsetRng('Badge — right offset','layout.badgeOffsetRight',0,200,1,'px')}
       ${lsetRng('Badge — bottom offset','layout.badgeOffsetBottom',0,200,1,'px')}
       ${lsetRng('Pour tooltip — X offset','layout.pourTipOffsetX',4,60,1,'px')}
@@ -13089,6 +13717,353 @@ window.drawTimingDiagram = drawTimingDiagram;
         backdrop.addEventListener('mousedown', (e) => {
             if (e.target === backdrop) window.closeDocsModal();
         });
+    }
+
+})();
+
+/* ═══════════════════════════════════════════════════════════════
+   REFACTOR: Workspace Tools · Palette drag · Minimap · Code Editor
+   ═══════════════════════════════════════════════════════════════ */
+(function () {
+    'use strict';
+
+    /* ── 1. Workspace Tools panel ───────────────────────── */
+    window.toggleWorkspacePanel = function (e) {
+        if (e) e.stopPropagation();
+        const panel = document.getElementById('workspace-panel');
+        if (!panel) return;
+        panel.classList.toggle('open');
+    };
+
+    window.closeWorkspacePanel = function () {
+        const panel = document.getElementById('workspace-panel');
+        if (panel) panel.classList.remove('open');
+    };
+
+    // Click outside closes
+    document.addEventListener('mousedown', (e) => {
+        const panel = document.getElementById('workspace-panel');
+        if (!panel || !panel.classList.contains('open')) return;
+        if (panel.contains(e.target)) return;
+        if (e.target.closest('#workspace-tools-btn')) return;
+        panel.classList.remove('open');
+    });
+
+    /* ── 2. Minimap ─────────────────────────────────────── */
+    const minimapEl = document.getElementById('minimap');
+    const minimapCanvas = document.getElementById('minimap-canvas');
+    const minimapToggle = document.getElementById('minimap-toggle');
+    let minimapCtx = null;
+    let minimapTransform = { scale: 1, offX: 0, offY: 0 };
+
+    if (minimapCanvas) minimapCtx = minimapCanvas.getContext('2d');
+
+    function minimapResize() {
+        if (!minimapCanvas || !minimapEl) return;
+        if (minimapEl.classList.contains('collapsed')) return;
+        // Measure the canvas itself, not its container. The container has a
+        // 1px border AND a width/height transition, so getBoundingClientRect()
+        // on it returns the "from" size for the first frame of the animation.
+        const rect = minimapCanvas.getBoundingClientRect();
+        if (rect.width < 10 || rect.height < 10) return;
+        const dpr = window.devicePixelRatio || 1;
+        const w = Math.max(1, Math.floor(rect.width  * dpr));
+        const h = Math.max(1, Math.floor(rect.height * dpr));
+        if (minimapCanvas.width  !== w) minimapCanvas.width  = w;
+        if (minimapCanvas.height !== h) minimapCanvas.height = h;
+        if (minimapCtx) minimapCtx.setTransform(dpr, 0, 0, dpr, 0, 0);
+        // Do NOT write canvas.style.width/height. CSS `width:100%` + `flex:1`
+        // own the display size; writing inline styles here would pin the
+        // canvas to whatever size we happened to measure mid-animation.
+    }
+
+    function minimapDraw() {
+        if (!minimapCtx || !minimapCanvas || !minimapEl) return;
+        if (minimapEl.classList.contains('collapsed')) return;
+        if (typeof components === 'undefined' || typeof compEls === 'undefined') return;
+        if (typeof viewport === 'undefined' || typeof panX === 'undefined') return;
+
+        // Read the canvas itself so the drawing dimensions always match
+        // the actual pixel surface — even during a layout transition.
+        const rect = minimapCanvas.getBoundingClientRect();
+        const W = rect.width;
+        const H = rect.height;
+        if (W < 10 || H < 10) return;
+
+        // Compute world bounds
+        let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+        for (const c of components) {
+            const el = compEls.get(c.id);
+            const w = el ? el.offsetWidth : 140;
+            const h = el ? el.offsetHeight : 60;
+            if (c.x < minX) minX = c.x;
+            if (c.y < minY) minY = c.y;
+            if (c.x + w > maxX) maxX = c.x + w;
+            if (c.y + h > maxY) maxY = c.y + h;
+        }
+        const vpRect = viewport.getBoundingClientRect();
+        const vpX = -panX / zoom;
+        const vpY = -panY / zoom;
+        const vpW = vpRect.width / zoom;
+        const vpH = vpRect.height / zoom;
+        if (vpX < minX) minX = vpX;
+        if (vpY < minY) minY = vpY;
+        if (vpX + vpW > maxX) maxX = vpX + vpW;
+        if (vpY + vpH > maxY) maxY = vpY + vpH;
+
+        if (!isFinite(minX)) return;
+
+        const pad = 40;
+        minX -= pad; minY -= pad; maxX += pad; maxY += pad;
+        const ww = Math.max(1, maxX - minX);
+        const wh = Math.max(1, maxY - minY);
+        const scale = Math.min((W - 10) / ww, (H - 10) / wh);
+        const offX = (W - ww * scale) / 2 - minX * scale;
+        const offY = (H - wh * scale) / 2 - minY * scale;
+        minimapTransform = { scale, offX, offY };
+
+        const ctx = minimapCtx;
+        const style = getComputedStyle(document.body);
+        const bg = style.getPropertyValue('--bg-color').trim() || '#f7f8fa';
+        const accent = style.getPropertyValue('--accent').trim() || '#1f3a63';
+
+        ctx.clearRect(0, 0, W, H);
+        ctx.fillStyle = bg;
+        ctx.globalAlpha = 0.5;
+        ctx.fillRect(0, 0, W, H);
+        ctx.globalAlpha = 1;
+
+        // Draw gates as colored rects
+        const getColor = (typeof window.getGateColor === 'function')
+            ? window.getGateColor
+            : (c) => accent;
+        for (const c of components) {
+            const el = compEls.get(c.id);
+            const w = el ? el.offsetWidth : 140;
+            const h = el ? el.offsetHeight : 60;
+            ctx.fillStyle = getColor(c) || accent;
+            const rx = c.x * scale + offX;
+            const ry = c.y * scale + offY;
+            const rw = Math.max(1.5, w * scale);
+            const rh = Math.max(1.5, h * scale);
+            ctx.fillRect(rx, ry, rw, rh);
+        }
+
+        // Viewport rectangle
+        ctx.strokeStyle = 'rgba(250, 180, 0, 0.95)';
+        ctx.lineWidth = 1.5;
+        ctx.strokeRect(
+            vpX * scale + offX,
+            vpY * scale + offY,
+            Math.max(4, vpW * scale),
+            Math.max(4, vpH * scale)
+        );
+    }
+
+    if (minimapToggle) {
+        minimapToggle.addEventListener('click', () => {
+            const wasCollapsed = minimapEl.classList.contains('collapsed');
+            minimapEl.classList.toggle('collapsed');
+            if (!wasCollapsed) return; // collapsing — nothing to re-measure
+
+            // Reopening: #minimap transitions from 34×34 → 200×140 over 180 ms.
+            // getBoundingClientRect() returns the *starting* size for the first
+            // frame of that animation, so wait for `transitionend` before
+            // resizing the canvas buffer.
+            let settled = false;
+            const settle = () => {
+                if (settled) return;
+                settled = true;
+                minimapEl.removeEventListener('transitionend', onEnd);
+                // Double-rAF in case the browser is still flushing layout.
+                requestAnimationFrame(() => {
+                    minimapResize();
+                    minimapDraw();
+                    requestAnimationFrame(minimapDraw);
+                });
+            };
+            const onEnd = (e) => {
+                if (e.target !== minimapEl) return;
+                settle();
+            };
+            minimapEl.addEventListener('transitionend', onEnd);
+            // Fallback: reduced-motion and body.no-animations kill the
+            // transition, so `transitionend` never fires. 250 ms > 180 ms.
+            setTimeout(settle, 250);
+        });
+    }
+
+    if (minimapCanvas) {
+        minimapCanvas.addEventListener('click', (e) => {
+            const rect = minimapCanvas.getBoundingClientRect();
+            const t = minimapTransform;
+            if (!t) return;
+            const wx = (e.clientX - rect.left - t.offX) / t.scale;
+            const wy = (e.clientY - rect.top - t.offY) / t.scale;
+            const vpRect = viewport.getBoundingClientRect();
+            if (typeof panX !== 'undefined') panX = vpRect.width / 2 - wx * zoom;
+            if (typeof panY !== 'undefined') panY = vpRect.height / 2 - wy * zoom;
+            if (typeof updateTransform === 'function') updateTransform();
+            minimapDraw();
+        });
+    }
+
+    // Redraw + self-heal on sim tick. `minimapResize()` is idempotent —
+    // it no-ops when the buffer size is already correct — so calling it
+    // every tick corrects any transient mid-animation measurement within
+    // at most 250 ms.
+    setInterval(() => {
+        minimapResize();
+        minimapDraw();
+    }, 250);
+    window.addEventListener('resize', () => { minimapResize(); minimapDraw(); });
+
+    // Initial — wait two frames so flex layout has fully settled before
+    // the first measurement.
+    requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+            minimapResize();
+            minimapDraw();
+        });
+    });
+
+    /* ── 3. Script editor: line numbers + syntax highlighting ── */
+    (function setupScriptEditor() {
+        const editor = document.getElementById('script-editor');
+        const highlight = document.getElementById('script-highlight');
+        const lineNums = document.getElementById('script-line-numbers');
+        if (!editor || !highlight || !lineNums) return;
+
+        const KEYWORDS = new Set(['AND','OR','NOT','XOR','NAND','NOR','XNOR']);
+
+        function escapeHtml(s) {
+            return String(s).replace(/[&<>"']/g, c => ({
+                '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'
+            }[c]));
+        }
+
+        function tokenizeLine(line) {
+            let out = '';
+            let i = 0;
+            while (i < line.length) {
+                const c = line[i];
+                if (c === '#') {
+                    out += `<span class="tok-comment">${escapeHtml(line.slice(i))}</span>`;
+                    return out;
+                }
+                if (c === '=' && line[i+1] !== '=') {
+                    out += '<span class="tok-assign">=</span>';
+                    i++; continue;
+                }
+                if (c === '(' || c === ')') {
+                    out += `<span class="tok-paren">${c}</span>`;
+                    i++; continue;
+                }
+                if (c === '&' || c === '|' || c === '^' || c === '~' || c === '!') {
+                    out += `<span class="tok-op">${c}</span>`;
+                    i++; continue;
+                }
+                if (/[A-Za-z_]/.test(c)) {
+                    let j = i;
+                    while (j < line.length && /[A-Za-z0-9_]/.test(line[j])) j++;
+                    const word = line.slice(i, j);
+                    const upper = word.toUpperCase();
+                    if (KEYWORDS.has(upper)) {
+                        out += `<span class="tok-keyword">${word}</span>`;
+                    } else if (upper === 'INPUTS' || upper === 'INPUT') {
+                        out += `<span class="tok-decl">${word}</span>`;
+                    } else {
+                        out += `<span class="tok-ident">${escapeHtml(word)}</span>`;
+                    }
+                    i = j; continue;
+                }
+                out += escapeHtml(c);
+                i++;
+            }
+            return out;
+        }
+
+        function render() {
+            const val = editor.value || '';
+            const lines = val.split('\n');
+            const html = lines.map(tokenizeLine).join('\n');
+            highlight.innerHTML = html || '<span class="tok-ident" style="opacity:.4"> </span>';
+            const ln = Math.max(1, lines.length);
+            lineNums.textContent = Array.from({ length: ln }, (_, i) => i + 1).join('\n');
+            // Sync scroll
+            highlight.scrollTop = editor.scrollTop;
+            highlight.scrollLeft = editor.scrollLeft;
+            lineNums.scrollTop = editor.scrollTop;
+        }
+
+        function syncScroll() {
+            highlight.scrollTop = editor.scrollTop;
+            highlight.scrollLeft = editor.scrollLeft;
+            lineNums.scrollTop = editor.scrollTop;
+        }
+
+        editor.addEventListener('input', render);
+        editor.addEventListener('scroll', syncScroll);
+
+        editor.addEventListener('keydown', (e) => {
+            if (e.key === 'Tab') {
+                e.preventDefault();
+                const start = editor.selectionStart;
+                const end = editor.selectionEnd;
+                editor.value = editor.value.slice(0, start) + '  ' + editor.value.slice(end);
+                editor.selectionStart = editor.selectionEnd = start + 2;
+                render();
+            }
+        });
+
+        // Seed with any existing content (e.g. on page load)
+        render();
+
+        // Expose for programmatic updates (e.g. when other code sets .value)
+        window._renderScriptHighlight = render;
+    })();
+
+    /* ── 4. Palette drag-out safety ─────────────────────── */
+    // The palette reuses startGhostDrag(), which is defined globally.
+    // A quick sanity check avoids errors on first paint.
+    if (typeof window.startGhostDrag !== 'function') {
+        // Wait for the main script to finish booting.
+        window.addEventListener('load', () => {
+            if (typeof window.startGhostDrag !== 'function') {
+                console.warn('[palette] startGhostDrag is not available — palette buttons will not drag.');
+            }
+        });
+    }
+
+    /* ── 5. Floating help icon ───────────────────────────── */
+    // Click-only. The button's inline `onclick="openHotkeyModal()"`
+    // handles the interaction — no hover wiring needed here.
+
+    /* ── 6. Toolbar height → --toolbar-h ─────────────────── */
+    // The refactored toolbar holds far fewer buttons than the original,
+    // so it's shorter. Everything anchored below it (viewport, palette,
+    // script panel, workspace popup) reads --toolbar-h instead of the
+    // old hard-coded 62 px — which removes the empty strip that used to
+    // sit between the toolbar and the canvas.
+    const toolbarEl = document.getElementById('toolbar');
+    function syncToolbarHeight() {
+        if (!toolbarEl) return;
+        const h = toolbarEl.offsetHeight;
+        if (h > 0) {
+            document.documentElement.style.setProperty('--toolbar-h', h + 'px');
+        }
+    }
+    syncToolbarHeight();
+    window.addEventListener('load', syncToolbarHeight);
+    window.addEventListener('resize', syncToolbarHeight);
+    // Fonts / theme changes can shift toolbar height by a pixel or two —
+    // re-measure after the browser has settled.
+    requestAnimationFrame(() => requestAnimationFrame(syncToolbarHeight));
+    setTimeout(syncToolbarHeight, 250);
+    // Keep it in sync if the toolbar ever wraps or its children resize
+    // (e.g. custom-gate buttons appearing, folder counts changing, etc.).
+    if (typeof ResizeObserver === 'function') {
+        try { new ResizeObserver(syncToolbarHeight).observe(toolbarEl); } catch(_) {}
     }
 
 })();
