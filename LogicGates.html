@@ -742,19 +742,28 @@ body.no-animations *,body.no-animations *::before,body.no-animations *::after{
 /* Bus ports render as rounded squares instead of circles */
 .port.bus-port{
   width:18px;height:18px;border-radius:4px;
-  background:linear-gradient(135deg,#7c3aed,#5b21b6);
-  border:2px solid #fff;
+  background:linear-gradient(135deg,
+    var(--bus-port-input-color, #7c3aed),
+    color-mix(in srgb, var(--bus-port-input-color, #7c3aed) 65%, #000));
+  border:2px solid var(--port-border-color, #fff);
 }
 .port.bus-port.output{
-  background:linear-gradient(135deg,#8b5cf6,#6d28d9);
+  background:linear-gradient(135deg,
+    var(--bus-port-output-color, #8b5cf6),
+    color-mix(in srgb, var(--bus-port-output-color, #8b5cf6) 65%, #000));
 }
 .port.bus-port.active-port{
-  background:linear-gradient(135deg,#a78bfa,#7c3aed)!important;
-  box-shadow:0 0 12px #a78bfa!important;
+  background:linear-gradient(135deg,
+    var(--bus-port-active-color, #a78bfa),
+    color-mix(in srgb, var(--bus-port-active-color, #a78bfa) 70%, #000))!important;
+  box-shadow:0 0 12px var(--bus-port-active-color, #a78bfa)!important;
 }
 .port.bus-port.pour-selected{
-  background:linear-gradient(135deg,#f59e0b,#b45309)!important;
-  box-shadow:0 0 16px #f59e0b,0 0 32px rgba(245,158,11,.35)!important;
+  background:linear-gradient(135deg,
+    var(--bus-port-pour-color, #f59e0b),
+    color-mix(in srgb, var(--bus-port-pour-color, #f59e0b) 65%, #000))!important;
+  box-shadow:0 0 16px var(--bus-port-pour-color, #f59e0b),
+             0 0 32px color-mix(in srgb, var(--bus-port-pour-color, #f59e0b) 35%, transparent)!important;
 }
 
 /* Bus wires are ~2.2× thicker than single-bit wires */
@@ -797,15 +806,11 @@ body.no-animations *,body.no-animations *::before,body.no-animations *::after{
   border-color:#fca5a5!important;
 }
 /* ══ 4-STATE WIRE COLOURS ══ */
-:root{
-  --wire-low-color:#0f1f33;
-  --wire-high-color:#22c55e;
-  --wire-float-color:#6b7280;
-  --wire-error-color:#ef4444;
-}
-.wire-path.low{stroke:var(--wire-low-color)}
-.wire-path.floating{stroke:var(--wire-float-color);stroke-dasharray:6,4}
-.wire-path.contention{stroke:var(--wire-error-color)!important;
+/* Values now live in LSET_DEFAULT.light/dark (Ports → Wire states).
+   Fallbacks here keep wires visible before applySettings() runs. */
+.wire-path.low{stroke:var(--wire-low-color, #0f1f33)}
+.wire-path.floating{stroke:var(--wire-float-color, #6b7280);stroke-dasharray:6,4}
+.wire-path.contention{stroke:var(--wire-error-color, #ef4444)!important;
   animation:wireFlash .5s ease-in-out infinite alternate}
 .wire-path.mismatch{
     stroke:#ef4444 !important;
@@ -828,8 +833,12 @@ body.no-animations *,body.no-animations *::before,body.no-animations *::after{
 .bulb.error{background:#ef4444;box-shadow:0 0 14px #ef4444;border-color:#dc2626;
   animation:busErrPulse .6s ease-in-out infinite alternate}
 
-/* Tri-state buffer badge */
-.gate.tri-gate .gate-header{background:linear-gradient(135deg,#0891b2,#155e75)!important}
+/* Tri-state buffer badge — follows the palette's TRI colour */
+.gate.tri-gate .gate-header{
+  background:linear-gradient(135deg,
+    var(--gate-color, #0891b2),
+    color-mix(in srgb, var(--gate-color, #0891b2) 60%, #000))!important;
+}
 
 #debug-tooltip .dbg-err-inline{color:#f87171;font-weight:bold}
 #debug-tooltip .dbg-z{color:#9ca3af;font-style:italic}
@@ -929,29 +938,24 @@ body.no-animations *,body.no-animations *::before,body.no-animations *::after{
 /* ── 1. Persistent mode badge ────────────────────────────── */
 .mode-badge {
     position: fixed;
-    top: 68px;
-    right: 12px;
+    top: var(--badge-offset-top, 68px);
+    right: var(--badge-offset-right, 12px);
     z-index: 200;
-    pointer-events: none;               /* never intercepts canvas clicks */
+    pointer-events: none;
     display: inline-flex;
     align-items: center;
     gap: 8px;
     padding: 6px 12px 6px 10px;
     border-radius: 999px;
-    background: color-mix(in srgb, var(--toolbar-bg) 82%, transparent);
-    backdrop-filter: blur(10px);
-    -webkit-backdrop-filter: blur(10px);
-    border: 1px solid var(--border-color);
+    background: var(--badge-bg, #ffffff);
+    border: 1px solid var(--badge-border, var(--border-color));
     box-shadow: 0 2px 12px rgba(0,0,0,0.10);
     font-size: 11px;
     font-weight: 600;
-    color: var(--text-color);
-    --badge-accent: var(--accent);
+    color: var(--badge-text, var(--text-color));
+    --badge-accent: var(--badge-dot-standard, #6b7280);
     max-width: min(360px, calc(100vw - 24px));
-    transition:
-        background .25s ease,
-        border-color .25s ease,
-        box-shadow .25s ease;
+    transition: border-color .25s ease, box-shadow .25s ease;
     user-select: none;
     -webkit-user-select: none;
 }
@@ -971,32 +975,25 @@ body.no-animations *,body.no-animations *::before,body.no-animations *::after{
 }
 .mode-badge-hint {
     font-weight: 400;
-    opacity: 0.7;
+    opacity: 0.85;
     font-size: 10px;
     padding-left: 8px;
-    border-left: 1px solid var(--border-color);
+    border-left: 1px solid var(--badge-border, var(--border-color));
     margin-left: 2px;
     white-space: nowrap;
     display: none;
+    color: var(--badge-hint, var(--muted));
 }
-.mode-badge-hint:not(:empty) {
-    display: inline;
+.mode-badge-hint:not(:empty) { display: inline; }
+.mode-badge[data-mode="standard"] { --badge-accent: var(--badge-dot-standard, #6b7280); }
+.mode-badge[data-mode="pour"]     { --badge-accent: var(--badge-dot-pour,     #f97316); }
+.mode-badge[data-mode="debug"]    { --badge-accent: var(--badge-dot-debug,    #16a34a); }
+.mode-badge[data-mode="box"]      { --badge-accent: var(--badge-dot-box,      #eab308); }
+.mode-badge[data-mode="wire"]     { --badge-accent: var(--badge-dot-wire,     #3b82f6); }
+.mode-badge[data-position="bottom-right"] {
+    top: auto;
+    bottom: var(--badge-offset-bottom, 12px);
 }
-
-/* Per-mode theming */
-.mode-badge[data-mode="standard"] { --badge-accent: #6b7280; }
-.mode-badge[data-mode="pour"] {
-    --badge-accent: #f97316;
-    border-color: color-mix(in srgb, #f97316 45%, var(--border-color));
-    background: color-mix(in srgb, #f97316 12%, var(--toolbar-bg) 82%);
-}
-.mode-badge[data-mode="debug"] {
-    --badge-accent: #16a34a;
-    border-color: color-mix(in srgb, #16a34a 45%, var(--border-color));
-    background: color-mix(in srgb, #16a34a 12%, var(--toolbar-bg) 82%);
-}
-.mode-badge[data-mode="box"]  { --badge-accent: #eab308; }
-.mode-badge[data-mode="wire"] { --badge-accent: #3b82f6; }
 
 /* Pulse the dot for active modes */
 .mode-badge[data-mode="pour"] .mode-badge-dot,
@@ -1027,9 +1024,9 @@ body.no-animations *,body.no-animations *::before,body.no-animations *::after{
     pointer-events: none;
     padding: 8px 12px;
     border-radius: 8px;
-    background: color-mix(in srgb, #b45309 92%, black 8%);
-    color: #fff;
-    box-shadow: 0 6px 20px rgba(180, 83, 9, 0.35);
+    background: var(--port-pour-color, #b45309);
+    color: var(--pour-tip-text, #ffffff);
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.35);
     opacity: 0;
     visibility: hidden;
     transition: opacity .15s ease, visibility 0s .15s;
@@ -1082,8 +1079,8 @@ body.no-animations *,body.no-animations *::before,body.no-animations *::after{
 
 .hotkey-modal-sheet {
     position: relative;
-    width: min(640px, 100%);
-    max-height: min(85vh, 780px);
+    width: min(var(--hotkey-modal-width, 640px), 100%);
+    max-height: min(var(--hotkey-modal-max-height, 85vh), 780px);
     background: var(--toolbar-bg);
     color: var(--text-color);
     border: 1px solid var(--border-color);
@@ -1210,19 +1207,19 @@ body.no-animations *,body.no-animations *::before,body.no-animations *::after{
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    min-width: 22px;
-    height: 22px;
+    min-width: var(--hotkey-key-min-width, 22px);
+    height: var(--hotkey-key-height, 22px);
     padding: 0 6px;
     font-family: var(--font-mono, ui-monospace, Menlo, Consolas, monospace);
-    font-size: 11px;
+    font-size: var(--hotkey-key-font-size, 11px);
     font-weight: 700;
     line-height: 1;
-    color: var(--text-color);
+    color: var(--hotkey-key-text, var(--text-color));
     background: linear-gradient(180deg,
-        color-mix(in srgb, var(--toolbar-bg) 94%, var(--text-color) 6%)  0%,
-        color-mix(in srgb, var(--toolbar-bg) 86%, var(--text-color) 14%) 100%);
-    border: 1px solid var(--border-color);
-    border-bottom: 2px solid var(--border-strong, var(--border-color));
+        var(--hotkey-key-bg-top, #fafbfc)    0%,
+        var(--hotkey-key-bg-bottom, #eef0f3) 100%);
+    border: 1px solid var(--hotkey-key-border, var(--border-color));
+    border-bottom: 2px solid var(--hotkey-key-border, var(--border-strong, var(--border-color)));
     border-radius: 5px;
     box-shadow:
         0 1px 0 rgba(255, 255, 255, 0.08) inset,
@@ -1244,10 +1241,10 @@ body.no-animations *,body.no-animations *::before,body.no-animations *::after{
     flex-shrink: 0;
 }
 .hotkey-modal-footer kbd {
-    height: 18px;
-    min-width: 18px;
+    height: calc(var(--hotkey-key-height, 22px) - 4px);
+    min-width: calc(var(--hotkey-key-min-width, 22px) - 4px);
     padding: 0 4px;
-    font-size: 10px;
+    font-size: calc(var(--hotkey-key-font-size, 11px) - 1px);
     border-bottom-width: 1px;
 }
 
@@ -1257,8 +1254,8 @@ body.no-animations *,body.no-animations *::before,body.no-animations *::after{
         font-size: 10px;
         padding: 4px 10px 4px 8px;
         top: auto;
-        bottom: 12px;      /* bottom-right on phones to stay clear of wrapped toolbar */
-        right: 12px;
+        bottom: var(--badge-offset-bottom, 12px);
+        right: var(--badge-offset-right, 12px);
     }
     .hotkey-modal {
         padding: 0;
@@ -1354,10 +1351,10 @@ body.no-animations *,body.no-animations *::before,body.no-animations *::after{
         <button id="share-btn" data-btn-id="share" onclick="openShareModal()" style="background:#1f3a63;">🌐 Share</button>
     </div>
     <div class="toolbar-group">
-    <button id="help-btn" onclick="openHotkeyModal()"
-            style="background:#3d4653;width:24px;height:24px;border-radius:50%;padding:0;font-weight:bold;font-size:13px;"
-            title="Keyboard shortcuts (Shift+?)"
-            aria-label="Open keyboard shortcuts">?</button>
+    <button id="help-btn" data-btn-id="help" onclick="openHotkeyModal()"
+        style="width:24px;height:24px;border-radius:50%;padding:0;font-weight:bold;font-size:13px;"
+        title="Keyboard shortcuts (Shift+?)"
+        aria-label="Open keyboard shortcuts">?</button>
 </div>
     <div class="toolbar-group" style="border-left:2px solid var(--border-color);padding-left:5px;">
         <span id="pour-indicator">🔌 Pour mode <button class="pour-exit-btn" onclick="exitWirePouring()">✕</button></span>
@@ -1695,6 +1692,20 @@ body.no-animations *,body.no-animations *::before,body.no-animations *::after{
 let components=[],wires=[],customContainers=[],savedCustomGates={};
 let savedFolders={};
 let toastsEnabled=localStorage.getItem('toasts_enabled')!=='false';
+/* Restore the theme class synchronously from the last localStorage save,
+   BEFORE applySettings() ever runs. Without this, applySettings() on the
+   `load` event picks the light map (body has no class yet), writes the
+   light CSS variables, and the async IndexedDB load only adds the
+   dark-theme class after the damage is done. Result: reload in dark mode
+   shows light mode until the user clicks Theme twice. */
+(function restoreThemeEarly(){
+    try {
+        const raw = localStorage.getItem('logic_sim_save_state_v4');
+        if (!raw) return;
+        const s = JSON.parse(raw);
+        if (s && s.isDark) document.body.classList.add('dark-theme');
+    } catch(_) {}
+})();
 let draggingWire=null,nextId=1,nextWireId=1,isPaused=false;
 let panX=0,panY=0,zoom=1,isPanning=false,startPanX=0,startPanY=0;
 let initialPinchDistance=null,initialZoom=1;
@@ -2396,7 +2407,14 @@ function startPan(e){if(e.target.closest('.gate')||e.target.closest('.custom-con
 function startTouchPanZoom(e){if(e.target.closest('.gate')||e.target.closest('.custom-container-wrapper')||e.target.closest('#toolbar'))return;if(e.touches.length===2){initialPinchDistance=Math.hypot(e.touches[0].clientX-e.touches[1].clientX,e.touches[0].clientY-e.touches[1].clientY);initialZoom=zoom;isPanning=false}else if(e.touches.length===1){isPanning=true;startPanX=e.touches[0].clientX-panX;startPanY=e.touches[0].clientY-panY}e.stopPropagation()}
 function handleZoom(e){e.preventDefault();const zf=1.1;applyZoom(e.deltaY<0?zoom*zf:zoom/zf,e.clientX,e.clientY)}
 function resetView(){panX=0;panY=0;zoom=1;updateTransform();saveToLocalStorage()}
-function toggleTheme(){document.body.classList.toggle('light-theme');document.body.classList.toggle('dark-theme');applySettings();updateGridBackground();updateModalGridBackground();saveToLocalStorage()}
+function toggleTheme(){
+    const isDark = document.body.classList.toggle('dark-theme');
+    document.body.classList.toggle('light-theme', !isDark);
+    applySettings();
+    updateGridBackground();
+    updateModalGridBackground();
+    saveToLocalStorage();
+}
 function togglePause(){isPaused=!isPaused;const b=document.getElementById('pause-btn');b.innerText=isPaused?'Resume':'Pause';b.style.background=isPaused?'#16a34a':'#d97706'}
 
 function startBoxSelect(e){isBoxSelecting=true;const r=viewport.getBoundingClientRect();boxSelectStartScreenX=e.clientX;boxSelectStartScreenY=e.clientY;boxSelectStartX=(e.clientX-r.left-panX)/zoom;boxSelectStartY=(e.clientY-r.top-panY)/zoom;selectionBoxEl.style.display='block';selectionBoxEl.style.left=(boxSelectStartScreenX-r.left)+'px';selectionBoxEl.style.top=(boxSelectStartScreenY-r.top)+'px';selectionBoxEl.style.width='0px';selectionBoxEl.style.height='0px'}
@@ -6459,6 +6477,11 @@ window.resetPreferences=resetPreferences;
 
 window.addEventListener('load',async()=>{
     await loadFromLocalStorage();
+    // applyLoadedState() may have just changed the body's theme class
+    // (e.g. IndexedDB save has a different theme than localStorage, or
+    //  localStorage was cleared for a huge circuit and only IndexedDB
+    //  survived). Re-run applySettings() so the CSS vars match.
+    try { applySettings(); } catch(e){ console.warn('applySettings after load failed', e); }
     updateTransform();updateCustomGatesToolbar();updateToastButton();
     svgWires=document.getElementById('wires');
     components.forEach(comp=>renderComponent(comp));
@@ -6530,7 +6553,31 @@ const LSET_DEFAULT = {
     '--bulb-off':'#dddddd',
     '--bulb-off-border':'#555555',
     '--bulb-on':'#d97706',
-    '--bulb-on-border':'#b45309'
+    '--bulb-on-border':'#b45309',
+    /* Bus ports (Join / Split / widened gates) */
+    '--bus-port-input-color':'#7c3aed',
+    '--bus-port-output-color':'#8b5cf6',
+    '--bus-port-active-color':'#a78bfa',
+    '--bus-port-pour-color':'#f59e0b',
+    /* 4-state wire rendering */
+    '--wire-low-color':'#0f1f33',
+    '--wire-float-color':'#6b7280',
+    '--wire-error-color':'#ef4444',
+    /* UX overlays */
+    '--badge-bg':'#ffffff',
+    '--badge-border':'#e3e6eb',
+    '--badge-text':'#14181f',
+    '--badge-hint':'#5b6472',
+    '--badge-dot-standard':'#6b7280',
+    '--badge-dot-pour':'#f97316',
+    '--badge-dot-debug':'#16a34a',
+    '--badge-dot-box':'#eab308',
+    '--badge-dot-wire':'#3b82f6',
+    '--pour-tip-text':'#ffffff',
+    '--hotkey-key-bg-top':'#fafbfc',
+    '--hotkey-key-bg-bottom':'#eef0f3',
+    '--hotkey-key-text':'#14181f',
+    '--hotkey-key-border':'#d2d8e0'
   },
   dark: {
     '--bg-color':'#0e1422','--toolbar-bg':'#131a2b','--text-color':'#dbe4f7',
@@ -6551,7 +6598,31 @@ const LSET_DEFAULT = {
     '--bulb-off':'#3f3f46',
     '--bulb-off-border':'#555555',
     '--bulb-on':'#f59e0b',
-    '--bulb-on-border':'#b45309'
+    '--bulb-on-border':'#b45309',
+    /* Bus ports (Join / Split / widened gates) */
+    '--bus-port-input-color':'#a78bfa',
+    '--bus-port-output-color':'#8b5cf6',
+    '--bus-port-active-color':'#c4b5fd',
+    '--bus-port-pour-color':'#f59e0b',
+    /* 4-state wire rendering */
+    '--wire-low-color':'#1a2a40',
+    '--wire-float-color':'#8896a8',
+    '--wire-error-color':'#f87171',
+    /* UX overlays */
+    '--badge-bg':'#131a2b',
+    '--badge-border':'#253053',
+    '--badge-text':'#dbe4f7',
+    '--badge-hint':'#8b96b8',
+    '--badge-dot-standard':'#9ca3af',
+    '--badge-dot-pour':'#fb923c',
+    '--badge-dot-debug':'#22c55e',
+    '--badge-dot-box':'#facc15',
+    '--badge-dot-wire':'#60a5fa',
+    '--pour-tip-text':'#ffffff',
+    '--hotkey-key-bg-top':'#1c2538',
+    '--hotkey-key-bg-bottom':'#131a2b',
+    '--hotkey-key-text':'#dbe4f7',
+    '--hotkey-key-border':'#334066'
   },
   /* NEW — theme-independent gate-type palette */
   gates: {
@@ -6586,7 +6657,18 @@ const LSET_DEFAULT = {
     noiseColor:'#ffffff',
     noiseOpacity:0.12,
     noiseScale:0.65,
-    noiseOctaves:3
+    noiseOctaves:3,
+    /* UX overlays */
+    badgeOffsetTop:68,
+    badgeOffsetRight:12,
+    badgeOffsetBottom:12,
+    pourTipOffsetX:16,
+    pourTipOffsetY:22,
+    hotkeyModalWidth:640,
+    hotkeyModalMaxHeight:85,
+    hotkeyKeyMinWidth:22,
+    hotkeyKeyHeight:22,
+    hotkeyKeyFontSize:11
   },
   /* NEW: toolbar action button colours */
   buttons: {
@@ -6597,7 +6679,8 @@ const LSET_DEFAULT = {
     tips:'#3d4653', toast:'#3d4653',
     export:'#15803d', import:'#0f766e',
     undo:'#3d4653', redo:'#3d4653',
-    share:'#1f3a63'
+    share:'#1f3a63',
+    help:'#3d4653'
   },
   /* Preferences are user-controlled and are deliberately NOT part of
      preset overrides — see applyLsPreset(). Everything the user can
@@ -6608,7 +6691,12 @@ const LSET_DEFAULT = {
     showTips: true,
     notifications: true,
     shadows: true,
-    animations: true
+    animations: true,
+    // ── UX overlays ──
+    showModeBadge: true,
+    badgePosition: 'top-right',
+    showPourTooltip: true,
+    showHotkeyButton: true
   }
 };
 
@@ -6631,6 +6719,24 @@ const LSET_THEME_FIELDS = [
   ['--danger','Danger'],
   ['--good','Success']
 ];
+
+const LSET_OVERLAY_COLOR_FIELDS = [
+  ['--badge-bg','Badge background'],
+  ['--badge-border','Badge border'],
+  ['--badge-text','Badge text'],
+  ['--badge-hint','Badge hint text'],
+  ['--badge-dot-standard','Dot — Standard'],
+  ['--badge-dot-pour','Dot — Pour'],
+  ['--badge-dot-debug','Dot — Debug'],
+  ['--badge-dot-box','Dot — Box select'],
+  ['--badge-dot-wire','Dot — Wiring'],
+  ['--pour-tip-text','Pour tooltip text'],
+  ['--hotkey-key-bg-top','Keycap — top gradient'],
+  ['--hotkey-key-bg-bottom','Keycap — bottom gradient'],
+  ['--hotkey-key-text','Keycap — text'],
+  ['--hotkey-key-border','Keycap — border']
+];
+
 
 const LSET_FONTS = [
   ['','System default'],
@@ -7103,6 +7209,84 @@ for(const name of Object.keys(PRESET_MESH_MAP)){
     }
 }
 
+/* Per-preset UX overlay colours. Each entry overrides the badge chrome
+   and keycap gradients so presets look themed end-to-end. Presets that
+   don't appear here use the neutral LSET_DEFAULT overlay palette. */
+const PRESET_OVERLAY_MAP = {
+  'Neon':            { '--badge-bg':'#0a0a18','--badge-border':'#00ffcc','--badge-text':'#e8fff8','--badge-hint':'#7de6d0','--hotkey-key-bg-top':'#0a0a18','--hotkey-key-bg-bottom':'#03030a','--hotkey-key-text':'#00ffcc','--hotkey-key-border':'#00ffcc' },
+  'Terminal':        { '--badge-bg':'#051005','--badge-border':'#0d3a0d','--badge-text':'#33ff33','--badge-hint':'#22aa22','--hotkey-key-bg-top':'#051005','--hotkey-key-bg-bottom':'#020802','--hotkey-key-text':'#33ff33','--hotkey-key-border':'#33ff33' },
+  'Cyberpunk':       { '--badge-bg':'#141008','--badge-border':'#3a3000','--badge-text':'#ffee00','--badge-hint':'#aa9900','--hotkey-key-bg-top':'#141008','--hotkey-key-bg-bottom':'#1a1400','--hotkey-key-text':'#ffee00','--hotkey-key-border':'#ffee00' },
+  'Synthwave':       { '--badge-bg':'#241040','--badge-border':'#3d1a5e','--badge-text':'#ffd6ff','--badge-hint':'#c88aff','--hotkey-key-bg-top':'#241040','--hotkey-key-bg-bottom':'#1a0a2e','--hotkey-key-text':'#ffd6ff','--hotkey-key-border':'#ff2fd0' },
+  'Dracula':         { '--badge-bg':'#21222c','--badge-border':'#44475a','--badge-text':'#f8f8f2','--badge-hint':'#a8b0c8','--hotkey-key-bg-top':'#343746','--hotkey-key-bg-bottom':'#21222c','--hotkey-key-text':'#f8f8f2','--hotkey-key-border':'#6272a4' },
+  'Nord':            { '--badge-bg':'#3b4252','--badge-border':'#434c5e','--badge-text':'#eceff4','--badge-hint':'#aebacf','--hotkey-key-bg-top':'#434c5e','--hotkey-key-bg-bottom':'#3b4252','--hotkey-key-text':'#eceff4','--hotkey-key-border':'#4c566a' },
+  'Solarized Dark':  { '--badge-bg':'#073642','--badge-border':'#0f4753','--badge-text':'#eee8d5','--badge-hint':'#93a1a1','--hotkey-key-bg-top':'#0b3d4a','--hotkey-key-bg-bottom':'#073642','--hotkey-key-text':'#eee8d5','--hotkey-key-border':'#155e6e' },
+  'Ocean':           { '--badge-bg':'#0f2a40','--badge-border':'#1a3d5a','--badge-text':'#d0f0ff','--badge-hint':'#88b8d8','--hotkey-key-bg-top':'#123048','--hotkey-key-bg-bottom':'#0f2a40','--hotkey-key-text':'#d0f0ff','--hotkey-key-border':'#2a5a80' },
+  'Lava':            { '--badge-bg':'#281008','--badge-border':'#4a1e10','--badge-text':'#ffe0b8','--badge-hint':'#cc8855','--hotkey-key-bg-top':'#2a1208','--hotkey-key-bg-bottom':'#281008','--hotkey-key-text':'#ffe0b8','--hotkey-key-border':'#6a2a18' },
+  'Ice':             { '--badge-bg':'#ffffff','--badge-border':'#c8e0f0','--badge-text':'#0a2848','--badge-hint':'#5a7a98','--hotkey-key-bg-top':'#ffffff','--hotkey-key-bg-bottom':'#eaf4fc','--hotkey-key-text':'#0a2848','--hotkey-key-border':'#a0c8e0' },
+  'Forest':          { '--badge-bg':'#232b20','--badge-border':'#3a4530','--badge-text':'#e0e8d8','--badge-hint':'#a8b898','--hotkey-key-bg-top':'#2a3224','--hotkey-key-bg-bottom':'#232b20','--hotkey-key-text':'#e0e8d8','--hotkey-key-border':'#556040' },
+  'Candy':           { '--badge-bg':'#ffffff','--badge-border':'#f0d8e8','--badge-text':'#4a2848','--badge-hint':'#8a6888','--hotkey-key-bg-top':'#ffffff','--hotkey-key-bg-bottom':'#fdf6fa','--hotkey-key-text':'#4a2848','--hotkey-key-border':'#dbb8cc' },
+  'Paper':           { '--badge-bg':'#fbf6e8','--badge-border':'#d8ccb0','--badge-text':'#2b2620','--badge-hint':'#6b6152','--hotkey-key-bg-top':'#fbf6e8','--hotkey-key-bg-bottom':'#f4ecd8','--hotkey-key-text':'#2b2620','--hotkey-key-border':'#b8a888' },
+  'Sepia':           { '--badge-bg':'#f5ead6','--badge-border':'#c8b494','--badge-text':'#3a2a1a','--badge-hint':'#7a6850','--hotkey-key-bg-top':'#f5ead6','--hotkey-key-bg-bottom':'#ede0c8','--hotkey-key-text':'#3a2a1a','--hotkey-key-border':'#a89570' },
+  'Blueprint':       { '--badge-bg':'#0d2648','--badge-border':'#1a3a6a','--badge-text':'#e8f0ff','--badge-hint':'#8aa8d0','--hotkey-key-bg-top':'#0f2a52','--hotkey-key-bg-bottom':'#0d2648','--hotkey-key-text':'#e8f0ff','--hotkey-key-border':'#2a5a9a' },
+  'High Contrast':   { '--badge-bg':'#000000','--badge-border':'#ffffff','--badge-text':'#ffffff','--badge-hint':'#cccccc','--hotkey-key-bg-top':'#000000','--hotkey-key-bg-bottom':'#000000','--hotkey-key-text':'#ffffff','--hotkey-key-border':'#ffffff' }
+};
+/* Per-preset gate colours for the newer components (Join / Split / Tri /
+   Note). These landed after the original preset definitions, so they
+   weren't included — every preset inherited the neutral purple/teal/yellow
+   from LSET_DEFAULT. These add palette-consistent values. */
+const PRESET_GATE_EXT_MAP = {
+  'Neon':            { JOINER:'#b14eff', SPLITTER:'#b14eff', TRI:'#00e5ff', NOTE:'#ffee00' },
+  'Terminal':        { JOINER:'#22aa22', SPLITTER:'#22aa22', TRI:'#55ffaa', NOTE:'#ffff00' },
+  'Cyberpunk':       { JOINER:'#ff9900', SPLITTER:'#ff9900', TRI:'#ffee00', NOTE:'#ff2200' },
+  'Blueprint':       { JOINER:'#8ab4e8', SPLITTER:'#8ab4e8', TRI:'#88ffcc', NOTE:'#ffcc00' },
+  'Paper':           { JOINER:'#6a4a8a', SPLITTER:'#6a4a8a', TRI:'#3b7a6a', NOTE:'#c88a2c' },
+  'Sepia':           { JOINER:'#6a4a5a', SPLITTER:'#6a4a5a', TRI:'#3a5a5a', NOTE:'#a88a2c' },
+  'Dracula':         { JOINER:'#bd93f9', SPLITTER:'#bd93f9', TRI:'#8be9fd', NOTE:'#f1fa8c' },
+  'Nord':            { JOINER:'#b48ead', SPLITTER:'#b48ead', TRI:'#88c0d0', NOTE:'#ebcb8b' },
+  'Solarized Dark':  { JOINER:'#6c71c4', SPLITTER:'#6c71c4', TRI:'#2aa198', NOTE:'#b58900' },
+  'Synthwave':       { JOINER:'#cc44ff', SPLITTER:'#cc44ff', TRI:'#00e5ff', NOTE:'#ffaa00' },
+  'Forest':          { JOINER:'#7a5a68', SPLITTER:'#7a5a68', TRI:'#5a8a78', NOTE:'#cc8833' },
+  'Ocean':           { JOINER:'#7a5ac8', SPLITTER:'#7a5ac8', TRI:'#40e0ff', NOTE:'#ffcc44' },
+  'Candy':           { JOINER:'#c8a0e8', SPLITTER:'#c8a0e8', TRI:'#88d8c8', NOTE:'#ffc060' },
+  'Mono':            { JOINER:'#4a4a4a', SPLITTER:'#4a4a4a', TRI:'#2a2a2a', NOTE:'#777777' },
+  'High Contrast':   { JOINER:'#ff00ff', SPLITTER:'#ff00ff', TRI:'#00ffff', NOTE:'#ffff00' },
+  'Lava':            { JOINER:'#ff3366', SPLITTER:'#ff3366', TRI:'#ffcc44', NOTE:'#ffcc00' },
+  'Ice':             { JOINER:'#7ab0e8', SPLITTER:'#7ab0e8', TRI:'#4ad8ff', NOTE:'#ffaa44' }
+};
+for(const name of Object.keys(PRESET_GATE_EXT_MAP)){
+    const preset = LSET_PRESETS[name];
+    if(!preset) continue;
+    if(!preset.gates) preset.gates = {};
+    // Only fill in the four newer types — never override what the
+    // preset already defines for the older gates.
+    for(const k of Object.keys(PRESET_GATE_EXT_MAP[name])){
+        if(!(k in preset.gates)) preset.gates[k] = PRESET_GATE_EXT_MAP[name][k];
+    }
+}
+
+/* Per-preset bus-port and wire-state overrides. Only needed for themes
+   whose palette differs strongly from the neutral defaults — most
+   themes look fine with the defaults, so we keep this map short. */
+const PRESET_SIGNAL_MAP = {
+  'Neon':            { '--bus-port-input-color':'#b14eff','--bus-port-output-color':'#cc88ff','--bus-port-active-color':'#00ffcc','--bus-port-pour-color':'#ffaa00','--wire-low-color':'#0a2a20','--wire-float-color':'#5a8a80','--wire-error-color':'#ff2f6d' },
+  'Terminal':        { '--bus-port-input-color':'#22aa22','--bus-port-output-color':'#33ff33','--bus-port-active-color':'#88ff88','--bus-port-pour-color':'#ffff00','--wire-low-color':'#0a2a0a','--wire-float-color':'#1a7a1a','--wire-error-color':'#ff3333' },
+  'Cyberpunk':       { '--bus-port-input-color':'#ff9900','--bus-port-output-color':'#ffcc00','--bus-port-active-color':'#00ff88','--bus-port-pour-color':'#ff2200','--wire-low-color':'#1a1400','--wire-float-color':'#776600','--wire-error-color':'#ff2200' },
+  'Synthwave':       { '--bus-port-input-color':'#cc44ff','--bus-port-output-color':'#ff2fd0','--bus-port-active-color':'#00ffcc','--bus-port-pour-color':'#ffaa00','--wire-low-color':'#1a0a2e','--wire-float-color':'#8a5ac8','--wire-error-color':'#ff3355' },
+  'Dracula':         { '--bus-port-input-color':'#bd93f9','--bus-port-output-color':'#caa8fb','--bus-port-active-color':'#50fa7b','--bus-port-pour-color':'#ffb86c','--wire-low-color':'#1a1b23','--wire-float-color':'#6272a4','--wire-error-color':'#ff5555' },
+  'Nord':            { '--bus-port-input-color':'#b48ead','--bus-port-output-color':'#caa8fb','--bus-port-active-color':'#a3be8c','--bus-port-pour-color':'#ebcb8b','--wire-low-color':'#242933','--wire-float-color':'#4c566a','--wire-error-color':'#bf616a' },
+  'Solarized Dark':  { '--bus-port-input-color':'#6c71c4','--bus-port-output-color':'#8a90d4','--bus-port-active-color':'#859900','--bus-port-pour-color':'#cb4b16','--wire-low-color':'#001f27','--wire-float-color':'#586e75','--wire-error-color':'#dc322f' },
+  'Ocean':           { '--bus-port-input-color':'#7a5ac8','--bus-port-output-color':'#9a7ae8','--bus-port-active-color':'#88ffcc','--bus-port-pour-color':'#ffcc44','--wire-low-color':'#041018','--wire-float-color':'#5880a0','--wire-error-color':'#e85a5a' },
+  'Lava':            { '--bus-port-input-color':'#ff3366','--bus-port-output-color':'#ff6699','--bus-port-active-color':'#ffcc00','--bus-port-pour-color':'#ff6622','--wire-low-color':'#0a0200','--wire-float-color':'#8a5530','--wire-error-color':'#ff2200' },
+  'Ice':             { '--bus-port-input-color':'#7ab0e8','--bus-port-output-color':'#9cc4f0','--bus-port-active-color':'#4ad8b8','--bus-port-pour-color':'#ffaa44','--wire-low-color':'#0a2848','--wire-float-color':'#88a8c0','--wire-error-color':'#e85a88' },
+  'High Contrast':   { '--bus-port-input-color':'#ff00ff','--bus-port-output-color':'#ff66ff','--bus-port-active-color':'#00ff00','--bus-port-pour-color':'#ffaa00','--wire-low-color':'#000000','--wire-float-color':'#999999','--wire-error-color':'#ff0000' }
+};
+for(const name of Object.keys(PRESET_SIGNAL_MAP)){
+    const preset = LSET_PRESETS[name];
+    if(!preset) continue;
+    const themeKey = preset.dark ? 'dark' : 'light';
+    preset[themeKey] = Object.assign({}, preset[themeKey] || {}, PRESET_SIGNAL_MAP[name]);
+}
+
 /* ── small helpers ─────────────────────────────────────── */
 function lsetClone(o){ return JSON.parse(JSON.stringify(o)); }
 function lsetGet(obj,path){ return path.split('.').reduce((o,k)=>(o==null?undefined:o[k]),obj); }
@@ -7342,6 +7526,17 @@ function applySettings(){
   body.style.setProperty('--wire-powered-color',L.wirePoweredColor);
   body.style.setProperty('--wire-hover-color',L.wireHoverColor);
   body.style.setProperty('--wire-selected-color',L.wireSelectedColor);
+  // UX overlay layout vars
+  body.style.setProperty('--badge-offset-top',    (L.badgeOffsetTop    ?? 68) + 'px');
+  body.style.setProperty('--badge-offset-right',  (L.badgeOffsetRight  ?? 12) + 'px');
+  body.style.setProperty('--badge-offset-bottom', (L.badgeOffsetBottom ?? 12) + 'px');
+  body.style.setProperty('--pour-tip-offset-x',   (L.pourTipOffsetX    ?? 16) + 'px');
+  body.style.setProperty('--pour-tip-offset-y',   (L.pourTipOffsetY    ?? 22) + 'px');
+  body.style.setProperty('--hotkey-modal-width',  (L.hotkeyModalWidth  ?? 640) + 'px');
+  body.style.setProperty('--hotkey-modal-max-height', (L.hotkeyModalMaxHeight ?? 85) + 'vh');
+  body.style.setProperty('--hotkey-key-min-width', (L.hotkeyKeyMinWidth ?? 22) + 'px');
+  body.style.setProperty('--hotkey-key-height',    (L.hotkeyKeyHeight   ?? 22) + 'px');
+  body.style.setProperty('--hotkey-key-font-size', (L.hotkeyKeyFontSize ?? 11) + 'px');
   body.style.setProperty('--ui-scale',String(F.uiScale||1));
   body.style.setProperty('--brand-scale',String(F.brandScale||1));
   if(F.ui)body.style.setProperty('--font-ui',F.ui); else body.style.removeProperty('--font-ui');
@@ -7431,6 +7626,11 @@ function applySettings(){
   try{ updateGridBackground(); }catch(_){}
   try{ updateModalGridBackground(); }catch(_){}
   try{ markPortPositionsDirty(); drawWires(); }catch(_){}
+
+  // UX overlays — no-op until the overlay script has loaded.
+  if (typeof window.applyOverlaySettings === 'function') {
+      try { window.applyOverlaySettings(); } catch(_){}
+  }
 }
 
 /* ── modal shell ───────────────────────────────────────── */
@@ -7479,8 +7679,21 @@ function lsetHtmlTheme(){
       <input type="color" data-path="light.${v}" value="${lsetNormHex(l)}" title="Light — ${v}">
       <input type="color" data-path="dark.${v}"  value="${lsetNormHex(d)}" title="Dark — ${v}"></div>`;
   }).join('');
+  const overlayRows = LSET_OVERLAY_COLOR_FIELDS.map(([v,label])=>{
+    const l=LSET.light[v]||LSET_DEFAULT.light[v]||'#000000';
+    const d=LSET.dark[v]||LSET_DEFAULT.dark[v]||'#000000';
+    return `<div class="field"><label title="${v}">${escapeHtml(label)}</label>
+      <input type="color" data-path="light.${v}" value="${lsetNormHex(l)}" title="Light — ${v}">
+      <input type="color" data-path="dark.${v}"  value="${lsetNormHex(d)}" title="Dark — ${v}"></div>`;
+  }).join('');
   return `<div class="sec-title">Colours &nbsp;·&nbsp; left swatch = light theme, right swatch = dark theme</div>
     <div class="grid">${rows}</div>
+    <div class="sec-title" style="margin-top:24px;">UX overlays &nbsp;·&nbsp; badge, tooltip &amp; hotkey modal</div>
+    <div class="grid">${overlayRows}</div>
+    <p style="font-size:11px;opacity:.6;margin-top:12px;line-height:1.6;">
+      The pour tooltip's background follows <b>Ports → Pour mode port</b>.
+      This section only controls its text colour and the badge / keycap colours.
+    </p>
     <div style="margin-top:16px;display:flex;gap:8px;flex-wrap:wrap;">
       <button class="btn-cancel" onclick="copyLightToDark()">Copy light → dark</button>
       <button class="btn-cancel" onclick="copyDarkToLight()">Copy dark → light</button>
@@ -7518,6 +7731,8 @@ function lsetHtmlGates(){
     ['NAND','NAND gate'], ['NOR','NOR gate'], ['XNOR','XNOR gate'],
     ['DELAY','Delay gate'], ['CLOCK','Clock'], ['PULSE','Pulse'],
     ['SCREEN','Pixel screen'], ['COLOR','Color gate'],
+    ['JOINER','Bus Joiner'], ['SPLITTER','Bus Splitter'],
+    ['TRI','Tri-state buffer'], ['NOTE','Sticky note (toolbar button)'],
     ['CUSTOM_DEFAULT','New custom gate (default)']
   ];
   const rows = list.map(([key,label]) =>
@@ -7537,6 +7752,7 @@ function lsetHtmlGates(){
 }
 
 function lsetHtmlPreferences(){
+    const bp = (LSET.preferences && LSET.preferences.badgePosition) || 'top-right';
     return `<div class="sec-title">Editing</div>
       <div class="grid">
         ${lsetChk('Snap to grid when dragging gates','preferences.snap')}
@@ -7554,15 +7770,28 @@ function lsetHtmlPreferences(){
         ${lsetChk('Show notification toasts','preferences.notifications')}
       </div>
 
+      <div class="sec-title">UX helpers &nbsp;·&nbsp; badge, tooltip, help button</div>
+      <div class="grid">
+        ${lsetChk('Show the mode badge','preferences.showModeBadge')}
+        <div class="field wide">
+          <label>Mode badge position</label>
+          <select data-path="preferences.badgePosition">
+            <option value="top-right"${bp==='top-right'?' selected':''}>Top-right (below toolbar)</option>
+            <option value="bottom-right"${bp==='bottom-right'?' selected':''}>Bottom-right (above toasts)</option>
+          </select>
+        </div>
+        ${lsetChk('Show the pour-mode tooltip that follows the cursor','preferences.showPourTooltip')}
+        ${lsetChk('Show the ? help button in the toolbar','preferences.showHotkeyButton')}
+      </div>
+
       <div style="margin-top:20px;">
         <button class="btn-cancel" onclick="resetPreferences()">↺ Reset preferences to defaults</button>
       </div>
 
       <p style="font-size:11px;opacity:.6;margin-top:20px;line-height:1.6;">
         These settings are personal and are <b>never changed by presets</b>.
-        Turning <b>Snap</b> off lets you place gates anywhere; turning
-        <b>Drop shadows</b> off makes side-by-side gates tile without any
-        visual gap.
+        Hiding the <b>? help button</b> does not disable the <b>Shift + ?</b>
+        shortcut — the reference sheet is still reachable from the keyboard.
       </p>`;
 }
 
@@ -7626,7 +7855,8 @@ function lsetHtmlButtons(){
         ['import','⬆ Import'],
         ['undo','↩ Undo'],
         ['redo','↪ Redo'],
-        ['share','🌐 Share']
+        ['share','🌐 Share'],
+        ['help','? Help / Shortcuts']
     ];
     const rows = list.map(([k,label]) =>
         `<div class="field"><label>${escapeHtml(label)}</label>
@@ -7682,6 +7912,23 @@ function lsetHtmlPorts(){
     <div class="grid">
       ${row('--gate-header-text','Gate header text')}
     </div>
+    <div class="sec-title">Bus ports &nbsp;·&nbsp; Join / Split / widened gates</div>
+    <div class="grid">
+      ${row('--bus-port-input-color','Bus input port')}
+      ${row('--bus-port-output-color','Bus output port')}
+      ${row('--bus-port-active-color','Bus active port (1)')}
+      ${row('--bus-port-pour-color','Bus pour port')}
+    </div>
+    <div class="sec-title">Wire states</div>
+    <div class="grid">
+      ${row('--wire-low-color','Wire — Low (0)')}
+      ${row('--wire-float-color','Wire — Floating (Z)')}
+      ${row('--wire-error-color','Wire — Contention / X')}
+    </div>
+    <p style="font-size:11px;opacity:.6;margin-top:16px;line-height:1.6;">
+      The "powered / 1" wire colour is under
+      <b>📐 Layout → Wires → Wire — powered</b>.
+    </p>
     <div class="sec-title">Gate shadow</div>
     <div class="grid">
       ${lsetTxt('Shadow — light','light.--gate-shadow','0 4px 6px rgba(0,0,0,.10)')}
@@ -7883,13 +8130,27 @@ function lsetHtmlLayout(){
       ${lsetRng('Grain scale','layout.noiseScale',0.05,3,0.05,'')}
       ${lsetRng('Grain detail (octaves)','layout.noiseOctaves',1,6,1,'')}
     </div>
+    <div class="sec-title">UX overlays &nbsp;·&nbsp; badge, tooltip &amp; hotkey modal</div>
+    <div class="grid">
+      ${lsetRng('Badge — top offset','layout.badgeOffsetTop',0,200,1,'px')}
+      ${lsetRng('Badge — right offset','layout.badgeOffsetRight',0,200,1,'px')}
+      ${lsetRng('Badge — bottom offset','layout.badgeOffsetBottom',0,200,1,'px')}
+      ${lsetRng('Pour tooltip — X offset','layout.pourTipOffsetX',4,60,1,'px')}
+      ${lsetRng('Pour tooltip — Y offset','layout.pourTipOffsetY',4,60,1,'px')}
+      ${lsetRng('Hotkey modal — width','layout.hotkeyModalWidth',400,1000,10,'px')}
+      ${lsetRng('Hotkey modal — max height','layout.hotkeyModalMaxHeight',40,100,1,'vh')}
+      ${lsetRng('Keycap — min width','layout.hotkeyKeyMinWidth',16,48,1,'px')}
+      ${lsetRng('Keycap — height','layout.hotkeyKeyHeight',16,40,1,'px')}
+      ${lsetRng('Keycap — font size','layout.hotkeyKeyFontSize',8,16,1,'px')}
+    </div>
     <p style="font-size:11px;opacity:.6;margin-top:12px;line-height:1.6;">
       The mesh is four large radial blobs blended with the background colour — the same technique
       behind most modern gradient backgrounds. The grain is an optional fine texture you can layer
       on top. Both render client-side; no images are fetched.
     </p>
     <p style="font-size:11px;opacity:.6;margin-top:20px;line-height:1.6;">
-      Shadows and animations are under <b>⚡ Preferences</b>.
+      Shadows and animations are under <b>⚡ Preferences</b>. Which overlays are
+      <b>visible</b> is also under Preferences.
     </p>`;
 }
 function lsetHtmlPresets(){
@@ -8212,6 +8473,10 @@ async function applyLsPreset(name){
         }
         document.body.classList.toggle('no-shadows', LSET.preferences.shadows === false);
         document.body.classList.toggle('no-animations', LSET.preferences.animations === false);
+
+        if (typeof window.applyOverlaySettings === 'function') {
+            try { window.applyOverlaySettings(); } catch(_){}
+        }
 
         if (typeof saveSettings === 'function') saveSettings();
     }
@@ -10261,7 +10526,22 @@ window.drawTimingDiagram = drawTimingDiagram;
         return 'standard';
     }
 
+    function prefs() {
+        try {
+            if (typeof LSET !== 'undefined' && LSET && LSET.preferences) return LSET.preferences;
+            if (typeof LSET_DEFAULT !== 'undefined' && LSET_DEFAULT.preferences) return LSET_DEFAULT.preferences;
+        } catch(_) {}
+        return {};
+    }
+
     function renderBadge() {
+        const P = prefs();
+        if (P.showModeBadge === false) {
+            if (badge.style.display !== 'none') badge.style.display = 'none';
+            return;
+        }
+        if (badge.style.display === 'none') badge.style.display = '';
+
         const mode = currentMode();
         if (mode === lastMode) return;
         lastMode = mode;
@@ -10271,12 +10551,10 @@ window.drawTimingDiagram = drawTimingDiagram;
         badgeText.textContent    = meta.label;
         badgeHint.textContent    = meta.hint || '';
 
-        // Restart the pop animation
         badge.classList.remove('mode-changed');
         void badge.offsetWidth;
         badge.classList.add('mode-changed');
 
-        // Hide the pour tooltip if we leave pour mode
         if (mode !== 'pour' && pourTip) pourTip.classList.remove('visible');
     }
 
@@ -10291,16 +10569,18 @@ window.drawTimingDiagram = drawTimingDiagram;
 
     function positionPourTip() {
         pourRaf = 0;
-        let x = pourX + 16;
-        let y = pourY + 22;
+        const L = (typeof LSET !== 'undefined' && LSET && LSET.layout) || {};
+        const ox = L.pourTipOffsetX ?? 16;
+        const oy = L.pourTipOffsetY ?? 22;
 
-        // Flip horizontally near the right edge
+        let x = pourX + ox;
+        let y = pourY + oy;
+
         const w = pourTip.offsetWidth || 200;
-        if (x + w > window.innerWidth - 8) x = pourX - w - 16;
+        if (x + w > window.innerWidth - 8) x = pourX - w - ox;
 
-        // Flip vertically near the bottom edge
         const h = pourTip.offsetHeight || 60;
-        if (y + h > window.innerHeight - 8) y = pourY - h - 22;
+        if (y + h > window.innerHeight - 8) y = pourY - h - oy;
 
         pourTip.style.transform = `translate3d(${x}px, ${y}px, 0)`;
     }
@@ -10309,8 +10589,11 @@ window.drawTimingDiagram = drawTimingDiagram;
         pourX = e.clientX;
         pourY = e.clientY;
 
+        const P = prefs();
         const active = typeof wirePouringState !== 'undefined' && wirePouringState;
-        if (active) {
+        const enabled = P.showPourTooltip !== false;
+
+        if (active && enabled) {
             pourTip.classList.add('visible');
             if (!pourRaf) pourRaf = requestAnimationFrame(positionPourTip);
         } else {
@@ -10386,6 +10669,31 @@ window.drawTimingDiagram = drawTimingDiagram;
     if (backdrop) backdrop.addEventListener('mousedown', (e) => {
         if (e.target === backdrop) window.closeHotkeyModal();
     });
+
+    /* ── 5. Settings-driven visibility ──────────────────── */
+    window.applyOverlaySettings = function () {
+        const P = prefs();
+
+        // Mode badge — visibility + position
+        const showBadge = P.showModeBadge !== false;
+        badge.style.display = showBadge ? '' : 'none';
+        badge.dataset.position = P.badgePosition || 'top-right';
+
+        // Help button — hide the whole toolbar group so the left-border
+        // separator from the neighbouring group doesn't leave a stub.
+        const helpBtn = document.getElementById('help-btn');
+        if (helpBtn) {
+            const group = helpBtn.closest('.toolbar-group');
+            if (group) group.style.display = P.showHotkeyButton === false ? 'none' : '';
+        }
+
+        // Pour tooltip — hide immediately if the user just disabled it.
+        if (P.showPourTooltip === false) pourTip.classList.remove('visible');
+    };
+
+    // Initial pass — the main script's first applySettings() runs during
+    // script execution, before this IIFE. Run the overlay-side apply now.
+    window.applyOverlaySettings();
 
 })();
 </script>
