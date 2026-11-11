@@ -1248,6 +1248,315 @@ body.no-animations *,body.no-animations *::before,body.no-animations *::after{
     border-bottom-width: 1px;
 }
 
+/* ═══════════════════════════════════════════════════════════
+   DOCUMENTATION MODAL
+   ═══════════════════════════════════════════════════════════ */
+.docs-modal {
+    position: fixed;
+    inset: 0;
+    z-index: 5200;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+}
+.docs-modal.open { display: flex; }
+.docs-modal-backdrop {
+    position: absolute;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.5);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    animation: docs-fade-in .22s ease-out;
+}
+@keyframes docs-fade-in { from { opacity: 0 } to { opacity: 1 } }
+.docs-modal-sheet {
+    position: relative;
+    width: min(1100px, 100%);
+    height: min(860px, 92vh);
+    background: var(--toolbar-bg);
+    color: var(--text-color);
+    border: 1px solid var(--border-color);
+    border-radius: 14px;
+    box-shadow: 0 24px 60px rgba(0, 0, 0, 0.45);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    animation: docs-sheet-in .28s cubic-bezier(.22, .61, .36, 1);
+}
+@keyframes docs-sheet-in {
+    from { opacity: 0; transform: translateY(24px) scale(.97) }
+    to   { opacity: 1; transform: translateY(0)    scale(1)  }
+}
+.docs-modal-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 18px 24px 14px;
+    border-bottom: 1px solid var(--border-color);
+    background: linear-gradient(180deg,
+        color-mix(in srgb, var(--accent) 6%, var(--toolbar-bg)) 0%,
+        var(--toolbar-bg) 100%);
+    flex-shrink: 0;
+}
+.docs-modal-eyebrow {
+    font-size: 9px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    opacity: 0.55;
+    margin-bottom: 4px;
+}
+.docs-modal-header h2 {
+    margin: 0;
+    font-size: 18px;
+    font-weight: 600;
+    letter-spacing: -0.01em;
+    font-family: var(--font-serif);
+}
+.docs-modal-close {
+    width: 28px;
+    height: 28px;
+    border-radius: 8px;
+    background: transparent;
+    border: 1px solid transparent;
+    color: var(--text-color);
+    font-size: 14px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0.65;
+    transition: opacity .15s, background .15s, border-color .15s;
+    flex-shrink: 0;
+}
+.docs-modal-close:hover {
+    opacity: 1;
+    background: color-mix(in srgb, var(--text-color) 8%, transparent);
+    border-color: var(--border-color);
+}
+.docs-modal-body {
+    flex: 1;
+    display: flex;
+    min-height: 0;
+    overflow: hidden;
+}
+.docs-nav {
+    width: 240px;
+    flex-shrink: 0;
+    border-right: 1px solid var(--border-color);
+    background: color-mix(in srgb, var(--bg-color) 55%, var(--toolbar-bg));
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+.docs-nav-search {
+    padding: 12px;
+    border-bottom: 1px solid var(--border-color);
+    flex-shrink: 0;
+}
+.docs-nav-search input {
+    width: 100%;
+    padding: 7px 10px;
+    font-size: 12px;
+    font-family: inherit;
+    color: var(--text-color);
+    background: var(--bg-color);
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    outline: none;
+    box-sizing: border-box;
+    transition: border-color .12s, box-shadow .12s;
+}
+.docs-nav-search input:focus {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 2px color-mix(in srgb, var(--accent) 20%, transparent);
+}
+.docs-nav nav {
+    flex: 1;
+    overflow-y: auto;
+    padding: 8px;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+.docs-nav-item {
+    display: block;
+    padding: 8px 12px;
+    font-size: 12px;
+    color: var(--text-color);
+    text-decoration: none;
+    border-radius: 6px;
+    opacity: 0.75;
+    transition: opacity .12s, background .12s;
+    cursor: pointer;
+    border-left: 3px solid transparent;
+    user-select: none;
+}
+.docs-nav-item:hover {
+    opacity: 1;
+    background: color-mix(in srgb, var(--text-color) 6%, transparent);
+}
+.docs-nav-item.active {
+    opacity: 1;
+    background: color-mix(in srgb, var(--accent) 12%, transparent);
+    border-left-color: var(--accent);
+    font-weight: 600;
+}
+.docs-content {
+    flex: 1;
+    overflow-y: auto;
+    padding: 24px 32px;
+    scroll-behavior: smooth;
+    scrollbar-width: thin;
+}
+.docs-article {
+    max-width: 780px;
+    margin: 0 auto;
+    line-height: 1.65;
+    font-size: 13.5px;
+}
+.docs-section {
+    padding: 8px 0 24px;
+    border-bottom: 1px solid var(--border-color);
+    scroll-margin-top: 20px;
+}
+.docs-section:last-of-type { border-bottom: none; }
+.docs-section h1 {
+    font-size: 22px;
+    margin: 0 0 14px 0;
+    letter-spacing: -0.01em;
+    font-family: var(--font-serif);
+    color: var(--accent);
+    scroll-margin-top: 20px;
+}
+.docs-section h2 {
+    font-size: 16px;
+    margin: 22px 0 8px;
+    letter-spacing: -0.005em;
+    color: var(--text-color);
+}
+.docs-section h3 {
+    font-size: 13.5px;
+    margin: 16px 0 6px;
+    color: var(--text-color);
+}
+.docs-section p { margin: 8px 0; }
+.docs-section ul,
+.docs-section ol { padding-left: 22px; margin: 8px 0; }
+.docs-section li { margin: 4px 0; }
+.docs-section strong { color: var(--text-color); font-weight: 700; }
+.docs-section code {
+    font-family: var(--font-mono, ui-monospace, Menlo, Consolas, monospace);
+    font-size: 0.92em;
+    padding: 1px 5px;
+    border-radius: 4px;
+    background: color-mix(in srgb, var(--text-color) 8%, transparent);
+    color: var(--text-color);
+}
+.docs-section pre {
+    margin: 12px 0;
+    padding: 12px 14px;
+    border-radius: 8px;
+    background: var(--bg-color);
+    border: 1px solid var(--border-color);
+    overflow-x: auto;
+    font-size: 12px;
+    line-height: 1.5;
+}
+.docs-section pre code { padding: 0; background: transparent; font-size: inherit; }
+.docs-section blockquote {
+    margin: 14px 0;
+    padding: 10px 14px;
+    border-left: 3px solid var(--accent);
+    background: color-mix(in srgb, var(--accent) 6%, transparent);
+    border-radius: 4px;
+    font-size: 12.5px;
+    opacity: 0.95;
+}
+.docs-section blockquote p { margin: 4px 0; }
+.docs-section table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 12px 0;
+    font-size: 12.5px;
+}
+.docs-section th,
+.docs-section td {
+    padding: 7px 10px;
+    text-align: left;
+    border-bottom: 1px solid var(--border-color);
+    border-right: 1px solid var(--border-color);
+}
+.docs-section th:last-child,
+.docs-section td:last-child { border-right: none; }
+.docs-section th {
+    background: color-mix(in srgb, var(--accent) 8%, var(--bg-color));
+    font-weight: 700;
+    font-size: 11.5px;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+}
+.docs-section tr:hover td {
+    background: color-mix(in srgb, var(--text-color) 3%, transparent);
+}
+.docs-empty {
+    padding: 40px 20px;
+    text-align: center;
+    font-size: 13px;
+    opacity: 0.55;
+    font-style: italic;
+    display: none;
+}
+.docs-empty.visible { display: block; }
+
+@media (max-width: 720px) {
+    .docs-modal { padding: 0; align-items: flex-end; }
+    .docs-modal-sheet {
+        width: 100%;
+        height: 94vh;
+        border-radius: 16px 16px 0 0;
+    }
+    .docs-modal-header { padding: 14px 18px 10px; }
+    .docs-modal-body { flex-direction: column; }
+    .docs-nav {
+        width: 100%;
+        max-height: 140px;
+        border-right: none;
+        border-bottom: 1px solid var(--border-color);
+    }
+    .docs-nav nav {
+        flex-direction: row;
+        overflow-x: auto;
+        overflow-y: hidden;
+        gap: 4px;
+        padding: 6px;
+    }
+    .docs-nav-item {
+        white-space: nowrap;
+        border-left: none;
+        border-bottom: 3px solid transparent;
+        padding: 6px 10px;
+        flex-shrink: 0;
+    }
+    .docs-nav-item.active {
+        border-left-color: transparent;
+        border-bottom-color: var(--accent);
+    }
+    .docs-content { padding: 16px 18px; }
+    .docs-section h1 { font-size: 18px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .docs-modal-backdrop,
+    .docs-modal-sheet {
+        animation: none !important;
+        transition: none !important;
+    }
+    .docs-content { scroll-behavior: auto; }
+}
+
 /* ── Responsive ──────────────────────────────────────────── */
 @media (max-width: 640px) {
     .mode-badge {
@@ -1669,6 +1978,10 @@ body.script-panel-open .mode-badge      { right: calc(var(--script-panel-width, 
         <button id="share-btn" data-btn-id="share" onclick="openShareModal()" style="background:#1f3a63;">🌐 Share</button>
     </div>
     <div class="toolbar-group">
+    <button id="docs-btn" onclick="openDocsModal()"
+        style="width:24px;height:24px;border-radius:50%;padding:0;font-weight:bold;font-size:12px;"
+        title="Open documentation (F1)"
+        aria-label="Open documentation">📚</button>
     <button id="help-btn" data-btn-id="help" onclick="openHotkeyModal()"
         style="width:24px;height:24px;border-radius:50%;padding:0;font-weight:bold;font-size:13px;"
         title="Keyboard shortcuts (Shift+?)"
@@ -2024,6 +2337,372 @@ body.script-panel-open .mode-badge      { right: calc(var(--script-panel-width, 
 
         <div class="hotkey-modal-footer">
             <span>Press <kbd>?</kbd> to toggle · <kbd>Esc</kbd> to close</span>
+        </div>
+    </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════
+     DOCUMENTATION MODAL
+     ═══════════════════════════════════════════════════════════ -->
+<div id="docs-modal" class="docs-modal" role="dialog" aria-modal="true" aria-labelledby="docs-modal-title">
+    <div class="docs-modal-backdrop" onclick="closeDocsModal()"></div>
+    <div class="docs-modal-sheet" role="document">
+        <div class="docs-modal-header">
+            <div>
+                <div class="docs-modal-eyebrow">Help Center</div>
+                <h2 id="docs-modal-title">📚 Documentation</h2>
+            </div>
+            <button class="docs-modal-close" onclick="closeDocsModal()" aria-label="Close documentation">✕</button>
+        </div>
+        <div class="docs-modal-body">
+            <aside class="docs-nav">
+                <div class="docs-nav-search">
+                    <input type="text" id="docs-search" placeholder="🔍 Search docs…" autocomplete="off" />
+                </div>
+                <nav>
+                    <a class="docs-nav-item active" data-section="docs-sec-1">🚀 The Basics</a>
+                    <a class="docs-nav-item" data-section="docs-sec-2">🔌 First Circuit</a>
+                    <a class="docs-nav-item" data-section="docs-sec-3">⚡ Pour Mode</a>
+                    <a class="docs-nav-item" data-section="docs-sec-4">⚙️ Custom Gates &amp; Scripts</a>
+                    <a class="docs-nav-item" data-section="docs-sec-5">🛠️ Troubleshooting</a>
+                </nav>
+            </aside>
+            <main class="docs-content" id="docs-content">
+                <article class="docs-article">
+
+                    <!-- ════════ SECTION 1 ════════ -->
+                    <section id="docs-sec-1" class="docs-section">
+                        <h1>🚀 Section 1: The Basics (What Is This?)</h1>
+                        <h2>The big idea</h2>
+                        <p>Think of logic gates as <strong>Lego bricks for electricity and thinking</strong>. Each brick has a tiny job — "are both of my inputs on?" or "flip my input" — and when you snap them together, they can add numbers, remember things, and light up pixels.</p>
+                        <p>The simulator speaks one language: <strong>on or off</strong>. That's it.</p>
+                        <table>
+                            <thead><tr><th>What we say</th><th>What it means</th><th>Everyday picture</th></tr></thead>
+                            <tbody>
+                                <tr><td><strong>1</strong> / High / True</td><td>On — power is flowing</td><td>💡 A light switch flipped <strong>UP</strong></td></tr>
+                                <tr><td><strong>0</strong> / Low / False</td><td>Off — no power</td><td>🌑 A light switch flipped <strong>DOWN</strong></td></tr>
+                            </tbody>
+                        </table>
+
+                        <h2>The core components</h2>
+
+                        <h3>🔘 Toggle &amp; Push Buttons — the switches</h3>
+                        <ul>
+                            <li><strong>Toggle</strong>: a light switch. Click it once to turn it on, again to turn it off. It <em>stays</em> where you put it.</li>
+                            <li><strong>Push</strong>: a doorbell. It's only on while you're holding it down. Let go and it snaps back off.</li>
+                        </ul>
+
+                        <h3>💡 Output &amp; Pixel — the lights</h3>
+                        <ul>
+                            <li><strong>Output</strong>: a light bulb that glows when it receives a 1. It also flashes <strong>red</strong> if it receives a confused signal (more on that in Section 5).</li>
+                            <li><strong>Pixel</strong>: a single resizable square of light. Perfect for drawing screens or showing a color. Drag its bottom-right corner to make it bigger.</li>
+                        </ul>
+
+                        <h3>🧠 AND, OR, NOT — the decision makers</h3>
+                        <ul>
+                            <li><strong>AND</strong>: "Both of you, or no deal." It outputs 1 only when <strong>all</strong> inputs are 1. Like a bank vault that needs two keys turned at the same time. 🗝️🗝️</li>
+                            <li><strong>OR</strong>: "Either of you is enough." It outputs 1 when <strong>at least one</strong> input is 1. Like a room with two doors — walk through either one. 🚪🚪</li>
+                            <li><strong>NOT</strong>: "The contrarian." It flips whatever it receives. Give it a 1, it gives you a 0. Give it a 0, it gives you a 1. 🙃</li>
+                        </ul>
+
+                        <p><strong>Bonus gates you'll meet later</strong>: XOR (exactly one, not both), NAND (NOT + AND), NOR (NOT + OR), XNOR (NOT + XOR). They're just combinations of the three above — same ideas, different attitudes.</p>
+                    </section>
+
+                    <!-- ════════ SECTION 2 ════════ -->
+                    <section id="docs-sec-2" class="docs-section">
+                        <h1>🔌 Section 2: Building Your First Circuit</h1>
+                        <p>Let's make a light you can control. It takes three steps. ⚡</p>
+
+                        <h2>Step 1 — Place a switch</h2>
+                        <ol>
+                            <li>Find the <strong>Toggle</strong> button in the top toolbar.</li>
+                            <li><strong>Drag it</strong> onto the empty canvas (or just click it to spawn one).</li>
+                            <li>You now have a switch. It says <strong>OFF</strong>.</li>
+                        </ol>
+
+                        <h2>Step 2 — Place a light</h2>
+                        <ol>
+                            <li>Find the <strong>Output</strong> button in the toolbar.</li>
+                            <li><strong>Drag it</strong> onto the canvas, somewhere to the right of your switch.</li>
+                            <li>You now have a bulb. It's dark.</li>
+                        </ol>
+
+                        <h2>Step 3 — Connect them</h2>
+                        <ol>
+                            <li>Hover over the <strong>small round port on the right side</strong> of the Toggle.</li>
+                            <li><strong>Click and drag</strong> from that port to the <strong>small round port on the left side</strong> of the Output.</li>
+                            <li>Let go. A wire appears. 🎉</li>
+                        </ol>
+                        <p>Now click the Toggle. The button flips to <strong>ON</strong>, the wire turns <strong>green</strong>, and the bulb glows. Click it again — everything goes back to gray and the bulb goes dark. You just built a working circuit.</p>
+
+                        <h2>How do I know a wire is active?</h2>
+                        <ul>
+                            <li><strong>Gray</strong> = the wire is carrying a <strong>0</strong> (off).</li>
+                            <li><strong>Green</strong> = the wire is carrying a <strong>1</strong> (on).</li>
+                            <li><strong>Gray dashed</strong> = the wire is <strong>floating</strong> (nobody is driving it — see "Z" in Section 5).</li>
+                            <li><strong>Red, flashing</strong> = two gates are fighting over the same wire (contention), or a wire width doesn't match (see "X" in Section 5).</li>
+                        </ul>
+
+                        <h2>How do I delete things quickly?</h2>
+                        <ul>
+                            <li><strong>Delete a gate</strong>: click the little <strong>×</strong> in its header. Or click the gate to select it and press <strong>Delete</strong> / <strong>Backspace</strong>.</li>
+                            <li><strong>Delete a wire</strong>: <strong>double-click</strong> it, or <strong>right-click</strong> it and choose <strong>✕ Delete wire</strong>.</li>
+                            <li><strong>Delete a selection</strong>: drag a box around multiple gates with <strong>Shift + drag</strong>, then press <strong>Delete</strong>.</li>
+                            <li><strong>Undo anything</strong>: <strong>Ctrl + Z</strong> (or <strong>Cmd + Z</strong> on Mac). Redo with <strong>Ctrl + Shift + Z</strong>.</li>
+                        </ul>
+                        <blockquote><p>💡 <strong>Tip:</strong> You can also select a gate and click the × in its header — that deletes just that gate and any wires attached to it.</p></blockquote>
+                    </section>
+
+                    <!-- ════════ SECTION 3 ════════ -->
+                    <section id="docs-sec-3" class="docs-section">
+                        <h1>⚡ Section 3: Advanced Wiring (Pour Mode)</h1>
+                        <p>Normal wiring is one hose, one flower bed: drag from an output to an input, repeat for every connection. <strong>Pour Mode</strong> is a garden hose with a splitter — you point it at as many beds as you like without reconnecting the tap. 🌱</p>
+
+                        <h2>How to enter Pour Mode</h2>
+                        <ol>
+                            <li><strong>Click</strong> (don't drag) any <strong>output port</strong> — the round port on the <strong>right</strong> side of a gate.</li>
+                            <li>The port turns <strong>amber/orange</strong> and starts to pulse. A <strong>🔌 Pour mode</strong> pill appears in the toolbar, and a <strong>mode badge</strong> shows in the corner. You're in Pour Mode.</li>
+                        </ol>
+
+                        <h2>How to hook up inputs</h2>
+                        <ol>
+                            <li><strong>Click any input port</strong> — the round port on the <strong>left</strong> side of a gate.</li>
+                            <li>A wire snaps from your chosen output to that input. Done.</li>
+                            <li><strong>Click more input ports</strong> to wire them all from the same source. No dragging, no re-clicking the output.</li>
+                            <li>Each new wire flashes green to confirm.</li>
+                        </ol>
+
+                        <h2>How to exit or cancel</h2>
+                        <ul>
+                            <li>Press <strong>Esc</strong>, <strong>or</strong></li>
+                            <li><strong>Right-click</strong> anywhere, <strong>or</strong></li>
+                            <li><strong>Click the same output port again</strong>, <strong>or</strong></li>
+                            <li>Click the <strong>✕</strong> on the <strong>🔌 Pour mode</strong> toolbar pill.</li>
+                        </ul>
+                        <p>The badge and the amber glow disappear, and you're back to Standard mode.</p>
+
+                        <h2>Bonus pour trick: wire from selected gates</h2>
+                        <ol>
+                            <li><strong>Shift + click</strong> several gates to select them (or <strong>Shift + drag</strong> a box around them).</li>
+                            <li><strong>Shift + click</strong> an input port on another gate.</li>
+                            <li>A wire is created from the <strong>next selected source</strong> — clicking more inputs cycles through your selected gates in round-robin order. This is <em>the</em> fastest way to wire a big bank of inputs to a row of gates.</li>
+                        </ol>
+                        <blockquote><p>🖱️ <strong>Cursor tooltip:</strong> while in Pour Mode, a small tooltip follows your cursor reminding you to "Click inputs to wire · Right-click to cancel". You can turn it off in <strong>Settings → ⚡ Preferences → Show the pour-mode tooltip</strong>.</p></blockquote>
+                    </section>
+
+                    <!-- ════════ SECTION 4 ════════ -->
+                    <section id="docs-sec-4" class="docs-section">
+                        <h1>⚙️ Section 4: Magic Tricks (Custom Gates &amp; Scripting)</h1>
+                        <p>This is where the simulator stops being a toy and starts being a workshop. 🪄</p>
+
+                        <h2>🏗️ Custom Logic / Custom ICs — build once, use everywhere</h2>
+                        <p>Think of a custom gate like <strong>saving a group of Lego bricks as a brand-new brick</strong>. You build a useful sub-circuit once (an adder, a multiplexer, a little logic puzzle), and then you can drop it onto the canvas as a single block — with its own input and output pins — as many times as you want. It's like prefabricating a wall in a workshop and then just slotting it into house after house.</p>
+
+                        <h3>Build a custom gate from scratch</h3>
+                        <ol>
+                            <li>Build a circuit on the canvas that has <strong>at least one INPUT or PUSH</strong> and <strong>at least one OUTPUT that's actually wired up</strong>.</li>
+                            <li>Click <strong>⚙️ Custom Gate</strong> in the toolbar.</li>
+                            <li>A mini-simulator opens. If you had gates selected on the main canvas, they're already loaded inside — otherwise, drag gates from the mini-toolbar to build your circuit.</li>
+                            <li>Name your gate, pick a color, and optionally choose a <strong>folder</strong>.</li>
+                            <li>Click <strong>OK</strong>. Your gate appears in the toolbar as a new button. Drag it onto the canvas like any other gate. 🎉</li>
+                        </ol>
+
+                        <h3>Edit an existing custom gate</h3>
+                        <ul>
+                            <li><strong>Right-click</strong> a custom gate button (or an instance on the canvas) and choose <strong>Edit</strong>.</li>
+                            <li>Change anything — name, color, inner logic.</li>
+                            <li>Click <strong>OK</strong>. Every existing instance is refreshed automatically.</li>
+                            <li>To delete it everywhere, click <strong>🗑 Delete Gate</strong> in the modal.</li>
+                        </ul>
+
+                        <h3>Organize with folders</h3>
+                        <ul>
+                            <li>Click the <strong>📁+</strong> button in the toolbar to create a folder. Give it a name and a color.</li>
+                            <li><strong>Drag a custom gate button onto a folder button</strong> to move it inside.</li>
+                            <li><strong>Click a folder</strong> to open a dropdown of its gates. Drag one out to place it.</li>
+                            <li><strong>Right-click a folder</strong> to rename, recolor, or delete it (with or without its contents).</li>
+                        </ul>
+
+                        <h3>Truth table → one custom block</h3>
+                        <ol>
+                            <li>Click <strong>📋 Logic Table</strong> in the toolbar.</li>
+                            <li>Choose the number of <strong>inputs</strong> (up to 8) and <strong>outputs</strong> (up to 4).</li>
+                            <li>Click any output cell to cycle it: <strong>0 → 1 → X</strong>. (X means "don't care".)</li>
+                            <li>Click <strong>Generate Gate →</strong> to see a live preview of the minimized circuit.</li>
+                            <li>Name it, color it, save it. Done — you have a custom gate built from a truth table.</li>
+                        </ol>
+                        <blockquote><p>🧠 <strong>Under the hood:</strong> the simulator runs the <strong>Quine–McCluskey</strong> algorithm to find the smallest possible sum-of-products circuit for your table. You get the elegant version, automatically.</p></blockquote>
+
+                        <h2>📜 Custom Scripting — type it, and it appears</h2>
+                        <p>The simulator has a secret superpower: you can <strong>type a Boolean equation as plain text</strong> and it will <strong>build the entire circuit for you, laid out and wired</strong>. No clicking, no dragging.</p>
+
+                        <h3>Try it</h3>
+                        <ol>
+                            <li>Click <strong>⚡ Script</strong> in the toolbar. A sidebar slides in from the right.</li>
+                            <li>Type an equation, for example: <code>Y = (A AND B) OR NOT C</code></li>
+                            <li>Click <strong>⚡ Compile Circuit</strong>.</li>
+                        </ol>
+                        <p>The canvas clears and a fully-wired circuit appears — inputs on the left, gates in the middle, your output(s) on the right. It really is that easy.</p>
+
+                        <h3>The syntax</h3>
+                        <ul>
+                            <li><strong>Assignment</strong>: <code>Name = expression</code></li>
+                            <li><strong>Operators</strong>: <code>AND</code>, <code>OR</code>, <code>NOT</code>, <code>XOR</code>, <code>NAND</code>, <code>NOR</code>, <code>XNOR</code></li>
+                            <li><strong>Symbols</strong>: <code>&amp;</code> (AND), <code>|</code> (OR), <code>~</code> or <code>!</code> (NOT), <code>^</code> (XOR)</li>
+                            <li><strong>Parentheses</strong>: for grouping, just like math.</li>
+                            <li><strong>Comments</strong>: start a line with <code>#</code></li>
+                            <li><strong>Multi-line</strong>: each line is a named signal you can reuse, e.g.<br/><code>inputs: A, B, Cin</code><br/><code>Sum  = A XOR B XOR Cin</code><br/><code>Cout = (A AND B) OR (Cin AND (A XOR B))</code></li>
+                            <li><strong>Optional input list</strong>: <code>inputs: A, B, C</code> tells the compiler exactly which names are switches. Any other name on the left side of an <code>=</code> becomes an internal signal, and any name that's never assigned becomes an automatic input.</li>
+                        </ul>
+
+                        <h3>What happens when you compile</h3>
+                        <ul>
+                            <li>The whole circuit is <strong>auto-laid out</strong> in neat columns — inputs on the left, gates in the middle, outputs on the right.</li>
+                            <li><strong>Identical sub-expressions are shared</strong> — write <code>(A AND B)</code> five times and the compiler builds it once and wires it everywhere.</li>
+                            <li>If a circuit already exists, you'll be asked to confirm before it's replaced. The whole build is <strong>one undo step</strong>.</li>
+                            <li>The status line at the bottom tells you how many inputs, gates, and outputs were created.</li>
+                        </ul>
+                        <blockquote><p>🪄 <strong>Pro tip:</strong> if you want a reusable version of your scripted circuit, save it as a custom gate. The two features stack beautifully.</p></blockquote>
+                    </section>
+
+                    <!-- ════════ SECTION 5 ════════ -->
+                    <section id="docs-sec-5" class="docs-section">
+                        <h1>🛠️ Section 5: Troubleshooting &amp; Secrets</h1>
+
+                        <h2>🎯 Cheat sheet — the moves you'll use every day</h2>
+                        <table>
+                            <thead><tr><th>Action</th><th>Shortcut</th></tr></thead>
+                            <tbody>
+                                <tr><td><strong>Box-select multiple gates</strong></td><td><strong>Shift + drag</strong> on empty canvas</td></tr>
+                                <tr><td><strong>Add / remove one gate from selection</strong></td><td><strong>Shift + click</strong> the gate</td></tr>
+                                <tr><td><strong>Copy selected gates</strong></td><td><strong>Ctrl + C</strong> (Cmd + C on Mac)</td></tr>
+                                <tr><td><strong>Paste at cursor</strong></td><td><strong>Ctrl + V</strong> (Cmd + V)</td></tr>
+                                <tr><td><strong>Undo</strong></td><td><strong>Ctrl + Z</strong> (Cmd + Z)</td></tr>
+                                <tr><td><strong>Redo</strong></td><td><strong>Ctrl + Shift + Z</strong> (or <strong>Ctrl + Y</strong>)</td></tr>
+                                <tr><td><strong>Delete selected gates or wires</strong></td><td><strong>Delete</strong> or <strong>Backspace</strong></td></tr>
+                                <tr><td><strong>Toggle Debug Mode</strong></td><td><strong>D</strong></td></tr>
+                                <tr><td><strong>Open the shortcuts modal</strong></td><td><strong>Shift + ?</strong> (or click the <strong>?</strong> button)</td></tr>
+                                <tr><td><strong>Cancel anything</strong></td><td><strong>Esc</strong></td></tr>
+                                <tr><td><strong>Spawn AND / OR / NOT / XOR / Toggle at cursor</strong></td><td><strong>A</strong> / <strong>O</strong> / <strong>N</strong> / <strong>X</strong> / <strong>S</strong></td></tr>
+                                <tr><td><strong>Zoom</strong></td><td>Scroll wheel (or pinch on touch)</td></tr>
+                                <tr><td><strong>Pan</strong></td><td>Drag empty canvas</td></tr>
+                            </tbody>
+                        </table>
+
+                        <h2>🐞 Debug Mode — X-ray vision for your circuit</h2>
+                        <p>Press <strong>D</strong> (or click the <strong>🐞 Debug</strong> button) to enter Debug Mode. Now:</p>
+                        <ul>
+                            <li><strong>Hover any gate or wire</strong> → a dark tooltip shows its live signal values, input states, and internal counters.</li>
+                            <li><strong>Click a gate's body or a wire</strong> → <strong>pin</strong> the tooltip so you can read it while you work.</li>
+                            <li><strong>Esc</strong> → unpin.</li>
+                            <li><strong>Unconnected input ports</strong> flash red so you can spot loose ends at a glance.</li>
+                            <li><strong>Broken custom gates</strong> (missing definitions) get a dashed red outline.</li>
+                            <li><strong>Right-click any port or wire</strong> → <strong>📈 Add to Timing Diagram</strong> to track its waveform over time.</li>
+                        </ul>
+
+                        <h2>📈 Timing Diagram — see signals over time</h2>
+                        <ul>
+                            <li>Click <strong>📈 Timing</strong> in the toolbar to open the waveform panel at the bottom.</li>
+                            <li><strong>Right-click any port or wire → Add to Timing Diagram</strong> to start tracking it.</li>
+                            <li>Watch the waveform scroll as your clocks tick. Clock edges automatically trigger a capture, so you can see glitches and propagation delays.</li>
+                            <li><strong>Clear</strong> empties the history. <strong>✕</strong> closes the panel.</li>
+                        </ul>
+
+                        <h2>🌐 Collaboration — build together live</h2>
+                        <ol>
+                            <li>Click <strong>🌐 Share</strong> in the toolbar.</li>
+                            <li><strong>Sign in</strong> with Google (one click) or an email/password.</li>
+                            <li><strong>Host a room</strong> → you get a 6-character code.</li>
+                            <li>Send the code to a friend. They click <strong>🌐 Share → Join</strong> and enter it.</li>
+                            <li>You'll see each other's <strong>live cursors</strong>, <strong>ghost gates</strong> as they drag, and <strong>wires being drawn in real time</strong>. Everyone's changes stay in sync.</li>
+                        </ol>
+                        <p>The Share button turns <strong>green</strong> (host) or <strong>blue</strong> (guest) and shows the room code while you're connected.</p>
+
+                        <h2>🎨 Themes &amp; presets — make it yours</h2>
+                        <ul>
+                            <li>Click <strong>Theme</strong> to flip between light and dark.</li>
+                            <li>Click <strong>⚙️ Settings</strong> for a full styling studio with tabs for Colours, Gates, Ports, Buttons, Preferences, Fonts, Layout, Scripting, Presets, and Advanced JSON.</li>
+                            <li>18 built-in presets (Neon, Terminal, Cyberpunk, Blueprint, Paper, Sepia, Dracula, Nord, Solarized Dark, Synthwave, Forest, Ocean, Candy, Mono, High Contrast, Lava, Ice, Default) plus your own saved presets.</li>
+                            <li>Settings persist in your browser and are separate from your circuit save.</li>
+                        </ul>
+
+                        <h2>💾 Autosave, export, and import</h2>
+                        <ul>
+                            <li>Your circuit <strong>autosaves</strong> to your browser's local storage and IndexedDB. You'll pick up right where you left off.</li>
+                            <li><strong>⬇ Export</strong> downloads a <code>.json</code> file of your circuit (gates, wires, custom gates, folders).</li>
+                            <li><strong>⬆ Import</strong> loads one back in. It <strong>merges</strong> with what's already there instead of replacing it — handy for combining projects.</li>
+                            <li>Settings have their own <strong>Export / Import</strong> buttons in the Settings modal.</li>
+                        </ul>
+
+                        <h2>🔬 Little-known signal truths (the "4-state" model)</h2>
+                        <p>Standard logic is 0 and 1 — but real wires can also be <strong>floating</strong> or <strong>fighting</strong>. This simulator speaks all four:</p>
+                        <table>
+                            <thead><tr><th>Value</th><th>Meaning</th><th>Wire color</th></tr></thead>
+                            <tbody>
+                                <tr><td><strong>0</strong></td><td>Low / off</td><td>Dark</td></tr>
+                                <tr><td><strong>1</strong></td><td>High / on</td><td>Green</td></tr>
+                                <tr><td><strong>Z</strong></td><td>Floating — nobody is driving this wire</td><td>Gray, dashed</td></tr>
+                                <tr><td><strong>X</strong></td><td>Contention — two gates are fighting over the same wire, or a width mismatch</td><td>Red, flashing</td></tr>
+                            </tbody>
+                        </table>
+                        <ul>
+                            <li><strong>Output</strong> bulbs glow orange for 1, flash red for X.</li>
+                            <li><strong>Tri-state buffer (TRI)</strong>: outputs Z when its enable input is 0, passes its data input when enable is 1.</li>
+                            <li><strong>Wire width mismatch</strong>: if you connect a 4-bit output to a 1-bit input, the wire flashes red and a toast suggests using a <strong>Splitter</strong> or a <strong>Joiner</strong>.</li>
+                        </ul>
+
+                        <h2>🚌 Buses — bundle many wires into one</h2>
+                        <ul>
+                            <li><strong>Join (JOINER)</strong>: takes N single-bit inputs → one N-bit bus output. Pick the width (2 / 4 / 8 / 16) in the gate header.</li>
+                            <li><strong>Split (SPLITTER)</strong>: takes one N-bit bus input → N single-bit outputs.</li>
+                            <li><strong>Any standard gate</strong> can be <strong>widened</strong> with the small dropdown in its header (<code>1b</code>, <code>2b</code>, <code>4b</code>, <code>8b</code>, <code>16b</code>). Widened gates operate <strong>bit-by-bit</strong> — <code>4b AND</code> is four AND gates in a trench coat.</li>
+                            <li>Bus wires are <strong>drawn thicker</strong> and labeled with <code>/N</code> so you can spot them.</li>
+                        </ul>
+
+                        <h2>⏱️ Timing gates — Delay, Clock, Pulse</h2>
+                        <ul>
+                            <li><strong>DELAY</strong>: passes its input through after N milliseconds. Great for breaking feedback loops.</li>
+                            <li><strong>CLOCK</strong>: toggles its output on and off every N milliseconds. <strong>It only runs while its enable input is 1.</strong></li>
+                            <li><strong>PULSE</strong>: fires a single-tick high pulse on the <strong>rising edge</strong> of its input. Perfect for one-shot triggers.</li>
+                        </ul>
+
+                        <h2>🎨 Color &amp; Pixel — make it pretty</h2>
+                        <ul>
+                            <li><strong>Color</strong> gate: sets the color of the wire downstream of it. Feed it into a <strong>Pixel</strong> to paint the pixel that color.</li>
+                            <li><strong>Pixel</strong>: a square light you can resize by dragging its bottom-right handle. Great for building small displays.</li>
+                        </ul>
+
+                        <h2>📝 Notes — leave yourself a message</h2>
+                        <ul>
+                            <li>Click <strong>📝 Label</strong> to drop a sticky note.</li>
+                            <li><strong>Double-click</strong> a note to edit its text.</li>
+                            <li>Drag the bottom-right corner to resize.</li>
+                            <li>Hover and click <strong>×</strong> to delete.</li>
+                        </ul>
+
+                        <h2>🚑 Quick fixes</h2>
+                        <ul>
+                            <li><strong>Nothing happens when I click Compile</strong> — check the status line under the editor; it'll tell you exactly which line failed.</li>
+                            <li><strong>My custom gate won't save</strong> — it needs at least one INPUT/PUSH and at least one OUTPUT that's actually wired up.</li>
+                            <li><strong>My wire is red and flashing</strong> — either two outputs are fighting over the same input (remove one), or the wire widths don't match (use a Join or Split).</li>
+                            <li><strong>My clock isn't ticking</strong> — feed a 1 into its enable input.</li>
+                            <li><strong>My paste went to the wrong place</strong> — Ctrl+V pastes at the cursor; move the cursor first, then paste.</li>
+                            <li><strong>The script panel won't close with Esc</strong> — press Esc once to blur the editor, again to close the panel. (Or click ✕.)</li>
+                        </ul>
+
+                        <h2>🧭 Still stuck?</h2>
+                        <ul>
+                            <li>The <strong>?</strong> button in the toolbar (or <strong>Shift + ?</strong>) opens the <strong>Shortcuts &amp; Modes</strong> sheet — a quick-reference card for every gesture and keyboard shortcut in the app.</li>
+                            <li>The <strong>mode badge</strong> in the corner always tells you which mode you're in: <strong>Standard</strong>, <strong>🔌 Pour Mode</strong>, <strong>🐞 Debug Mode</strong>, <strong>▦ Box Select</strong>, or <strong>🔗 Wiring</strong>.</li>
+                            <li>The <strong>tips box</strong> at the bottom-left of the canvas has a running summary of the most useful gestures. Hide it with the <strong>✕</strong> or from <strong>Settings → ⚡ Preferences</strong>.</li>
+                        </ul>
+
+                        <p style="text-align:center; margin-top:24px; opacity:0.6;">Happy building. 🎛️</p>
+                    </section>
+
+                    <div class="docs-empty">No sections match your search.</div>
+                </article>
+            </main>
         </div>
     </div>
 </div>
@@ -11899,6 +12578,166 @@ window.drawTimingDiagram = drawTimingDiagram;
     // Initial pass — the main script's first applySettings() runs during
     // script execution, before this IIFE. Run the overlay-side apply now.
     window.applyOverlaySettings();
+
+})();
+
+/* ═══════════════════════════════════════════════════════════
+   DOCUMENTATION MODAL — open · close · nav · search · hotkey
+   ═══════════════════════════════════════════════════════════ */
+(function () {
+    'use strict';
+
+    const modal       = document.getElementById('docs-modal');
+    const content     = document.getElementById('docs-content');
+    const searchInput = document.getElementById('docs-search');
+    if (!modal || !content) return;
+
+    let isOpen = false;
+
+    /* ── Open / close ──────────────────────────────────── */
+    window.openDocsModal = function () {
+        if (isOpen) return;
+        isOpen = true;
+        modal.classList.add('open');
+        // Reset scroll to the first section whenever it's opened
+        content.scrollTop = 0;
+        // Focus the search field so the user can immediately filter
+        setTimeout(() => { if (searchInput) searchInput.focus(); }, 120);
+        updateActiveNav();
+    };
+
+    window.closeDocsModal = function () {
+        if (!isOpen) return;
+        isOpen = false;
+        modal.classList.remove('open');
+        // Return focus to the toolbar trigger
+        const trigger = document.getElementById('docs-btn');
+        if (trigger) trigger.focus({ preventScroll: true });
+    };
+
+    window.toggleDocsModal = function () {
+        isOpen ? window.closeDocsModal() : window.openDocsModal();
+    };
+
+    /* ── Sidebar navigation ────────────────────────────── */
+    modal.querySelectorAll('.docs-nav-item').forEach(item => {
+        item.addEventListener('click', () => {
+            const id = item.dataset.section;
+            const sec = document.getElementById(id);
+            if (!sec) return;
+            sec.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            setActiveNav(id);
+        });
+    });
+
+    function setActiveNav(id) {
+        modal.querySelectorAll('.docs-nav-item').forEach(a => {
+            a.classList.toggle('active', a.dataset.section === id);
+        });
+    }
+
+    /* ── Scroll-spy ────────────────────────────────────── */
+    let scrollSpyRaf = 0;
+    content.addEventListener('scroll', () => {
+        if (scrollSpyRaf) return;
+        scrollSpyRaf = requestAnimationFrame(() => {
+            scrollSpyRaf = 0;
+            updateActiveNav();
+        });
+    }, { passive: true });
+
+    function updateActiveNav() {
+        const sections = content.querySelectorAll('.docs-section');
+        if (!sections.length) return;
+        const contentTop = content.getBoundingClientRect().top;
+        let activeId = null;
+        // The "active" section is the last one whose top is above the
+        // content viewport's top edge (plus a small comfortable buffer).
+        sections.forEach(sec => {
+            if (sec.style.display === 'none') return;
+            const rect = sec.getBoundingClientRect();
+            if (rect.top - contentTop < 80) activeId = sec.id;
+        });
+        if (!activeId) activeId = sections[0].id;
+        setActiveNav(activeId);
+    }
+
+    /* ── Search filter ─────────────────────────────────── */
+    let searchRaf = 0;
+    searchInput.addEventListener('input', () => {
+        if (searchRaf) return;
+        searchRaf = requestAnimationFrame(() => {
+            searchRaf = 0;
+            applySearchFilter();
+        });
+    });
+
+    function applySearchFilter() {
+        const q = (searchInput.value || '').toLowerCase().trim();
+        const sections = content.querySelectorAll('.docs-section');
+        const navItems = modal.querySelectorAll('.docs-nav-item');
+        let anyVisible = false;
+
+        sections.forEach(sec => {
+            if (!q) {
+                sec.style.display = '';
+                anyVisible = true;
+                return;
+            }
+            const matches = sec.textContent.toLowerCase().includes(q);
+            sec.style.display = matches ? '' : 'none';
+            if (matches) anyVisible = true;
+        });
+
+        navItems.forEach(item => {
+            const sec = document.getElementById(item.dataset.section);
+            const visible = !q || (sec && sec.style.display !== 'none');
+            item.style.display = visible ? '' : 'none';
+        });
+
+        const empty = content.querySelector('.docs-empty');
+        if (empty) empty.classList.toggle('visible', !anyVisible);
+
+        // Snap the content back to the top so the user sees the first match
+        if (q) content.scrollTop = 0;
+    }
+
+    /* ── Keyboard: F1 opens, Escape closes ─────────────── */
+    document.addEventListener('keydown', (e) => {
+        const t = document.activeElement;
+        const typing = t && (
+            t.tagName === 'INPUT'    ||
+            t.tagName === 'TEXTAREA' ||
+            t.tagName === 'SELECT'   ||
+            t.isContentEditable
+        );
+
+        // F1 — open (or toggle) the docs
+        if (e.key === 'F1' && !typing) {
+            e.preventDefault();
+            e.stopPropagation();
+            window.toggleDocsModal();
+            return;
+        }
+
+        // Escape — close only this modal (capture phase so we win
+        // against the app's other Escape handlers while it's open)
+        if (isOpen && e.key === 'Escape') {
+            // Let the search input's own Escape clear it first
+            if (t === searchInput && searchInput.value) return;
+            e.preventDefault();
+            e.stopPropagation();
+            window.closeDocsModal();
+        }
+    }, /* capture: */ true);
+
+    /* ── Backdrop click closes ─────────────────────────── */
+    const backdrop = modal.querySelector('.docs-modal-backdrop');
+    if (backdrop) {
+        backdrop.addEventListener('mousedown', (e) => {
+            if (e.target === backdrop) window.closeDocsModal();
+        });
+    }
 
 })();
 </script>
