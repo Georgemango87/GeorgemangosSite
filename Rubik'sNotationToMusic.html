@@ -1,0 +1,593 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Cube Notation ⇄ Piano</title>
+<style>
+  :root { color-scheme: dark; }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; min-height: 100vh;
+    font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    background: radial-gradient(1200px 600px at 50% -10%, #1e2a44, #0b0f18 60%);
+    color: #e6edf7; display: flex; justify-content: center; padding: 32px 16px;
+  }
+  .card {
+    width: min(880px, 100%); background: #131a26; border: 1px solid #24314a;
+    border-radius: 16px; padding: 24px; box-shadow: 0 20px 50px rgba(0,0,0,.45);
+  }
+  h1 { margin: 0 0 4px; font-size: 20px; letter-spacing: .2px; }
+  .sub { margin: 0 0 16px; color: #8ea1bf; font-size: 13px; }
+
+  .modes {
+    display: inline-flex; background: #0c121c; border: 1px solid #26344d;
+    border-radius: 10px; padding: 3px; gap: 3px; margin-bottom: 14px;
+  }
+  .modes button {
+    background: transparent; color: #8ea1bf; padding: 7px 16px;
+    font-size: 13px; font-weight: 600; border-radius: 7px; cursor: pointer;
+    border: 0; transition: background .15s, color .15s;
+  }
+  .modes button:hover { background: #1b2534; color: #cbd5e1; }
+  .modes button[aria-pressed="true"] { background: #2563eb; color: #fff; }
+  .modes button[aria-pressed="true"]:hover { background: #2563eb; }
+
+  textarea {
+    width: 100%; resize: vertical; min-height: 96px;
+    background: #0c121c; color: #dbe7f7; border: 1px solid #26344d;
+    border-radius: 10px; padding: 12px;
+    font: 15px/1.6 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  }
+  textarea:focus { outline: 2px solid #3b82f6; outline-offset: 1px; }
+
+  .row { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; margin-top: 14px; }
+  .row button.go {
+    background: #2563eb; color: #fff; border: 0; border-radius: 9px;
+    padding: 10px 22px; font-size: 14px; font-weight: 600; cursor: pointer;
+    transition: background .15s;
+  }
+  .row button.go:hover:not(:disabled) { background: #3b82f6; }
+  .row button.go:disabled { opacity: .4; cursor: default; }
+  .row button.secondary { background: #1f2937; color: #cbd5e1; }
+  .row button.secondary:hover:not(:disabled) { background: #2b3648; }
+  .row button.secondary:disabled { opacity: .4; cursor: default; }
+  .row button.accent { background: #0e7490; }
+  .row button.accent:hover:not(:disabled) { background: #0891b2; }
+  input[type=number] {
+    width: 80px; background: #0c121c; color: #dbe7f7; border: 1px solid #26344d;
+    border-radius: 8px; padding: 8px 10px; font-size: 14px;
+  }
+  label { font-size: 13px; color: #93a6c4; display: flex; align-items: center; gap: 8px; }
+
+  #viz { margin-top: 20px; display: flex; flex-wrap: wrap; gap: 6px; min-height: 34px; }
+  .ev {
+    padding: 5px 9px; border-radius: 7px;
+    font: 12px/1.3 ui-monospace, Menlo, monospace;
+    background: #1b2534; color: #93a6c4; border: 1px solid #24314a;
+    transition: background .08s, color .08s, transform .08s;
+  }
+  .ev.chord { background: #1d2333; border-color: #3b4a6b; color: #a9bde0; }
+  .ev.on { background: #2563eb; color: #fff; border-color: #60a5fa; transform: translateY(-1px); }
+
+  #err { margin-top: 12px; font-size: 13px; min-height: 18px; white-space: pre-wrap; color: #f87171; }
+  .hint { margin-top: 18px; font-size: 12.5px; color: #7f93b3; line-height: 1.9; }
+  .hint b { color: #a9bde0; }
+  .hint code {
+    background: #0c121c; border: 1px solid #24314a; border-radius: 5px;
+    padding: 1px 5px; color: #b8cbe6; font-size: 12px;
+  }
+  .hint .map { font-family: ui-monospace, Menlo, monospace; color: #b8cbe6; }
+  .hidden { display: none; }
+</style>
+</head>
+<body>
+<div class="card">
+  <h1>🎹 Cube Notation ⇄ Piano</h1>
+  <p class="sub">Play cube algorithms as music, or turn melodies back into cube notation. <code>( )</code> chords · <code>{ }</code> double speed · <code>x y z</code> octaves.</p>
+
+  <div class="modes" role="group" aria-label="Input mode">
+    <button type="button" data-mode="cube" aria-pressed="true">Cube notation</button>
+    <button type="button" data-mode="notes" aria-pressed="false">Note names</button>
+  </div>
+
+  <textarea id="input" spellcheck="false"></textarea>
+
+  <div class="row">
+    <button id="play" class="go">▶ Play</button>
+    <button id="stop" class="go secondary" disabled>■ Stop</button>
+    <label>Tempo <input id="bpm" type="number" value="120" min="20" max="300"> BPM</label>
+    <button id="convert" class="go accent" type="button">→ Note names</button>
+    <button id="example" class="go secondary" type="button">Load example</button>
+  </div>
+
+  <div id="viz"></div>
+  <div id="err"></div>
+
+  <div id="hint-cube" class="hint">
+    <b>Faces → pitches</b> <span class="map">B=C · B'=C# · D=D · D'=D# · U'=E · F=F · F'=F# · L=G · L'=G# · R=A · R'=A# · U=B</span><br>
+    <b>Half turns</b> <code>R2</code> expands to <code>{R R}</code> · <b>Octaves</b> <code>x</code>/<code>y</code>/<code>z</code> shift up, primes shift down, and they stack · <code>[reset]</code> clears shifts.<br>
+    <b>Grouping</b> <code>( )</code> chord · <code>{ }</code> 2× speed · spaces optional · <code>-</code> rest · also accepts <code>[+8va]</code> / <code>[-8va]</code>.<br>
+    <b>Convert</b> turns this into explicit note names with octaves (ready for the note mode).
+  </div>
+
+  <div id="hint-notes" class="hint hidden">
+    <b>Notes:</b> <code>A</code>–<code>G</code> with accidentals <code>C#</code> <code>Bb</code> (also <code>♯</code> <code>♭</code>). Optional octave: <code>C5</code>, <code>A3</code> — default 4, so <code>A</code> = 440 Hz.<br>
+    <b>Chords:</b> <code>(A C E)</code> · <b>Speed:</b> <code>{A B}</code> is 2×, nest for 4× · <b>Octaves:</b> <code>[+8va]</code> / <code>[-8va]</code> / <code>[reset]</code> · <b>Rests:</b> <code>-</code> or <code>r</code><br>
+    <b>Convert</b> rewrites the melody as a cube algorithm. Enharmonics collapse (A# and Bb both become <code>R'</code>), and octaves are encoded with <code>x</code>/<code>x'</code>.
+  </div>
+</div>
+
+<script>
+(() => {
+  "use strict";
+
+  /* ------------------------------------------------------------------ *
+   *  Constants
+   * ------------------------------------------------------------------ */
+  const DEFAULT_OCTAVE = 4;
+  const LETTER_SEMITONE = { C:0, D:2, E:4, F:5, G:7, A:9, B:11 };
+  const NAMES = ['C','C#','D','D#','E','F','F#','G','G#','A','A#','B'];
+  const midiToName = m => NAMES[((m % 12) + 12) % 12] + (Math.floor(m / 12) - 1);
+
+  // Cube face turn → pitch class (0 = C). The 12 quarter turns cover all 12 pitches.
+  const CUBE_PC = {
+    "B": 0,  "B'": 1,
+    "D": 2,  "D'": 3,
+    "U'": 4,
+    "F": 5,  "F'": 6,
+    "L": 7,  "L'": 8,
+    "R": 9,  "R'": 10,
+    "U": 11
+  };
+  const PC_TO_MOVE = {};
+  for (const [k, v] of Object.entries(CUBE_PC)) PC_TO_MOVE[v] = k;
+
+  const APOS = /['\u2019\u2032]/;
+  const CUBE_FACES = 'UDLRFBudlrfb';
+  const CUBE_ROTS  = 'xyzXYZ';
+
+  const EXAMPLES = {
+    cube:  "R U R' F' (R U R' U') R' F R2 U' R' U'",
+    notes: "A B Bb Gb (A B Bb E) Bb F {A A} E Bb E"
+  };
+
+  /* ------------------------------------------------------------------ *
+   *  Tokenizers
+   * ------------------------------------------------------------------ */
+  function readBracket(src, i) {
+    const end = src.indexOf(']', i);
+    if (end === -1) throw new Error('Unclosed "[" — missing "]"');
+    return { text: src.slice(i + 1, end).trim(), next: end + 1 };
+  }
+
+  function tokenizeNotes(src) {
+    const out = [];
+    let i = 0;
+    while (i < src.length) {
+      const c = src[i];
+      if (/\s/.test(c) || c === '|' || c === ',') { i++; continue; }
+      if (c === '(' || c === '{') { out.push({ type:'open',  ch:c }); i++; continue; }
+      if (c === ')' || c === '}') { out.push({ type:'close', ch:c }); i++; continue; }
+      if (c === '[') { const b = readBracket(src, i); out.push({ type:'cmd', text:b.text }); i = b.next; continue; }
+      if (c === ']') { i++; continue; }
+      let j = i;
+      while (j < src.length && !/[\s(){}\[\],|]/.test(src[j])) j++;
+      out.push({ type:'note', text: src.slice(i, j) });
+      i = j;
+    }
+    return out;
+  }
+
+  function tokenizeCube(src) {
+    const out = [];
+    let i = 0;
+    while (i < src.length) {
+      const c = src[i];
+      if (/\s/.test(c) || c === '|' || c === ',') { i++; continue; }
+      if (c === '(' || c === '{') { out.push({ type:'open',  ch:c }); i++; continue; }
+      if (c === ')' || c === '}') { out.push({ type:'close', ch:c }); i++; continue; }
+      if (c === '[') { const b = readBracket(src, i); out.push({ type:'cmd', text:b.text }); i = b.next; continue; }
+      if (c === ']') { i++; continue; }
+
+      if (CUBE_ROTS.includes(c)) {
+        let j = i + 1, dir = 1;
+        if (APOS.test(src[j] || '')) { dir = -1; j++; }
+        if (src[j] === '2') j++;
+        out.push({ type:'rot', dir });
+        i = j;
+        continue;
+      }
+
+      if (CUBE_FACES.includes(c)) {
+        const face = c.toUpperCase();
+        let j = i + 1, prime = false;
+        if (APOS.test(src[j] || '')) { prime = true; j++; }
+
+        if (src[j] === '2') {                          // X2 → { X X }
+          j++;
+          let p2 = prime;
+          if (APOS.test(src[j] || '')) { p2 = true; j++; }
+          const text = face + (p2 ? "'" : "");
+          out.push({ type:'open', ch:'{' });
+          out.push({ type:'note', text });
+          out.push({ type:'note', text });
+          out.push({ type:'close', ch:'}' });
+          i = j;
+          continue;
+        }
+
+        out.push({ type:'note', text: face + (prime ? "'" : "") });
+        i = j;
+        continue;
+      }
+
+      throw new Error('Unknown cube symbol "' + c + '"');
+    }
+    return out;
+  }
+
+  /* ------------------------------------------------------------------ *
+   *  Pitch resolution
+   * ------------------------------------------------------------------ */
+  function noteToMidi(text, shift) {
+    const t = text.trim();
+    if (t === '-' || t === '_' || t === 'r' || t === 'R') return null;
+    const m = t.match(/^([A-Ga-g])([#b\u266f\u266ds]*)(-?\d+)?$/);
+    if (!m) throw new Error('Cannot read note "' + text + '"');
+    let acc = 0;
+    for (const ch of m[2]) acc += (ch === 'b' || ch === '\u266d') ? -1 : 1;
+    const oct = m[3] !== undefined ? parseInt(m[3], 10) : DEFAULT_OCTAVE;
+    return 12 * (oct + 1) + LETTER_SEMITONE[m[1].toUpperCase()] + acc + 12 * shift;
+  }
+
+  function cubeToMidi(text, shift) {
+    const pc = CUBE_PC[text];
+    if (pc === undefined) throw new Error('Unknown cube move "' + text + '"');
+    return 12 * (DEFAULT_OCTAVE + 1) + pc + 12 * shift;
+  }
+
+  /* ------------------------------------------------------------------ *
+   *  Parser → [{ midis:[midi|null], dur:beats, label }]
+   * ------------------------------------------------------------------ */
+  function parse(src, mode) {
+    const tokens = mode === 'cube' ? tokenizeCube(src) : tokenizeNotes(src);
+    let pos = 0, shift = 0;
+
+    const resolve = t => mode === 'cube' ? cubeToMidi(t, shift) : noteToMidi(t, shift);
+
+    function applyCmd(raw) {
+      const c = String(raw).toLowerCase().replace(/\s+/g, '');
+      if (c === '' || c === '0' || c === 'reset') { shift = 0; return; }
+      const m = c.match(/^([+-]?)8v([ab])$/);
+      if (!m) throw new Error('Unknown command "[' + raw + ']"');
+      let dir = m[2] === 'b' ? -1 : 1;
+      if (m[1] === '-') dir = -1;
+      if (m[1] === '+') dir = 1;
+      shift += dir;
+    }
+
+    function parseSeq(speed, stopCh) {
+      const out = [];
+      while (pos < tokens.length) {
+        const t = tokens[pos];
+
+        if (t.type === 'close') {
+          pos++;
+          if (t.ch === stopCh) return out;
+          continue;
+        }
+        if (t.type === 'cmd') { pos++; applyCmd(t.text); continue; }
+        if (t.type === 'rot') { pos++; shift += t.dir; continue; }
+        if (t.type === 'note') {
+          pos++;
+          out.push({ midis:[resolve(t.text)], dur:speed, label:t.text });
+          continue;
+        }
+        if (t.type === 'open') {
+          pos++;
+          if (t.ch === '{') { out.push(...parseSeq(speed * 0.5, '}')); continue; }
+
+          const midis = [], labels = [];
+          while (pos < tokens.length && !(tokens[pos].type === 'close' && tokens[pos].ch === ')')) {
+            const tt = tokens[pos];
+            if (tt.type === 'note') { midis.push(resolve(tt.text)); labels.push(tt.text); pos++; }
+            else if (tt.type === 'rot') { shift += tt.dir; pos++; }
+            else if (tt.type === 'cmd') { applyCmd(tt.text); pos++; }
+            else if (tt.type === 'open') {
+              pos++;
+              const inner = parseSeq(speed, tt.ch === '{' ? '}' : ')');
+              for (const e of inner) {
+                for (const m of e.midis) if (m !== null) midis.push(m);
+                if (e.label) labels.push(e.label);
+              }
+            }
+            else pos++;
+          }
+          if (pos < tokens.length) pos++;
+          out.push({ midis:[...new Set(midis)], dur:speed, label:'(' + labels.join(' ') + ')' });
+          continue;
+        }
+        pos++;
+      }
+      return out;
+    }
+
+    const events = parseSeq(1, null);
+    if (!events.length) throw new Error('Nothing to play.');
+    return events;
+  }
+
+  /* ------------------------------------------------------------------ *
+   *  Serializer  (events → text, for the converter)
+   * ------------------------------------------------------------------ */
+  function serialize(events, target) {     // target: 'cube' | 'notes'
+    const out = [];
+    const warnings = [];
+    let shift = 0, depth = 0;
+
+    const setDepth = d => {
+      while (depth < d) { out.push('{'); depth++; }
+      while (depth > d) { out.push('}'); depth--; }
+    };
+
+    const emitShift = t => {
+      if (target !== 'cube') return;       // note names carry their own octave
+      while (shift < t) { out.push('x');  shift++; }
+      while (shift > t) { out.push("x'"); shift--; }
+    };
+
+    for (const ev of events) {
+      let d = 0;
+      if (ev.dur < 1) {
+        const raw = Math.log2(1 / ev.dur);
+        d = Math.max(0, Math.round(raw));
+        if (Math.abs(raw - d) > 1e-9) {
+          warnings.push(`A note lasting ${+ev.dur.toFixed(3)} beats isn't a power of ½ — rounded to ${Math.pow(0.5, d)}.`);
+        }
+      } else if (ev.dur > 1) {
+        warnings.push(`A ${+ev.dur.toFixed(2)}-beat note is longer than one beat — shortened to 1.`);
+      }
+      setDepth(d);
+
+      const midis = ev.midis.filter(m => m !== null);
+      if (!midis.length) { out.push('-'); continue; }
+
+      if (target === 'notes') {
+        const names = midis.map(midiToName);
+        out.push(names.length > 1 ? '(' + names.join(' ') + ')' : names[0]);
+        continue;
+      }
+
+      const infos = midis.map(m => {
+        const pc = ((m % 12) + 12) % 12;
+        return { pc, shift: Math.round((m - 60 - pc) / 12) };
+      });
+      const s = infos[0].shift;
+      if (infos.some(i => i.shift !== s)) {
+        warnings.push(`Chord "${ev.label}" spans more than one octave — all of it moved to octave ${s + 4}.`);
+      }
+      emitShift(s);
+
+      const moves = infos.map(i => PC_TO_MOVE[i.pc]);
+      out.push(moves.length > 1 ? '(' + moves.join(' ') + ')' : moves[0]);
+    }
+    setDepth(0);
+
+    return { text: out.join(' '), warnings };
+  }
+
+  /* ------------------------------------------------------------------ *
+   *  Audio
+   * ------------------------------------------------------------------ */
+  let audioCtx = null, master = null;
+  let oscillators = [], timers = [];
+
+  function ensureAudio() {
+    if (!audioCtx) {
+      const AC = window.AudioContext || window.webkitAudioContext;
+      audioCtx = new AC();
+      master = audioCtx.createGain();
+      master.gain.value = 0.32;
+      master.connect(audioCtx.destination);
+    }
+    return audioCtx;
+  }
+
+  function scheduleNote(ctx, midi, start, dur) {
+    const freq = 440 * Math.pow(2, (midi - 69) / 12);
+    const end = start + dur;
+
+    const out = ctx.createGain();
+    out.connect(master);
+
+    const osc1 = ctx.createOscillator();
+    osc1.type = 'triangle';
+    osc1.frequency.value = freq;
+    const g1 = ctx.createGain(); g1.gain.value = 0.75;
+
+    const osc2 = ctx.createOscillator();
+    osc2.type = 'sine';
+    osc2.frequency.value = freq * 2;
+    const g2 = ctx.createGain(); g2.gain.value = 0.18;
+
+    osc1.connect(g1).connect(out);
+    osc2.connect(g2).connect(out);
+
+    const atk = Math.min(0.012, dur * 0.3);
+    out.gain.setValueAtTime(0.0001, start);
+    out.gain.exponentialRampToValueAtTime(0.4, start + atk);
+    out.gain.setValueAtTime(0.4, start + Math.max(atk, dur * 0.55));
+    out.gain.exponentialRampToValueAtTime(0.0006, end);
+
+    osc1.start(start); osc1.stop(end + 0.02);
+    osc2.start(start); osc2.stop(end + 0.02);
+    oscillators.push(osc1, osc2);
+  }
+
+  /* ------------------------------------------------------------------ *
+   *  UI
+   * ------------------------------------------------------------------ */
+  const inputEl  = document.getElementById('input');
+  const bpmEl    = document.getElementById('bpm');
+  const playBtn  = document.getElementById('play');
+  const stopBtn  = document.getElementById('stop');
+  const convBtn  = document.getElementById('convert');
+  const exBtn    = document.getElementById('example');
+  const vizEl    = document.getElementById('viz');
+  const errEl    = document.getElementById('err');
+  const hintCube = document.getElementById('hint-cube');
+  const hintNote = document.getElementById('hint-notes');
+  const modeBtns = [...document.querySelectorAll('.modes button')];
+
+  let mode = 'cube';
+
+  function showMsg(text, kind) {
+    errEl.textContent = text;
+    errEl.style.color = kind === 'warn' ? '#fbbf24' : '#f87171';
+  }
+
+  function setMode(next) {
+    mode = next;
+    for (const b of modeBtns) b.setAttribute('aria-pressed', String(b.dataset.mode === next));
+    hintCube.classList.toggle('hidden', next !== 'cube');
+    hintNote.classList.toggle('hidden', next !== 'notes');
+    inputEl.placeholder = EXAMPLES[next];
+
+    convBtn.textContent = next === 'cube' ? '→ Note names' : '→ Cube notation';
+    convBtn.title = next === 'cube'
+      ? 'Rewrite this algorithm using note names'
+      : 'Rewrite these notes as a cube algorithm';
+
+    const other = next === 'cube' ? 'notes' : 'cube';
+    if (inputEl.value.trim() === EXAMPLES[other] || inputEl.value.trim() === '') {
+      inputEl.value = EXAMPLES[next];
+    }
+    refreshViz();
+  }
+
+  function refreshViz() {
+    try {
+      renderViz(parse(inputEl.value, mode));
+      showMsg('', 'err');
+    } catch (e) {
+      vizEl.innerHTML = '';
+      showMsg('⚠ ' + e.message, 'err');
+    }
+  }
+
+  function renderViz(events) {
+    vizEl.innerHTML = '';
+    for (const ev of events) {
+      const span = document.createElement('span');
+      const names = ev.midis.filter(m => m !== null).map(midiToName);
+      span.className = 'ev' + (ev.midis.length > 1 ? ' chord' : '');
+      span.textContent = names.length ? names.join(' ') : '·';
+      if (ev.label) span.title = ev.label;
+      vizEl.appendChild(span);
+    }
+  }
+
+  function setHighlight(i) {
+    const kids = vizEl.children;
+    for (let k = 0; k < kids.length; k++) kids[k].classList.toggle('on', k === i);
+  }
+
+  function stopAll() {
+    timers.forEach(clearTimeout);
+    timers = [];
+    for (const o of oscillators) { try { o.stop(); } catch (_) {} }
+    oscillators = [];
+    setHighlight(-1);
+    playBtn.disabled = false;
+    stopBtn.disabled = true;
+  }
+
+  /* ---- the reverse converter ---- */
+  function convert() {
+    const target = mode === 'cube' ? 'notes' : 'cube';
+    let result;
+    try {
+      result = serialize(parse(inputEl.value, mode), target);
+    } catch (e) {
+      showMsg('⚠ ' + e.message, 'err');
+      return;
+    }
+
+    inputEl.value = result.text;
+    setMode(target);                       // re-renders + clears the message area
+
+    if (result.warnings.length) {
+      showMsg('ℹ ' + result.warnings.join('\nℹ '), 'warn');
+    }
+  }
+
+  /* ---- playback ---- */
+  async function play() {
+    stopAll();
+
+    let events;
+    try {
+      events = parse(inputEl.value, mode);
+    } catch (e) {
+      showMsg('⚠ ' + e.message, 'err');
+      vizEl.innerHTML = '';
+      return;
+    }
+
+    showMsg('', 'err');
+    renderViz(events);
+
+    const ctx = ensureAudio();
+    if (ctx.state === 'suspended') await ctx.resume();
+
+    const bpm  = Math.min(300, Math.max(20, parseFloat(bpmEl.value) || 120));
+    const beat = 60 / bpm;
+
+    playBtn.disabled = true;
+    stopBtn.disabled = false;
+
+    let t = ctx.currentTime + 0.12;
+
+    events.forEach((ev, i) => {
+      const dur = ev.dur * beat;
+      for (const midi of ev.midis) {
+        if (midi === null || midi === undefined) continue;
+        scheduleNote(ctx, midi, t, Math.max(0.04, dur * 0.96));
+      }
+      const delay = Math.max(0, (t - ctx.currentTime) * 1000);
+      timers.push(setTimeout(() => setHighlight(i), delay));
+      t += dur;
+    });
+
+    timers.push(setTimeout(() => {
+      setHighlight(-1);
+      playBtn.disabled = false;
+      stopBtn.disabled = true;
+    }, (t - ctx.currentTime) * 1000 + 80));
+  }
+
+  playBtn.addEventListener('click', play);
+  stopBtn.addEventListener('click', stopAll);
+  convBtn.addEventListener('click', convert);
+  exBtn.addEventListener('click', () => { inputEl.value = EXAMPLES[mode]; refreshViz(); });
+
+  for (const b of modeBtns) b.addEventListener('click', () => setMode(b.dataset.mode));
+
+  inputEl.addEventListener('keydown', e => {
+    if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') { e.preventDefault(); play(); }
+    if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'k') { e.preventDefault(); convert(); }
+  });
+  inputEl.addEventListener('input', () => {
+    try {
+      renderViz(parse(inputEl.value, mode));
+      showMsg('', 'err');
+    } catch (e) { /* stay quiet while typing */ }
+  });
+  document.addEventListener('keydown', e => { if (e.key === 'Escape') stopAll(); });
+
+  setMode('cube');
+})();
+</script>
+</body>
+</html>
