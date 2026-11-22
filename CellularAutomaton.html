@@ -240,6 +240,11 @@
         <input type="checkbox" id="wrap" checked> Wrap edges
       </label>
     </div>
+    <div class="row">
+      <label style="display:flex;gap:8px;align-items:center;cursor:pointer">
+        <input type="checkbox" id="multiColor" checked> Colors evolve independently
+      </label>
+    </div>
   </section>
 
   <section>
@@ -250,6 +255,11 @@
     </div>
     <div class="btns" style="margin-bottom:8px">
       <button id="undoBtn">↶ Undo</button>
+    </div>
+    <div class="row">
+      <span class="lbl">Amount</span>
+      <input type="number" id="amountInput" value="1" min="1" max="1000">
+      <span style="color:#4a5570;font-size:11px">× per step / undo</span>
     </div>
     <div class="row">
       <span class="lbl">Speed</span>
@@ -359,8 +369,18 @@
 
   let birthSet   = new Set([3]);
   let surviveSet = new Set([2, 3]);
+
+  const birthArr = new Uint8Array(9);
+  const survArr  = new Uint8Array(9);
+  function rebuildRuleLookups() {
+    for (let i = 0; i <= 8; i++) {
+      birthArr[i] = birthSet.has(i) ? 1 : 0;
+      survArr[i]  = surviveSet.has(i) ? 1 : 0;
+    }
+  }
   let useMoore   = true;
   let wrapEdges  = true;
+  let colorsIndependent = true;
 
   let running = false;
   let speed   = 12;                   // generations per second
@@ -378,11 +398,13 @@
   const presetSel   = document.getElementById('preset');
   const neighborSel = document.getElementById('neighbors');
   const wrapChk     = document.getElementById('wrap');
+  const multiChk    = document.getElementById('multiColor');
   const runBtn      = document.getElementById('runBtn');
   const stepBtn     = document.getElementById('stepBtn');
   const undoBtn     = document.getElementById('undoBtn');
   const speedEl     = document.getElementById('speed');
   const speedLbl    = document.getElementById('speedLbl');
+  const amountInput = document.getElementById('amountInput');
   const genEl       = document.getElementById('gen');
   const aliveEl     = document.getElementById('alive');
   const colsInput   = document.getElementById('colsInput');
@@ -484,6 +506,51 @@
     ctx.strokeStyle = '#2a3346';
     ctx.lineWidth = 1;
     ctx.strokeRect(panX - 0.5, panY - 0.5, gw + 1, gh + 1);
+
+    drawCenterMarker(w, h);
+  }
+
+  function drawCenterMarker(viewW, viewH) {
+    // Center of the grid, in screen space
+    const cx = panX + (cols / 2) * zoom;
+    const cy = panY + (rows / 2) * zoom;
+
+    // Off-screen? Skip.
+    if (cx < -40 || cy < -40 || cx > viewW + 40 || cy > viewH + 40) return;
+
+    const arm = Math.max(6, Math.min(18, zoom * 1.5));
+    const gap = Math.max(2, arm * 0.35);
+
+    ctx.save();
+    ctx.lineWidth = 1.25;
+    ctx.strokeStyle = 'rgba(94,231,255,0.85)';
+    ctx.beginPath();
+    // Horizontal
+    ctx.moveTo(cx - arm, cy);
+    ctx.lineTo(cx - gap, cy);
+    ctx.moveTo(cx + gap, cy);
+    ctx.lineTo(cx + arm, cy);
+    // Vertical
+    ctx.moveTo(cx, cy - arm);
+    ctx.lineTo(cx, cy - gap);
+    ctx.moveTo(cx, cy + gap);
+    ctx.lineTo(cx, cy + arm);
+    ctx.stroke();
+
+    // Center dot
+    ctx.fillStyle = 'rgba(94,231,255,0.9)';
+    ctx.beginPath();
+    ctx.arc(cx, cy, 1.6, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Faint outline ring for contrast over bright cells
+    ctx.strokeStyle = 'rgba(0,0,0,0.45)';
+    ctx.lineWidth = 2.5;
+    ctx.beginPath();
+    ctx.arc(cx, cy, 1.6, 0, Math.PI * 2);
+    ctx.stroke();
+
+    ctx.restore();
   }
 
   function refresh() {
@@ -497,6 +564,24 @@
     runBtn.textContent = running ? '⏸ Pause' : '▶ Run';
     runBtn.classList.toggle('on', running);
   }
+
+  function stepAmount() {
+    const v = parseInt(amountInput.value, 10);
+    return Math.max(1, Math.min(1000, isNaN(v) ? 1 : v));
+  }
+
+  function refreshAmountLabels() {
+    const n = stepAmount();
+    const suffix = n > 1 ? ' ×' + n : '';
+    stepBtn.textContent = '⏭ Step' + suffix;
+    undoBtn.textContent = '↶ Undo' + suffix;
+  }
+
+  amountInput.addEventListener('input', refreshAmountLabels);
+  amountInput.addEventListener('change', () => {
+    amountInput.value = stepAmount();
+    refreshAmountLabels();
+  });
 
   /* ============================================================
      UNDO
@@ -515,11 +600,17 @@
     if (!silent) updateUI();
   }
 
-  function undo() {
-    const snap = undoStack.pop();
-    if (!snap) return;
-    undoBytes -= snap.grid.byteLength;
+  function undo(steps) {
+    steps = Math.max(1, steps || 1);
+    if (undoStack.length === 0) return;
     setRunning(false);
+
+    let snap = null;
+    for (let i = 0; i < steps && undoStack.length > 0; i++) {
+      snap = undoStack.pop();
+      undoBytes -= snap.grid.byteLength;
+    }
+    if (!snap) return;
 
     const dimsChanged = (snap.cols !== cols || snap.rows !== rows);
     cols = snap.cols;
@@ -542,15 +633,23 @@
      SIMULATION
      ============================================================ */
   function step() {
+    rebuildRuleLookups();
+
     const next = new Uint8Array(cols * rows);
     const offs = useMoore ? MOORE : VON;
-    const birthColor = lastColor || 1;
     const ol = offs.length;
+    const bArr = birthArr;
+    const sArr = survArr;
+    const birthColor = lastColor || 1;
+    const multi = colorsIndependent;
 
     for (let y = 0; y < rows; y++) {
       const rowBase = y * cols;
       for (let x = 0; x < cols; x++) {
-        let n = 0;
+        // multi: 4 bits per color (colors 1..7) packed into a number
+        // combined: total non-zero neighbors
+        let packed = 0;
+        let alive = 0;
 
         for (let k = 0; k < ol; k++) {
           let nx = x + offs[k][0];
@@ -563,16 +662,34 @@
             continue;
           }
 
-          if (grid[ny * cols + nx]) n++;
+          const v = grid[ny * cols + nx];
+          if (v) {
+            if (multi) packed += 1 << (v << 2);
+            else alive++;
+          }
         }
 
         const i = rowBase + x;
         const cur = grid[i];
 
-        if (cur) {
-          next[i] = surviveSet.has(n) ? cur : 0;
+        if (multi) {
+          if (cur) {
+            // Survive only if enough same-color neighbors
+            const n = (packed >>> (cur << 2)) & 0xF;
+            next[i] = sArr[n] ? cur : 0;
+          } else if (packed) {
+            // Birth: pick the color with the most neighbors that
+            // satisfies the birth rule (lowest index wins ties)
+            let bestC = 0, bestN = 0;
+            for (let c = 1; c < 8; c++) {
+              const n = (packed >>> (c << 2)) & 0xF;
+              if (n > bestN && bArr[n]) { bestN = n; bestC = c; }
+            }
+            next[i] = bestC;
+          }
         } else {
-          next[i] = birthSet.has(n) ? birthColor : 0;
+          if (cur) next[i] = sArr[alive] ? cur : 0;
+          else next[i] = bArr[alive] ? birthColor : 0;
         }
       }
     }
@@ -892,13 +1009,16 @@
 
   stepBtn.addEventListener('click', () => {
     setRunning(false);
-    pushUndo();
-    step();
+    const n = stepAmount();
+    for (let i = 0; i < n; i++) {
+      pushUndo(true);
+      step();
+    }
     refresh();
     updateUI();
   });
 
-  undoBtn.addEventListener('click', undo);
+  undoBtn.addEventListener('click', () => undo(stepAmount()));
 
   speedEl.addEventListener('input', () => {
     speed = Number(speedEl.value);
@@ -911,6 +1031,10 @@
 
   wrapChk.addEventListener('change', () => {
     wrapEdges = wrapChk.checked;
+  });
+
+  multiChk.addEventListener('change', () => {
+    colorsIndependent = multiChk.checked;
   });
 
   presetSel.addEventListener('change', () => {
@@ -970,7 +1094,7 @@
       stepBtn.click();
     } else if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'z') {
       e.preventDefault();
-      undo();
+      undo(stepAmount());
     } else if (e.key === 'f' || e.key === 'F') {
       fitView();
       render();
@@ -1010,6 +1134,7 @@
   syncOffscreen();
   fitView();
   render();
+  refreshAmountLabels();
   updateUI();
 })();
 </script>
