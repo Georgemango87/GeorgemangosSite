@@ -1,0 +1,1017 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Cellular Pixel Studio</title>
+<style>
+  :root{
+    --bg:#0b0e14;
+    --panel:#11151f;
+    --line:#1e2637;
+    --text:#dfe6f3;
+    --muted:#7d8aa5;
+    --accent:#5ee7ff;
+  }
+  *{ box-sizing:border-box; }
+  html,body{ height:100%; margin:0; }
+  body{
+    background:var(--bg);
+    color:var(--text);
+    font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    font-size:13px;
+    display:flex;
+    height:100vh;
+    overflow:hidden;
+  }
+
+  /* ---------- sidebar ---------- */
+  #panel{
+    width:272px;
+    flex:0 0 272px;
+    padding:14px 14px 24px;
+    overflow-y:auto;
+    background:var(--panel);
+    border-right:1px solid var(--line);
+  }
+  #panel::-webkit-scrollbar{ width:8px; }
+  #panel::-webkit-scrollbar-thumb{ background:#222c40; border-radius:4px; }
+
+  h1{
+    font-size:14px;
+    margin:0 0 14px;
+    letter-spacing:.6px;
+    font-weight:700;
+  }
+  h1 span{ color:var(--accent); }
+
+  section{ margin-bottom:18px; }
+  h2{
+    font-size:10px;
+    text-transform:uppercase;
+    letter-spacing:1.2px;
+    color:var(--muted);
+    margin:0 0 8px;
+    font-weight:700;
+  }
+
+  button{
+    font:inherit;
+    color:var(--text);
+    background:#1a2130;
+    border:1px solid #263048;
+    border-radius:6px;
+    padding:6px 10px;
+    cursor:pointer;
+    transition:background .12s, border-color .12s, color .12s;
+  }
+  button:hover:not(:disabled){ background:#222c40; }
+  button:disabled{ opacity:.35; cursor:default; }
+  button.on{
+    background:#0f3a44;
+    border-color:var(--accent);
+    color:var(--accent);
+  }
+
+  .btns{ display:flex; gap:6px; flex-wrap:wrap; }
+  .btns button{ flex:1 1 0; min-width:64px; }
+
+  .row{
+    display:flex;
+    align-items:center;
+    gap:8px;
+    margin-bottom:8px;
+    color:var(--muted);
+  }
+  .row > span.lbl{ min-width:56px; }
+
+  select{
+    font:inherit;
+    color:var(--text);
+    background:#1a2130;
+    border:1px solid #263048;
+    border-radius:6px;
+    padding:5px 6px;
+    flex:1;
+    min-width:0;
+  }
+  select:focus{ outline:1px solid var(--accent); }
+
+  input[type="number"]{
+    font:inherit;
+    width:62px;
+    color:var(--text);
+    background:#1a2130;
+    border:1px solid #263048;
+    border-radius:6px;
+    padding:5px 6px;
+  }
+  input[type="number"]:focus{ outline:1px solid var(--accent); }
+
+  input[type="range"]{
+    flex:1;
+    accent-color:var(--accent);
+  }
+  input[type="checkbox"]{ accent-color:var(--accent); }
+
+  /* palette */
+  .palette{ display:flex; flex-wrap:wrap; gap:6px; }
+  .swatch{
+    width:27px; height:27px;
+    padding:0;
+    border-radius:6px;
+    border:2px solid transparent;
+    cursor:pointer;
+  }
+  .swatch.sel{
+    border-color:#fff;
+    box-shadow:0 0 0 2px rgba(94,231,255,.55);
+  }
+  .swatch.eraser{
+    background:repeating-linear-gradient(45deg,#2a3346 0 4px,#161c28 4px 8px);
+  }
+
+  /* rule digit toggles */
+  .digits{ display:flex; gap:3px; flex-wrap:wrap; }
+  .digit{
+    width:23px; height:23px;
+    padding:0;
+    font-size:11px;
+    border-radius:5px;
+    line-height:1;
+  }
+  .digit.on{
+    background:#0f3a44;
+    border-color:var(--accent);
+    color:var(--accent);
+  }
+
+  .stat{
+    color:var(--muted);
+    font-variant-numeric:tabular-nums;
+    margin-top:8px;
+  }
+  .stat b{ color:var(--text); font-weight:600; }
+
+  .hint{
+    color:#5a6684;
+    font-size:11px;
+    line-height:1.5;
+    border-top:1px solid var(--line);
+    padding-top:10px;
+  }
+  kbd{
+    background:#1a2130;
+    border:1px solid #263048;
+    border-bottom-width:2px;
+    border-radius:4px;
+    padding:0 4px;
+    font-family:ui-monospace,monospace;
+    font-size:10px;
+  }
+
+  /* ---------- stage ---------- */
+  #stage{
+    flex:1;
+    min-width:0;
+    position:relative;
+    overflow:hidden;
+    background:radial-gradient(circle at 50% 40%, #101623 0%, #070a0f 75%);
+  }
+  canvas{
+    position:absolute;
+    inset:0;
+    width:100%;
+    height:100%;
+    display:block;
+    image-rendering:pixelated;
+    touch-action:none;
+    cursor:crosshair;
+    outline:1px solid var(--line);
+  }
+  #zoomBadge{
+    position:absolute;
+    left:12px;
+    bottom:12px;
+    background:rgba(17,21,31,.85);
+    border:1px solid var(--line);
+    border-radius:6px;
+    padding:4px 8px;
+    color:var(--muted);
+    font-variant-numeric:tabular-nums;
+    pointer-events:none;
+    font-size:11px;
+  }
+</style>
+</head>
+<body>
+
+<aside id="panel">
+  <h1><span>◼</span> Cellular Pixel Studio</h1>
+
+  <section>
+    <h2>Brush</h2>
+    <div class="palette" id="palette"></div>
+  </section>
+
+  <section>
+    <h2>Rules</h2>
+    <div class="row">
+      <span class="lbl">Preset</span>
+      <select id="preset"></select>
+    </div>
+    <div class="row" style="align-items:flex-start">
+      <span class="lbl" style="padding-top:4px">Birth</span>
+      <div class="digits" id="birthDigits"></div>
+    </div>
+    <div class="row" style="align-items:flex-start">
+      <span class="lbl" style="padding-top:4px">Survive</span>
+      <div class="digits" id="surviveDigits"></div>
+    </div>
+    <div class="row">
+      <span class="lbl">Neighbors</span>
+      <select id="neighbors">
+        <option value="moore">Moore (8)</option>
+        <option value="von">Von Neumann (4)</option>
+      </select>
+    </div>
+    <div class="row">
+      <label style="display:flex;gap:8px;align-items:center;cursor:pointer">
+        <input type="checkbox" id="wrap" checked> Wrap edges
+      </label>
+    </div>
+  </section>
+
+  <section>
+    <h2>Simulation</h2>
+    <div class="btns" style="margin-bottom:8px">
+      <button id="runBtn">▶ Run</button>
+      <button id="stepBtn">⏭ Step</button>
+    </div>
+    <div class="btns" style="margin-bottom:8px">
+      <button id="undoBtn">↶ Undo</button>
+    </div>
+    <div class="row">
+      <span class="lbl">Speed</span>
+      <input type="range" id="speed" min="1" max="60" value="12">
+      <span id="speedLbl" style="min-width:44px;text-align:right">12/s</span>
+    </div>
+    <div class="stat">Gen <b id="gen">0</b> · Alive <b id="alive">0</b></div>
+  </section>
+
+  <section>
+    <h2>Grid</h2>
+    <div class="row">
+      <input type="number" id="colsInput" value="90" min="4" max="1000">
+      <span style="color:#4a5570">×</span>
+      <input type="number" id="rowsInput" value="60" min="4" max="1000">
+      <button id="resizeBtn" style="padding:5px 8px">Resize</button>
+    </div>
+    <div class="btns">
+      <button id="clearBtn">Clear</button>
+      <button id="randBtn">Random</button>
+      <button id="fitBtn">Fit</button>
+    </div>
+  </section>
+
+  <div class="hint">
+    Left‑drag draw · right‑drag erase<br>
+    <kbd>Wheel</kbd> zoom · <kbd>Middle</kbd>/<kbd>Alt</kbd>+drag pan<br>
+    <kbd>Space</kbd> run · <kbd>→</kbd> step · <kbd>Ctrl</kbd>+<kbd>Z</kbd> undo
+  </div>
+</aside>
+
+<main id="stage">
+  <canvas id="board"></canvas>
+  <div id="zoomBadge">100%</div>
+</main>
+
+<script>
+(() => {
+  "use strict";
+
+  /* ============================================================
+     CONSTANTS
+     ============================================================ */
+  const COLORS = [null, '#5ee7ff', '#ff6b9d', '#ffd93d', '#6bff8f',
+                  '#b07bff', '#ff9f45', '#ffffff'];
+  const DEAD_COLOR = '#0d1117';
+  const GRID_LINE  = 'rgba(255,255,255,0.055)';
+
+  const MOORE = [[-1,-1],[0,-1],[1,-1],[-1,0],[1,0],[-1,1],[0,1],[1,1]];
+  const VON   = [[0,-1],[-1,0],[1,0],[0,1]];
+
+  const PRESETS = [
+    { name: 'Conway (B3/S23)',        b: [3],              s: [2,3] },
+    { name: 'HighLife (B36/S23)',     b: [3,6],            s: [2,3] },
+    { name: 'Seeds (B2/S)',           b: [2],              s: [] },
+    { name: 'Day & Night (B3678/S34678)', b: [3,6,7,8],    s: [3,4,6,7,8] },
+    { name: 'Maze (B3/S12345)',       b: [3],              s: [1,2,3,4,5] },
+    { name: 'Coral (B3/S45678)',      b: [3],              s: [4,5,6,7,8] },
+    { name: 'Replicator (B1357/S1357)', b: [1,3,5,7],      s: [1,3,5,7] },
+    { name: 'Diamoeba (B35678/S5678)', b: [3,5,6,7,8],     s: [5,6,7,8] },
+    { name: 'Anneal (B4678/S35678)',  b: [4,6,7,8],        s: [3,5,6,7,8] },
+    { name: '2×2 (B36/S125)',         b: [3,6],            s: [1,2,5] },
+    { name: 'Life w/o Death (B3/S012345678)', b: [3],      s: [0,1,2,3,4,5,6,7,8] },
+    { name: 'Custom',                 b: null,             s: null }
+  ];
+
+  const UNDO_MAX = 200;
+  const UNDO_MAX_BYTES = 64 * 1024 * 1024;   // ~64 MB of retained snapshots
+
+  /* ============================================================
+     STATE
+     ============================================================ */
+  const canvas = document.getElementById('board');
+  const ctx    = canvas.getContext('2d');
+  const stage  = document.getElementById('stage');
+
+  let cols = 90;
+  let rows = 60;
+
+  let grid = new Uint8Array(cols * rows);
+  let gen  = 0;
+
+  /* --- camera / viewport --- */
+  let zoom = 8;                       // screen px per cell
+  let panX = 0, panY = 0;             // screen px of grid origin
+  const MIN_ZOOM = 0.25;
+  const MAX_ZOOM = 80;
+
+  /* --- offscreen grid image (1px per cell) --- */
+  const offscreen = document.createElement('canvas');
+  const offCtx    = offscreen.getContext('2d');
+  let imgData = null;
+  let img32   = null;
+
+  /* --- packed colors (little-endian ABGR) --- */
+  function hexToU32(hex) {
+    const r = parseInt(hex.slice(1, 3), 16);
+    const g = parseInt(hex.slice(3, 5), 16);
+    const b = parseInt(hex.slice(5, 7), 16);
+    return (255 << 24) | (b << 16) | (g << 8) | r;
+  }
+  const DEAD_U32  = hexToU32(DEAD_COLOR);
+  const COLOR_U32 = COLORS.map(c => c ? hexToU32(c) : 0);
+
+  let brush = 1;                      // 0 = eraser
+  let lastColor = 1;                  // remembered paint color (used for births)
+
+  let birthSet   = new Set([3]);
+  let surviveSet = new Set([2, 3]);
+  let useMoore   = true;
+  let wrapEdges  = true;
+
+  let running = false;
+  let speed   = 12;                   // generations per second
+  let lastT = 0, acc = 0;
+
+  const undoStack = [];
+  let undoBytes = 0;
+
+  /* ============================================================
+     DOM REFS
+     ============================================================ */
+  const paletteEl   = document.getElementById('palette');
+  const birthDigits = document.getElementById('birthDigits');
+  const survDigits  = document.getElementById('surviveDigits');
+  const presetSel   = document.getElementById('preset');
+  const neighborSel = document.getElementById('neighbors');
+  const wrapChk     = document.getElementById('wrap');
+  const runBtn      = document.getElementById('runBtn');
+  const stepBtn     = document.getElementById('stepBtn');
+  const undoBtn     = document.getElementById('undoBtn');
+  const speedEl     = document.getElementById('speed');
+  const speedLbl    = document.getElementById('speedLbl');
+  const genEl       = document.getElementById('gen');
+  const aliveEl     = document.getElementById('alive');
+  const colsInput   = document.getElementById('colsInput');
+  const rowsInput   = document.getElementById('rowsInput');
+  const resizeBtn   = document.getElementById('resizeBtn');
+  const clearBtn    = document.getElementById('clearBtn');
+  const randBtn     = document.getElementById('randBtn');
+  const fitBtn      = document.getElementById('fitBtn');
+  const zoomBadge   = document.getElementById('zoomBadge');
+
+  /* ============================================================
+     RENDERING / LAYOUT
+     ============================================================ */
+  function buildOffscreen() {
+    offscreen.width  = cols;
+    offscreen.height = rows;
+    imgData = offCtx.createImageData(cols, rows);
+    img32   = new Uint32Array(imgData.data.buffer);
+    for (let i = 0; i < img32.length; i++) img32[i] = DEAD_U32;
+    offCtx.putImageData(imgData, 0, 0);
+  }
+
+  function syncOffscreen() {
+    let alive = 0;
+    for (let i = 0; i < grid.length; i++) {
+      const v = grid[i];
+      if (v) { img32[i] = COLOR_U32[v]; alive++; }
+      else   { img32[i] = DEAD_U32; }
+    }
+    offCtx.putImageData(imgData, 0, 0);
+    aliveEl.textContent = alive;
+    return alive;
+  }
+
+  function updateZoomBadge() {
+    if (zoomBadge) zoomBadge.textContent = Math.round(zoom * 100) + '%';
+  }
+
+  function fitView() {
+    const w = canvas.clientWidth, h = canvas.clientHeight;
+    if (!w || !h) return;
+    const pad = 24;
+    const zx = (w - pad * 2) / cols;
+    const zy = (h - pad * 2) / rows;
+    zoom = Math.max(MIN_ZOOM, Math.min(MAX_ZOOM, Math.min(zx, zy)));
+    panX = (w - cols * zoom) / 2;
+    panY = (h - rows * zoom) / 2;
+    updateZoomBadge();
+  }
+
+  function layout() {
+    const r = stage.getBoundingClientRect();
+    const w = Math.max(1, Math.floor(r.width));
+    const h = Math.max(1, Math.floor(r.height));
+    const dpr = window.devicePixelRatio || 1;
+    canvas.width  = Math.round(w * dpr);
+    canvas.height = Math.round(h * dpr);
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    render();
+  }
+
+  function render() {
+    const w = canvas.clientWidth;
+    const h = canvas.clientHeight;
+
+    ctx.fillStyle = '#070a0f';
+    ctx.fillRect(0, 0, w, h);
+
+    if (!imgData) return;
+
+    const gw = cols * zoom;
+    const gh = rows * zoom;
+
+    ctx.imageSmoothingEnabled = false;
+    ctx.drawImage(offscreen, panX, panY, gw, gh);
+
+    if (zoom >= 6) {
+      const x0 = Math.max(0, Math.floor(-panX / zoom));
+      const y0 = Math.max(0, Math.floor(-panY / zoom));
+      const x1 = Math.min(cols, Math.ceil((w - panX) / zoom));
+      const y1 = Math.min(rows, Math.ceil((h - panY) / zoom));
+
+      ctx.strokeStyle = GRID_LINE;
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      for (let x = x0; x <= x1; x++) {
+        const px = Math.round(panX + x * zoom) + 0.5;
+        ctx.moveTo(px, Math.max(0, panY));
+        ctx.lineTo(px, Math.min(h, panY + gh));
+      }
+      for (let y = y0; y <= y1; y++) {
+        const py = Math.round(panY + y * zoom) + 0.5;
+        ctx.moveTo(Math.max(0, panX), py);
+        ctx.lineTo(Math.min(w, panX + gw), py);
+      }
+      ctx.stroke();
+    }
+
+    ctx.strokeStyle = '#2a3346';
+    ctx.lineWidth = 1;
+    ctx.strokeRect(panX - 0.5, panY - 0.5, gw + 1, gh + 1);
+  }
+
+  function refresh() {
+    syncOffscreen();
+    render();
+  }
+
+  function updateUI() {
+    genEl.textContent = gen;
+    undoBtn.disabled = undoStack.length === 0;
+    runBtn.textContent = running ? '⏸ Pause' : '▶ Run';
+    runBtn.classList.toggle('on', running);
+  }
+
+  /* ============================================================
+     UNDO
+     ============================================================ */
+  function pushUndo(silent) {
+    const snapshot = { grid: grid.slice(), gen, cols, rows };
+    undoStack.push(snapshot);
+    undoBytes += snapshot.grid.byteLength;
+
+    while (undoStack.length > UNDO_MAX ||
+           (undoBytes > UNDO_MAX_BYTES && undoStack.length > 1)) {
+      const removed = undoStack.shift();
+      undoBytes -= removed.grid.byteLength;
+    }
+
+    if (!silent) updateUI();
+  }
+
+  function undo() {
+    const snap = undoStack.pop();
+    if (!snap) return;
+    undoBytes -= snap.grid.byteLength;
+    setRunning(false);
+
+    const dimsChanged = (snap.cols !== cols || snap.rows !== rows);
+    cols = snap.cols;
+    rows = snap.rows;
+    grid = snap.grid;
+    gen  = snap.gen;
+
+    if (dimsChanged) {
+      colsInput.value = cols;
+      rowsInput.value = rows;
+      buildOffscreen();
+      syncOffscreen();
+      fitView();
+    }
+    refresh();
+    updateUI();
+  }
+
+  /* ============================================================
+     SIMULATION
+     ============================================================ */
+  function step() {
+    const next = new Uint8Array(cols * rows);
+    const offs = useMoore ? MOORE : VON;
+    const birthColor = lastColor || 1;
+    const ol = offs.length;
+
+    for (let y = 0; y < rows; y++) {
+      const rowBase = y * cols;
+      for (let x = 0; x < cols; x++) {
+        let n = 0;
+
+        for (let k = 0; k < ol; k++) {
+          let nx = x + offs[k][0];
+          let ny = y + offs[k][1];
+
+          if (wrapEdges) {
+            if (nx < 0) nx += cols; else if (nx >= cols) nx -= cols;
+            if (ny < 0) ny += rows; else if (ny >= rows) ny -= rows;
+          } else if (nx < 0 || ny < 0 || nx >= cols || ny >= rows) {
+            continue;
+          }
+
+          if (grid[ny * cols + nx]) n++;
+        }
+
+        const i = rowBase + x;
+        const cur = grid[i];
+
+        if (cur) {
+          next[i] = surviveSet.has(n) ? cur : 0;
+        } else {
+          next[i] = birthSet.has(n) ? birthColor : 0;
+        }
+      }
+    }
+
+    grid = next;
+    gen++;
+  }
+
+  function loop(t) {
+    if (!running) return;
+
+    if (!lastT) lastT = t;
+    let dt = t - lastT;
+    lastT = t;
+    if (dt > 250) dt = 250;
+
+    acc += dt;
+    const interval = 1000 / speed;
+    let did = 0;
+
+    while (acc >= interval && did < 12) {
+      pushUndo(true);      // silent: UI is refreshed once after the loop
+      step();
+      acc -= interval;
+      did++;
+    }
+
+    if (did) {
+      refresh();
+      updateUI();          // keeps gen counter + undo-button state in sync
+    }
+    requestAnimationFrame(loop);
+  }
+
+  function setRunning(v) {
+    if (v === running) return;
+    running = v;
+
+    if (v) {
+      // No pushUndo() here — the run loop snapshots before each step.
+      lastT = 0;
+      acc = 0;
+      requestAnimationFrame(loop);
+    }
+    updateUI();
+  }
+
+  /* ============================================================
+     DRAWING
+     ============================================================ */
+  const pointers = new Map();
+  let painting = false;
+  let strokeVal = 0;
+  let lastCell = null;
+  let panning = false;
+  let panStart = null;
+  let pinch = null;
+
+  function localPoint(e) {
+    const r = canvas.getBoundingClientRect();
+    return { x: e.clientX - r.left, y: e.clientY - r.top };
+  }
+
+  function screenToCell(sx, sy) {
+    return {
+      x: Math.floor((sx - panX) / zoom),
+      y: Math.floor((sy - panY) / zoom)
+    };
+  }
+
+  function zoomAt(sx, sy, factor) {
+    const wx = (sx - panX) / zoom;
+    const wy = (sy - panY) / zoom;
+    const nz = Math.max(MIN_ZOOM, Math.min(MAX_ZOOM, zoom * factor));
+    panX = sx - wx * nz;
+    panY = sy - wy * nz;
+    zoom = nz;
+    updateZoomBadge();
+  }
+
+  function paintAt(x, y, val) {
+    grid[y * cols + x] = val;
+  }
+
+  function paintLine(x0, y0, x1, y1, val) {
+    let dx = Math.abs(x1 - x0), sx = x0 < x1 ? 1 : -1;
+    let dy = -Math.abs(y1 - y0), sy = y0 < y1 ? 1 : -1;
+    let err = dx + dy;
+
+    for (;;) {
+      paintAt(x0, y0, val);
+      if (x0 === x1 && y0 === y1) break;
+      const e2 = 2 * err;
+      if (e2 >= dy) { err += dy; x0 += sx; }
+      if (e2 <= dx) { err += dx; y0 += sy; }
+    }
+  }
+
+  canvas.addEventListener('pointerdown', (e) => {
+    pointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
+
+    if (pointers.size === 2) {
+      if (painting) { painting = false; lastCell = null; updateUI(); }
+      panning = false;
+      const [a, b] = [...pointers.values()];
+      pinch = {
+        midX: (a.x + b.x) / 2,
+        midY: (a.y + b.y) / 2,
+        dist: Math.hypot(a.x - b.x, a.y - b.y) || 1,
+        panX, panY, zoom
+      };
+      return;
+    }
+    if (pointers.size > 2) return;
+
+    const p = localPoint(e);
+
+    if (e.button === 1 || (e.button === 0 && e.altKey)) {
+      e.preventDefault();
+      panning = true;
+      panStart = { sx: p.x, sy: p.y, panX, panY };
+      canvas.setPointerCapture(e.pointerId);
+      canvas.style.cursor = 'grabbing';
+      return;
+    }
+
+    if (e.button === 0 || e.button === 2) {
+      if (running) setRunning(false);
+      const c = screenToCell(p.x, p.y);
+      if (c.x < 0 || c.y < 0 || c.x >= cols || c.y >= rows) return;
+
+      canvas.setPointerCapture(e.pointerId);
+      pushUndo();
+
+      painting  = true;
+      strokeVal = (e.button === 2) ? 0 : brush;
+      lastCell  = c;
+      paintAt(c.x, c.y, strokeVal);
+      refresh();
+    }
+  });
+
+  canvas.addEventListener('pointermove', (e) => {
+    if (pointers.has(e.pointerId)) {
+      pointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
+    }
+
+    if (pinch && pointers.size === 2) {
+      const [a, b] = [...pointers.values()];
+      const r = canvas.getBoundingClientRect();
+      const midX = (a.x + b.x) / 2 - r.left;
+      const midY = (a.y + b.y) / 2 - r.top;
+      const dist = Math.hypot(a.x - b.x, a.y - b.y) || 1;
+
+      const wx = (pinch.midX - r.left - pinch.panX) / pinch.zoom;
+      const wy = (pinch.midY - r.top  - pinch.panY) / pinch.zoom;
+      const nz = Math.max(MIN_ZOOM, Math.min(MAX_ZOOM,
+        pinch.zoom * (dist / pinch.dist)));
+      zoom = nz;
+      panX = midX - wx * nz;
+      panY = midY - wy * nz;
+      updateZoomBadge();
+      render();
+      return;
+    }
+
+    if (panning && panStart) {
+      const p = localPoint(e);
+      panX = panStart.panX + (p.x - panStart.sx);
+      panY = panStart.panY + (p.y - panStart.sy);
+      render();
+      return;
+    }
+
+    if (painting) {
+      const p = localPoint(e);
+      const c = screenToCell(p.x, p.y);
+      c.x = Math.max(0, Math.min(cols - 1, c.x));
+      c.y = Math.max(0, Math.min(rows - 1, c.y));
+      if (lastCell) paintLine(lastCell.x, lastCell.y, c.x, c.y, strokeVal);
+      else paintAt(c.x, c.y, strokeVal);
+      lastCell = c;
+      refresh();
+    }
+  });
+
+  function endPointer(e) {
+    pointers.delete(e.pointerId);
+    if (pointers.size < 2) pinch = null;
+
+    if (painting) { painting = false; lastCell = null; updateUI(); }
+    if (panning)  { panning = false; panStart = null; canvas.style.cursor = 'crosshair'; }
+
+    if (canvas.hasPointerCapture(e.pointerId)) {
+      canvas.releasePointerCapture(e.pointerId);
+    }
+  }
+
+  canvas.addEventListener('pointerup', endPointer);
+  canvas.addEventListener('pointercancel', endPointer);
+  canvas.addEventListener('contextmenu', (e) => e.preventDefault());
+
+  canvas.addEventListener('wheel', (e) => {
+    e.preventDefault();
+    const p = localPoint(e);
+    const factor = Math.exp(-e.deltaY * (e.deltaMode === 1 ? 0.05 : 0.0015));
+    zoomAt(p.x, p.y, factor);
+    render();
+  }, { passive: false });
+
+  /* ============================================================
+     UI BUILDERS
+     ============================================================ */
+  function buildPalette() {
+    paletteEl.innerHTML = '';
+
+    const er = document.createElement('button');
+    er.className = 'swatch eraser' + (brush === 0 ? ' sel' : '');
+    er.title = 'Eraser';
+    er.addEventListener('click', () => { brush = 0; buildPalette(); });
+    paletteEl.appendChild(er);
+
+    for (let i = 1; i < COLORS.length; i++) {
+      const b = document.createElement('button');
+      b.className = 'swatch' + (brush === i ? ' sel' : '');
+      b.style.background = COLORS[i];
+      b.title = 'Color ' + i;
+      b.addEventListener('click', () => {
+        brush = i;
+        lastColor = i;
+        buildPalette();
+      });
+      paletteEl.appendChild(b);
+    }
+  }
+
+  function buildDigits(container, set) {
+    container.innerHTML = '';
+    for (let i = 0; i <= 8; i++) {
+      const b = document.createElement('button');
+      b.className = 'digit' + (set.has(i) ? ' on' : '');
+      b.textContent = i;
+      b.addEventListener('click', () => {
+        if (set.has(i)) set.delete(i); else set.add(i);
+        b.classList.toggle('on');
+        syncPreset();
+      });
+      container.appendChild(b);
+    }
+  }
+
+  function buildPresetSelect() {
+    presetSel.innerHTML = '';
+    PRESETS.forEach((p, i) => {
+      const o = document.createElement('option');
+      o.value = i;
+      o.textContent = p.name;
+      presetSel.appendChild(o);
+    });
+    presetSel.value = 0;
+  }
+
+  function setsEqual(set, arr) {
+    if (set.size !== arr.length) return false;
+    for (const v of arr) if (!set.has(v)) return false;
+    return true;
+  }
+
+  function syncPreset() {
+    for (let i = 0; i < PRESETS.length - 1; i++) {
+      const p = PRESETS[i];
+      if (setsEqual(birthSet, p.b) && setsEqual(surviveSet, p.s)) {
+        presetSel.value = i;
+        return;
+      }
+    }
+    presetSel.value = PRESETS.length - 1; // Custom
+  }
+
+  function applyPreset(idx) {
+    const p = PRESETS[idx];
+    if (!p || !p.b || !p.s) return;         // "Custom" — leave as-is
+    birthSet   = new Set(p.b);
+    surviveSet = new Set(p.s);
+    buildDigits(birthDigits, birthSet);
+    buildDigits(survDigits,  surviveSet);
+  }
+
+  /* ============================================================
+     GRID OPERATIONS
+     ============================================================ */
+  function resizeGrid(nc, nr) {
+    const oldGrid = grid, oc = cols, orr = rows;
+    cols = nc;
+    rows = nr;
+
+    const ng = new Uint8Array(cols * rows);
+    const cw = Math.min(cols, oc);
+    const ch = Math.min(rows, orr);
+    for (let y = 0; y < ch; y++) {
+      for (let x = 0; x < cw; x++) {
+        ng[y * cols + x] = oldGrid[y * oc + x];
+      }
+    }
+    grid = ng;
+    buildOffscreen();
+    syncOffscreen();
+    fitView();
+    render();
+    updateUI();
+  }
+
+  /* ============================================================
+     EVENT WIRING
+     ============================================================ */
+  runBtn.addEventListener('click', () => setRunning(!running));
+
+  stepBtn.addEventListener('click', () => {
+    setRunning(false);
+    pushUndo();
+    step();
+    refresh();
+    updateUI();
+  });
+
+  undoBtn.addEventListener('click', undo);
+
+  speedEl.addEventListener('input', () => {
+    speed = Number(speedEl.value);
+    speedLbl.textContent = speed + '/s';
+  });
+
+  neighborSel.addEventListener('change', () => {
+    useMoore = neighborSel.value === 'moore';
+  });
+
+  wrapChk.addEventListener('change', () => {
+    wrapEdges = wrapChk.checked;
+  });
+
+  presetSel.addEventListener('change', () => {
+    applyPreset(Number(presetSel.value));
+  });
+
+  resizeBtn.addEventListener('click', () => {
+    const nc = Math.max(4, Math.min(1000, parseInt(colsInput.value, 10) || cols));
+    const nr = Math.max(4, Math.min(1000, parseInt(rowsInput.value, 10) || rows));
+    colsInput.value = nc;
+    rowsInput.value = nr;
+    setRunning(false);
+    pushUndo();
+    resizeGrid(nc, nr);
+  });
+
+  clearBtn.addEventListener('click', () => {
+    setRunning(false);
+    pushUndo();
+    grid.fill(0);
+    gen = 0;
+    refresh();
+    updateUI();
+  });
+
+  randBtn.addEventListener('click', () => {
+    setRunning(false);
+    pushUndo();
+    const c = lastColor || 1;
+    const density = 0.32;
+    for (let i = 0; i < grid.length; i++) {
+      grid[i] = Math.random() < density ? c : 0;
+    }
+    gen = 0;
+    refresh();
+    updateUI();
+  });
+
+  fitBtn.addEventListener('click', () => {
+    fitView();
+    render();
+  });
+
+  /* ---------- keyboard ---------- */
+  window.addEventListener('keydown', (e) => {
+    const tag = (e.target.tagName || '').toUpperCase();
+    if (tag === 'INPUT' || tag === 'SELECT' || tag === 'TEXTAREA' || tag === 'BUTTON') {
+      // still allow ctrl+z globally
+      if (!(e.ctrlKey || e.metaKey)) return;
+    }
+
+    if (e.code === 'Space') {
+      e.preventDefault();
+      setRunning(!running);
+    } else if (e.key === 'ArrowRight') {
+      e.preventDefault();
+      stepBtn.click();
+    } else if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'z') {
+      e.preventDefault();
+      undo();
+    } else if (e.key === 'f' || e.key === 'F') {
+      fitView();
+      render();
+    }
+  });
+
+  /* ---------- responsive ---------- */
+  if (window.ResizeObserver) {
+    new ResizeObserver(() => layout()).observe(stage);
+  } else {
+    window.addEventListener('resize', layout);
+  }
+
+  /* ============================================================
+     BOOT
+     ============================================================ */
+  buildPalette();
+  buildPresetSelect();
+  buildDigits(birthDigits, birthSet);
+  buildDigits(survDigits,  surviveSet);
+
+  // Seed the canvas with a little starter pattern (an R-pentomino-ish blob)
+  (function seed() {
+    const cx = Math.floor(cols / 2);
+    const cy = Math.floor(rows / 2);
+    const pattern = [
+      [0,1],[1,1],[2,1],[1,0],[1,2]
+    ];
+    for (const [dx, dy] of pattern) {
+      const x = cx + dx, y = cy + dy;
+      if (x >= 0 && y >= 0 && x < cols && y < rows) grid[y * cols + x] = 1;
+    }
+  })();
+
+  layout();
+  buildOffscreen();
+  syncOffscreen();
+  fitView();
+  render();
+  updateUI();
+})();
+</script>
+</body>
+</html>
