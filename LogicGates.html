@@ -1965,8 +1965,8 @@ body.script-panel-open .mode-badge      { right: calc(var(--script-panel-width, 
     align-items: center;
     justify-content: center;
     width: 54px;
-    min-height: 48px;
-    padding: 4px 2px 2px;
+    min-height: 54px;
+    padding: 0;
     border-radius: 6px;
     background: transparent;
     color: var(--text-color);
@@ -1984,21 +1984,29 @@ body.script-panel-open .mode-badge      { right: calc(var(--script-panel-width, 
 }
 #palette .palette-item:active { cursor: grabbing; transform: scale(0.96); }
 #palette .palette-item svg {
+    position: static;
     width: 32px;
     height: 22px;
     color: var(--text-color);
     flex-shrink: 0;
     display: block;
+    margin: 0 auto;
     transition: color .12s;
 }
 #palette .palette-item:hover svg { color: var(--accent); }
 #palette .palette-item .palette-label {
-    font-size: 8.5px;
+    position: absolute;
+    bottom: 3px;
+    left: 0;
+    right: 0;
+    font-size: 9px;
     font-weight: 600;
-    margin-top: 2px;
-    opacity: 0.8;
+    margin: 0;
+    opacity: 0.85;
     letter-spacing: 0.02em;
     line-height: 1;
+    text-align: center;
+    pointer-events: none;
 }
 #palette .palette-item .palette-color-dot {
     position: absolute;
@@ -2031,8 +2039,9 @@ body { padding-left: 0; }
 @media (max-width: 640px) {
     #palette { width: 56px; }
     #viewport { left: 56px; }
-    #palette .palette-item { width: 44px; min-height: 42px; }
-    #palette .palette-item svg { width: 26px; height: 18px; }
+    #palette .palette-item { width: 44px; min-height: 48px; }
+    #palette .palette-item svg { width: 28px; height: 20px; }
+    #palette .palette-item .palette-label { font-size: 8px; bottom: 2px; }
 }
 
 /* ── 2. Workspace Tools floating panel ────────────────────── */
@@ -2434,56 +2443,63 @@ body { padding-left: 0; }
 
     <div class="palette-item" data-gate-type="AND" title="AND gate"
          onmousedown="startGhostDrag(event,'AND')" ontouchstart="startGhostDrag(event,'AND')">
-        <svg viewBox="0 0 44 30" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round">
-            <path d="M4 3 L18 3 A12 12 0 0 1 18 27 L4 27 Z"/>
+        <svg viewBox="0 0 44 30" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linejoin="round" stroke-linecap="round">
+            <path d="M8 4 H25 A11 11 0 0 1 25 26 H8 Z"/>
+            <path d="M2 9 H8 M2 21 H8 M36 15 H42"/>
         </svg>
         <span class="palette-label">AND</span>
     </div>
     <div class="palette-item" data-gate-type="OR" title="OR gate"
          onmousedown="startGhostDrag(event,'OR')" ontouchstart="startGhostDrag(event,'OR')">
-        <svg viewBox="0 0 44 30" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round">
-            <path d="M4 3 Q18 3 30 15 Q18 27 4 27 Q14 15 4 3 Z"/>
+        <svg viewBox="0 0 44 30" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linejoin="round" stroke-linecap="round">
+            <path d="M8 4 Q22 4 35 15 Q22 26 8 26 Q15 15 8 4"/>
+            <path d="M2 9 H10 M2 21 H10 M35 15 H42"/>
         </svg>
         <span class="palette-label">OR</span>
     </div>
     <div class="palette-item" data-gate-type="XOR" title="XOR gate"
          onmousedown="startGhostDrag(event,'XOR')" ontouchstart="startGhostDrag(event,'XOR')">
-        <svg viewBox="0 0 44 30" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round">
-            <path d="M4 3 Q18 3 30 15 Q18 27 4 27 Q14 15 4 3 Z"/>
-            <path d="M0 3 Q10 15 0 27"/>
+        <svg viewBox="0 0 44 30" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linejoin="round" stroke-linecap="round">
+            <path d="M8 4 Q22 4 35 15 Q22 26 8 26 Q15 15 8 4"/>
+            <path d="M4 4 Q11 15 4 26"/>
+            <path d="M2 9 H6 M2 21 H6 M35 15 H42"/>
         </svg>
         <span class="palette-label">XOR</span>
     </div>
     <div class="palette-item" data-gate-type="NOT" title="NOT gate"
          onmousedown="startGhostDrag(event,'NOT')" ontouchstart="startGhostDrag(event,'NOT')">
-        <svg viewBox="0 0 44 30" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round">
-            <path d="M6 4 L26 15 L6 26 Z"/>
-            <circle cx="32" cy="15" r="3"/>
+        <svg viewBox="0 0 44 30" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linejoin="round" stroke-linecap="round">
+            <path d="M12 4 L32 15 L12 26 Z"/>
+            <circle cx="35" cy="15" r="3"/>
+            <path d="M2 15 H12 M38 15 H42"/>
         </svg>
         <span class="palette-label">NOT</span>
     </div>
     <div class="palette-item" data-gate-type="NAND" title="NAND gate"
          onmousedown="startGhostDrag(event,'NAND')" ontouchstart="startGhostDrag(event,'NAND')">
-        <svg viewBox="0 0 44 30" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round">
-            <path d="M4 3 L18 3 A12 12 0 0 1 18 27 L4 27 Z"/>
-            <circle cx="34" cy="15" r="3"/>
+        <svg viewBox="0 0 44 30" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linejoin="round" stroke-linecap="round">
+            <path d="M8 4 H23 A11 11 0 0 1 23 26 H8 Z"/>
+            <circle cx="36.5" cy="15" r="2.5"/>
+            <path d="M2 9 H8 M2 21 H8 M39 15 H42"/>
         </svg>
         <span class="palette-label">NAND</span>
     </div>
     <div class="palette-item" data-gate-type="NOR" title="NOR gate"
          onmousedown="startGhostDrag(event,'NOR')" ontouchstart="startGhostDrag(event,'NOR')">
-        <svg viewBox="0 0 44 30" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round">
-            <path d="M4 3 Q18 3 30 15 Q18 27 4 27 Q14 15 4 3 Z"/>
-            <circle cx="34" cy="15" r="3"/>
+        <svg viewBox="0 0 44 30" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linejoin="round" stroke-linecap="round">
+            <path d="M8 4 Q22 4 33 15 Q22 26 8 26 Q15 15 8 4"/>
+            <circle cx="35.5" cy="15" r="2.5"/>
+            <path d="M2 9 H10 M2 21 H10 M38 15 H42"/>
         </svg>
         <span class="palette-label">NOR</span>
     </div>
     <div class="palette-item" data-gate-type="XNOR" title="XNOR gate"
          onmousedown="startGhostDrag(event,'XNOR')" ontouchstart="startGhostDrag(event,'XNOR')">
-        <svg viewBox="0 0 44 30" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round">
-            <path d="M4 3 Q18 3 30 15 Q18 27 4 27 Q14 15 4 3 Z"/>
-            <path d="M0 3 Q10 15 0 27"/>
-            <circle cx="34" cy="15" r="3"/>
+        <svg viewBox="0 0 44 30" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linejoin="round" stroke-linecap="round">
+            <path d="M8 4 Q22 4 33 15 Q22 26 8 26 Q15 15 8 4"/>
+            <path d="M4 4 Q11 15 4 26"/>
+            <circle cx="35.5" cy="15" r="2.5"/>
+            <path d="M2 9 H6 M2 21 H6 M38 15 H42"/>
         </svg>
         <span class="palette-label">XNOR</span>
     </div>
@@ -2493,26 +2509,28 @@ body { padding-left: 0; }
 
     <div class="palette-item" data-gate-type="DELAY" title="Delay gate"
          onmousedown="startGhostDrag(event,'DELAY')" ontouchstart="startGhostDrag(event,'DELAY')">
-        <svg viewBox="0 0 44 30" fill="none" stroke="currentColor" stroke-width="2">
-            <rect x="8" y="6" width="28" height="18" rx="2"/>
-            <path d="M2 15 L8 15 M36 15 L42 15"/>
-            <text x="22" y="19" text-anchor="middle" font-size="9" fill="currentColor" stroke="none" font-family="system-ui">Δt</text>
+        <svg viewBox="0 0 44 30" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linejoin="round" stroke-linecap="round">
+            <rect x="8" y="4" width="28" height="22" rx="2"/>
+            <path d="M2 15 H8 M36 15 H42"/>
+            <text x="22" y="19" text-anchor="middle" font-size="13" font-weight="700" fill="currentColor" stroke="none" font-family="system-ui, -apple-system, sans-serif">Δt</text>
         </svg>
         <span class="palette-label">DELAY</span>
     </div>
     <div class="palette-item" data-gate-type="CLOCK" title="Clock"
          onmousedown="startGhostDrag(event,'CLOCK')" ontouchstart="startGhostDrag(event,'CLOCK')">
-        <svg viewBox="0 0 44 30" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round">
-            <rect x="8" y="6" width="28" height="18" rx="2"/>
-            <path d="M12 18 L16 18 L16 11 L20 11 L20 18 L24 18 L24 11 L28 11 L28 18 L32 18" stroke-linecap="round"/>
-            <path d="M2 15 L8 15 M36 15 L42 15"/>
+        <svg viewBox="0 0 44 30" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linejoin="round" stroke-linecap="round">
+            <rect x="8" y="4" width="28" height="22" rx="2"/>
+            <path d="M12 19 H16 V11 H22 V19 H28 V11 H32 V19"/>
+            <path d="M2 15 H8 M36 15 H42"/>
         </svg>
         <span class="palette-label">CLOCK</span>
     </div>
     <div class="palette-item" data-gate-type="PULSE" title="Pulse"
          onmousedown="startGhostDrag(event,'PULSE')" ontouchstart="startGhostDrag(event,'PULSE')">
-        <svg viewBox="0 0 44 30" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round">
-            <path d="M2 15 L12 15 L12 6 L18 6 L18 15 L26 15 L26 6 L32 6 L32 15 L42 15" stroke-linecap="round"/>
+        <svg viewBox="0 0 44 30" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linejoin="round" stroke-linecap="round">
+            <rect x="8" y="4" width="28" height="22" rx="2"/>
+            <path d="M12 19 H17 V11 H27 V19 H32"/>
+            <path d="M2 15 H8 M36 15 H42"/>
         </svg>
         <span class="palette-label">PULSE</span>
     </div>
@@ -2522,17 +2540,17 @@ body { padding-left: 0; }
 
     <div class="palette-item" data-gate-type="JOINER" title="Joiner — N bits → 1 bus"
          onmousedown="startGhostDrag(event,'JOINER')" ontouchstart="startGhostDrag(event,'JOINER')">
-        <svg viewBox="0 0 44 30" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round">
-            <path d="M4 5 L18 15 L4 25 M4 10 L14 15 M4 20 L14 15" stroke-linecap="round"/>
-            <path d="M18 15 L40 15" stroke-width="3.5"/>
+        <svg viewBox="0 0 44 30" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linejoin="round" stroke-linecap="round">
+            <path d="M12 6 L34 12 L34 18 L12 24 Z"/>
+            <path d="M2 9 H12 M2 15 H12 M2 21 H12 M34 15 H42"/>
         </svg>
         <span class="palette-label">JOIN</span>
     </div>
     <div class="palette-item" data-gate-type="SPLITTER" title="Splitter — 1 bus → N bits"
          onmousedown="startGhostDrag(event,'SPLITTER')" ontouchstart="startGhostDrag(event,'SPLITTER')">
-        <svg viewBox="0 0 44 30" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round">
-            <path d="M4 15 L26 15" stroke-width="3.5"/>
-            <path d="M26 15 L40 5 M26 15 L40 15 M26 15 L40 25" stroke-linecap="round"/>
+        <svg viewBox="0 0 44 30" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linejoin="round" stroke-linecap="round">
+            <path d="M12 12 L34 6 L34 24 L12 18 Z"/>
+            <path d="M2 15 H12 M34 9 H42 M34 15 H42 M34 21 H42"/>
         </svg>
         <span class="palette-label">SPLIT</span>
     </div>
@@ -2542,10 +2560,10 @@ body { padding-left: 0; }
 
     <div class="palette-item" data-gate-type="TRI" title="Tri-state buffer"
          onmousedown="startGhostDrag(event,'TRI')" ontouchstart="startGhostDrag(event,'TRI')">
-        <svg viewBox="0 0 44 30" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round">
+        <svg viewBox="0 0 44 30" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linejoin="round" stroke-linecap="round">
             <path d="M14 5 L32 15 L14 25 Z"/>
-            <path d="M4 15 L14 15 M32 15 L40 15"/>
-            <path d="M20 22 L20 27 M20 27 L24 27" stroke-width="1.6"/>
+            <path d="M2 15 H14 M32 15 H42"/>
+            <path d="M22 27 V20.5 M19 27 H25"/>
         </svg>
         <span class="palette-label">TRI</span>
     </div>
@@ -4447,10 +4465,13 @@ document.addEventListener('keydown',e=>{
         }
         return;
     }
-    if(ctrl&&e.key==='z'&&!e.shiftKey){e.preventDefault();undo();return}
-    if((ctrl&&e.key==='z'&&e.shiftKey)||(ctrl&&e.key==='y')){e.preventDefault();redo();return}
-    if(ctrl&&e.key==='c'){e.preventDefault();copySelected();return}
-    if(ctrl&&e.key==='v'){e.preventDefault();pasteAtCursor();return}
+    const _inTextField = document.activeElement?.tagName==='INPUT'
+        || document.activeElement?.tagName==='TEXTAREA'
+        || document.activeElement?.isContentEditable;
+    if(ctrl&&e.key==='z'&&!e.shiftKey&&!_inTextField){e.preventDefault();undo();return}
+    if(((ctrl&&e.key==='z'&&e.shiftKey)||(ctrl&&e.key==='y'))&&!_inTextField){e.preventDefault();redo();return}
+    if(ctrl&&e.key==='c'&&!_inTextField){e.preventDefault();copySelected();return}
+    if(ctrl&&e.key==='v'&&!_inTextField){e.preventDefault();pasteAtCursor();return}
     if((e.key==='Delete'||e.key==='Backspace')
        &&document.activeElement?.tagName!=='INPUT'
        &&document.activeElement?.tagName!=='TEXTAREA'
@@ -4658,7 +4679,7 @@ function renderComponent(comp){
     else if(comp.type==='CLOCK'){bc=`<div style="display:flex;justify-content:space-between;align-items:center;gap:3px;"><div class="port" id="port-${comp.id}-in-0" data-comp="${comp.id}" data-type="in" data-port="0"></div><span style="font-size:9px;">⏱</span><input type="number" min="50" max="20000" step="1" value="${comp.clockMs||250}" class="delay-input" id="clock-val-${comp.id}" title="Toggle period in milliseconds (50 – 20000)"><span style="font-size:8px;opacity:.6;">ms</span><div class="port output" id="port-${comp.id}-out-0" data-comp="${comp.id}" data-type="out" data-port="0"></div></div>`}
     else if(comp.type==='COLOR'){bc=`<div style="display:flex;justify-content:space-between;align-items:center;gap:3px;"><div class="port" id="port-${comp.id}-in-0" data-comp="${comp.id}" data-type="in" data-port="0"></div><input type="color" class="color-picker-input" value="${comp.pixelColor||'#39ff14'}" id="color-val-${comp.id}"><div class="port output" id="port-${comp.id}-out-0" data-comp="${comp.id}" data-type="out" data-port="0"></div></div>`}
     else if(comp.type==='SCREEN'){const w=comp.pixelWidth||40,h=comp.pixelHeight||40;
-        bc=`<div class="pixel-wrapper" style="position:relative;display:inline-block;width:${w}px;height:${h}px;"><div class="pixel-square" id="pixel-${comp.id}"><div class="port" id="port-${comp.id}-in-0" data-comp="${comp.id}" data-type="in" data-port="0"></div></div><button class="pixel-delete-btn" onclick="removeComponent(${comp.id})">✕</button><div class="pixel-resize-handle" onmousedown="startResizePixel(event,${comp.id})" ontouchstart="startResizePixel(event,${comp.id})"></div></div>`;
+        bc=`<div class="pixel-wrapper" style="position:relative;display:inline-block;width:${w}px;height:${h}px;"><div class="pixel-square" id="pixel-${comp.id}" style="background:var(--pixel-off);"><div class="port" id="port-${comp.id}-in-0" data-comp="${comp.id}" data-type="in" data-port="0"></div></div><button class="pixel-delete-btn" onclick="removeComponent(${comp.id})">✕</button><div class="pixel-resize-handle" onmousedown="startResizePixel(event,${comp.id})" ontouchstart="startResizePixel(event,${comp.id})"></div></div>`;
         el.innerHTML=`<div class="gate-body" style="padding:0;background:transparent;display:flex;align-items:center;justify-content:center;border-radius:0;width:100%;height:100%;">${bc}</div>`;
         el.addEventListener('mousedown',e=>{if(!e.target.classList.contains('pixel-delete-btn')&&!e.target.classList.contains('pixel-resize-handle')&&!e.target.classList.contains('port'))startDragGate(e,comp.id)});
         el.addEventListener('touchstart',e=>{if(!e.target.classList.contains('pixel-delete-btn')&&!e.target.classList.contains('pixel-resize-handle')&&!e.target.classList.contains('port'))startDragGate(e,comp.id)});
@@ -6064,13 +6085,13 @@ function updateVisuals(){
             let newColor=null;
             if(comp.type==='COLOR'){
                 newColor=comp.pixelColor||'#39ff14';
-            } else if(comp.outputVal===1){
+            } else if(coerceState(comp.outputVal) === ST1){
                 const ws=wiresByToComp.get(comp.id);
                 if(ws){
                     for(let k=0;k<ws.length;k++){
                         const w=ws[k];
                         const src=byId.get(w.fromComp);
-                        if(!src||src.outputVal!==1)continue;
+                        if(!src||coerceState(src.outputVal) !== ST1)continue;
                         const c=src.type==='COLOR'
                             ?(src.pixelColor||'#39ff14')
                             :(src.outputColor||null);
@@ -6105,7 +6126,8 @@ function updateVisuals(){
         if(comp.type==='SCREEN'){
             const p=el.querySelector('.pixel-square');
             if(p){
-                const v=(comp.inputs&&comp.inputs[0])?1:0;
+                const stateVal = coerceState(comp.inputs && comp.inputs[0]);
+                const v = stateVal === ST1 ? 1 : 0;
                 let cc=null;
                 const iw=iwm.get(comp.id+':0');
                 if(iw){
@@ -6118,8 +6140,18 @@ function updateVisuals(){
                 const key=v+'|'+(cc||'');
                 if(p._vk!==key){
                     p.classList.toggle('on',v===1);
-                    if(v===1&&cc){p.style.background=cc;p.style.boxShadow='0 0 15px '+cc}
-                    else{p.style.background='';p.style.boxShadow=''}
+                    if(v===1 && cc){
+                        p.style.background=cc;
+                        p.style.boxShadow='0 0 15px '+cc;
+                    } else if(v===1){
+                        /* ON with no colour source — let the CSS .on rule paint it */
+                        p.style.background='';
+                        p.style.boxShadow='';
+                    } else {
+                        /* OFF — explicit, so nothing can leave it lit */
+                        p.style.background='var(--pixel-off)';
+                        p.style.boxShadow='';
+                    }
                     p._vk=key;
                 }
             }
@@ -6251,13 +6283,30 @@ function updateModalVisuals(){
         }
         if(comp.type==='PULSE'){const l=el.querySelector('.pulse-led');if(l)l.classList.toggle('on',comp.state===1)}
         if(comp.type==='SCREEN'){
-            const p=document.getElementById(`modal-pixel-${comp.id}`);
+            const p=el.querySelector('.pixel-square');
             if(p){
-                const v = coerceState(comp.inputs && comp.inputs[0]) === ST1 ? 1 : 0;
-                p.classList.toggle('on', v === 1);  
-                let cc=null;const iw=modalWires.find(w=>w.toComp===comp.id&&w.toPort===0);
-                if(iw){const s=modalComponents.find(c=>c.id===iw.fromComp);if(s&&s.type==='COLOR')cc=s.pixelColor||'#39ff14'}
-                if(v===1&&cc){p.style.background=cc;p.style.boxShadow=`0 0 15px ${cc}`}else{p.style.background='';p.style.boxShadow=''}
+                const stateVal = coerceState(comp.inputs && comp.inputs[0]);
+                const v = stateVal === ST1 ? 1 : 0;
+                if(v===1){
+                    p.classList.add('on');
+                    let cc=null;
+                    const iw=wires.find(w=>w.toComp===comp.id&&w.toPort===0);
+                    if(iw){
+                        const s=modalComponents.find(c=>c.id===iw.fromComp);
+                        if(s&&s.type==='COLOR')cc=s.pixelColor||'#39ff14';
+                    }
+                    if(cc){
+                        p.style.background=cc;
+                        p.style.boxShadow=`0 0 15px ${cc}`;
+                    } else {
+                        p.style.background='';
+                        p.style.boxShadow='';
+                    }
+                } else {
+                    p.classList.remove('on');
+                    p.style.background='var(--pixel-off)';
+                    p.style.boxShadow='';
+                }
             }
         }
         (comp.inputs||[]).forEach((v,idx)=>{const p=document.getElementById(`modal-port-${comp.id}-in-${idx}`);if(p)p.classList.toggle('active-port',coerceState(v)===ST1)});
@@ -12896,7 +12945,7 @@ window.drawTimingDiagram = drawTimingDiagram;
        ════════════════════════════════════════════════════════ */
 
     /* ── 2.1 Tokenizer ─────────────────────────────────────── */
-    const SCRIPT_OPS = ['AND','OR','NOT','XOR','NAND','NOR','XNOR'];
+    const SCRIPT_OPS = ['AND','OR','NOT','XOR','NAND','NOR','XNOR','DELAY'];
 
     function lexScript(src){
         const tokens = [];
@@ -12970,6 +13019,10 @@ window.drawTimingDiagram = drawTimingDiagram;
                 eat();
                 return { type:'not', operand: parseNot() };
             }
+            if(peek() && peek().t === 'DELAY'){
+                eat();
+                return { type:'delay', operand: parseNot() };
+            }
             return parseAtom();
         }
         function parseAtom(){
@@ -12998,7 +13051,8 @@ window.drawTimingDiagram = drawTimingDiagram;
     function parseScriptSource(src){
         const lines       = src.split(/\r?\n/);
         const assignments = [];
-        const declaredInputs = new Set();
+        const declaredInputs  = new Set();
+        const declaredOutputs = new Set();
 
         for(let i = 0; i < lines.length; i++){
             let line = lines[i];
@@ -13016,6 +13070,22 @@ window.drawTimingDiagram = drawTimingDiagram;
                     if(!/^[A-Za-z_][A-Za-z0-9_]*$/.test(n))
                         throw new Error('Line ' + lineNo + ': invalid input name "' + n + '"');
                     declaredInputs.add(n);
+                }
+                continue;
+            }
+
+            // Optional declaration line:  outputs: o1, o2, o4, o8
+            // Only the named signals become OUTPUT gates. Every other
+            // assignment stays internal (hidden from the canvas edge).
+            // Omit this line to keep the default behaviour where every
+            // assigned signal is exported.
+            const outMatch = line.match(/^outputs?\s*:\s*(.+)$/i);
+            if(outMatch){
+                const names = outMatch[1].split(/[,\s]+/).filter(Boolean);
+                for(const n of names){
+                    if(!/^[A-Za-z_][A-Za-z0-9_]*$/.test(n))
+                        throw new Error('Line ' + lineNo + ': invalid output name "' + n + '"');
+                    declaredOutputs.add(n);
                 }
                 continue;
             }
@@ -13054,26 +13124,29 @@ window.drawTimingDiagram = drawTimingDiagram;
             });
         }
 
-        // Validate — walk each RHS in order. A signal is legal if it's a
-        // declared input, or an assignment already defined earlier.
-        const assignedSoFar = new Set();
+        // Pass 2 — validate: every RHS identifier must be either a
+        // declared input or an assigned signal name. Order is irrelevant:
+        // forward references and self-references are both allowed so
+        // feedback loops like  Q = (D AND WE) OR (Q AND NOT WE)  compile.
         for(const a of assignments){
             collectIdentifiers(a.ast, (name) => {
                 if(declaredInputs.has(name)) return;
-                if(assignedSoFar.has(name))  return;
-                if(assignedNames.has(name))
-                    throw new Error('Line ' + a.lineNo + ': "' + name + '" used before it\'s defined. Move its equation above.');
-                throw new Error('Line ' + a.lineNo + ': "' + name + '" is not a declared input.');
+                if(assignedNames.has(name))  return;
+                throw new Error('Line ' + a.lineNo + ': "' + name + '" is not a declared input or assigned signal.');
             });
-            assignedSoFar.add(a.name);
         }
 
-        return { assignments, inputs: Array.from(declaredInputs).sort() };
+        return {
+            assignments,
+            inputs:  Array.from(declaredInputs).sort(),
+            outputs: Array.from(declaredOutputs)
+        };
     }
 
     function collectIdentifiers(node, fn){
         if(node.type === 'input') fn(node.name);
         else if(node.type === 'not') collectIdentifiers(node.operand, fn);
+        else if(node.type === 'delay') collectIdentifiers(node.operand, fn);
         else if(node.type === 'op'){
             collectIdentifiers(node.left, fn);
             collectIdentifiers(node.right, fn);
@@ -13117,7 +13190,6 @@ window.drawTimingDiagram = drawTimingDiagram;
         const GATE_GAP = S.gateGap     ?? 20;
 
         const colNextY = new Map();
-
         function placeGate(col, height){
             const existing = colNextY.get(col);
             const y = existing !== undefined ? existing : Y_START;
@@ -13127,8 +13199,7 @@ window.drawTimingDiagram = drawTimingDiagram;
 
         function spawnGateAndGet(type, x, y){
             const beforeCount = components.length;
-            const result = spawnComponentAt(type, x, y);
-            if(result && typeof result === 'object' && 'id' in result) return result;
+            spawnComponentAt(type, x, y);
             if(components.length !== beforeCount + 1)
                 throw new Error('Failed to spawn ' + type + ' gate at (' + x + ',' + y + ')');
             return components[components.length - 1];
@@ -13142,13 +13213,11 @@ window.drawTimingDiagram = drawTimingDiagram;
             if(io) io.textContent = name;
         }
 
-        /* — Place all inputs in column 0 — */
+        /* ── Place all inputs in column 0 ── */
         const inputMap = new Map();
         for(let i = 0; i < parsed.inputs.length; i++){
             const name = parsed.inputs[i];
-            const x = X_START + 0 * COL_W;
-            const y = Y_START + i * ROW_STEP;
-            const comp = spawnGateAndGet('INPUT', x, y);
+            const comp = spawnGateAndGet('INPUT', X_START, Y_START + i * ROW_STEP);
             setGateLabel(comp, name);
             inputMap.set(name, comp);
         }
@@ -13156,96 +13225,202 @@ window.drawTimingDiagram = drawTimingDiagram;
             colNextY.set(0, Y_START + parsed.inputs.length * ROW_STEP);
         }
 
-        /* — Compile AST nodes to gates with dedup — */
-        const gateByKey   = new Map();  // canonical AST key → comp
-        const namedSignals = new Map(); // assignment name → { comp, depth }
-        const pendingWires = [];        // deferred so we can batch at the end
+        /* ── Pass 1: pre-create one "root gate" per assignment ──
+           The gate type is the RHS's top-level operator. Its inputs are
+           wired in Pass 2. Creating the gate first means self-references
+           and forward-references can resolve to a real component
+           immediately — which is exactly what makes feedback loops
+           like  Q = (D AND WE) OR (Q AND NOT WE)  compile cleanly. */
+        const signalGate = new Map();   // name → comp (the gate whose output IS this signal)
 
-        function canonicalKey(node){
-            if(node.type === 'input') return 'I:' + node.name;
-            if(node.type === 'not')   return 'N:' + canonicalKey(node.operand);
-            if(node.type === 'op'){
-                const comm = ['AND','OR','XOR','NAND','NOR','XNOR'].indexOf(node.op) !== -1;
-                const a = canonicalKey(node.left);
-                const b = canonicalKey(node.right);
-                if(comm){
-                    const pair = a < b ? [a, b] : [b, a];
-                    return 'O:' + node.op + ':' + pair[0] + ':' + pair[1];
-                }
-                return 'O:' + node.op + ':' + a + ':' + b;
-            }
-            return '?';
+        for(const a of parsed.assignments){
+            if(a.ast.type === 'input') continue;   // alias — resolved below
+            const type = (a.ast.type === 'not') ? 'NOT' : a.ast.op;
+            signalGate.set(a.name, spawnGateAndGet(type, 0, 0));
         }
 
-        function compileNode(node){
-            /* — Leaf — */
+        /* ── Resolve aliases (Q = A) transitively, with cycle detection ── */
+        const aliasResolving = new Set();
+        function resolveAlias(name){
+            if(signalGate.has(name)) return signalGate.get(name);
+            if(inputMap.has(name))   return inputMap.get(name);
+            if(aliasResolving.has(name))
+                throw new Error('Circular alias: "' + name + '"');
+            aliasResolving.add(name);
+            const a = parsed.assignments.find(x => x.name === name);
+            let result = null;
+            if(a && a.ast.type === 'input'){
+                result = resolveAlias(a.ast.name);
+            }
+            aliasResolving.delete(name);
+            if(result) signalGate.set(name, result);
+            return result;
+        }
+        for(const a of parsed.assignments){
+            if(a.ast.type === 'input') resolveAlias(a.name);
+        }
+
+        /* ── Pass 2: build each RHS sub-graph, wire into its root gate ──
+           Self-refs and forward-refs resolve via signalGate. The feedback
+           wire (e.g. OR → rightAND.in0) is simply a normal wire here;
+           the simulator's iterative BFS handles the propagation. */
+        const pendingWires = [];   // { from, fromPort, to, toPort }
+
+        function compileSubGraph(node, currentName){
             if(node.type === 'input'){
-                if(inputMap.has(node.name))
-                    return { comp: inputMap.get(node.name), depth: 0 };
-                if(namedSignals.has(node.name))
-                    return namedSignals.get(node.name);
+                if(node.name === currentName){
+                    const g = signalGate.get(currentName);
+                    if(!g) throw new Error(
+                        'Self-reference in alias "' + currentName +
+                        '" — add an operator (e.g. Q = NOT NOT Q).');
+                    return g;
+                }
+                if(signalGate.has(node.name)) return signalGate.get(node.name);
+                if(inputMap.has(node.name))   return inputMap.get(node.name);
                 throw new Error('Unknown signal "' + node.name + '"');
             }
-
-            const key = canonicalKey(node);
-            if(gateByKey.has(key)){
-                const comp = gateByKey.get(key);
-                return { comp, depth: comp._scriptDepth };
-            }
-
-            /* — NOT — */
             if(node.type === 'not'){
-                const inner = compileNode(node.operand);
-                const depth = inner.depth + 1;
-                const { x, y } = placeGate(depth, 60);
-                const comp = spawnGateAndGet('NOT', x, y);
-                comp._scriptDepth = depth;
-                pendingWires.push({ fromComp: inner.comp.id, fromPort: 0, toComp: comp.id, toPort: 0 });
-                gateByKey.set(key, comp);
-                return { comp, depth };
+                const comp = spawnGateAndGet('NOT', 0, 0);
+                const child = compileSubGraph(node.operand, currentName);
+                pendingWires.push({ from: child, fromPort: 0, to: comp, toPort: 0 });
+                return comp;
             }
-
-            /* — Binary op — */
-            const left  = compileNode(node.left);
-            const right = compileNode(node.right);
-            const depth = Math.max(left.depth, right.depth) + 1;
-            const { x, y } = placeGate(depth, 80);
-            const comp = spawnGateAndGet(node.op, x, y);
-            comp._scriptDepth = depth;
-            pendingWires.push({ fromComp: left.comp.id,  fromPort: 0, toComp: comp.id, toPort: 0 });
-            pendingWires.push({ fromComp: right.comp.id, fromPort: 0, toComp: comp.id, toPort: 1 });
-            gateByKey.set(key, comp);
-            return { comp, depth };
+            if(node.type === 'op'){
+                const comp = spawnGateAndGet(node.op, 0, 0);
+                const left  = compileSubGraph(node.left,  currentName);
+                const right = compileSubGraph(node.right, currentName);
+                pendingWires.push({ from: left,  fromPort: 0, to: comp, toPort: 0 });
+                pendingWires.push({ from: right, fromPort: 0, to: comp, toPort: 1 });
+                return comp;
+            }
+            throw new Error('Unknown AST node type "' + node.type + '"');
         }
 
-        /* — Compile each assignment, register its name as a reusable signal — */
-        const outputEntries = [];
-        let maxDepth = 0;
         for(const a of parsed.assignments){
-            const res = compileNode(a.ast);
-            namedSignals.set(a.name, res);
-            if(res.depth > maxDepth) maxDepth = res.depth;
-            outputEntries.push({ name: a.name, src: res });
+            const root = signalGate.get(a.name);
+            if(!root || a.ast.type === 'input') continue;   // alias or skipped
+            if(a.ast.type === 'not'){
+                const child = compileSubGraph(a.ast.operand, a.name);
+                pendingWires.push({ from: child, fromPort: 0, to: root, toPort: 0 });
+            } else if(a.ast.type === 'op'){
+                const left  = compileSubGraph(a.ast.left,  a.name);
+                const right = compileSubGraph(a.ast.right, a.name);
+                pendingWires.push({ from: left,  fromPort: 0, to: root, toPort: 0 });
+                pendingWires.push({ from: right, fromPort: 0, to: root, toPort: 1 });
+            }
         }
 
-        /* — Place OUTPUTs in the final column — */
+        /* ── Cycle-safe depth computation ──
+           depthVisiting marks gates on the current DFS stack. A back-edge
+           (a source already on the stack) contributes depth 0 so cycles
+           don't infinite-loop. INPUTs resolve to depth 0 naturally
+           (incoming map is empty for them, so maxChild stays -1). */
+        const incoming = new Map();
+        for(const w of pendingWires){
+            let list = incoming.get(w.to.id);
+            if(!list){ list = []; incoming.set(w.to.id, list); }
+            list.push(w.from);
+        }
+        const depthMemo = new Map();
+        const depthVisiting = new Set();
+
+        function computeDepth(comp){
+            if(depthMemo.has(comp.id)) return depthMemo.get(comp.id);
+            if(depthVisiting.has(comp.id)) return 0;   // back-edge
+            depthVisiting.add(comp.id);
+            let maxChild = -1;
+            const sources = incoming.get(comp.id);
+            if(sources){
+                for(const src of sources){
+                    const d = computeDepth(src);
+                    if(d > maxChild) maxChild = d;
+                }
+            }
+            depthVisiting.delete(comp.id);
+            const depth = maxChild + 1;
+            depthMemo.set(comp.id, depth);
+            return depth;
+        }
+
+        for(const comp of components){
+            if(comp.type === 'INPUT') continue;
+            computeDepth(comp);
+        }
+
+        /* ── Place gates column by column ── */
+        for(const comp of components){
+            if(comp.type === 'INPUT') continue;
+            const d = depthMemo.get(comp.id) ?? 1;
+            const h = (comp.type === 'NOT') ? 60 : 80;
+            const { x, y } = placeGate(d, h);
+            comp.x = x; comp.y = y; comp._scriptDepth = d;
+            const el = compEls.get(comp.id);
+            if(el){ el.style.left = x + 'px'; el.style.top = y + 'px'; }
+        }
+
+        /* ── Place OUTPUTs one column past the deepest gate ── */
+        let maxDepth = 0;
+        for(const comp of components){
+            if(comp.type === 'INPUT') continue;
+            const d = depthMemo.get(comp.id) ?? 1;
+            if(d > maxDepth) maxDepth = d;
+        }
         const outCol = maxDepth + 1;
-        for(const e of outputEntries){
+
+        /* If the script declares `outputs:`, only those named signals
+           get an OUTPUT gate. Otherwise every assigned signal is
+           exported (previous default). Raw inputs are also accepted
+           as passthrough outputs. */
+        const declaredOutNames = (parsed.outputs && parsed.outputs.length)
+            ? parsed.outputs
+            : null;
+        if(declaredOutNames){
+            for(const n of declaredOutNames){
+                if(!signalGate.has(n) && !inputMap.has(n))
+                    throw new Error('Declared output "' + n + '" is not an assigned signal or input.');
+            }
+        }
+        const outputNames = declaredOutNames || Array.from(signalGate.keys());
+
+        const outputEntries = [];
+        for(const name of outputNames){
+            let srcComp = signalGate.get(name);
+            if(!srcComp && inputMap.has(name)) srcComp = inputMap.get(name);
+            if(!srcComp) continue;
             const { x, y } = placeGate(outCol, 60);
             const outComp = spawnGateAndGet('OUTPUT', x, y);
-            setGateLabel(outComp, e.name);
-            pendingWires.push({ fromComp: e.src.comp.id, fromPort: 0, toComp: outComp.id, toPort: 0 });
+            setGateLabel(outComp, name);
+            pendingWires.push({ from: srcComp, fromPort: 0, to: outComp, toPort: 0 });
+            outputEntries.push({ name, comp: srcComp, outComp });
         }
 
-        /* — Push all wires — */
+        /* ── Commit pending wires ── */
         for(const w of pendingWires){
-            if(w.fromComp === w.toComp) continue;
-            wires.push(newWire(w.fromComp, w.fromPort, w.toComp, w.toPort));
+            if(!w.from || !w.to) continue;
+            if(w.from.id === w.to.id) continue;   // skip self-wire
+            const exists = wires.some(x =>
+                x.fromComp === w.from.id && x.fromPort === w.fromPort &&
+                x.toComp   === w.to.id   && x.toPort   === w.toPort);
+            if(exists) continue;
+            wires.push(newWire(w.from.id, w.fromPort, w.to.id, w.toPort));
+        }
+
+        /* ── Initialise every gate output to 0 ──
+           Gives feedback loops a defined starting state. INPUTs are
+           skipped (their state is user-controlled). spawnComponentAt()
+           already sets '0', but this loop guarantees it explicitly and
+           insulates us from future changes to spawnComponentAt. */
+        for(const comp of components){
+            if(comp.type === 'INPUT') continue;
+            comp.outputVal = '0';
+            if(Array.isArray(comp.outputsArray)){
+                comp.outputsArray = comp.outputsArray.map(() => '0');
+            }
         }
 
         return {
             inputs:  parsed.inputs.length,
-            gates:   gateByKey.size,       // inputs are NOT in gateByKey
+            gates:   components.filter(c => c.type !== 'INPUT' && c.type !== 'OUTPUT').length,
             outputs: outputEntries.length
         };
     }
@@ -13970,7 +14145,8 @@ window.drawTimingDiagram = drawTimingDiagram;
                     const upper = word.toUpperCase();
                     if (KEYWORDS.has(upper)) {
                         out += `<span class="tok-keyword">${word}</span>`;
-                    } else if (upper === 'INPUTS' || upper === 'INPUT') {
+                    } else if (upper === 'INPUTS' || upper === 'INPUT' ||
+                               upper === 'OUTPUTS' || upper === 'OUTPUT') {
                         out += `<span class="tok-decl">${word}</span>`;
                     } else {
                         out += `<span class="tok-ident">${escapeHtml(word)}</span>`;
