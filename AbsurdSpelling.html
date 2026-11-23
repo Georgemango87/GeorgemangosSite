@@ -1,0 +1,832 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Absurd English Speller</title>
+  <style>
+    /* ============================================================
+       STYLES
+       ============================================================ */
+    :root {
+      --bg1: #0f172a;
+      --bg2: #1e293b;
+      --card: rgba(30, 41, 59, 0.75);
+      --border: rgba(148, 163, 184, 0.15);
+      --accent: #818cf8;
+      --accent-hover: #6366f1;
+      --text: #e2e8f0;
+      --text-muted: #94a3b8;
+      --success: #34d399;
+      --warning: #fbbf24;
+      --danger: #f87171;
+      --radius: 16px;
+      --font: "Inter", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+      --mono: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      min-height: 100vh;
+      font-family: var(--font);
+      background: radial-gradient(ellipse at 20% 0%, #312e81 0%, transparent 50%),
+                  radial-gradient(ellipse at 80% 100%, #1e1b4b 0%, transparent 50%),
+                  linear-gradient(160deg, var(--bg1), var(--bg2));
+      color: var(--text);
+      display: flex;
+      justify-content: center;
+      padding: 32px 16px 64px;
+    }
+
+    .app {
+      width: 100%;
+      max-width: 880px;
+    }
+
+    /* Header */
+    header {
+      text-align: center;
+      margin-bottom: 28px;
+    }
+
+    header h1 {
+      font-size: clamp(1.8rem, 4vw, 2.6rem);
+      font-weight: 800;
+      letter-spacing: -0.02em;
+      background: linear-gradient(135deg, #c7d2fe, #a5b4fc, #818cf8);
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
+      margin-bottom: 6px;
+    }
+
+    header .subtitle {
+      color: var(--text-muted);
+      font-size: 0.95rem;
+      max-width: 560px;
+      margin: 0 auto;
+    }
+
+    /* Cards */
+    .card {
+      background: var(--card);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 20px;
+      margin-bottom: 18px;
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.25);
+    }
+
+    label {
+      display: block;
+      font-size: 0.8rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--text-muted);
+      margin-bottom: 10px;
+    }
+
+    textarea {
+      width: 100%;
+      min-height: 130px;
+      padding: 14px 16px;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      background: rgba(15, 23, 42, 0.6);
+      color: var(--text);
+      font-family: var(--font);
+      font-size: 1rem;
+      line-height: 1.6;
+      resize: vertical;
+      outline: none;
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+
+    textarea:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(129, 140, 248, 0.15);
+    }
+
+    textarea::placeholder {
+      color: #475569;
+    }
+
+    #outputText {
+      min-height: 150px;
+      font-family: var(--mono);
+      font-size: 0.95rem;
+      background: rgba(15, 23, 42, 0.85);
+      color: #c7d2fe;
+    }
+
+    /* Buttons */
+    .actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-top: 14px;
+    }
+
+    button {
+      appearance: none;
+      border: none;
+      border-radius: 10px;
+      padding: 11px 22px;
+      font-family: var(--font);
+      font-size: 0.9rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.2s, transform 0.1s, opacity 0.2s;
+      background: var(--accent);
+      color: #0f172a;
+    }
+
+    button:hover:not(:disabled) {
+      background: var(--accent-hover);
+      transform: translateY(-1px);
+    }
+
+    button:active:not(:disabled) {
+      transform: translateY(0);
+    }
+
+    button:disabled {
+      opacity: 0.4;
+      cursor: not-allowed;
+    }
+
+    button.secondary {
+      background: rgba(148, 163, 184, 0.12);
+      color: var(--text);
+      border: 1px solid var(--border);
+    }
+
+    button.secondary:hover:not(:disabled) {
+      background: rgba(148, 163, 184, 0.22);
+    }
+
+    /* Status */
+    .status {
+      margin-top: 12px;
+      font-size: 0.82rem;
+      color: var(--text-muted);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      min-height: 22px;
+    }
+
+    .status.ready {
+      color: var(--success);
+    }
+
+    .status.warning {
+      color: var(--warning);
+    }
+
+    .status.error {
+      color: var(--danger);
+    }
+
+    /* Explanation */
+    .explanation h2 {
+      font-size: 1.1rem;
+      margin-bottom: 12px;
+      color: #c7d2fe;
+    }
+
+    .explanation p {
+      font-size: 0.9rem;
+      line-height: 1.7;
+      color: var(--text-muted);
+      margin-bottom: 12px;
+    }
+
+    .explanation code {
+      background: rgba(129, 140, 248, 0.15);
+      color: #a5b4fc;
+      padding: 2px 6px;
+      border-radius: 5px;
+      font-family: var(--mono);
+      font-size: 0.85em;
+    }
+
+    .explanation details {
+      margin-top: 10px;
+      border-top: 1px solid var(--border);
+      padding-top: 12px;
+    }
+
+    .explanation summary {
+      cursor: pointer;
+      font-size: 0.85rem;
+      font-weight: 600;
+      color: #a5b4fc;
+      user-select: none;
+    }
+
+    .explanation summary:hover {
+      color: #c7d2fe;
+    }
+
+    .explanation pre {
+      margin-top: 10px;
+      max-height: 260px;
+      overflow: auto;
+      background: rgba(15, 23, 42, 0.7);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 14px;
+      font-family: var(--mono);
+      font-size: 0.78rem;
+      line-height: 1.6;
+      color: #94a3b8;
+      white-space: pre-wrap;
+      word-break: break-word;
+    }
+
+    .license {
+      font-size: 0.78rem !important;
+      color: #64748b !important;
+      margin-top: 8px;
+      line-height: 1.6;
+    }
+
+    .license a {
+      color: #818cf8;
+      text-decoration: none;
+    }
+
+    .license a:hover {
+      text-decoration: underline;
+    }
+
+    /* Responsive */
+    @media (max-width: 600px) {
+      body {
+        padding: 20px 10px 48px;
+      }
+
+      .card {
+        padding: 16px;
+      }
+
+      .actions {
+        flex-direction: column;
+      }
+
+      button {
+        width: 100%;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="app">
+    <header>
+      <h1>Absurd English Speller</h1>
+      <p class="subtitle">
+        Turn plain English into gloriously complicated spelling — powered by real pronunciation data.
+      </p>
+    </header>
+
+    <main>
+      <!-- Input -->
+      <section class="card">
+        <label for="inputText">Your text</label>
+        <textarea id="inputText" placeholder="Type or paste English text here… e.g. “The quick brown fox jumps over the lazy dog.”"></textarea>
+        <div class="actions">
+          <button id="convertBtn" disabled>Convert</button>
+          <button id="clearBtn" class="secondary">Clear</button>
+          <button id="copyBtn" class="secondary" disabled>Copy</button>
+        </div>
+        <div id="status" class="status">Loading pronunciation dictionary…</div>
+      </section>
+
+      <!-- Output -->
+      <section class="card">
+        <label for="outputText">Absurd spelling</label>
+        <textarea id="outputText" readonly placeholder="Your absurdly spelled text will appear here…"></textarea>
+      </section>
+
+      <!-- Explanation -->
+      <section class="card explanation">
+        <h2>How it works</h2>
+        <p>
+          This tool uses the <strong>Carnegie Mellon University Pronouncing Dictionary (CMUdict)</strong>
+          to look up the pronunciation of each English word. CMUdict stores pronunciations in ARPAbet,
+          which are converted to <strong>IPA phonemes</strong>. Each IPA phoneme is then replaced by the
+          strangest valid English spelling pattern we could find.
+        </p>
+        <p>
+          For example, the /p/ sound can be spelled <code>gh</code> (as in <em>hiccough</em>),
+          /t/ can be <code>phth</code> (as in <em>phthisis</em>), and /oʊ/ can be
+          <code>eau</code> (as in <em>plateau</em>) or <code>ough</code> (as in <em>though</em>).
+        </p>
+        <p>
+          Words missing from the dictionary fall back to a simple letter-to-sound rule and are marked
+          with <code>‹…›</code> so you can see where the fallback was used.
+        </p>
+
+        <details>
+          <summary>Phoneme-to-spelling rules (configurable)</summary>
+          <pre id="rulesDisplay"></pre>
+        </details>
+
+        <p class="license">
+          <strong>Attribution:</strong> CMUdict is Copyright (C) 1993–2015 Carnegie Mellon University,
+          released under a BSD-2-Clause licence. Source:
+          <a href="https://github.com/cmusphinx/cmudict" target="_blank" rel="noopener">github.com/cmusphinx/cmudict</a>.
+        </p>
+      </section>
+    </main>
+  </div>
+
+  <script>
+    /* ============================================================
+       1. CONFIGURATION — PHONEME-TO-ABSURD-SPELLING MAPPING
+       ------------------------------------------------------------
+       Each IPA phoneme maps to an array of candidate spellings.
+       "score" is a strangeness score. The converter picks the
+       highest-scoring candidate, so you can add even stranger
+       spellings later by giving them higher scores.
+       ============================================================ */
+    const PHONEME_SPELLINGS = {
+      /* --- Consonants --- */
+      "p":  [{ s: "gh",  score: 10 }, { s: "pp",  score: 5 }, { s: "pe",  score: 4 }],
+      "b":  [{ s: "pb",  score: 9  }, { s: "bb",  score: 6 }],
+      "t":  [{ s: "phth", score: 10 }, { s: "tte", score: 8 }, { s: "bt",  score: 9 }, { s: "pt", score: 7 }, { s: "th", score: 3 }],
+      "d":  [{ s: "bd",  score: 10 }, { s: "dd",  score: 4 }, { s: "ed",  score: 5 }],
+      "k":  [{ s: "ch",  score: 9  }, { s: "que", score: 7 }, { s: "ck",  score: 4 }, { s: "c",  score: 2 }],
+      "ɡ":  [{ s: "gh",  score: 8  }, { s: "gu",  score: 6 }, { s: "gg",  score: 4 }],
+      "f":  [{ s: "gh",  score: 10 }, { s: "ph",  score: 6 }, { s: "ff",  score: 3 }],
+      "v":  [{ s: "ph",  score: 9  }, { s: "vv",  score: 4 }, { s: "f",   score: 3 }],
+      "θ":  [{ s: "phth", score: 10 }, { s: "th", score: 5 }],
+      "ð":  [{ s: "the", score: 8  }, { s: "th",  score: 4 }],
+      "s":  [{ s: "ps",  score: 9  }, { s: "sc",  score: 7 }, { s: "ss",  score: 3 }, { s: "c", score: 2 }],
+      "z":  [{ s: "x",   score: 10 }, { s: "zz",  score: 5 }, { s: "s",   score: 2 }],
+      "ʃ":  [{ s: "sch", score: 10 }, { s: "ti",  score: 8 }, { s: "ci",  score: 7 }, { s: "si", score: 6 }, { s: "ch", score: 5 }],
+      "ʒ":  [{ s: "si",  score: 9  }, { s: "g",   score: 7 }, { s: "s",   score: 4 }],
+      "tʃ": [{ s: "tu",  score: 9  }, { s: "tch", score: 8 }, { s: "ch",  score: 4 }],
+      "dʒ": [{ s: "dg",  score: 9  }, { s: "di",  score: 8 }, { s: "g",   score: 5 }, { s: "j", score: 3 }],
+      "m":  [{ s: "mn",  score: 10 }, { s: "mb",  score: 8 }, { s: "mm",  score: 4 }],
+      "n":  [{ s: "pn",  score: 10 }, { s: "kn",  score: 8 }, { s: "gn",  score: 7 }, { s: "nn", score: 3 }],
+      "ŋ":  [{ s: "ngue", score: 10 }, { s: "ng", score: 3 }, { s: "n",   score: 2 }],
+      "l":  [{ s: "le",  score: 5  }, { s: "ll",  score: 4 }],
+      "r":  [{ s: "wr",  score: 9  }, { s: "rh",  score: 8 }, { s: "rr",  score: 4 }],
+      "w":  [{ s: "wh",  score: 7  }, { s: "w",   score: 2 }],
+      "j":  [{ s: "j",   score: 8  }, { s: "y",   score: 2 }],
+      "h":  [{ s: "wh",  score: 9  }, { s: "j",   score: 8 }, { s: "h",   score: 2 }],
+
+      /* --- Vowels --- */
+      "i":  [{ s: "ie",  score: 9 }, { s: "ea",  score: 7 }, { s: "ee",  score: 3 }, { s: "ey", score: 6 }],
+      "ɪ":  [{ s: "ui",  score: 10 }, { s: "y",  score: 8 }, { s: "e",   score: 5 }, { s: "i",  score: 2 }],
+      "eɪ": [{ s: "eigh", score: 10 }, { s: "ei", score: 7 }, { s: "ey",  score: 6 }, { s: "ai", score: 4 }],
+      "ɛ":  [{ s: "ai",  score: 9 }, { s: "ea",  score: 8 }, { s: "ie",  score: 7 }, { s: "e",  score: 3 }],
+      "æ":  [{ s: "ai",  score: 9 }, { s: "a",   score: 3 }],
+      "ɑ":  [{ s: "au",  score: 8 }, { s: "ah",  score: 7 }, { s: "aa",  score: 6 }, { s: "a",  score: 2 }],
+      "ɔ":  [{ s: "ough", score: 10 }, { s: "au", score: 6 }, { s: "aw",  score: 5 }, { s: "oo", score: 4 }],
+      "oʊ": [{ s: "eau", score: 10 }, { s: "ough", score: 10 }, { s: "oa", score: 6 }, { s: "ow", score: 5 }, { s: "oe", score: 5 }],
+      "ʊ":  [{ s: "ou",  score: 9 }, { s: "oo",  score: 4 }, { s: "u",   score: 3 }],
+      "u":  [{ s: "ui",  score: 10 }, { s: "ou", score: 9 }, { s: "ew",  score: 7 }, { s: "ue", score: 6 }, { s: "oo", score: 3 }],
+      "ʌ":  [{ s: "oo",  score: 10 }, { s: "ou", score: 8 }, { s: "o",   score: 6 }, { s: "u",  score: 2 }],
+      "ə":  [{ s: "ough", score: 10 }, { s: "a",  score: 2 }, { s: "e",   score: 2 }, { s: "o",  score: 2 }, { s: "u", score: 2 }],
+      "ɝ":  [{ s: "our", score: 10 }, { s: "ear", score: 9 }, { s: "ur",  score: 5 }, { s: "ir", score: 4 }, { s: "er", score: 3 }],
+      "ɑr": [{ s: "ear", score: 9 }, { s: "ar",  score: 3 }],
+      "ɔr": [{ s: "our", score: 9 }, { s: "oor", score: 8 }, { s: "oar", score: 7 }, { s: "or", score: 3 }],
+      "ɪr": [{ s: "ere", score: 9 }, { s: "ier", score: 7 }, { s: "ear", score: 6 }],
+      "ɛr": [{ s: "are", score: 8 }, { s: "ear", score: 7 }, { s: "ere", score: 6 }, { s: "air", score: 4 }],
+      "ʊr": [{ s: "our", score: 8 }, { s: "oor", score: 7 }, { s: "ure", score: 6 }],
+      "aɪ": [{ s: "uy",  score: 10 }, { s: "igh", score: 9 }, { s: "ei",  score: 8 }, { s: "ie", score: 6 }, { s: "y", score: 3 }],
+      "aʊ": [{ s: "ough", score: 10 }, { s: "ow", score: 4 }],
+      "ɔɪ": [{ s: "oi",  score: 5 }, { s: "oy",  score: 4 }],
+    };
+
+    /* ============================================================
+       2. ARPABET → IPA MAPPING
+       ------------------------------------------------------------
+       CMUdict uses ARPAbet. We convert each ARPAbet phone to an
+       IPA symbol. Stress digits are handled where they matter
+       (AH0 → schwa, ER0 → schwa + r).
+       ============================================================ */
+    const ARPABET_TO_IPA = {
+      AA: "ɑ",  AE: "æ",  AH: "ʌ",  AO: "ɔ",  AW: "aʊ", AY: "aɪ",
+      EH: "ɛ",  ER: "ɝ",  EY: "eɪ", IH: "ɪ",  IY: "i",  OW: "oʊ",
+      OY: "ɔɪ", UH: "ʊ",  UW: "u",
+      B: "b",   CH: "tʃ", D: "d",   DH: "ð",  F: "f",   G: "ɡ",
+      HH: "h",  JH: "dʒ", K: "k",   L: "l",   M: "m",   N: "n",
+      NG: "ŋ",  P: "p",   R: "r",   S: "s",   SH: "ʃ",  T: "t",
+      TH: "θ",  V: "v",   W: "w",   Y: "j",   Z: "z",   ZH: "ʒ",
+    };
+
+    /* ============================================================
+       3. CMUDICT PARSER AND DICTIONARY STORAGE
+       ============================================================ */
+    const CMUDICT_URL = "https://raw.githubusercontent.com/cmusphinx/cmudict/master/cmudict.dict";
+
+    /** @type {Map<string, string[][]>} word -> array of ARPAbet pronunciations */
+    let dictionary = new Map();
+
+    function parseCmudict(text) {
+      const dict = new Map();
+      const lines = text.split("\n");
+      for (let line of lines) {
+        line = line.trim();
+        if (!line || line.startsWith(";;;")) continue;
+
+        const spaceIdx = line.indexOf(" ");
+        if (spaceIdx === -1) continue;
+
+        let word = line.slice(0, spaceIdx);
+        const phones = line.slice(spaceIdx + 1).trim().split(/\s+/);
+
+        // Remove pronunciation-variant numbers like "word(2)"
+        word = word.replace(/\(\d+\)$/, "");
+        word = word.toLowerCase();
+
+        if (!dict.has(word)) dict.set(word, []);
+        dict.get(word).push(phones);
+      }
+      return dict;
+    }
+
+    /* ============================================================
+       4. FALLBACK GRAPHEME-TO-PHONEME (for missing words)
+       ------------------------------------------------------------
+       Very simple letter-to-ARPAbet mapping. Good enough to keep
+       the page working for names, slang, and typos. Fallback
+       output is wrapped in ‹…› so it is clearly marked.
+       ============================================================ */
+    const LETTER_TO_ARPABET = {
+      a: ["AE"], b: ["B"], c: ["K"], d: ["D"], e: ["EH"], f: ["F"],
+      g: ["G"],  h: ["HH"], i: ["IH"], j: ["JH"], k: ["K"], l: ["L"],
+      m: ["M"],  n: ["N"], o: ["AA"], p: ["P"], q: ["K"], r: ["R"],
+      s: ["S"],  t: ["T"], u: ["AH"], v: ["V"], w: ["W"], x: ["K", "S"],
+      y: ["Y"],  z: ["Z"],
+    };
+
+    function fallbackG2P(word) {
+      const result = [];
+      for (const ch of word.toLowerCase()) {
+        if (LETTER_TO_ARPABET[ch]) {
+          result.push(...LETTER_TO_ARPABET[ch]);
+        }
+      }
+      return result;
+    }
+
+    /* ============================================================
+       5. CORE CONVERSION ENGINE
+       ============================================================ */
+
+    /**
+     * Convert an ARPAbet pronunciation into an array of IPA phonemes.
+     * Handles AH0 → schwa and ER0 → schwa + r.
+     */
+    function arpabetToIpaPhonemes(arpabetTokens) {
+      const ipa = [];
+      for (const token of arpabetTokens) {
+        const upper = token.toUpperCase();
+
+        if (upper === "AH0") {
+          ipa.push("ə");
+          continue;
+        }
+        if (upper === "ER0") {
+          ipa.push("ə");
+          ipa.push("r");
+          continue;
+        }
+
+        // Strip stress digits (e.g. EY1 → EY)
+        const base = upper.replace(/\d+$/, "");
+        const ipaSymbol = ARPABET_TO_IPA[base];
+        if (ipaSymbol) {
+          ipa.push(ipaSymbol);
+        } else {
+          ipa.push("?"); // unknown phoneme
+        }
+      }
+      return ipa;
+    }
+
+    /**
+     * Pick the strangest (highest-scoring) spelling for a single
+     * IPA phoneme. Ties are broken by choosing the longer spelling.
+     */
+    function chooseSpelling(phoneme) {
+      const candidates = PHONEME_SPELLINGS[phoneme];
+      if (!candidates || candidates.length === 0) return phoneme;
+
+      let best = candidates[0];
+      for (const c of candidates) {
+        if (c.score > best.score) {
+          best = c;
+        } else if (c.score === best.score && c.s.length > best.s.length) {
+          best = c;
+        }
+      }
+      return best.s;
+    }
+
+    /**
+     * Preserve the capitalisation pattern of the original word.
+     */
+    function matchCase(original, converted) {
+      if (original === original.toUpperCase() && original.length > 1) {
+        return converted.toUpperCase();
+      }
+      if (original[0] === original[0].toUpperCase()) {
+        return converted.charAt(0).toUpperCase() + converted.slice(1);
+      }
+      return converted;
+    }
+
+    /**
+     * Convert one English word into its absurd spelling.
+     */
+    function convertWord(word) {
+      const lower = word.toLowerCase().replace(/’/g, "'");
+
+      let arpabet;
+      let usedFallback = false;
+
+      const pronunciations = dictionary.get(lower);
+      if (pronunciations && pronunciations.length > 0) {
+        // Support multiple pronunciations: use the first one.
+        // You could randomise here for variety.
+        arpabet = pronunciations[0];
+      } else {
+        arpabet = fallbackG2P(lower);
+        usedFallback = true;
+      }
+
+      const ipaPhonemes = arpabetToIpaPhonemes(arpabet);
+
+      let absurd = "";
+      for (const ph of ipaPhonemes) {
+        absurd += chooseSpelling(ph);
+      }
+
+      let result = matchCase(word, absurd);
+      if (usedFallback) {
+        result = "‹" + result + "›";
+      }
+      return result;
+    }
+
+    /**
+     * Convert a full text string, preserving spaces, punctuation,
+     * word order, and capitalisation.
+     */
+    function convertText(text) {
+      // Matches words, including internal apostrophes and hyphens.
+      const tokenRegex = /([A-Za-z]+(?:['’\-][A-Za-z]+)*)/g;
+
+      let result = "";
+      let lastIndex = 0;
+      let match;
+
+      while ((match = tokenRegex.exec(text)) !== null) {
+        // Add everything before this word (spaces, punctuation, etc.)
+        result += text.slice(lastIndex, match.index);
+
+        // Convert the word
+        result += convertWord(match[1]);
+
+        lastIndex = tokenRegex.lastIndex;
+      }
+
+      // Add trailing non-word characters
+      result += text.slice(lastIndex);
+      return result;
+    }
+
+    /* ============================================================
+       6. SEED DICTIONARY (fallback if CMUdict cannot be fetched)
+       ------------------------------------------------------------
+       A tiny set of common words so the page still works offline
+       or if GitHub is unreachable. The full CMUdict is fetched
+       automatically on page load.
+       ============================================================ */
+    const SEED_CMUDICT = `
+the DH AH0
+be B IY1
+to T UW1
+of AH1 V
+and AE1 N D
+a AH0
+in IH1 N
+that DH AE1 T
+have HH AE1 V
+I AY1
+it IH1 T
+for F AO1 R
+not N AA1 T
+on AA1 N
+with W IH1 DH
+he HH IY1
+as AE1 Z
+you Y UW1
+do D UW1
+at AE1 T
+this DH IH1 S
+but B AH1 T
+his HH IH1 Z
+by B AY1
+from F R AH1 M
+they DH EY1
+we W IY1
+say S EY1
+her HH ER0
+she SH IY1
+or AO1 R
+an AE1 N
+will W IH1 L
+my M AY1
+one W AH1 N
+all AO1 L
+would W UH1 D
+there DH EH1 R
+their DH EH1 R
+what W AH1 T
+so S OW1
+up AH1 P
+out AW1 T
+if IH1 F
+about AH0 B AW1 T
+who HH UW1
+get G EH1 T
+which W IH1 CH
+go G OW1
+me M IY1
+when W EH1 N
+make M EY1 K
+can K AE1 N
+like L AY1 K
+time T AY1 M
+no N OW1
+just JH AH1 S T
+him HH IH1 M
+know N OW1
+take T EY1 K
+people P IY1 P AH0 L
+into IH1 N T UW0
+year Y IH1 R
+your Y AO1 R
+good G UH1 D
+some S AH1 M
+could K UH1 D
+them DH EH1 M
+see S IY1
+other AH1 DH ER0
+than DH AE1 N
+then DH EH1 N
+now N AW1
+look L UH1 K
+only OW1 N L IY0
+come K AH1 M
+its IH1 T S
+over OW1 V ER0
+think TH IH1 NG K
+also AO1 L S OW0
+back B AE1 K
+after AE1 F T ER0
+use Y UW1 Z
+two T UW1
+how HH AW1
+our AW1 ER0
+work W ER1 K
+first F ER1 S T
+well W EH1 L
+way W EY1
+even IY1 V AH0 N
+new N UW1
+want W AA1 N T
+because B IH0 K AO1 Z
+any EH1 N IY0
+these DH IY1 Z
+give G IH1 V
+day D EY1
+most M OW1 S T
+us AH1 S
+`.trim();
+
+    /* ============================================================
+       7. UI LOGIC
+       ============================================================ */
+    document.addEventListener("DOMContentLoaded", () => {
+      const inputEl = document.getElementById("inputText");
+      const outputEl = document.getElementById("outputText");
+      const convertBtn = document.getElementById("convertBtn");
+      const clearBtn = document.getElementById("clearBtn");
+      const copyBtn = document.getElementById("copyBtn");
+      const statusEl = document.getElementById("status");
+
+      // --- Render the current phoneme rules into the explanation ---
+      function renderRules() {
+        const pre = document.getElementById("rulesDisplay");
+        if (!pre) return;
+        let text = "";
+        for (const [phoneme, candidates] of Object.entries(PHONEME_SPELLINGS)) {
+          const sorted = [...candidates].sort((a, b) => b.score - a.score);
+          text += `/${phoneme}/  →  ` + sorted.map(c => `${c.s} (${c.score})`).join(", ") + "\n";
+        }
+        pre.textContent = text;
+      }
+      renderRules();
+
+      // --- Load the full CMUdict ---
+      async function loadDictionary() {
+        try {
+          statusEl.textContent = "Downloading CMUdict (this may take a few seconds)…";
+          statusEl.className = "status";
+
+          const response = await fetch(CMUDICT_URL);
+          if (!response.ok) throw new Error(`HTTP ${response.status}`);
+
+          const text = await response.text();
+          dictionary = parseCmudict(text);
+
+          statusEl.textContent = `Dictionary loaded: ${dictionary.size.toLocaleString()} words. Ready!`;
+          statusEl.className = "status ready";
+          convertBtn.disabled = false;
+        } catch (err) {
+          console.error("Failed to load CMUdict:", err);
+
+          // Fall back to the tiny seed dictionary
+          dictionary = parseCmudict(SEED_CMUDICT);
+          statusEl.textContent =
+            "Could not download the full dictionary. Using a small built-in seed — some words will be marked with ‹…›.";
+          statusEl.className = "status warning";
+          convertBtn.disabled = false;
+        }
+      }
+
+      loadDictionary();
+
+      // --- Convert button ---
+      convertBtn.addEventListener("click", () => {
+        const text = inputEl.value;
+        if (!text.trim()) {
+          outputEl.value = "";
+          copyBtn.disabled = true;
+          return;
+        }
+
+        try {
+          outputEl.value = convertText(text);
+          copyBtn.disabled = false;
+        } catch (err) {
+          console.error("Conversion error:", err);
+          outputEl.value = "An error occurred while converting. Please try again.";
+          copyBtn.disabled = true;
+        }
+      });
+
+      // --- Clear button ---
+      clearBtn.addEventListener("click", () => {
+        inputEl.value = "";
+        outputEl.value = "";
+        copyBtn.disabled = true;
+        inputEl.focus();
+      });
+
+      // --- Copy button ---
+      copyBtn.addEventListener("click", async () => {
+        const text = outputEl.value;
+        if (!text) return;
+
+        try {
+          await navigator.clipboard.writeText(text);
+          copyBtn.textContent = "Copied!";
+          setTimeout(() => (copyBtn.textContent = "Copy"), 1500);
+        } catch (err) {
+          // Fallback for older browsers / insecure contexts
+          outputEl.select();
+          document.execCommand("copy");
+          copyBtn.textContent = "Copied!";
+          setTimeout(() => (copyBtn.textContent = "Copy"), 1500);
+        }
+      });
+
+      // Keyboard shortcut: Ctrl/Cmd + Enter to convert
+      inputEl.addEventListener("keydown", (e) => {
+        if ((e.ctrlKey || e.metaKey) && e.key === "Enter") {
+          e.preventDefault();
+          convertBtn.click();
+        }
+      });
+    });
+  </script>
+</body>
+</html>
